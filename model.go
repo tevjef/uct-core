@@ -93,7 +93,7 @@ type (
 	Book struct {
 		Id        float64   `json:"id,omitempty" db:"id"`
 		SectionId float64   `json:"section_id,omitempty" db:"section_id"`
-		Name      string    `json:"name,omitempty" db:"name"`
+		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
 		CreatedAt time.Time `json:"created_at,omitempty" db:"created_at"`
 		UpdatedAt time.Time `json:"updated_at,omitempty" db:"updated_at"`
@@ -148,14 +148,14 @@ var seasons = [...]string{
 	"spring",
 	"summer",
 	"winter",
-	"add_fall",
-	"add_spring",
-	"add_summer",
-	"add_winter",
-	"drop_fall",
-	"drop_spring",
-	"drop_summer",
-	"drop_winter",
+	"start_fall",
+	"start_spring",
+	"start_summer",
+	"start_winter",
+	"end_fall",
+	"end_spring",
+	"end_summer",
+	"end_winter",
 }
 
 func (s Period) String() string {
@@ -383,10 +383,10 @@ func (instructor *Instructor) vetAndBuild() {
 
 func (book *Book) vetAndBuild() {
 	// Name
-	if book.Name == nil {
+	if book.Title == nil {
 		log.Panic("Instructor name == nil")
 	}
-	book.Name = trim(book.Name)
+	book.Title = trim(book.Title)
 
 	// RegistrationPage
 	if book.Url == nil {
