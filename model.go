@@ -149,14 +149,14 @@ var seasons = [...]string{
 	"spring",
 	"summer",
 	"winter",
-	"add_fall",
-	"add_spring",
-	"add_summer",
-	"add_winter",
-	"drop_fall",
-	"drop_spring",
-	"drop_summer",
-	"drop_winter",
+	"start_fall",
+	"start_spring",
+	"start_summer",
+	"start_winter",
+	"end_fall",
+	"end_spring",
+	"end_summer",
+	"end_winter",
 }
 
 func (s Period) String() string {
