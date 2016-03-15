@@ -2,42 +2,42 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
-	"log"
 )
 
 type (
 	University struct {
-		Id               float64   `json:"id,omitempty" db:"id"`
-		Name             string    `json:"name,omitempty" db:"name"`
-		Abbr             string    `json:"abbr,omitempty" db:"abbr"`
-		HomePage         string    `json:"home_page,omitempty" db:"home_page"`
-		RegistrationPage string    `json:"registration_page,omitempty" db:"registration_page"`
-		MainColor        string    `json:"main_color,omitempty" db:"main_color"`
-		AccentColor      string    `json:"accent_color,omitempty" db:"accent_color"`
-		TopicName        string    `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt        time.Time `json:"created_at,omitempty" db:"created_at"`
-		UpdatedAt        time.Time `json:"updated_at,omitempty" db:"updated_at"`
-		Subjects         []Subject `json:"subjects,omitempty"`
-		Registration 	[]Registration `json:"registration,omitempty"`
-		Metadata 	[]Metadata `json:"metadata,omitempty"`
+		Id               float64        `json:"id,omitempty" db:"id"`
+		Name             string         `json:"name,omitempty" db:"name"`
+		Abbr             string         `json:"abbr,omitempty" db:"abbr"`
+		HomePage         string         `json:"home_page,omitempty" db:"home_page"`
+		RegistrationPage string         `json:"registration_page,omitempty" db:"registration_page"`
+		MainColor        string         `json:"main_color,omitempty" db:"main_color"`
+		AccentColor      string         `json:"accent_color,omitempty" db:"accent_color"`
+		TopicName        string         `json:"topic_name,omitempty" db:"topic_name"`
+		CreatedAt        time.Time      `json:"created_at,omitempty" db:"created_at"`
+		UpdatedAt        time.Time      `json:"updated_at,omitempty" db:"updated_at"`
+		Subjects         []Subject      `json:"subjects,omitempty"`
+		Registration     []Registration `json:"registration,omitempty"`
+		Metadata         []Metadata     `json:"metadata,omitempty"`
 	}
 
 	Subject struct {
-		Id           float64   `json:"id,omitempty" db:"id"`
-		UniversityId float64   `json:"university_id,omitempty" db:"university_id"`
-		Name         string    `json:"name,omitempty" db:"name"`
-		Abbr         string    `json:"abbr,omitempty" db:"abbr"`
-		Season Season    `json:"season,omitempty" db:"season"`
-		Year   time.Time `json:"year,omitempty" db:"year"`
-		TopicName    string    `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt    time.Time `json:"created_at,omitempty" db:"created_at"`
-		UpdatedAt    time.Time `json:"updated_at,omitempty" db:"updated_at"`
-		Courses      []Course  `json:"courses,omitempty"`
-		Metadata 	[]Metadata `json:"metadata,omitempty"`
+		Id           float64    `json:"id,omitempty" db:"id"`
+		UniversityId float64    `json:"university_id,omitempty" db:"university_id"`
+		Name         string     `json:"name,omitempty" db:"name"`
+		Abbr         string     `json:"abbr,omitempty" db:"abbr"`
+		Season       Season     `json:"season,omitempty" db:"season"`
+		Year         time.Time  `json:"year,omitempty" db:"year"`
+		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
+		CreatedAt    time.Time  `json:"created_at,omitempty" db:"created_at"`
+		UpdatedAt    time.Time  `json:"updated_at,omitempty" db:"updated_at"`
+		Courses      []Course   `json:"courses,omitempty"`
+		Metadata     []Metadata `json:"metadata,omitempty"`
 	}
 
 	Course struct {
@@ -50,7 +50,7 @@ type (
 		CreatedAt time.Time      `json:"created_at,omitempty" db:"created_at"`
 		UpdatedAt time.Time      `json:"updated_at,omitempty" db:"updated_at"`
 		Sections  []Section      `json:"sections,omitempty"`
-		Metadata 	[]Metadata `json:"metadata,omitempty"`
+		Metadata  []Metadata     `json:"metadata,omitempty"`
 	}
 
 	Section struct {
@@ -68,7 +68,7 @@ type (
 		Meetings    []Meeting    `json:"meeting,omitempty"`
 		Instructors []Instructor `json:"instructors,omitempty"`
 		Books       []Book       `json:"books,omitempty"`
-		Metadata 	[]Metadata `json:"metadata,omitempty"`
+		Metadata    []Metadata   `json:"metadata,omitempty"`
 	}
 
 	Meeting struct {
@@ -117,7 +117,6 @@ type (
 		Period       Period    `json:"period,omitempty" db:"period"`
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
 	}
-
 
 	TimePeriod struct {
 		Period     Period    `json:"period,omitempty" db:"period"`
@@ -219,18 +218,18 @@ func (u *University) vetAndBuild() {
 		log.Panic("HomePage == nil")
 	}
 	u.HomePage = trim(u.HomePage)
-	url, err := url.ParseRequestURI(u.HomePage)
+	nUrl, err := url.ParseRequestURI(u.HomePage)
 	checkError(err)
-	u.HomePage = url.String()
+	u.HomePage = nUrl.String()
 
 	// RegistrationPage
 	if u.RegistrationPage == nil {
 		log.Panic("RegistrationPage == nil")
 	}
 	u.RegistrationPage = trim(u.RegistrationPage)
-	url, err = url.ParseRequestURI(u.RegistrationPage)
+	nUrl, err = url.ParseRequestURI(u.RegistrationPage)
 	checkError(err)
-	u.RegistrationPage = url.String()
+	u.RegistrationPage = nUrl.String()
 
 	// MainColor
 	if u.MainColor == nil {
@@ -280,7 +279,7 @@ func (sub *Subject) vetAndBuild() {
 	if sub.Year == nil {
 		log.Panic("Year == nil")
 	}
-	sub.Year = time.Date(sub.Year.Year(),1,1,0,0,0,0, time.UTC)
+	sub.Year = time.Date(sub.Year.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
 
 	// TopicName
 	regex, err := regexp.Compile("\\s\\s+")
