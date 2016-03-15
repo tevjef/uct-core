@@ -93,7 +93,7 @@ type (
 	Book struct {
 		Id        float64   `json:"id,omitempty" db:"id"`
 		SectionId float64   `json:"section_id,omitempty" db:"section_id"`
-		Name      string    `json:"name,omitempty" db:"name"`
+		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
 		CreatedAt time.Time `json:"created_at,omitempty" db:"created_at"`
 		UpdatedAt time.Time `json:"updated_at,omitempty" db:"updated_at"`
@@ -384,10 +384,10 @@ func (instructor *Instructor) vetAndBuild() {
 
 func (book *Book) vetAndBuild() {
 	// Name
-	if book.Name == nil {
+	if book.Title == nil {
 		log.Panic("Instructor name == nil")
 	}
-	book.Name = trim(book.Name)
+	book.Title = trim(book.Title)
 
 	// RegistrationPage
 	if book.Url == nil {
