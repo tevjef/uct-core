@@ -11,6 +11,7 @@ import (
 	"time"
 	"os"
 	"fmt"
+	"regexp"
 )
 
 const (
@@ -117,4 +118,11 @@ func getDummyDoc(filename string) *goquery.Document {
 func Log(v... interface{}){
 	s := fmt.Sprint(v...)
 	log.Printf("%s %s[%s] %s\n", time.Now().Format(time.UnixDate), os.Args[0], strconv.Itoa(os.Getpid()), s)
+}
+
+func TrimAll(str string) string {
+	regex, err := regexp.Compile("\\s\\s+")
+	CheckError(err)
+	str= regex.ReplaceAllString(str, " ")
+	return trim(str)
 }
