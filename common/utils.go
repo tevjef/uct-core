@@ -116,5 +116,5 @@ func getDummyDoc(filename string) *goquery.Document {
 
 func Log(v... interface{}){
 	s := fmt.Sprint(v...)
-	log.Printf("%s %s[%s] %s", time.Now().Format(time.UnixDate), os.Args[0], strconv.Itoa(os.Getpid()), s)
+	log.Printf("%s %s[%s] %s\n", time.Now().Format(time.UnixDate), os.Args[0], strconv.Itoa(os.Getpid()), s)
 }

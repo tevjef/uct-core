@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 	uct "uct/common"
-	"io/ioutil"
 )
 
 var (
@@ -41,14 +40,14 @@ type (
 			SessionDatePrintIndicator string   `json:"sessionDatePrintIndicator"`
 			ExamCode                  string   `json:"examCode"`
 			SpecialPermissionAddCode  string   `json:"specialPermissionAddCode"`
-			CrossListedSections       []string `json:"crossListedSections"`
+			CrossListedSections       []interface{} `json:"crossListedSections"`
 			SectionNotes              string   `json:"sectionNotes"`
 			SpecialPermissionDropCode string   `json:"specialPermissionDropCode"`
 			Instructors               []struct {
 				Name string `json:"name"`
 			} `json:"instructors"`
 			Number                               string   `json:"number"`
-			Majors                               []string `json:"majors"`
+			Majors                               []interface{} `json:"majors"`
 			SessionDates                         string   `json:"sessionDates"`
 			SpecialPermissionDropCodeDescription string   `json:"specialPermissionDropCodeDescription"`
 			Subtopic                             string   `json:"subtopic"`
@@ -57,10 +56,10 @@ type (
 				Code        string `json:"code"`
 				Description string `json:"description"`
 			} `json:"comments"`
-			Minors                              []string `json:"minors"`
+			Minors                              []interface{} `json:"minors"`
 			CampusCode                          string   `json:"campusCode"`
 			Index                               string   `json:"index"`
-			UnitMajors                          []string `json:"unitMajors"`
+			UnitMajors                          []interface{} `json:"unitMajors"`
 			Printed                             string   `json:"printed"`
 			SpecialPermissionAddCodeDescription string   `json:"specialPermissionAddCodeDescription"`
 			Subtitle                            string   `json:"subtitle"`
@@ -79,12 +78,12 @@ type (
 				MeetingModeCode string `json:"meetingModeCode"`
 			} `json:"meetingTimes"`
 			LegendKey     string   `json:"legendKey"`
-			HonorPrograms []string `json:"honorPrograms"`
+			HonorPrograms []interface{} `json:"honorPrograms"`
 		} `json:"sections"`
 		SupplementCode string   `json:"supplementCode"`
-		Credits        int      `json:"credits"`
+		Credits        float64      `json:"credits"`
 		UnitNotes      string   `json:"unitNotes"`
-		CoreCodes      []string `json:"coreCodes"`
+		CoreCodes      []interface{} `json:"coreCodes"`
 		CourseNotes    string   `json:"courseNotes"`
 		ExpandedTitle  string   `json:"expandedTitle"`
 	}
@@ -218,19 +217,19 @@ func getCourses(subject string, semester uct.Semester) (courses []RCourse) {
 		return
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+/*	b, err := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(b, &courses)*/
 
-	err = json.Unmarshal(b, &courses)
-	/*dec := json.NewDecoder(resp.Body)
+	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&courses); err == io.EOF {
 	} else if err != nil {
-		log.Fatal(err)
-	}*/
+		uct.Log(err)
+	}
 
 	defer resp.Body.Close()
 
 	bolB, _ := json.Marshal(courses)
-	fmt.Printf("%s", bolB)
+	fmt.Printf("%s\n", bolB)
 	return
 }
 
