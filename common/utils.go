@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"log"
@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"bytes"
 	"strconv"
+	"time"
+	"os"
+	"fmt"
 )
 
 const (
@@ -64,7 +67,7 @@ func substringBeforeLast(str, separator string) string {
 	return str[:pos]
 }
 
-func checkError(err error) {
+func CheckError(err error) {
 	if err != nil {
 		log.Panic(err)
 	}
@@ -100,7 +103,7 @@ func Atoi64(str string) sql.NullInt64 {
 
 func ToFloat64(str string) float64 {
 	s, err := strconv.ParseFloat(str, 64)
-	checkError(err)
+	CheckError(err)
 	return s
 }
 
@@ -111,3 +114,7 @@ func getDummyDoc(filename string) *goquery.Document {
 }
 
 
+func Log(v... interface{}){
+	s := fmt.Sprint(v...)
+	log.Printf("%s %s[%s] %s", time.Now().Format(time.UnixDate), os.Args[0], strconv.Itoa(os.Getpid()), s)
+}
