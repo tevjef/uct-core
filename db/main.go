@@ -2,9 +2,9 @@ package db
 
 import (
 	"encoding/json"
-	"os"
 	"io"
 	"log"
+	"os"
 
 	"uct-common"
 )

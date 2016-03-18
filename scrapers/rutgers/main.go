@@ -6,9 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 	uct "uct/common"
+	"sync"
 )
 
 var (
@@ -17,74 +20,90 @@ var (
 )
 
 type (
+	MeetingByClass []RMeetingTime
+
 	RSubject struct {
-		Name    string `json:"description,omitempty"`
-		Number  string `json:"code,omitempty"`
+		Name    string    `json:"description,omitempty"`
+		Number  string    `json:"code,omitempty"`
 		Courses []RCourse `json:"courses,omitempty"`
-		Season uct.Season
-		Year 	int
+		Season  uct.Season
+		Year    int
 	}
 
 	RCourse struct {
-		SubjectNotes      string `json:"subjectNotes"`
-		CourseNumber      string `json:"courseNumber"`
-		Subject           string `json:"subject"`
-		CampusCode        string `json:"campusCode"`
-		OpenSections      int    `json:"openSections"`
-		SynopsisURL       string `json:"synopsisUrl"`
-		SubjectGroupNotes string `json:"subjectGroupNotes"`
-		OfferingUnitCode  string `json:"offeringUnitCode"`
-		OfferingUnitTitle string `json:"offeringUnitTitle"`
-		Title             string `json:"title"`
-		CourseDescription string `json:"courseDescription"`
-		PreReqNotes       string `json:"preReqNotes"`
-		Sections          []RSection `json:"sections"`
-		SupplementCode    string   `json:"supplementCode"`
-		Credits           float64      `json:"credits"`
-		UnitNotes         string   `json:"unitNotes"`
+		SubjectNotes      string        `json:"subjectNotes"`
+		CourseNumber      string        `json:"courseNumber"`
+		Subject           string        `json:"subject"`
+		CampusCode        string        `json:"campusCode"`
+		OpenSections      int           `json:"openSections"`
+		SynopsisURL       string        `json:"synopsisUrl"`
+		SubjectGroupNotes string        `json:"subjectGroupNotes"`
+		OfferingUnitCode  string        `json:"offeringUnitCode"`
+		OfferingUnitTitle string        `json:"offeringUnitTitle"`
+		Title             string        `json:"title"`
+		CourseDescription string        `json:"courseDescription"`
+		PreReqNotes       string        `json:"preReqNotes"`
+		Sections          []RSection    `json:"sections"`
+		SupplementCode    string        `json:"supplementCode"`
+		Credits           float64       `json:"credits"`
+		UnitNotes         string        `json:"unitNotes"`
 		CoreCodes         []interface{} `json:"coreCodes"`
-		CourseNotes       string   `json:"courseNotes"`
-		ExpandedTitle     string   `json:"expandedTitle"`
+		CourseNotes       string        `json:"courseNotes"`
+		ExpandedTitle     string        `json:"expandedTitle"`
 	}
 
-	RSection          struct {
-		SectionEligibility        string   `json:"sectionEligibility"`
-		SessionDatePrintIndicator string   `json:"sessionDatePrintIndicator"`
-		ExamCode                  string   `json:"examCode"`
-		SpecialPermissionAddCode  string   `json:"specialPermissionAddCode"`
-		CrossListedSections       []interface{} `json:"crossListedSections"`
-		SectionNotes              string   `json:"sectionNotes"`
-		SpecialPermissionDropCode            string   `json:"specialPermissionDropCode"`
-		Instructor                           []RInstructor `json:"instructors"`
-		Number                               string   `json:"number"`
-		Majors                               []interface{} `json:"majors"`
-		SessionDates                         string   `json:"sessionDates"`
-		SpecialPermissionDropCodeDescription string   `json:"specialPermissionDropCodeDescription"`
-		Subtopic                             string   `json:"subtopic"`
-		OpenStatus                           bool     `json:"openStatus"`
-		Comments                             []RComment `json:"comments"`
-		Minors                               []interface{} `json:"minors"`
-		CampusCode                           string   `json:"campusCode"`
-		Index                                string   `json:"index"`
-		UnitMajors                           []interface{} `json:"unitMajors"`
-		Printed                              string   `json:"printed"`
-		SpecialPermissionAddCodeDescription  string   `json:"specialPermissionAddCodeDescription"`
-		Subtitle                             string   `json:"subtitle"`
-		MeetingTimes                        []RMeetingTime `json:"meetingTimes"`
-		LegendKey                           string   `json:"legendKey"`
-		HonorPrograms                       []interface{} `json:"honorPrograms"`
+	RSection struct {
+		SectionEligibility                   string                 `json:"sectionEligibility"`
+		SessionDatePrintIndicator            string                 `json:"sessionDatePrintIndicator"`
+		ExamCode                             string                 `json:"examCode"`
+		SpecialPermissionAddCode             string                 `json:"specialPermissionAddCode"`
+		CrossListedSections                  []RCrossListedSections `json:"crossListedSections"`
+		SectionNotes                         string                 `json:"sectionNotes"`
+		SpecialPermissionDropCode            string                 `json:"specialPermissionDropCode"`
+		Instructor                           []RInstructor          `json:"instructors"`
+		Number                               string                 `json:"number"`
+		Majors                               []RMajor               `json:"majors"`
+		SessionDates                         string                 `json:"sessionDates"`
+		SpecialPermissionDropCodeDescription string                 `json:"specialPermissionDropCodeDescription"`
+		Subtopic                             string                 `json:"subtopic"`
+		SynopsisUrl                          string                 `json:"synopsisUrl"`
+		OpenStatus                           bool                   `json:"openStatus"`
+		Comments                             []RComment             `json:"comments"`
+		Minors                               []interface{}          `json:"minors"`
+		CampusCode                           string                 `json:"campusCode"`
+		Index                                string                 `json:"index"`
+		UnitMajors                           []interface{}          `json:"unitMajors"`
+		Printed                              string                 `json:"printed"`
+		SpecialPermissionAddCodeDescription  string                 `json:"specialPermissionAddCodeDescription"`
+		Subtitle                             string                 `json:"subtitle"`
+		MeetingTimes                         []RMeetingTime         `json:"meetingTimes"`
+		LegendKey                            string                 `json:"legendKey"`
+		HonorPrograms                        []interface{}          `json:"honorPrograms"`
 	}
 
-	RInstructor               struct {
+	RInstructor struct {
 		Name string `json:"name"`
 	}
 
-	RComment                             struct {
+	RMajor struct {
+		isMajorCode bool   `json:"isMajorCode"`
+		isUnitCode  bool   `json:"isUnitCode"`
+		code        string `json:"code"`
+	}
+
+	RComment struct {
 		Code        string `json:"code"`
 		Description string `json:"description"`
 	}
 
-	RMeetingTime                        struct {
+	RCrossListedSections struct {
+		sectionNumber    string `json:"sectionNumber"`
+		offeringUnitCode string `json:"offeringUnitCode"`
+		courseNumber     string `json:"courseNumber"`
+		subjectCode      string `json:"subjectCode"`
+	}
+
+	RMeetingTime struct {
 		CampusLocation  string `json:"campusLocation"`
 		BaClassHours    string `json:"baClassHours"`
 		RoomNumber      string `json:"roomNumber"`
@@ -192,34 +211,84 @@ func main() {
 
 	Semesters := uct.ResolveSemesters(time.Now(), rutgersNB.Registrations)
 
-	//CurrentSemester := Semesters[1]
+
 	//NextSemester := Semesters[2]
 
-	subjects := getSubjects(Semesters.Last)
-	for _, val := range subjects {
-		for _,v := range getCourses(val.Number, Semesters.Last) {
-			val.Courses = append(val.Courses, v)
-		}
+	ThisSemester := Semesters.Current
+	if ThisSemester.Season == uct.WINTER {
+		ThisSemester.Year += 1
 	}
 
+	subjects := getSubjects(ThisSemester)
+	var wg sync.WaitGroup
+	wg.Add(len(subjects))
+	for i, _ := range subjects {
+
+		go func(sub *RSubject) {
+			courses := getCourses(sub.Number, ThisSemester)
+
+			for j, _ := range courses {
+				sub.Courses = append(sub.Courses, courses[j])
+			}
+			wg.Done()
+		}(&subjects[i])
+
+	}
+	wg.Wait()
+
 	var dbSubjects []uct.Subject
-	for _, val := range subjects {
-		newSubject := uct.Subject{Name:val.Name,Abbr:val.Name, Season: val.Season, Year:time.Date(val.Year, 0,0,0,0,0,0, time.UTC)}
-		for _, course := range val.Courses {
-			newCourse := uct.Course{Name:course.ExpandedTitle, Number:course.CourseNumber, Synopsis:uct.ToNullString(course.CourseDescription), Metadata:course.metadata()}
+	for _, subject := range subjects {
+		newSubject := uct.Subject{
+			Name:   subject.Name,
+			Abbr:   subject.Name,
+			Season: subject.Season,
+			Year:   subject.Year}
+		for _, course := range subject.Courses {
+			newCourse := uct.Course{
+				Name:     course.ExpandedTitle,
+				Number:   course.CourseNumber,
+				Synopsis: uct.ToNullString(course.CourseDescription),
+				Metadata: course.metadata()}
+
+			for _, section := range course.Sections {
+				newSection := uct.Section{
+					Number:     section.Number,
+					CallNumber: section.Index,
+					Status:     section.status(),
+					Credits:    uct.FloatToString("%.1f", course.Credits),
+					Max:        0,
+					Metadata:   section.metadata()}
+
+				for _, meeting := range section.MeetingTimes {
+					newMeeting := uct.Meeting{
+						Room:      meeting.room(),
+						Day:       meeting.day(),
+						StartTime: meeting.getMeetingHourBegin(),
+						EndTime:   meeting.getMeetingHourEnd(),
+						Metadata:  meeting.metadata()}
+
+					newMeeting.VetAndBuild()
+					newSection.Meetings = append(newSection.Meetings, newMeeting)
+				}
+
+				newSection.VetAndBuild()
+				newCourse.Sections = append(newCourse.Sections, newSection)
+
+			}
+			newCourse.VetAndBuild()
 			newSubject.Courses = append(newSubject.Courses, newCourse)
 		}
-
+		newSubject.VetAndBuild()
 		dbSubjects = append(dbSubjects, newSubject)
 	}
 
-	bolB, _ := json.MarshalIndent(dbSubjects, "", "    ")
+	bolB, _ := json.Marshal(dbSubjects)
 	fmt.Printf("%s\n", bolB)
 
 }
 
 func getSubjects(semester uct.Semester) (subjects []RSubject) {
-	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=NB&level=U,G", host, getRutgersSemester(semester))
+	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=NB&level=U%sG", host, getRutgersSemester(semester), "%2C")
 	uct.Log("GET  ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -233,9 +302,10 @@ func getSubjects(semester uct.Semester) (subjects []RSubject) {
 		log.Fatal(err)
 	}
 
-	for _, val := range subjects {
-		val.Season = semester.Season
-		val.Year = semester.Year
+	for i, _ := range subjects {
+		subjects[i].Name = strings.Title(strings.ToLower(subjects[i].Name))
+		subjects[i].Season = semester.Season
+		subjects[i].Year = semester.Year
 	}
 
 	defer resp.Body.Close()
@@ -243,7 +313,7 @@ func getSubjects(semester uct.Semester) (subjects []RSubject) {
 }
 
 func getCourses(subject string, semester uct.Semester) (courses []RCourse) {
-	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=NB&level=U,G", host, subject, getRutgersSemester(semester))
+	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=NB&level=U%sG", host, subject, getRutgersSemester(semester), "%2C")
 	uct.Log("GET  ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -254,16 +324,22 @@ func getCourses(subject string, semester uct.Semester) (courses []RCourse) {
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&courses); err == io.EOF {
 	} else if err != nil {
-		uct.Log(err)
+		uct.LogVerbose(err)
 	}
 
-	for _, val := range courses {
-		val.clean()
+	for i, _ := range courses {
+		courses[i].clean()
+		for j, _ := range courses[i].Sections {
+			courses[i].Sections[j].clean()
+			for k, _:= range courses[i].Sections[j].MeetingTimes {
+				courses[i].Sections[j].MeetingTimes[k].clean()
+			}
+		}
 	}
 
 	courses = FilterCourses(courses, func(course RCourse) bool {
 		return len(course.Sections) > 0
-	} )
+	})
 
 	defer resp.Body.Close()
 	return
@@ -286,8 +362,8 @@ func (course *RCourse) clean() {
 	// Open Sections
 	num := 0
 	for _, val := range course.Sections {
-		if (!(val.Printed=="Y") && val.OpenStatus) {
-			num++;
+		if !(val.Printed == "Y") && val.OpenStatus {
+			num++
 		}
 	}
 	course.OpenSections = course.OpenSections - num
@@ -299,6 +375,10 @@ func (course *RCourse) clean() {
 	course.ExpandedTitle = uct.TrimAll(course.ExpandedTitle)
 	if len(course.ExpandedTitle) == 0 {
 		course.ExpandedTitle = course.Title
+	}
+
+	if course.ExpandedTitle == "" {
+		log.Fatal("WTF IS GOING ON!")
 	}
 
 	course.CourseNumber = uct.TrimAll(course.CourseNumber)
@@ -315,23 +395,289 @@ func (course *RCourse) clean() {
 
 }
 
+func (section *RSection) clean() {
+	section.Subtitle = uct.TrimAll(section.Subtitle)
+	section.SectionNotes = uct.TrimAll(section.SectionNotes)
+	section.CampusCode = uct.TrimAll(section.CampusCode)
+	section.SpecialPermissionAddCodeDescription = uct.TrimAll(section.SpecialPermissionAddCodeDescription)
+
+	sort.Stable(MeetingByClass(section.MeetingTimes))
+}
+
+func (meeting *RMeetingTime) clean() {
+	meeting.StartTime = uct.TrimAll(meeting.StartTime)
+	meeting.EndTime = uct.TrimAll(meeting.EndTime)
+
+}
+
+func (section *RSection) status() uct.Status {
+	if section.OpenStatus {
+		return uct.OPEN
+	} else {
+		return uct.CLOSED
+	}
+}
+
+func (section RSection) instructor() (instructors []uct.Instructor) {
+	for _, instructor := range section.Instructor {
+		instructors = append(instructors, uct.Instructor{Name: instructor.Name})
+	}
+	return
+}
+
+func (section RSection) metadata() (metadata []uct.Metadata) {
+
+	if len(section.CrossListedSections) > 0 {
+		str := ""
+		for _, cls := range section.CrossListedSections {
+			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
+		}
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Cross-listed Sections",
+			Content: str,
+		})
+	}
+
+	if len(section.Comments) > 0 {
+		str := ""
+		for _, comment := range section.Comments {
+			str += comment.Description + ", \n"
+		}
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Comments",
+			Content: str,
+		})
+	}
+
+	if len(section.Majors) > 0 {
+		isMajorHeaderSet := false
+		isUnitHeaderSet := false
+		var openTo string
+		for _, unit := range section.Majors {
+			if unit.isMajorCode {
+				if !isMajorHeaderSet {
+					isMajorHeaderSet = true
+					openTo = openTo + "Majors: "
+				}
+			} else if unit.isUnitCode {
+				if !isUnitHeaderSet {
+					isUnitHeaderSet = true
+					openTo += "Schools: "
+				}
+				openTo += unit.code
+				openTo += ", "
+			}
+			openTo += unit.code + ", "
+		}
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Open To",
+			Content: openTo,
+		})
+	}
+
+	if len(section.SectionNotes) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Section Notes",
+			Content: section.SectionNotes,
+		})
+	}
+
+	if len(section.SynopsisUrl) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Synopsis Url",
+			Content: section.SynopsisUrl,
+		})
+	}
+
+	if len(section.ExamCode) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Exam Code",
+			Content: section.ExamCode,
+		})
+	}
+
+	if len(section.SpecialPermissionAddCodeDescription) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Special Permission",
+			Content: "Code: " + section.SpecialPermissionAddCode + "\n" + section.SpecialPermissionAddCodeDescription,
+		})
+	}
+
+	if len(section.Subtitle) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Subtitle",
+			Content: section.Subtitle,
+		})
+	}
+
+	if len(section.CampusCode) > 0 {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Campus Code",
+			Content: section.CampusCode,
+		})
+	}
+
+	return
+}
+
+func (meeting MeetingByClass) Len() int {
+	return len(meeting)
+}
+
+func (meeting MeetingByClass) Swap(i, j int) {
+	meeting[i], meeting[j] = meeting[j], meeting[i]
+}
+
+func (meeting MeetingByClass) Less(i, j int) bool {
+	return meeting[i].classRank() < meeting[j].classRank()
+}
+
+func (meeting RMeetingTime) classRank() int {
+	if meeting.isLecture() {
+		return 1
+	} else if meeting.isRecitation() {
+		return 2
+	} else if meeting.isByArrangement() {
+		return 3
+	} else if meeting.isLab() {
+		return 4
+	} else if meeting.isStudio() {
+		return 5
+	}
+	return 99
+}
+
+func (meeting RMeetingTime) timeRank() int {
+	switch meeting.MeetingDay {
+	case "Monday":
+		return 10
+	case "Tuesday":
+		return 9
+	case "Wednesday":
+		return 8
+	case "Thurdsday":
+		return 7
+	case "Friday":
+		return 6
+	case "Saturday":
+		return 5
+	case "Sunday":
+		return 4
+	}
+	return -1
+}
+
+func (meeting RMeetingTime) room() string {
+	if meeting.BuildingCode != "" {
+		return meeting.BuildingCode + " - " + meeting.RoomNumber
+	}
+	return ""
+}
+
+func (time RMeetingTime) getMeetingHourBegin() string {
+	meridian := ""
+
+	if time.PmCode != "" {
+		if time.PmCode == "A" {
+			meridian = "AM"
+		} else {
+			meridian = "PM"
+		}
+	}
+	return formatMeetingHours(time.StartTime) + " " + meridian
+}
+
+func (time RMeetingTime) getMeetingHourEnd() string {
+	if len(time.StartTime) > 1 || len(time.EndTime) > 1 {
+		var meridian string
+		starttime := time.StartTime
+		endtime := time.EndTime
+		pmcode := time.PmCode
+
+		end, _ := strconv.Atoi(endtime[:2])
+		start, _ := strconv.Atoi(starttime[:2])
+
+		if !(pmcode == "A") {
+			meridian = "PM"
+		} else if end < start {
+			meridian = "PM"
+		} else if endtime[:2] == "12" {
+			meridian = "AM"
+		} else {
+			meridian = "AM"
+		}
+
+		return formatMeetingHours(time.EndTime) + " " + meridian
+	}
+	return ""
+}
+
+func (meeting RMeetingTime) day() string {
+	switch meeting.MeetingDay {
+	case "M":
+		return "Monday"
+	case "T":
+		return "Tuesday"
+	case "W":
+		return "Wednesday"
+	case "TH":
+		return "Thursday"
+	case "F":
+		return "Friday"
+	case "S":
+		return "Saturday"
+	case "U":
+		return "Sunday"
+	}
+	return ""
+}
+
+func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
+	if meeting.CampusAbbrev != "" {
+		campus := ""
+		switch meeting.CampusAbbrev {
+		case "NWK":
+			campus = "Newark"
+			break
+		case "CAM":
+			campus = "Camden"
+			break
+		default:
+			campus = "New Brunswick"
+		}
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Campus",
+			Content: meeting.CampusAbbrev + " - " + campus,
+		})
+	}
+
+	if meeting.MeetingModeCode != "" {
+		metadata = append(metadata, uct.Metadata{
+			Title:   "Class Type",
+			Content: meeting.classType(),
+		})
+	}
+
+	return
+}
+
 func (course RCourse) metadata() (metadata []uct.Metadata) {
 
 	if course.SubjectNotes != "" {
 		metadata = append(metadata, uct.Metadata{
-			Title: "Subject Notes",
+			Title:   "Subject Notes",
 			Content: course.SubjectNotes,
 		})
 	}
 	if course.PreReqNotes != "" {
 		metadata = append(metadata, uct.Metadata{
-			Title: "Prequisites",
+			Title:   "Prequisites",
 			Content: course.PreReqNotes,
 		})
 	}
 	if course.SynopsisURL != "" {
 		metadata = append(metadata, uct.Metadata{
-			Title: "Synopsis",
+			Title:   "Synopsis Url",
 			Content: course.SynopsisURL,
 		})
 	}
