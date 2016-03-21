@@ -127,8 +127,12 @@ func LogVerbose(v interface{}) {
 }
 
 func TrimAll(str string) string {
-	regex, err := regexp.Compile("\\s\\s+")
+	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
 	str = regex.ReplaceAllString(str, " ")
+
+	// Remove NUL and Heading bytes from string
+	str = string(bytes.Replace([]byte(str), []byte("\x00"), []byte(""), -1))
+	str = string(bytes.Replace([]byte(str), []byte("\x01"), []byte(""), -1))
 	return trim(str)
 }

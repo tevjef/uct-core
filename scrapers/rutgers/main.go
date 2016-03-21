@@ -1,22 +1,27 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	uct "uct/common"
-	"sync"
 )
 
 var (
-	rutgersNB *uct.University
-	host      = "http://sis.rutgers.edu/soc"
+	/*	rutgersNB *uct.University
+		rutgersNK *uct.University
+		rutgersCAM *uct.University*/
+
+	host = "http://sis.rutgers.edu/soc"
 )
 
 type (
@@ -121,7 +126,21 @@ type (
 
 func main() {
 
-	rutgersNB = &uct.University{
+	uni := getUniversity("NK")
+	enc := json.NewEncoder(bufio.NewWriter(os.Stdout))
+	enc.Encode(uni)
+	uni = getUniversity("NB")
+	enc.Encode(uni)
+	uni = getUniversity("CM")
+	enc.Encode(uni)
+
+}
+
+func getUniversity(campus string) uct.University {
+
+	var university uct.University
+
+	university = uct.University{
 		Name:             "Rutgers University–New Brunswick",
 		Abbr:             "RU-NB",
 		MainColor:        "F44336",
@@ -130,51 +149,51 @@ func main() {
 		RegistrationPage: "https://sims.rutgers.edu/webreg/",
 		Registrations: []uct.Registration{
 			uct.Registration{
-				Period:     uct.SEM_FALL,
+				Period:     uct.SEM_FALL.String(),
 				PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.SEM_SPRING,
+				Period:     uct.SEM_SPRING.String(),
 				PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.SEM_SUMMER,
+				Period:     uct.SEM_SUMMER.String(),
 				PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.SEM_WINTER,
+				Period:     uct.SEM_WINTER.String(),
 				PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.START_FALL,
+				Period:     uct.START_FALL.String(),
 				PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.START_SPRING,
+				Period:     uct.START_SPRING.String(),
 				PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.START_SUMMER,
+				Period:     uct.START_SUMMER.String(),
 				PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.START_WINTER,
+				Period:     uct.START_WINTER.String(),
 				PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.END_FALL,
+				Period:     uct.END_FALL.String(),
 				PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.END_SPRING,
+				Period:     uct.END_SPRING.String(),
 				PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.END_SUMMER,
+				Period:     uct.END_SUMMER.String(),
 				PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
-				Period:     uct.END_WINTER,
+				Period:     uct.END_WINTER.String(),
 				PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC),
 			},
 		},
@@ -209,86 +228,137 @@ func main() {
 		},
 	}
 
-	Semesters := uct.ResolveSemesters(time.Now(), rutgersNB.Registrations)
-
-
-	//NextSemester := Semesters[2]
-
-	ThisSemester := Semesters.Current
-	if ThisSemester.Season == uct.WINTER {
-		ThisSemester.Year += 1
-	}
-
-	subjects := getSubjects(ThisSemester)
-	var wg sync.WaitGroup
-	wg.Add(len(subjects))
-	for i, _ := range subjects {
-
-		go func(sub *RSubject) {
-			courses := getCourses(sub.Number, ThisSemester)
-
-			for j, _ := range courses {
-				sub.Courses = append(sub.Courses, courses[j])
-			}
-			wg.Done()
-		}(&subjects[i])
-
-	}
-	wg.Wait()
-
-	var dbSubjects []uct.Subject
-	for _, subject := range subjects {
-		newSubject := uct.Subject{
-			Name:   subject.Name,
-			Abbr:   subject.Name,
-			Season: subject.Season,
-			Year:   subject.Year}
-		for _, course := range subject.Courses {
-			newCourse := uct.Course{
-				Name:     course.ExpandedTitle,
-				Number:   course.CourseNumber,
-				Synopsis: uct.ToNullString(course.CourseDescription),
-				Metadata: course.metadata()}
-
-			for _, section := range course.Sections {
-				newSection := uct.Section{
-					Number:     section.Number,
-					CallNumber: section.Index,
-					Status:     section.status(),
-					Credits:    uct.FloatToString("%.1f", course.Credits),
-					Max:        0,
-					Metadata:   section.metadata()}
-
-				for _, meeting := range section.MeetingTimes {
-					newMeeting := uct.Meeting{
-						Room:      meeting.room(),
-						Day:       meeting.day(),
-						StartTime: meeting.getMeetingHourBegin(),
-						EndTime:   meeting.getMeetingHourEnd(),
-						Metadata:  meeting.metadata()}
-
-					newMeeting.VetAndBuild()
-					newSection.Meetings = append(newSection.Meetings, newMeeting)
-				}
-
-				newSection.VetAndBuild()
-				newCourse.Sections = append(newCourse.Sections, newSection)
-
-			}
-			newCourse.VetAndBuild()
-			newSubject.Courses = append(newSubject.Courses, newCourse)
+	res := uct.ResolveSemesters(time.Now(), university.Registrations)
+	Semesters := [3]uct.Semester{res.Last, res.Current, res.Next}
+	for _, ThisSemester := range Semesters {
+		if ThisSemester.Season == uct.WINTER {
+			ThisSemester.Year += 1
 		}
-		newSubject.VetAndBuild()
-		dbSubjects = append(dbSubjects, newSubject)
+
+		subjects := getSubjects(ThisSemester, campus)
+		var wg sync.WaitGroup
+		wg.Add(len(subjects))
+		for i, _ := range subjects {
+			go func(sub *RSubject) {
+				courses := getCourses(sub.Number, campus, ThisSemester)
+
+				for j, _ := range courses {
+					sub.Courses = append(sub.Courses, courses[j])
+				}
+				wg.Done()
+			}(&subjects[i])
+
+		}
+		wg.Wait()
+		for _, subject := range subjects {
+			newSubject := uct.Subject{
+				Name:   subject.Name,
+				Number:   subject.Number,
+				Season: subject.Season.String(),
+				Year:   subject.Year}
+			for _, course := range subject.Courses {
+				newCourse := uct.Course{
+					Name:     course.ExpandedTitle,
+					Number:   course.CourseNumber,
+					Synopsis: uct.ToNullString(course.CourseDescription),
+					Metadata: course.metadata()}
+
+				for _, section := range course.Sections {
+					newSection := uct.Section{
+						Number:     section.Number,
+						CallNumber: section.Index,
+						Status:     section.status(),
+						Credits:    uct.FloatToString("%.1f", course.Credits),
+						Max:        0,
+						Metadata:   section.metadata()}
+
+					for _, meeting := range section.MeetingTimes {
+						newMeeting := uct.Meeting{
+							Room:      meeting.room(),
+							Day:       meeting.day(),
+							StartTime: meeting.getMeetingHourBegin(),
+							EndTime:   meeting.getMeetingHourEnd(),
+							Metadata:  meeting.metadata()}
+
+						newMeeting.VetAndBuild()
+						newSection.Meetings = append(newSection.Meetings, newMeeting)
+					}
+
+					newSection.VetAndBuild()
+					newCourse.Sections = append(newCourse.Sections, newSection)
+
+				}
+				newCourse.VetAndBuild()
+				newSubject.Courses = append(newSubject.Courses, newCourse)
+			}
+			newSubject.VetAndBuild()
+			university.Subjects = append(university.Subjects, newSubject)
+		}
 	}
 
-	bolB, _ := json.Marshal(dbSubjects)
-	fmt.Printf("%s\n", bolB)
-
+	if campus == "NK" {
+		university.Name = "Rutgers University–Newark"
+		university.Abbr = "RU-NK"
+		university.HomePage = "http://www.newark.rutgers.edu/"
+		university.Metadata = []uct.Metadata{
+			uct.Metadata{
+				Title: "About", Content: `<p><b>Rutgers–Newark</b> is one of three regional campuses of <a href="/wiki/R
+				utgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/Public_universit
+				y" title="Public university">public</a> research university of the <a href="/wiki/U.S._state" title="U.S
+				. state">U.S. state</a> of <a href="/wiki/New_Jersey" title="New Jersey">New Jersey</a>, located in the
+				 city of <a href="/wiki/Newark,_New_Jersey" title="Newark, New Jersey">Newark</a>. Rutgers, founded in 1
+				 766 in <a href="/wiki/New_Brunswick,_New_Jersey" title="New Brunswick, New Jersey">New Brunswick</a>, i
+				 s the <a href="/wiki/Colonial_colleges" title="Colonial colleges" class="mw-redirect">eighth oldest col
+				 lege in the United States</a> and a member of the <a href="/wiki/Association_of_American_Universities"
+				 title="Association of American Universities">Association of American Universities</a>. In 1945, the sta
+				 te legislature voted to make Rutgers University, then a private <a href="/wiki/Liberal_arts_college" ti
+				 tle="Liberal arts college">liberal arts college</a>, into the state university and the following year m
+				 erged the school with the former <a href="/wiki/University_of_Newark" title="University of Newark" clas
+				 s="mw-redirect">University of Newark</a> (1936–1946), which became the Rutgers–Newark campus. Rutgers a
+				 lso incorporated the College of South Jersey and South Jersey Law School, in Camden, as a constituent c
+				 ampus of the university and renamed it <a href="/wiki/Rutgers%E2%80%93Camden" title="Rutgers–Camden" cl
+				 ass="mw-redirect">Rutgers–Camden</a> in 1950.</p> <p>Rutgers–Newark offers undergraduate (bachelors) an
+				 d graduate (masters, doctoral) programs to more than 11,000 students. The campus is located on 38 acre
+				 s in Newark's <a href="/wiki/University_Heights,_Newark,_New_Jersey" title="University Heights, Newark
+				 , New Jersey" class="mw-redirect">University Heights</a> section. It consists of seven degree-granting
+				  undergraduate, graduate, and professional schools, including the <a href="/wiki/Rutgers_Business_Schoo
+				  l" title="Rutgers Business School" class="mw-redirect">Rutgers Business School</a> and <a href="/wiki/
+				  Rutgers_School_of_Law_-_Newark" title="Rutgers School of Law - Newark" class="mw-redirect">Rutgers Sch
+				  ool of Law - Newark</a>, and several research institutes including the <a href="/wiki/Institute_of_Ja
+				  zz_Studies" title="Institute of Jazz Studies">Institute of Jazz Studies</a>. According to <i>U.S. News
+				   &amp; World Report</i>, Rutgers–Newark is the most <a href="/wiki/Cultural_diversity" title="Cultural
+				    diversity">diverse</a> national university in the United States.</p>`,
+			},
+		}
+	}
+	if campus == "CM" {
+		university.Name = "Rutgers University–Camden"
+		university.Abbr = "RU-CAM"
+		university.HomePage = "http://www.camden.rutgers.edu/"
+		university.Metadata = []uct.Metadata{
+			uct.Metadata{
+				Title: "About", Content: `<p><b>Rutgers University–Camden</b> is one of three regional campuses of <a
+				href="/wiki/Rutgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/N
+				ew_Jersey" title="New Jersey">New Jersey</a>'s <a href="/wiki/Public_university" title="Public universit
+				y">public</a> <a href="/wiki/Research_university" title="Research university" class="mw-redirect">resear
+				ch university</a>. It is located in <a href="/wiki/Camden,_New_Jersey" title="Camden, New Jersey">Camden
+				</a>, New Jersey, <a href="/wiki/United_States" title="United States">United States</a>. Founded in the
+				1920s, Rutgers–Camden began as an amalgam of the South Jersey Law School and the College of South Jersey
+				. It is the southernmost of the three regional campuses of Rutgers—the others being located in <a href="
+				/wiki/New_Brunswick,_New_Jersey" title="New Brunswick, New Jersey">New Brunswick</a> and <a href="/wiki/
+				Newark,_New_Jersey" title="Newark, New Jersey">Newark</a>.<sup id="cite_ref-3" class="reference"><a href
+				="#cite_note-3"><span>[</span>3<span>]</span></a></sup> The city of Camden is located on the <a href="/w
+				iki/Delaware_River" title="Delaware River">Delaware River</a> east of <a href="/wiki/Philadelphia,_Penn
+				sylvania" title="Philadelphia, Pennsylvania" class="mw-redirect">Philadelphia</a>.</p>`,
+			},
+		}
+	}
+	university.VetAndBuild()
+	return university
 }
 
-func getSubjects(semester uct.Semester) (subjects []RSubject) {
-	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=NB&level=U%sG", host, getRutgersSemester(semester), "%2C")
+func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
+	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 	uct.Log("GET  ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -312,8 +382,8 @@ func getSubjects(semester uct.Semester) (subjects []RSubject) {
 	return
 }
 
-func getCourses(subject string, semester uct.Semester) (courses []RCourse) {
-	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=NB&level=U%sG", host, subject, getRutgersSemester(semester), "%2C")
+func getCourses(subject string, campus string, semester uct.Semester) (courses []RCourse) {
+	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	uct.Log("GET  ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -331,7 +401,7 @@ func getCourses(subject string, semester uct.Semester) (courses []RCourse) {
 		courses[i].clean()
 		for j, _ := range courses[i].Sections {
 			courses[i].Sections[j].clean()
-			for k, _:= range courses[i].Sections[j].MeetingTimes {
+			for k, _ := range courses[i].Sections[j].MeetingTimes {
 				courses[i].Sections[j].MeetingTimes[k].clean()
 			}
 		}
@@ -377,10 +447,6 @@ func (course *RCourse) clean() {
 		course.ExpandedTitle = course.Title
 	}
 
-	if course.ExpandedTitle == "" {
-		log.Fatal("WTF IS GOING ON!")
-	}
-
 	course.CourseNumber = uct.TrimAll(course.CourseNumber)
 
 	course.CourseDescription = uct.TrimAll(course.CourseDescription)
@@ -410,11 +476,11 @@ func (meeting *RMeetingTime) clean() {
 
 }
 
-func (section *RSection) status() uct.Status {
+func (section *RSection) status() string {
 	if section.OpenStatus {
-		return uct.OPEN
+		return uct.OPEN.String()
 	} else {
-		return uct.CLOSED
+		return uct.CLOSED.String()
 	}
 }
 
@@ -432,10 +498,13 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 		for _, cls := range section.CrossListedSections {
 			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
 		}
-		metadata = append(metadata, uct.Metadata{
-			Title:   "Cross-listed Sections",
-			Content: str,
-		})
+		if len(str) != 5 {
+			metadata = append(metadata, uct.Metadata{
+				Title:   "Cross-listed Sections",
+				Content: str,
+			})
+		}
+
 	}
 
 	if len(section.Comments) > 0 {
@@ -469,10 +538,12 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 			}
 			openTo += unit.code + ", "
 		}
-		metadata = append(metadata, uct.Metadata{
-			Title:   "Open To",
-			Content: openTo,
-		})
+		if len(openTo) > len("Majors: ") {
+			metadata = append(metadata, uct.Metadata{
+				Title:   "Open To",
+				Content: openTo,
+			})
+		}
 	}
 
 	if len(section.SectionNotes) > 0 {
@@ -653,7 +724,7 @@ func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
 
 	if meeting.MeetingModeCode != "" {
 		metadata = append(metadata, uct.Metadata{
-			Title:   "Class Type",
+			Title:   "Type",
 			Content: meeting.classType(),
 		})
 	}

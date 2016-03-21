@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"golang.org/x/exp/utf8string"
 	"log"
 	"net/url"
 	"regexp"
@@ -21,7 +22,7 @@ type (
 	SubjectByName   []Subject
 	// Sort by name
 	University struct {
-		Id               float64        `json:"id,omitempty" db:"id"`
+		Id               int64          `json:"id,omitempty" db:"id"`
 		Name             string         `json:"name,omitempty" db:"name"`
 		Abbr             string         `json:"abbr,omitempty" db:"abbr"`
 		HomePage         string         `json:"home_page,omitempty" db:"home_page"`
@@ -29,8 +30,8 @@ type (
 		MainColor        string         `json:"main_color,omitempty" db:"main_color"`
 		AccentColor      string         `json:"accent_color,omitempty" db:"accent_color"`
 		TopicName        string         `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt        time.Time      `json:"-"`
+		UpdatedAt        time.Time      `json:"-"`
 		Subjects         []Subject      `json:"subjects,omitempty"`
 		Registrations    []Registration `json:"registration,omitempty"`
 		Metadata         []Metadata     `json:"metadata,omitempty"`
@@ -38,46 +39,46 @@ type (
 
 	// Sort by name
 	Subject struct {
-		Id           float64    `json:"id,omitempty" db:"id"`
-		UniversityId float64    `json:"university_id,omitempty" db:"university_id"`
+		Id           int64      `json:"id,omitempty" db:"id"`
+		UniversityId int64      `json:"university_id,omitempty" db:"university_id"`
 		Name         string     `json:"name,omitempty" db:"name"`
-		Abbr         string     `json:"abbr,omitempty" db:"abbr"`
-		Season       Season     `json:"season,omitempty" db:"season"`
-		Year         int  `json:"year,omitempty" db:"year"`
+		Number         string     `json:"number,omitempty" db:"number"`
+		Season       string     `json:"season" db:"season"`
+		Year         int        `json:"year,omitempty" db:"year"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt    time.Time  `json:"-"`
+		UpdatedAt    time.Time  `json:"-"`
 		Courses      []Course   `json:"courses,omitempty"`
 		Metadata     []Metadata `json:"metadata,omitempty"`
 	}
 
 	// Sort by name
 	Course struct {
-		Id        float64        `json:"id,omitempty" db:"id"`
-		SubjectId float64        `json:"subject_id,omitempty" db:"subject_id"`
+		Id        int64          `json:"id,omitempty" db:"id"`
+		SubjectId int64          `json:"subject_id,omitempty" db:"subject_id"`
 		Name      string         `json:"name,omitempty" db:"name"`
 		Number    string         `json:"number,omitempty" db:"number"`
 		Synopsis  sql.NullString `json:"synopsis,omitempty" db:"synopsis"`
 		TopicName string         `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt time.Time      `json:"-"`
+		UpdatedAt time.Time      `json:"-"`
 		Sections  []Section      `json:"sections,omitempty"`
 		Metadata  []Metadata     `json:"metadata,omitempty"`
 	}
 
 	// Sort by number
 	Section struct {
-		Id          float64      `json:"id,omitempty" db:"id"`
-		CourseId    float64      `json:"course_id,omitempty" db:"course_id"`
+		Id          int64        `json:"id,omitempty" db:"id"`
+		CourseId    int64        `json:"course_id,omitempty" db:"course_id"`
 		Number      string       `json:"number,omitempty" db:"number"`
 		CallNumber  string       `json:"call_number,omitempty" db:"call_number"`
 		Max         float64      `json:"max,omitempty" db:"max"`
 		Now         float64      `json:"now,omitempty" db:"now"`
-		Status      Status       `json:"status,omitempty" db:"status"`
+		Status      string       `json:"status,omitempty" db:"status"`
 		Credits     string       `json:"credits,omitempty" db:"credits"`
 		TopicName   string       `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt   time.Time    `json:"-"`
+		UpdatedAt   time.Time    `json:"-"`
 		Meetings    []Meeting    `json:"meeting,omitempty"`
 		Instructors []Instructor `json:"instructors,omitempty"`
 		Books       []Book       `json:"books,omitempty"`
@@ -86,28 +87,28 @@ type (
 
 	// Sort by day
 	Meeting struct {
-		Id        float64    `json:"id,omitempty" db:"id"`
-		SectionId float64    `json:"section_id,omitempty" db:"section_id"`
+		Id        int64      `json:"id,omitempty" db:"id"`
+		SectionId int64      `json:"section_id,omitempty" db:"section_id"`
 		Room      string     `json:"room,omitempty" db:"room"`
 		Day       string     `json:"day,omitempty" db:"day"`
 		StartTime string     `json:"start_time,omitempty" db:"start_time"`
 		EndTime   string     `json:"end_time,omitempty" db:"section_id"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt time.Time  `json:"-"`
+		UpdatedAt time.Time  `json:"-"`
 		Metadata  []Metadata `json:"metadata,omitempty"`
 	}
 
 	Instructor struct {
-		Id        float64   `json:"id,omitempty" db:"id"`
-		SectionId float64   `json:"section_id,omitempty" db:"section_id"`
+		Id        int64     `json:"id,omitempty" db:"id"`
+		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
 		Name      string    `json:"name,omitempty" db:"name"`
 		CreatedAt time.Time `json:"-"`
 		UpdatedAt time.Time `json:"-"`
 	}
 
 	Book struct {
-		Id        float64   `json:"id,omitempty" db:"id"`
-		SectionId float64   `json:"section_id,omitempty" db:"section_id"`
+		Id        int64     `json:"id,omitempty" db:"id"`
+		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
 		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
 		CreatedAt time.Time `json:"-"`
@@ -115,24 +116,25 @@ type (
 	}
 
 	Metadata struct {
-		Id           float64   `json:"id,omitempty" db:"id"`
-		UniversityId float64   `json:"university_id,omitempty" db:"university_id"`
-		SubjectId    float64   `json:"subject_id,omitempty" db:"subject_id"`
-		CourseId     float64   `json:"course_id,omitempty" db:"course_id"`
-		SectionId    float64   `json:"section_id,omitempty" db:"section_id"`
+		Id           int64     `json:"id,omitempty" db:"id"`
+		UniversityId int64     `json:"university_id,omitempty" db:"university_id"`
+		SubjectId    int64     `json:"subject_id,omitempty" db:"subject_id"`
+		CourseId     int64     `json:"course_id,omitempty" db:"course_id"`
+		SectionId    int64     `json:"section_id,omitempty" db:"section_id"`
+		MeetingId    int64     `json:"meeting_id,omitempty" db:"meeting_id"`
 		Title        string    `json:"title,omitempty" db:"title"`
 		Content      string    `json:"content,omitempty" db:"content"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt    time.Time `json:"-"`
+		UpdatedAt    time.Time `json:"-"`
 	}
 
 	Registration struct {
-		Id           float64   `json:"id,omitempty" db:"id"`
-		UniversityId float64   `json:"university_id,omitempty" db:"university_id"`
-		Period       Period    `json:"period,omitempty" db:"period"`
+		Id           int64     `json:"id,omitempty" db:"id"`
+		UniversityId int64     `json:"university_id,omitempty" db:"university_id"`
+		Period       string    `json:"period,omitempty" db:"period"`
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt    time.Time `json:"-"`
+		UpdatedAt    time.Time `json:"-"`
 	}
 
 	TimePeriod struct {
@@ -221,7 +223,7 @@ var status = [...]string{
 }
 
 func (s Status) String() string {
-	return status[s]
+	return status[s-1]
 }
 
 func (u *University) VetAndBuild() {
@@ -281,7 +283,9 @@ func (u *University) VetAndBuild() {
 	regex, err = regexp.Compile("[^A-Za-z.]")
 	CheckError(err)
 	u.TopicName = trim(regex.ReplaceAllString(u.TopicName, ""))
-	u.TopicName = u.TopicName[:26]
+	if len(u.TopicName) > 26 {
+		u.TopicName = u.TopicName[:25]
+	}
 }
 
 func (sub *Subject) VetAndBuild() {
@@ -296,13 +300,13 @@ func (sub *Subject) VetAndBuild() {
 	sub.Name = strings.Replace(sub.Name, "%", " ", -1)
 
 	// Abbr
-	if sub.Abbr == "" {
+	if sub.Number == "" {
 		regex, err := regexp.Compile("[^A-Z]")
 		CheckError(err)
-		sub.Abbr = trim(regex.ReplaceAllString(sub.Name, ""))
+		sub.Number = trim(regex.ReplaceAllString(sub.Name, ""))
 	}
-	if len(sub.Abbr) > 3 {
-		sub.Abbr = sub.Abbr[:3]
+	if len(sub.Number) > 3 {
+		sub.Number = sub.Number[:3]
 	}
 
 	if len(sub.Courses) == 0 {
@@ -320,16 +324,18 @@ func (sub *Subject) VetAndBuild() {
 
 func (course *Course) VetAndBuild() {
 	// Name
+
 	if course.Name == "" {
 		log.Panic("Course name == is empty", course)
 	}
+
 	course.Name = strings.Title(strings.ToLower(course.Name))
 	course.Name = strings.Replace(course.Name, "_", " ", -1)
 	course.Name = strings.Replace(course.Name, ".", " ", -1)
 	course.Name = strings.Replace(course.Name, "~", " ", -1)
 	course.Name = strings.Replace(course.Name, "%", " ", -1)
-	course.Name = trim(course.Name)
 
+	course.Name = TrimAll(course.Name)
 	// Number
 	if course.Number == "" {
 		log.Panic("Number == is empty")
@@ -340,6 +346,8 @@ func (course *Course) VetAndBuild() {
 		regex, err := regexp.Compile("\\s\\s+")
 		CheckError(err)
 		course.Synopsis.String = regex.ReplaceAllString(course.Synopsis.String, " ")
+		course.Synopsis.String = utf8string.NewString(course.Synopsis.String).String()
+
 	}
 
 	// TopicName
@@ -370,7 +378,7 @@ func (section *Section) VetAndBuild() {
 	}
 
 	// Status
-	if section.Status == 0 {
+	if section.Status == "" {
 		log.Panic("Status == is empty")
 	}
 
@@ -436,18 +444,18 @@ func (r Registration) dayOfYear() int {
 	return r.PeriodDate.YearDay()
 }
 
-func (r Registration) season() Season {
+func (r Registration) season() string {
 	switch r.Period {
-	case SEM_FALL:
-		return FALL
-	case SEM_SPRING:
-		return SPRING
-	case SEM_SUMMER:
-		return SUMMER
-	case SEM_WINTER:
-		return WINTER
+	case SEM_FALL.String():
+		return FALL.String()
+	case SEM_SPRING.String():
+		return SPRING.String()
+	case SEM_SUMMER.String():
+		return SUMMER.String()
+	case SEM_WINTER.String():
+		return WINTER.String()
 	default:
-		return SUMMER
+		return SUMMER.String()
 	}
 }
 
