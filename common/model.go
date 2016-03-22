@@ -8,6 +8,10 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"strconv"
+	"crypto/sha1"
+	"fmt"
+	"bytes"
 )
 
 type (
@@ -45,6 +49,7 @@ type (
 		Number         string     `json:"number,omitempty" db:"number"`
 		Season       string     `json:"season" db:"season"`
 		Year         int        `json:"year,omitempty" db:"year"`
+		Hash      string	`json:"hash,omitempty" db:"hash"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
 		CreatedAt    time.Time  `json:"-"`
 		UpdatedAt    time.Time  `json:"-"`
@@ -59,6 +64,7 @@ type (
 		Name      string         `json:"name,omitempty" db:"name"`
 		Number    string         `json:"number,omitempty" db:"number"`
 		Synopsis  sql.NullString `json:"synopsis,omitempty" db:"synopsis"`
+		Hash      string	`json:"hash,omitempty" db:"hash"`
 		TopicName string         `json:"topic_name,omitempty" db:"topic_name"`
 		CreatedAt time.Time      `json:"-"`
 		UpdatedAt time.Time      `json:"-"`
@@ -226,6 +232,22 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
+func (s Subject) hash() string {
+	var buffer bytes.Buffer
+	for _, course := range s.Courses {
+		buffer.WriteString("a" + course.Hash)
+	}
+	return fmt.Sprintf("%x", sha1.Sum([]byte(s.Name+s.Number+s.Season+strconv.Itoa(s.Year)+buffer.String())))
+}
+
+func (c Course) hash() string {
+	var buffer bytes.Buffer
+	for _, section := range c.Sections {
+		buffer.WriteString(section.CallNumber + section.Number)
+	}
+	return fmt.Sprintf("%x", sha1.Sum([]byte(c.Name+ c.Number+ buffer.String())))
+}
+
 func (u *University) VetAndBuild() {
 	// Name
 	if u.Name == "" {
@@ -300,11 +322,11 @@ func (sub *Subject) VetAndBuild() {
 	sub.Name = strings.Replace(sub.Name, "%", " ", -1)
 
 	// Abbr
-	if sub.Number == "" {
+	/*if sub.Number == "" {
 		regex, err := regexp.Compile("[^A-Z]")
 		CheckError(err)
 		sub.Number = trim(regex.ReplaceAllString(sub.Name, ""))
-	}
+	}*/
 	if len(sub.Number) > 3 {
 		sub.Number = sub.Number[:3]
 	}
@@ -320,6 +342,8 @@ func (sub *Subject) VetAndBuild() {
 	regex, err = regexp.Compile("[^A-Za-z.]")
 	CheckError(err)
 	sub.TopicName = trim(regex.ReplaceAllString(sub.TopicName, "."))
+
+	sub.Hash = sub.hash()
 }
 
 func (course *Course) VetAndBuild() {
@@ -357,6 +381,8 @@ func (course *Course) VetAndBuild() {
 	regex, err = regexp.Compile("[^A-Za-z.]")
 	CheckError(err)
 	course.TopicName = trim(regex.ReplaceAllString(course.TopicName, "."))
+
+	course.Hash = course.hash()
 }
 
 func (section *Section) VetAndBuild() {

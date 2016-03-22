@@ -43,6 +43,8 @@ func main() {
 func insertUniversity(db *sqlx.DB, uni uct.University) {
 	uni.VetAndBuild()
 	var university_id int64
+
+
 	upsertUni := `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name)
 					VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
 					ON CONFLICT
@@ -91,12 +93,13 @@ func insertSubject(db *sqlx.DB, sub uct.Subject) int64 {
 	sub.VetAndBuild()
 	var subject_id int64
 
-	upsertSub := `INSERT INTO subject (university_id, name, number, season, year, topic_name)
-					VALUES  (:university_id, :name, :number, :season, :year, :topic_name)
+	upsertSub := `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
+					VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name)
 					ON CONFLICT
-						ON CONSTRAINT unique_subject_name_number__university_id_season_year
+						ON CONSTRAINT unique_subject_hash
 						DO UPDATE SET (name, season, year, topic_name) = (EXCLUDED.name, EXCLUDED.season, EXCLUDED.year, EXCLUDED.topic_name)
 					RETURNING subject.id`
+
 	if rows, err := db.NamedQuery(upsertSub, sub); err != nil {
 		log.Panicln(err)
 	} else {
@@ -192,18 +195,10 @@ func insertCourse(db *sqlx.DB, course uct.Course) int64 {
 	course.VetAndBuild()
 	var course_id int64
 
-	upsertSub := `INSERT INTO course (subject_id, name, number, synopsis, topic_name)
-					VALUES  (:subject_id, :name, :number, :synopsis, :topic_name)
-					ON CONFLICT
-						ON CONSTRAINT unique_course_name__number__subject_id
-						DO UPDATE SET (name, synopsis, topic_name) = (EXCLUDED.name, EXCLUDED.synopsis, EXCLUDED.topic_name)
+	update := `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name) WHERE hash = :hash
 					RETURNING course.id`
-	if rows, err := db.NamedQuery(upsertSub, course); err != nil {
-		/*
-		b , _ := json.Marshal(course)
-		*/
-		log.Printf("Name: %x\n", []byte(course.Name))
-		log.Printf("Name: %s\n", course.Name)
+
+	if rows, err := db.NamedQuery(update, course); err != nil {
 		log.Panicln(err)
 	} else {
 		for rows.Next() {
@@ -211,7 +206,24 @@ func insertCourse(db *sqlx.DB, course uct.Course) int64 {
 				log.Panicln(err)
 			}
 		}
-		uct.Log("UPSERT course_id ", course_id)
+		uct.Log("UPDATE course_id ", course_id)
+	}
+
+
+	if course_id == 0 {
+		insert := `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
+					VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name) RETURNING course.id`
+
+		if rows, err := db.NamedQuery(insert, course); err != nil {
+			log.Panicln(err)
+		} else {
+			for rows.Next() {
+				if err = rows.Scan(&course_id); err != nil {
+					log.Panicln(err)
+				}
+			}
+			uct.Log("INSERT course_id ", course_id)
+		}
 	}
 	return course_id
 }
