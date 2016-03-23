@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"fmt"
+	"reflect"
 )
 
 var database *sqlx.DB
@@ -45,23 +46,16 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	var university_id int64
 
 
-	upsertUni := `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name)
-					VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
-					ON CONFLICT
-						ON CONSTRAINT unique_university_name
-						DO UPDATE SET (abbr, home_page, registration_page, main_color, accent_color, topic_name) = (EXCLUDED.abbr, EXCLUDED.home_page, EXCLUDED.registration_page, EXCLUDED.main_color, EXCLUDED.accent_color, EXCLUDED.topic_name)
-					RETURNING university.id`
+	insertQuery := `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name)
+                    VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
+                    RETURNING university.id`
 
-	if rows, err := db.NamedQuery(upsertUni, uni); err != nil {
-		log.Panicln(err)
-	} else {
-		for rows.Next() {
-			if err = rows.Scan(&university_id); err != nil {
-				log.Panicln(err)
-			}
-		}
-		uct.Log("UPSERT university_id ", university_id)
-	}
+	updateQuery := `UPDATE university SET (abbr, home_page, registration_page, main_color, accent_color, topic_name) =
+	                (:abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
+	                WHERE name = :name
+	                RETURNING university.id`
+
+	university_id = upsert(db, insertQuery, updateQuery, uni)
 
 	for _, subject := range uni.Subjects {
 		subject.UniversityId = university_id
@@ -69,7 +63,42 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 		for _, course := range subject.Courses {
 			course.SubjectId = subId
-			insertCourse(db, course)
+			courseId := insertCourse(db, course)
+
+			for _, section := range course.Sections {
+				section.CourseId = courseId
+				sectionId := insertSection(db, section)
+
+				for _, instructor := range section.Instructors {
+					instructor.SectionId = sectionId
+					insertInstructor(db, instructor)
+				}
+
+				for _, meeting := range section.Meetings {
+					meeting.SectionId = sectionId
+					meetingId := insertMeeting(db, meeting)
+
+					for _, metadata := range meeting.Metadata {
+						metadata.MeetingId = meetingId
+						insertMetadata(db, metadata)
+					}
+				}
+
+				for _, book := range section.Books {
+					book.SectionId = sectionId
+					insertBook(db, book)
+				}
+
+				for _, metadata := range section.Metadata {
+					metadata.SectionId = sectionId
+					insertMetadata(db, metadata)
+				}
+			}
+
+			for _, metadata := range course.Metadata {
+				metadata.CourseId = courseId
+				insertMetadata(db, metadata)
+			}
 		}
 
 		for _, metadata := range subject.Metadata {
@@ -89,141 +118,217 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	}
 }
 
-func insertSubject(db *sqlx.DB, sub uct.Subject) int64 {
+func insertSubject(db *sqlx.DB, sub uct.Subject) (subject_id int64) {
 	sub.VetAndBuild()
-	var subject_id int64
 
-	upsertSub := `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
-					VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name)
-					ON CONFLICT
-						ON CONSTRAINT unique_subject_hash
-						DO UPDATE SET (name, season, year, topic_name) = (EXCLUDED.name, EXCLUDED.season, EXCLUDED.year, EXCLUDED.topic_name)
-					RETURNING subject.id`
+	insertQuery := `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
+                   	VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name) 
+                   	RETURNING subject.id`
 
-	if rows, err := db.NamedQuery(upsertSub, sub); err != nil {
-		log.Panicln(err)
-	} else {
-		for rows.Next() {
-			if err = rows.Scan(&subject_id); err != nil {
-				log.Panicln(err)
-			}
-		}
-		uct.Log("UPSERT subject_id ", subject_id)
-	}
+	updateQuery := `UPDATE subject SET (name, season, year, topic_name) = (:name, :season, :year, :topic_name)
+					WHERE hash = :hash
+                   	RETURNING subject.id`
+	
+	subject_id = upsert(db, insertQuery, updateQuery, sub)
+	
 	return subject_id
+}
+
+func insertCourse(db *sqlx.DB, course uct.Course) (course_id int64) {
+	course.VetAndBuild()
+	
+	updateQuery := `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name) WHERE hash = :hash
+                    RETURNING course.id`
+
+	insertQuery := `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
+                    VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name) 
+                    RETURNING course.id`
+
+
+	course_id = upsert(db, insertQuery, updateQuery, course)
+
+	return course_id
+}
+
+func insertSection(db *sqlx.DB, section uct.Section) (section_id int64) {
+	section.VetAndBuild()
+	
+	updateQuery := `UPDATE section SET (max, nox, status, credits, topic_name) = (:max, :now, :status, :creadits, :topic_name)
+					WHERE course_id = :course_id
+                    RETURNING section.id`
+
+	insertQuery := `INSERT INTO section (course_id, number, call_number, max, nox, status, credits, topic_name)
+                    VALUES  (:course_id, :number, :call_number, :max, :nox, :status, :credits, :topic_name) 
+                    RETURNING section.id`
+
+
+	section_id = upsert(db, insertQuery, updateQuery, section)
+
+	return section_id
+}
+
+func insertMeeting(db *sqlx.DB, meeting uct.Meeting) (meeting_id int64) {
+	meeting.VetAndBuild()
+	
+	updateQuery := `UPDATE meeting SET (room, day, start_time, end_time) = (:room, :day, :start_time, :end_time)
+					WHERE section_id = :section_id
+                    RETURNING meeting.id`
+
+	insertQuery := `INSERT INTO meeting (section_id, room, day, start_time, end_time)
+                    VALUES  (:section_id, :room, :day, :start_time, :end_time)
+                    RETURNING meeting.id`
+
+
+	meeting_id = upsert(db, insertQuery, updateQuery, meeting)
+
+	return meeting_id
+}
+
+func insertInstructor(db *sqlx.DB, instructor uct.Instructor) (instructor_id int64) {
+	instructor.VetAndBuild()
+
+	updateQuery := `UPDATE instructor SET (name) = (:name)
+					WHERE section_id = :section_id
+                    RETURNING instructor.id`
+
+	insertQuery := `INSERT INTO meeting (section_id, name)
+                    VALUES  (:section_id, :name)
+                    RETURNING instructor.id`
+
+
+	instructor_id = upsert(db, insertQuery, updateQuery, instructor)
+
+	return instructor_id
+}
+
+func insertBook(db *sqlx.DB, book uct.Book) (book_id int64) {
+	updateQuery := `UPDATE book SET (title, url) = (:title, :url)
+					WHERE section_id = :section_id
+                    RETURNING book.id`
+
+	insertQuery := `INSERT INTO meeting (section_id, title, url)
+                    VALUES  (:section_id, :title, :url)
+                    RETURNING book.id`
+
+
+	book_id = upsert(db, insertQuery, updateQuery, book)
+
+	return book_id
 }
 
 func insertRegistration(db *sqlx.DB, registration uct.Registration) int64 {
 	var registration_id int64
 
-	upsertRegis := `INSERT INTO registration (university_id, period, period_date)
-					VALUES (:university_id, :period, :period_date)
-					ON CONFLICT
-						ON CONSTRAINT unique_registration_period__university_id
-						DO UPDATE SET (period_date) = (:period_date)
-					RETURNING registration.id`
+	updateQuery := `UPDATE registration SET (period_date) = (:period_date) 
+					WHERE university_id = :university_id
+	                RETURNING registration.id`
+	
+	insertQuery := `INSERT INTO registration (university_id, period, period_date)
+                    VALUES (:university_id, :period, :period_date) 
+                    RETURNING registration.id`
 
-	if rows, err := db.NamedQuery(upsertRegis, registration); err != nil {
-		log.Panicln(err)
-	} else {
-		for rows.Next() {
-			if err = rows.Scan(&registration_id); err != nil {
-				log.Panicln(err)
-			}
-		}
-		uct.Log("UPSERT registration_id ", registration_id)
-	}
+	registration_id = upsert(db, insertQuery, updateQuery, registration)
+
 	return registration_id
 }
 
-func insertMetadata(db *sqlx.DB, metadata uct.Metadata) int64 {
-	var metadata_id int64
-	var upsertMetaData string
+func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
+	var insertQuery string
+	var updateQuery string
 
 	if metadata.UniversityId != 0 {
-		upsertMetaData = `INSERT INTO metadata (university_id, title, content)
-					VALUES (:university_id, :title, :content)
-					ON CONFLICT
-						ON CONSTRAINT unique_metadata_title__university_id
-						DO UPDATE SET (title, content) = (:title, :content)
-					RETURNING id`
+		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
+					   WHERE metadata.university_id = :university_id 
+		               RETURNING metadata.id`
+		
+		insertQuery = `INSERT INTO metadata (university_id, title, content)
+                       VALUES (:university_id, :title, :content) 
+                       RETURNING metadata.id`
+
 	} else if metadata.SubjectId != 0 {
-		upsertMetaData = `INSERT INTO metadata (subject_id, title, content)
-					VALUES (:subject_id, :title, :content)
-					ON CONFLICT
-						ON CONSTRAINT unique_metadata_title__subject_id
-						DO UPDATE SET (metadata.title, metadata.content) = (:title, :content)
-					RETURNING id`
+		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
+					   WHERE metadata.subject_id = :subject_id 
+		               RETURNING metadata.id`
+		
+		insertQuery = `INSERT INTO metadata (subject_id, title, content)
+                       VALUES (:subject_id, :title, :content) 
+                       RETURNING metadata.id`
+
 	} else if metadata.CourseId != 0 {
-		upsertMetaData = `INSERT INTO metadata (course_id, title, content)
-					VALUES (:course_id, :title, :content)
-					ON CONFLICT
-						ON CONSTRAINT unique_metadata_title__course_id
-						DO UPDATE SET (metadata.title, metadata.content) = (:title, :content)
-					RETURNING id`
+
+		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
+					   WHERE metadata.course_id = :course_id 
+		               RETURNING metadata.id`
+		
+		insertQuery = `INSERT INTO metadata (course_id, title, content)
+                       VALUES (:course_id, :title, :content) 
+                       RETURNING metadata.id`
+
 	} else if metadata.SectionId != 0 {
-		upsertMetaData = `INSERT INTO metadata (section_id, title, content)
-					VALUES (:section_id, :title, :content)
-					ON CONFLICT
-						ON CONSTRAINT unique_metadata_title__section_id
-						DO UPDATE SET (metadata.title, metadata.content) = (:title, :content)
-					RETURNING id`
+		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
+					   WHERE metadata.section_id = :section_id 
+		               RETURNING metadata.id`
+		
+		insertQuery = `INSERT INTO metadata (section_id, title, content)
+                       VALUES (:section_id, :title, :content) 
+                       RETURNING metadata.id`
+		
 	} else if metadata.MeetingId != 0 {
-		upsertMetaData = `INSERT INTO metadata (meeting_id, title, content)
-					VALUES (:meeting_id, :title, :content)
-					ON CONFLICT
-						ON CONSTRAINT unique_metadata_title__meeting_id
-						DO UPDATE SET (metadata.title, metadata.content) = (:title, :content)
-					RETURNING id`
+		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
+					   WHERE metadata.meeting_id = :meeting_id 
+		               RETURNING metadata.id`
+		
+		insertQuery = `INSERT INTO metadata (meeting_id, title, content)
+                       VALUES (:meeting_id, :title, :content) 
+                       RETURNING metadata.id`
 	}
 
-
-	if rows, err := db.NamedQuery(upsertMetaData, metadata); err != nil {
-		log.Panicln(err)
-	} else {
-		for rows.Next() {
-			if err = rows.Scan(&metadata_id); err != nil {
-				log.Panicln(err)
-			}
-		}
-		uct.Log("UPSERT metadata_id ", metadata_id)
-	}
+	metadata_id = upsert(db, insertQuery, updateQuery, metadata)
+	
 	return metadata_id
 }
 
-func insertCourse(db *sqlx.DB, course uct.Course) int64 {
-	course.VetAndBuild()
-	var course_id int64
+func insert(db *sqlx.DB, query string, data interface{}) int64 {
+	var id int64
 
-	update := `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name) WHERE hash = :hash
-					RETURNING course.id`
-
-	if rows, err := db.NamedQuery(update, course); err != nil {
+	if rows, err := db.NamedQuery(query, data); err != nil {
 		log.Panicln(err)
 	} else {
 		for rows.Next() {
-			if err = rows.Scan(&course_id); err != nil {
+			if err = rows.Scan(&id); err != nil {
 				log.Panicln(err)
 			}
 		}
-		uct.Log("UPDATE course_id ", course_id)
 	}
+	return id
+}
 
+func update(db *sqlx.DB, query string, data interface{}) int64 {
+	typeName := reflect.TypeOf(data).Name()
+	b, _ := json.Marshal(data)
+	dataString := string(b)
 
-	if course_id == 0 {
-		insert := `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
-					VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name) RETURNING course.id`
-
-		if rows, err := db.NamedQuery(insert, course); err != nil {
-			log.Panicln(err)
+	var id int64
+	if id == 0 {
+		if rows, err := db.NamedQuery(query, data); err != nil {
+			log.Panicln(err,typeName, dataString)
 		} else {
 			for rows.Next() {
-				if err = rows.Scan(&course_id); err != nil {
-					log.Panicln(err)
+				if err = rows.Scan(&id); err != nil {
+					log.Panicln(err, typeName, dataString)
 				}
 			}
-			uct.Log("INSERT course_id ", course_id)
 		}
 	}
-	return course_id
+	return id
+}
+func upsert(db *sqlx.DB, insertQuery, updateQuery string, data interface{}) (id int64) {
+	typeName := reflect.TypeOf(data).Name()
+	if id = update(db, updateQuery, data); id != 0 {
+		uct.Log("Update:",typeName, id)
+	} else {
+		id = insert(db, insertQuery, data)
+		uct.Log("Insert:",typeName, id)
+	}
+	return
 }

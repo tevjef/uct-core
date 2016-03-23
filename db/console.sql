@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS public.section
   number TEXT NOT NULL,
   call_number TEXT NOT NULL,
   now INTEGER DEFAULT -1 NOT NULL,
-  max INT DEFAULT -1 NOT NULL,
+  max INTEGER DEFAULT -1 NOT NULL,
   status status NOT NULL,
   credits NUMERIC,
   topic_name TEXT,
