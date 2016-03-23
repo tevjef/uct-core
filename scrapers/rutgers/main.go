@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -253,7 +254,7 @@ func getUniversity(campus string) uct.University {
 		for _, subject := range subjects {
 			newSubject := uct.Subject{
 				Name:   subject.Name,
-				Number:   subject.Number,
+				Number: subject.Number,
 				Season: subject.Season.String(),
 				Year:   subject.Year}
 			for _, course := range subject.Courses {
@@ -272,10 +273,17 @@ func getUniversity(campus string) uct.University {
 						Max:        0,
 						Metadata:   section.metadata()}
 
+					for _, instructor := range section.Instructor {
+						newInstructor := uct.Instructor{Name: instructor.Name}
+
+						newInstructor.VetAndBuild()
+						newSection.Instructors = append(newSection.Instructors, newInstructor)
+					}
+
 					for _, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
-							Room:      meeting.room(),
-							Day:       meeting.day(),
+							Room:      uct.ToNullString(meeting.room()),
+							Day:       uct.ToNullString(meeting.day()),
 							StartTime: meeting.getMeetingHourBegin(),
 							EndTime:   meeting.getMeetingHourEnd(),
 							Metadata:  meeting.metadata()}
@@ -521,23 +529,26 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 	if len(section.Majors) > 0 {
 		isMajorHeaderSet := false
 		isUnitHeaderSet := false
-		var openTo string
+		var buffer bytes.Buffer
 		for _, unit := range section.Majors {
 			if unit.isMajorCode {
 				if !isMajorHeaderSet {
 					isMajorHeaderSet = true
-					openTo = openTo + "Majors: "
+					buffer.WriteString("Majors: ")
 				}
+				buffer.WriteString(unit.code)
+				buffer.WriteString(", ")
 			} else if unit.isUnitCode {
 				if !isUnitHeaderSet {
 					isUnitHeaderSet = true
-					openTo += "Schools: "
+					buffer.WriteString("Schools: ")
 				}
-				openTo += unit.code
-				openTo += ", "
+				buffer.WriteString(unit.code)
+				buffer.WriteString(", ")
 			}
-			openTo += unit.code + ", "
 		}
+
+		openTo := buffer.String()
 		if len(openTo) > len("Majors: ") {
 			metadata = append(metadata, uct.Metadata{
 				Title:   "Open To",
@@ -645,25 +656,29 @@ func (meeting RMeetingTime) room() string {
 	return ""
 }
 
-func (time RMeetingTime) getMeetingHourBegin() string {
-	meridian := ""
+func (meetingTime RMeetingTime) getMeetingHourBegin() string {
+	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
 
-	if time.PmCode != "" {
-		if time.PmCode == "A" {
-			meridian = "AM"
-		} else {
-			meridian = "PM"
+		meridian := ""
+
+		if meetingTime.PmCode != "" {
+			if meetingTime.PmCode == "A" {
+				meridian = "AM"
+			} else {
+				meridian = "PM"
+			}
 		}
+		return formatMeetingHours(meetingTime.StartTime) + " " + meridian
 	}
-	return formatMeetingHours(time.StartTime) + " " + meridian
+	return ""
 }
 
-func (time RMeetingTime) getMeetingHourEnd() string {
-	if len(time.StartTime) > 1 || len(time.EndTime) > 1 {
+func (meetingTime RMeetingTime) getMeetingHourEnd() string {
+	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
 		var meridian string
-		starttime := time.StartTime
-		endtime := time.EndTime
-		pmcode := time.PmCode
+		starttime := meetingTime.StartTime
+		endtime := meetingTime.EndTime
+		pmcode := meetingTime.PmCode
 
 		end, _ := strconv.Atoi(endtime[:2])
 		start, _ := strconv.Atoi(starttime[:2])
@@ -678,9 +693,57 @@ func (time RMeetingTime) getMeetingHourEnd() string {
 			meridian = "AM"
 		}
 
-		return formatMeetingHours(time.EndTime) + " " + meridian
+		return formatMeetingHours(meetingTime.EndTime) + " " + meridian
 	}
 	return ""
+}
+
+func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
+	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
+
+		meridian := ""
+
+		if meetingTime.PmCode != "" {
+			if meetingTime.PmCode == "A" {
+				meridian = "AM"
+			} else {
+				meridian = "PM"
+			}
+		}
+
+		kitchenTime := uct.TrimAll(formatMeetingHours(meetingTime.StartTime) + meridian)
+		time, err := time.Parse(time.Kitchen, kitchenTime)
+		uct.CheckError(err)
+		return time
+	}
+	return time.Unix(0, 0)
+}
+
+func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
+	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
+		var meridian string
+		starttime := meetingTime.StartTime
+		endtime := meetingTime.EndTime
+		pmcode := meetingTime.PmCode
+
+		end, _ := strconv.Atoi(endtime[:2])
+		start, _ := strconv.Atoi(starttime[:2])
+
+		if !(pmcode == "A") {
+			meridian = "PM"
+		} else if end < start {
+			meridian = "PM"
+		} else if endtime[:2] == "12" {
+			meridian = "AM"
+		} else {
+			meridian = "AM"
+		}
+
+		time, err := time.Parse(time.Kitchen, formatMeetingHours(meetingTime.EndTime)+meridian)
+		uct.CheckError(err)
+		return time
+	}
+	return time.Unix(0, 0)
 }
 
 func (meeting RMeetingTime) day() string {
@@ -704,24 +767,6 @@ func (meeting RMeetingTime) day() string {
 }
 
 func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
-	if meeting.CampusAbbrev != "" {
-		campus := ""
-		switch meeting.CampusAbbrev {
-		case "NWK":
-			campus = "Newark"
-			break
-		case "CAM":
-			campus = "Camden"
-			break
-		default:
-			campus = "New Brunswick"
-		}
-		metadata = append(metadata, uct.Metadata{
-			Title:   "Campus",
-			Content: meeting.CampusAbbrev + " - " + campus,
-		})
-	}
-
 	if meeting.MeetingModeCode != "" {
 		metadata = append(metadata, uct.Metadata{
 			Title:   "Type",

@@ -1,17 +1,17 @@
 package common
 
 import (
+	"bytes"
+	"crypto/sha1"
 	"database/sql"
+	"fmt"
 	"golang.org/x/exp/utf8string"
 	"log"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
-	"crypto/sha1"
-	"fmt"
-	"bytes"
 )
 
 type (
@@ -46,10 +46,10 @@ type (
 		Id           int64      `json:"id,omitempty" db:"id"`
 		UniversityId int64      `json:"university_id,omitempty" db:"university_id"`
 		Name         string     `json:"name,omitempty" db:"name"`
-		Number         string     `json:"number,omitempty" db:"number"`
+		Number       string     `json:"number,omitempty" db:"number"`
 		Season       string     `json:"season" db:"season"`
 		Year         int        `json:"year,omitempty" db:"year"`
-		Hash      string	`json:"hash,omitempty" db:"hash"`
+		Hash         string     `json:"hash,omitempty" db:"hash"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
 		CreatedAt    time.Time  `json:"-"`
 		UpdatedAt    time.Time  `json:"-"`
@@ -64,7 +64,7 @@ type (
 		Name      string         `json:"name,omitempty" db:"name"`
 		Number    string         `json:"number,omitempty" db:"number"`
 		Synopsis  sql.NullString `json:"synopsis,omitempty" db:"synopsis"`
-		Hash      string	`json:"hash,omitempty" db:"hash"`
+		Hash      string         `json:"hash,omitempty" db:"hash"`
 		TopicName string         `json:"topic_name,omitempty" db:"topic_name"`
 		CreatedAt time.Time      `json:"-"`
 		UpdatedAt time.Time      `json:"-"`
@@ -93,15 +93,16 @@ type (
 
 	// Sort by day
 	Meeting struct {
-		Id        int64      `json:"id,omitempty" db:"id"`
-		SectionId int64      `json:"section_id,omitempty" db:"section_id"`
-		Room      string     `json:"room,omitempty" db:"room"`
-		Day       string     `json:"day,omitempty" db:"day"`
-		StartTime string     `json:"start_time,omitempty" db:"start_time"`
-		EndTime   string     `json:"end_time,omitempty" db:"section_id"`
-		CreatedAt time.Time  `json:"-"`
-		UpdatedAt time.Time  `json:"-"`
-		Metadata  []Metadata `json:"metadata,omitempty"`
+		Id        int64          `json:"id,omitempty" db:"id"`
+		SectionId int64          `json:"section_id,omitempty" db:"section_id"`
+		Room      sql.NullString `json:"room,omitempty" db:"room"`
+		Day       sql.NullString `json:"day,omitempty" db:"day"`
+		StartTime string         `json:"start_time,omitempty" db:"start_time"`
+		EndTime   string         `json:"end_time,omitempty" db:"end_time"`
+		Index int `json:"-" db:"index"`
+		CreatedAt time.Time      `json:"-"`
+		UpdatedAt time.Time      `json:"-"`
+		Metadata  []Metadata     `json:"metadata,omitempty"`
 	}
 
 	Instructor struct {
@@ -245,7 +246,7 @@ func (c Course) hash() string {
 	for _, section := range c.Sections {
 		buffer.WriteString(section.CallNumber + section.Number)
 	}
-	return fmt.Sprintf("%x", sha1.Sum([]byte(c.Name+ c.Number+ buffer.String())))
+	return fmt.Sprintf("%x", sha1.Sum([]byte(c.Name+c.Number+buffer.String())))
 }
 
 func (u *University) VetAndBuild() {
@@ -415,8 +416,14 @@ func (section *Section) VetAndBuild() {
 }
 
 func (meeting *Meeting) VetAndBuild() {
-	meeting.StartTime = TrimAll(meeting.StartTime)
-	meeting.EndTime = TrimAll(meeting.EndTime)
+
+	if meeting.StartTime == "" {
+		meeting.StartTime = "00:00 AM"
+		meeting.EndTime = "00:00 AM"
+	}
+
+	/*meeting.StartTime.String = TrimAll(meeting.StartTime.String)
+	meeting.EndTime.String = TrimAll(meeting.EndTime.String)*/
 }
 
 func (instructor *Instructor) VetAndBuild() {
@@ -564,7 +571,7 @@ func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester
 }
 
 func (meeting Meeting) dayRank() int {
-	switch meeting.Day {
+	switch meeting.Day.String {
 	case "Monday":
 		return 1
 	case "Tuesday":

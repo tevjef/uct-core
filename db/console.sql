@@ -152,12 +152,15 @@ CREATE TABLE IF NOT EXISTS public.meeting
   section_id BIGINT NOT NULL,
   room TEXT,
   day TEXT,
-  start_time TIME NOT NULL,
-  end_time TIME NOT NULL,
+  start_time TIME,
+  end_time TIME,
+  index INTEGER,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT meeting__pk PRIMARY KEY (id),
-  CONSTRAINT meeting_section_id__fk FOREIGN KEY (section_id) REFERENCES public.section (id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT meeting_section_id__fk FOREIGN KEY (section_id) REFERENCES public.section (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT unique_section_index UNIQUE (section_id, index)
+
 )WITH (OIDS = FALSE);
 
 ALTER TABLE public.meeting OWNER TO postgres;
@@ -167,6 +170,7 @@ COMMENT ON COLUMN public.meeting.room IS 'This may include the full name, e.g Ce
 COMMENT ON COLUMN public.meeting.day IS 'The day this meeting is on';
 COMMENT ON COLUMN public.meeting.start_time IS 'The start time for this meeting. The scraper should extract values of this format. hh:mm(AM|PM)';
 COMMENT ON COLUMN public.meeting.end_time IS 'The end time for this meeting. The scraper should extract values of this format. hh:mm(AM|PM)';
+COMMENT ON COLUMN public.meeting.index IS 'The position of this meeting';
 COMMENT ON COLUMN public.meeting.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.meeting.updated_at IS 'Time this row was updated';
 
@@ -448,28 +452,22 @@ BEGIN
   -- Set the correct topic name for this row
   --
   SELECT
-    university.id,
-    subject.id,
-    course.id
+    university.topic_name,
+    subject.topic_name,
+    course.topic_name
   INTO
     _university_topic_name,
     _subject_topic_name,
     _course_topic_name
-  FROM section
-    JOIN course ON course.id = section.course_id
+  FROM course
     JOIN subject ON subject.id = course.subject_id
     JOIN university ON university.id = subject.university_id
-  WHERE section.id = NEW.id;
+  WHERE course.id = NEW.course_id;
 
-
-  IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-    NEW.topic_name = _university_topic_name || '__' ||
+  NEW.topic_name = _university_topic_name || '__' ||
                      _subject_topic_name || '__' ||
                      _course_topic_name || '__' ||
                      NEW.id::text;
-
-  END IF;
-
   RETURN NEW;
 END;
 $$
@@ -493,31 +491,6 @@ EXECUTE PROCEDURE set_course_topic_name();
 CREATE TRIGGER insert_section_topic_name
 BEFORE INSERT ON public.section
 FOR EACH ROW
-EXECUTE PROCEDURE set_section_topic_name();
-
-
-CREATE TRIGGER update_university_topic_name
-BEFORE UPDATE ON public.university
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
-EXECUTE PROCEDURE set_university_topic_name();
-
-CREATE TRIGGER update_subject_topic_name
-BEFORE UPDATE ON public.subject
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
-EXECUTE PROCEDURE set_subject_topic_name();
-
-CREATE TRIGGER update_course_topic_name
-BEFORE UPDATE ON public.course
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
-EXECUTE PROCEDURE set_course_topic_name();
-
-CREATE TRIGGER update_section_topic_name
-BEFORE UPDATE ON public.section
-FOR EACH ROW
-WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE PROCEDURE set_section_topic_name();
 
 
