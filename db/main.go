@@ -24,12 +24,11 @@ var (
 
 var (
 	debugBool      bool
-	app            = kingpin.New("uct-db", "A command-line application for inserting and updated university information").Version("1.0.0").Author("Tevin Jeffrey")
-	fullUpsert     = app.Flag("Insert All", "Full insert/update of all json object.").Default("true").Short('i').Bool()
-	file           = app.Flag("file", "File to read university data from.").Short('f').File()
-	verbose        = app.Flag("verbose", "Verbose logging. Including object representations.").Default("false").Short('v').Bool()
-	help           = app.HelpFlag.Short('h')
-	add          = app.Command("add", "Add nomally").Default().Hidden()
+	app            = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
+	add            = app.Command("add", "A command-line application for inserting and updated university information").Hidden().Default()
+	fullUpsert     = add.Flag("insert-all", "Full insert/update of all json objects.").Default("true").Short('i').Bool()
+	file           = add.Flag("file", "File to read university data from.").Short('f').File()
+	verbose        = add.Flag("verbose", "Verbose log of object representations.").Default("false").Short('v').Bool()
 	debug          = app.Command("debug", "Enable debug mode.")
 	server         = debug.Flag("server", "Debug server address to enable profiling.").PlaceHolder("hostname:port").Default("127.0.0.1:6060").TCP()
 	cpuprofile     = debug.Flag("cpuprofile", "Write cpu profile to file.").PlaceHolder("cpu.pprof").String()
@@ -107,7 +106,6 @@ func main() {
 	} else {
 		input = bufio.NewReader(os.Stdin)
 	}
-
 
 	dec := ffjson.NewDecoder()
 	var universities []uct.University
