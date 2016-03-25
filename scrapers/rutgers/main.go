@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pquerna/ffjson/ffjson"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"sync"
 	"time"
 	uct "uct/common"
-	"github.com/pquerna/ffjson/ffjson"
 )
 
 var (
@@ -131,9 +131,9 @@ func main() {
 
 	var schools []uct.University
 
-	schools = append(schools,getCampus("NK"))
-	schools = append(schools,getCampus("NB"))
-	schools = append(schools,getCampus("CM"))
+	schools = append(schools, getCampus("NK"))
+	schools = append(schools, getCampus("NB"))
+	schools = append(schools, getCampus("CM"))
 
 	err := enc.Encode(schools)
 	uct.CheckError(err)

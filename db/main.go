@@ -29,6 +29,7 @@ var (
 	file           = app.Flag("file", "File to read university data from.").Short('f').File()
 	verbose        = app.Flag("verbose", "Verbose logging. Including object representations.").Default("false").Short('v').Bool()
 	help           = app.HelpFlag.Short('h')
+	add          = app.Command("add", "Add nomally").Default().Hidden()
 	debug          = app.Command("debug", "Enable debug mode.")
 	server         = debug.Flag("server", "Debug server address to enable profiling.").PlaceHolder("hostname:port").Default("127.0.0.1:6060").TCP()
 	cpuprofile     = debug.Flag("cpuprofile", "Write cpu profile to file.").PlaceHolder("cpu.pprof").String()
@@ -66,6 +67,9 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case "debug":
 		debugBool = true
+		break
+	case "add":
+		debugBool = false
 	}
 
 	if *server != nil && debugBool {

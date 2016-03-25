@@ -99,7 +99,7 @@ type (
 		Day       sql.NullString `json:"day,omitempty" db:"day"`
 		StartTime string         `json:"start_time,omitempty" db:"start_time"`
 		EndTime   string         `json:"end_time,omitempty" db:"end_time"`
-		Index int `json:"-" db:"index"`
+		Index     int            `json:"-" db:"index"`
 		CreatedAt time.Time      `json:"-"`
 		UpdatedAt time.Time      `json:"-"`
 		Metadata  []Metadata     `json:"metadata,omitempty"`
