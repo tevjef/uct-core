@@ -24,7 +24,7 @@ type (
 	SectionByNumber []Section
 	CourseByName    []Course
 	SubjectByName   []Subject
-	// Sort by name
+
 	University struct {
 		Id               int64          `json:"id,omitempty" db:"id"`
 		Name             string         `json:"name,omitempty" db:"name"`
@@ -142,11 +142,6 @@ type (
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
 		CreatedAt    time.Time `json:"-"`
 		UpdatedAt    time.Time `json:"-"`
-	}
-
-	TimePeriod struct {
-		Period     Period    `json:"period,omitempty" db:"period"`
-		PeriodDate time.Time `json:"period_date,omitempty" db:"period_date"`
 	}
 
 	Semester struct {

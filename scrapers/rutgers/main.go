@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"sync"
 	"time"
 	uct "uct/common"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 var (
@@ -127,17 +127,20 @@ type (
 
 func main() {
 
-	uni := getUniversity("NK")
-	enc := json.NewEncoder(bufio.NewWriter(os.Stdout))
-	enc.Encode(uni)
-	uni = getUniversity("NB")
-	enc.Encode(uni)
-	uni = getUniversity("CM")
-	enc.Encode(uni)
+	enc := ffjson.NewEncoder(os.Stdout)
+
+	var schools []uct.University
+
+	schools = append(schools,getCampus("NK"))
+	schools = append(schools,getCampus("NB"))
+	schools = append(schools,getCampus("CM"))
+
+	err := enc.Encode(schools)
+	uct.CheckError(err)
 
 }
 
-func getUniversity(campus string) uct.University {
+func getCampus(campus string) uct.University {
 
 	var university uct.University
 
