@@ -421,11 +421,6 @@ func (mj *Course) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		}
 		buf.WriteByte(',')
 	}
-	if len(mj.Hash) != 0 {
-		buf.WriteString(`"hash":`)
-		fflib.WriteJsonString(buf, string(mj.Hash))
-		buf.WriteByte(',')
-	}
 	if len(mj.TopicName) != 0 {
 		buf.WriteString(`"topic_name":`)
 		fflib.WriteJsonString(buf, string(mj.TopicName))
@@ -498,8 +493,6 @@ const (
 
 	ffj_t_Course_Synopsis
 
-	ffj_t_Course_Hash
-
 	ffj_t_Course_TopicName
 
 	ffj_t_Course_Sections
@@ -516,8 +509,6 @@ var ffj_key_Course_Name = []byte("name")
 var ffj_key_Course_Number = []byte("number")
 
 var ffj_key_Course_Synopsis = []byte("synopsis")
-
-var ffj_key_Course_Hash = []byte("hash")
 
 var ffj_key_Course_TopicName = []byte("topic_name")
 
@@ -583,14 +574,6 @@ mainparse:
 				goto mainparse
 			} else {
 				switch kn[0] {
-
-				case 'h':
-
-					if bytes.Equal(ffj_key_Course_Hash, kn) {
-						currentKey = ffj_t_Course_Hash
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
 
 				case 'i':
 
@@ -667,12 +650,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Course_Hash, kn) {
-					currentKey = ffj_t_Course_Hash
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				if fflib.EqualFoldRight(ffj_key_Course_Synopsis, kn) {
 					currentKey = ffj_t_Course_Synopsis
 					state = fflib.FFParse_want_colon
@@ -734,9 +711,6 @@ mainparse:
 
 				case ffj_t_Course_Synopsis:
 					goto handle_Synopsis
-
-				case ffj_t_Course_Hash:
-					goto handle_Hash
 
 				case ffj_t_Course_TopicName:
 					goto handle_TopicName
@@ -887,32 +861,6 @@ handle_Synopsis:
 		err = json.Unmarshal(tbuf, &uj.Synopsis)
 		if err != nil {
 			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_Hash:
-
-	/* handler: uj.Hash type=string kind=string quoted=false*/
-
-	{
-
-		{
-			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
-				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
-			}
-		}
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			outBuf := fs.Output.Bytes()
-
-			uj.Hash = string(string(outBuf))
-
 		}
 	}
 
@@ -3135,29 +3083,49 @@ func (mj *Metadata) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
 		buf.WriteByte(',')
 	}
-	if mj.UniversityId != 0 {
+	if true {
+		/* Struct fall back. type=sql.NullInt64 kind=struct */
 		buf.WriteString(`"university_id":`)
-		fflib.FormatBits2(buf, uint64(mj.UniversityId), 10, mj.UniversityId < 0)
+		err = buf.Encode(&mj.UniversityId)
+		if err != nil {
+			return err
+		}
 		buf.WriteByte(',')
 	}
-	if mj.SubjectId != 0 {
+	if true {
+		/* Struct fall back. type=sql.NullInt64 kind=struct */
 		buf.WriteString(`"subject_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SubjectId), 10, mj.SubjectId < 0)
+		err = buf.Encode(&mj.SubjectId)
+		if err != nil {
+			return err
+		}
 		buf.WriteByte(',')
 	}
-	if mj.CourseId != 0 {
+	if true {
+		/* Struct fall back. type=sql.NullInt64 kind=struct */
 		buf.WriteString(`"course_id":`)
-		fflib.FormatBits2(buf, uint64(mj.CourseId), 10, mj.CourseId < 0)
+		err = buf.Encode(&mj.CourseId)
+		if err != nil {
+			return err
+		}
 		buf.WriteByte(',')
 	}
-	if mj.SectionId != 0 {
+	if true {
+		/* Struct fall back. type=sql.NullInt64 kind=struct */
 		buf.WriteString(`"section_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SectionId), 10, mj.SectionId < 0)
+		err = buf.Encode(&mj.SectionId)
+		if err != nil {
+			return err
+		}
 		buf.WriteByte(',')
 	}
-	if mj.MeetingId != 0 {
+	if true {
+		/* Struct fall back. type=sql.NullInt64 kind=struct */
 		buf.WriteString(`"meeting_id":`)
-		fflib.FormatBits2(buf, uint64(mj.MeetingId), 10, mj.MeetingId < 0)
+		err = buf.Encode(&mj.MeetingId)
+		if err != nil {
+			return err
+		}
 		buf.WriteByte(',')
 	}
 	if len(mj.Title) != 0 {
@@ -3466,28 +3434,18 @@ handle_Id:
 
 handle_UniversityId:
 
-	/* handler: uj.UniversityId type=int64 kind=int64 quoted=false*/
+	/* handler: uj.UniversityId type=sql.NullInt64 kind=struct quoted=false*/
 
 	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
+		/* Falling back. type=sql.NullInt64 kind=struct */
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
-	}
 
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.UniversityId = int64(tval)
-
+		err = json.Unmarshal(tbuf, &uj.UniversityId)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
 	}
 
@@ -3496,28 +3454,18 @@ handle_UniversityId:
 
 handle_SubjectId:
 
-	/* handler: uj.SubjectId type=int64 kind=int64 quoted=false*/
+	/* handler: uj.SubjectId type=sql.NullInt64 kind=struct quoted=false*/
 
 	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
+		/* Falling back. type=sql.NullInt64 kind=struct */
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
-	}
 
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SubjectId = int64(tval)
-
+		err = json.Unmarshal(tbuf, &uj.SubjectId)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
 	}
 
@@ -3526,28 +3474,18 @@ handle_SubjectId:
 
 handle_CourseId:
 
-	/* handler: uj.CourseId type=int64 kind=int64 quoted=false*/
+	/* handler: uj.CourseId type=sql.NullInt64 kind=struct quoted=false*/
 
 	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
+		/* Falling back. type=sql.NullInt64 kind=struct */
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
-	}
 
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.CourseId = int64(tval)
-
+		err = json.Unmarshal(tbuf, &uj.CourseId)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
 	}
 
@@ -3556,28 +3494,18 @@ handle_CourseId:
 
 handle_SectionId:
 
-	/* handler: uj.SectionId type=int64 kind=int64 quoted=false*/
+	/* handler: uj.SectionId type=sql.NullInt64 kind=struct quoted=false*/
 
 	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
+		/* Falling back. type=sql.NullInt64 kind=struct */
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
-	}
 
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SectionId = int64(tval)
-
+		err = json.Unmarshal(tbuf, &uj.SectionId)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
 	}
 
@@ -3586,28 +3514,18 @@ handle_SectionId:
 
 handle_MeetingId:
 
-	/* handler: uj.MeetingId type=int64 kind=int64 quoted=false*/
+	/* handler: uj.MeetingId type=sql.NullInt64 kind=struct quoted=false*/
 
 	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
+		/* Falling back. type=sql.NullInt64 kind=struct */
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
-	}
 
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.MeetingId = int64(tval)
-
+		err = json.Unmarshal(tbuf, &uj.MeetingId)
+		if err != nil {
+			return fs.WrapErr(err)
 		}
 	}
 
@@ -6240,11 +6158,6 @@ func (mj *Subject) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		fflib.FormatBits2(buf, uint64(mj.Year), 10, mj.Year < 0)
 		buf.WriteByte(',')
 	}
-	if len(mj.Hash) != 0 {
-		buf.WriteString(`"hash":`)
-		fflib.WriteJsonString(buf, string(mj.Hash))
-		buf.WriteByte(',')
-	}
 	if len(mj.TopicName) != 0 {
 		buf.WriteString(`"topic_name":`)
 		fflib.WriteJsonString(buf, string(mj.TopicName))
@@ -6319,8 +6232,6 @@ const (
 
 	ffj_t_Subject_Year
 
-	ffj_t_Subject_Hash
-
 	ffj_t_Subject_TopicName
 
 	ffj_t_Subject_Courses
@@ -6339,8 +6250,6 @@ var ffj_key_Subject_Number = []byte("number")
 var ffj_key_Subject_Season = []byte("season")
 
 var ffj_key_Subject_Year = []byte("year")
-
-var ffj_key_Subject_Hash = []byte("hash")
 
 var ffj_key_Subject_TopicName = []byte("topic_name")
 
@@ -6411,14 +6320,6 @@ mainparse:
 
 					if bytes.Equal(ffj_key_Subject_Courses, kn) {
 						currentKey = ffj_t_Subject_Courses
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'h':
-
-					if bytes.Equal(ffj_key_Subject_Hash, kn) {
-						currentKey = ffj_t_Subject_Hash
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -6504,12 +6405,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Subject_Hash, kn) {
-					currentKey = ffj_t_Subject_Hash
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				if fflib.SimpleLetterEqualFold(ffj_key_Subject_Year, kn) {
 					currentKey = ffj_t_Subject_Year
 					state = fflib.FFParse_want_colon
@@ -6580,9 +6475,6 @@ mainparse:
 
 				case ffj_t_Subject_Year:
 					goto handle_Year
-
-				case ffj_t_Subject_Hash:
-					goto handle_Hash
 
 				case ffj_t_Subject_TopicName:
 					goto handle_TopicName
@@ -6768,32 +6660,6 @@ handle_Year:
 			}
 
 			uj.Year = int(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_Hash:
-
-	/* handler: uj.Hash type=string kind=string quoted=false*/
-
-	{
-
-		{
-			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
-				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
-			}
-		}
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			outBuf := fs.Output.Bytes()
-
-			uj.Hash = string(string(outBuf))
 
 		}
 	}

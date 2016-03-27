@@ -34,11 +34,11 @@ type (
 		MainColor        string         `json:"main_color,omitempty" db:"main_color"`
 		AccentColor      string         `json:"accent_color,omitempty" db:"accent_color"`
 		TopicName        string         `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt        time.Time      `json:"-"`
-		UpdatedAt        time.Time      `json:"-"`
 		Subjects         []Subject      `json:"subjects,omitempty"`
 		Registrations    []Registration `json:"registration,omitempty"`
 		Metadata         []Metadata     `json:"metadata,omitempty"`
+		CreatedAt        time.Time      `json:"-" db:"created_at"`
+		UpdatedAt        time.Time      `json:"-" db:"updated_at"`
 	}
 
 	// Sort by name
@@ -49,12 +49,12 @@ type (
 		Number       string     `json:"number,omitempty" db:"number"`
 		Season       string     `json:"season" db:"season"`
 		Year         int        `json:"year,omitempty" db:"year"`
-		Hash         string     `json:"hash,omitempty" db:"hash"`
+		Hash         string     `json:"-" db:"hash"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt    time.Time  `json:"-"`
-		UpdatedAt    time.Time  `json:"-"`
 		Courses      []Course   `json:"courses,omitempty"`
 		Metadata     []Metadata `json:"metadata,omitempty"`
+		CreatedAt    time.Time  `json:"-" db:"created_at"`
+		UpdatedAt    time.Time  `json:"-" db:"updated_at"`
 	}
 
 	// Sort by name
@@ -64,12 +64,13 @@ type (
 		Name      string         `json:"name,omitempty" db:"name"`
 		Number    string         `json:"number,omitempty" db:"number"`
 		Synopsis  sql.NullString `json:"synopsis,omitempty" db:"synopsis"`
-		Hash      string         `json:"hash,omitempty" db:"hash"`
+		Hash      string         `json:"-" db:"hash"`
 		TopicName string         `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt time.Time      `json:"-"`
-		UpdatedAt time.Time      `json:"-"`
 		Sections  []Section      `json:"sections,omitempty"`
 		Metadata  []Metadata     `json:"metadata,omitempty"`
+		CreatedAt time.Time      `json:"-" db:"created_at"`
+		UpdatedAt time.Time      `json:"-" db:"updated_at"`
+
 	}
 
 	// Sort by number
@@ -83,12 +84,12 @@ type (
 		Status      string       `json:"status,omitempty" db:"status"`
 		Credits     string       `json:"credits,omitempty" db:"credits"`
 		TopicName   string       `json:"topic_name,omitempty" db:"topic_name"`
-		CreatedAt   time.Time    `json:"-"`
-		UpdatedAt   time.Time    `json:"-"`
 		Meetings    []Meeting    `json:"meeting,omitempty"`
 		Instructors []Instructor `json:"instructors,omitempty"`
 		Books       []Book       `json:"books,omitempty"`
 		Metadata    []Metadata   `json:"metadata,omitempty"`
+		CreatedAt   time.Time    `json:"-" db:"created_at"`
+		UpdatedAt   time.Time    `json:"-" db:"updated_at"`
 	}
 
 	// Sort by day
@@ -100,17 +101,17 @@ type (
 		StartTime string         `json:"start_time,omitempty" db:"start_time"`
 		EndTime   string         `json:"end_time,omitempty" db:"end_time"`
 		Index     int            `json:"-" db:"index"`
-		CreatedAt time.Time      `json:"-"`
-		UpdatedAt time.Time      `json:"-"`
 		Metadata  []Metadata     `json:"metadata,omitempty"`
+		CreatedAt time.Time      `json:"-" db:"created_at"`
+		UpdatedAt time.Time      `json:"-" db:"updated_at"`
 	}
 
 	Instructor struct {
 		Id        int64     `json:"id,omitempty" db:"id"`
 		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
 		Name      string    `json:"name,omitempty" db:"name"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt time.Time `json:"-" db:"created_at"`
+		UpdatedAt time.Time `json:"-" db:"updated_at"`
 	}
 
 	Book struct {
@@ -118,21 +119,21 @@ type (
 		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
 		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
-		CreatedAt time.Time `json:"-"`
-		UpdatedAt time.Time `json:"-"`
+		CreatedAt time.Time `json:"-" db:"created_at"`
+		UpdatedAt time.Time `json:"-" db:"updated_at"`
 	}
 
 	Metadata struct {
 		Id           int64     `json:"id,omitempty" db:"id"`
-		UniversityId int64     `json:"university_id,omitempty" db:"university_id"`
-		SubjectId    int64     `json:"subject_id,omitempty" db:"subject_id"`
-		CourseId     int64     `json:"course_id,omitempty" db:"course_id"`
-		SectionId    int64     `json:"section_id,omitempty" db:"section_id"`
-		MeetingId    int64     `json:"meeting_id,omitempty" db:"meeting_id"`
+		UniversityId sql.NullInt64     `json:"-" db:"university_id"`
+		SubjectId    sql.NullInt64      `json:"-" db:"subject_id"`
+		CourseId     sql.NullInt64      `json:"-" db:"course_id"`
+		SectionId    sql.NullInt64      `json:"-" db:"section_id"`
+		MeetingId    sql.NullInt64      `json:"-" db:"meeting_id"`
 		Title        string    `json:"title,omitempty" db:"title"`
 		Content      string    `json:"content,omitempty" db:"content"`
-		CreatedAt    time.Time `json:"-"`
-		UpdatedAt    time.Time `json:"-"`
+		CreatedAt    time.Time `json:"-" db:"created_at"`
+		UpdatedAt    time.Time `json:"-" db:"updated_at"`
 	}
 
 	Registration struct {
@@ -140,8 +141,8 @@ type (
 		UniversityId int64     `json:"university_id,omitempty" db:"university_id"`
 		Period       string    `json:"period,omitempty" db:"period"`
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
-		CreatedAt    time.Time `json:"-"`
-		UpdatedAt    time.Time `json:"-"`
+		CreatedAt    time.Time `json:"-" db:"created_at"`
+		UpdatedAt    time.Time `json:"-" db:"updated_at"`
 	}
 
 	Semester struct {

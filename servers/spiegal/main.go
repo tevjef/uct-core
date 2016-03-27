@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/alecthomas/template/parse"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,7 +14,8 @@ import (
 )
 
 var (
-	database *sqlx.DB
+	database      *sqlx.DB
+	preparedStmts = make(map[string]*sqlx.Stmt)
 )
 
 func init() {
@@ -37,6 +39,13 @@ func main() {
 	r.Run(":80")
 }
 
+/*
+Add to middleware
+
+if s := c.Request.Header.Get("Accept"); s == "" || s != "application/json" {
+c.Error(errors.New("Missing header, Accept: application/json"))
+c.String(http.StatusBadRequest, "Missing header, Accept: application/json")
+}*/
 func universityHandler(c *gin.Context) {
 	dirtyDeep := c.DefaultQuery("deep", "true")
 	dirtyId := c.DefaultQuery("id", "0")
@@ -55,15 +64,10 @@ func universityHandler(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
 	}
 
-	if s := c.Request.Header.Get("Accept"); s == "" || s != "application/json" {
-		c.Error(errors.New("Missing header, Accept: application/json"))
-		c.String(http.StatusBadRequest, "Missing header, Accept: application/json")
-	}
-
 	if id != 0 {
-		return c.JSON(http.StatusOK, SelectUniversity(id, deep))
+		c.JSON(http.StatusOK, SelectUniversity(id, deep))
 	} else {
-		return c.JSON(http.StatusOK, SelectUniversities(deep))
+		c.JSON(http.StatusOK, SelectUniversities(deep))
 	}
 
 }
@@ -85,33 +89,33 @@ func subjectHandler(c *gin.Context) {
 	if deep, err = strconv.ParseBool(dirtyDeep); err != nil {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: deep=%s", dirtyDeep)
+		return
 	}
 
 	if universityId, err = strconv.ParseInt(dirtyUniversityId, 10, 64); err != nil {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: university_id=%s", dirtyUniversityId)
+		return
 	}
 
 	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
+		return
 	}
 
 	if season, err = ParseSeason(dirtySeason); err != nil {
 		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: season=%s", dirtyId)
+		c.String(http.StatusBadRequest, "Could not parse parameter: season=%s", dirtySeason)
+		return
 	}
 
-	if year, err := strconv.ParseInt(dirtyYear, 10, 64); err != nil {
+	if _, err := strconv.ParseInt(dirtyYear, 10, 64); err != nil {
 		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: year=%s", dirtySeason)
+		c.String(http.StatusBadRequest, "Could not parse parameter: year=%s", dirtyYear)
+		return
 	} else {
-		year = year
-	}
-
-	if s := c.Request.Header.Get("Accept"); s == "" || s != "application/json" {
-		c.Error(errors.New("Missing header, Accept: application/json"))
-		c.String(http.StatusBadRequest, "Missing header, Accept: application/json")
+		year = dirtyYear
 	}
 
 	if id != 0 {
@@ -124,7 +128,7 @@ func subjectHandler(c *gin.Context) {
 func courseHandler(c *gin.Context) {
 	dirtyDeep := c.DefaultQuery("deep", "true")
 	dirtyId := c.DefaultQuery("id", "0")
-	dirstySubjectId := c.Query("subject_id")
+	dirtySubjectId := c.Query("subject_id")
 
 	var deep bool
 	var id int64
@@ -141,20 +145,15 @@ func courseHandler(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
 	}
 
-	if subjectId, err = strconv.ParseInt(dirstySubjectId, 10, 64); err != nil {
+	if subjectId, err = strconv.ParseInt(dirtySubjectId, 10, 64); err != nil {
 		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: subject_id=%s", dirstySubjectId)
-	}
-
-	if s := c.Request.Header.Get("Accept"); s == "" || s != "application/json" {
-		c.Error(errors.New("Missing header, Accept: application/json"))
-		c.String(http.StatusBadRequest, "Missing header, Accept: application/json")
+		c.String(http.StatusBadRequest, "Could not parse parameter: subject_id=%s", dirtySubjectId)
 	}
 
 	if id != 0 {
-		return c.JSON(http.StatusOK, SelectCourse(id, deep))
+		c.JSON(http.StatusOK, SelectCourse(id, deep))
 	} else {
-		return c.JSON(http.StatusOK, SelectCourses(subjectId, deep))
+		c.JSON(http.StatusOK, SelectCourses(subjectId, deep))
 	}
 }
 
@@ -163,45 +162,53 @@ func sectionHandler(c *gin.Context) {
 }
 
 func SelectUniversity(university_id int64, deep bool) (university common.University) {
+	fmt.Println("Selecting universities")
 	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
-	PrepareAndGet(query, university, university_id)
-	if deep && university != nil {
-		deepSelectUniversities(university)
+	PrepareAndGet(query, &university, university_id)
+	if deep && &university != nil {
+		deepSelectUniversities(&university)
 	}
 	return
 }
 
 func SelectUniversities(deep bool) (universities []common.University) {
+	fmt.Println("Selecting universities")
 	query := `SELECT * FROM university ORDER BY name`
 	PrepareAndSelect(query, universities)
 	if deep {
 		for i, _ := range universities {
-			deepSelectUniversities(universities[i])
+			deepSelectUniversities(&universities[i])
 		}
 	}
 	return
 }
 
-func deepSelectUniversities(university common.University) {
+func deepSelectUniversities(university *common.University) {
 	university.Registrations = SelectRegistrations(university.Id)
 	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 }
 
 func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
+	key := "subject"
 	query := `SELECT * FROM subject WHERE id = $1 ORDER BY number`
-	PrepareAndSelect(query, subject, subject_id)
-	if deep && subject != nil {
-		deepSelectSubject(subject)
+	if err := Get(GetCachedStmt(key, query), &subject, subject_id); err != nil {
+		common.CheckError(err)
+	}
+	if deep && &subject != nil {
+		deepSelectSubject(&subject)
 	}
 	return
 }
 
-func SelectSubjects(university_id int64, season, year string, deep bool) (subjects []*common.Subject) {
+func SelectSubjects(university_id int64, season common.Season, year string, deep bool) (subjects []common.Subject) {
+	key := "subjects"
 	query := `SELECT * FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
-	PrepareAndSelect(query, subjects, university_id, season, year)
+	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
+		common.CheckError(err)
+	}
 	if deep {
 		for i := range subjects {
-			deepSelectSubject(subjects[i])
+			deepSelectSubject(&subjects[i])
 		}
 	}
 	return
@@ -213,20 +220,26 @@ func deepSelectSubject(subject *common.Subject) {
 }
 
 func SelectCourse(course_id int64, deep bool) (course common.Course) {
+	key := "course"
 	query := `SELECT * FROM course WHERE id = $1 ORDER BY name`
-	PrepareAndGet(query, course, course_id)
-	if deep && course != nil {
-		deepSelectCourse(course)
+	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
+		common.CheckError(err)
+	}
+	if deep && &course != nil {
+		deepSelectCourse(&course)
 	}
 	return
 }
 
-func SelectCourses(subjectId int64, deep bool) (courses []*common.Course) {
+func SelectCourses(subjectId int64, deep bool) (courses []common.Course) {
+	key := "courses"
 	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY name`
-	PrepareAndSelect(query, courses, subjectId)
+	if err := Select(GetCachedStmt(key, query), &courses, subjectId); err != nil {
+		common.CheckError(err)
+	}
 	if deep {
 		for i := range courses {
-			deepSelectCourse(courses[i])
+			deepSelectCourse(&courses[i])
 		}
 	}
 	return
@@ -237,22 +250,28 @@ func deepSelectCourse(course *common.Course) {
 	course.Metadata = SelectMetadata(0, 0, course.Id, 0, 0)
 }
 
-func SelectSection(section_id int64, deep bool) (section *common.Section) {
+func SelectSection(section_id int64, deep bool) (section common.Section) {
+	key := "section"
 	query := `SELECT * FROM section WHERE id = $1 ORDER BY number`
-	PrepareAndGet(query, section, section_id)
-	if deep && section != nil {
-		deepSelectSection(section)
+	if err := Get(GetCachedStmt(key, query), &section, section_id); err != nil {
+		common.CheckError(err)
+	}
+	if deep && &section != nil {
+		deepSelectSection(&section)
 	}
 
 	return
 }
 
-func SelectSections(course_id int64, deep bool) (sections []*common.Section) {
+func SelectSections(course_id int64, deep bool) (sections []common.Section) {
+	key := "sections"
 	query := `SELECT * FROM section WHERE course_id = $1 ORDER BY number`
-	PrepareAndSelect(query, sections, course_id)
+	if err := Select(GetCachedStmt(key, query), &sections, course_id); err != nil {
+		common.CheckError(err)
+	}
 	if deep {
 		for i := range sections {
-			deepSelectSection(sections[i])
+			deepSelectSection(&sections[i])
 		}
 	}
 
@@ -266,54 +285,69 @@ func deepSelectSection(section *common.Section) {
 	section.Metadata = SelectMetadata(0, 0, 0, section.Id, 0)
 }
 
-func SelectMeetings(sectionId int64) (meetings []*common.Meeting) {
-	query := `SELECT * FROM meetings WHERE section_id = $1 ORDER BY index`
-	PrepareAndSelect(query, meetings, sectionId)
-
+func SelectMeetings(sectionId int64) (meetings []common.Meeting) {
+	key := "meetings"
+	query := `SELECT * FROM meeting WHERE section_id = $1 ORDER BY index`
+	if err := Select(GetCachedStmt(key, query), &meetings, sectionId); err != nil {
+		common.CheckError(err)
+	}
 	for i := range meetings {
 		meetings[i].Metadata = SelectMetadata(0, 0, 0, 0, meetings[i].Id)
 	}
 	return
 }
 
-func SelectInstructors(sectionId int64) (instructors []*common.Instructor) {
+func SelectInstructors(sectionId int64) (instructors []common.Instructor) {
+	key := "instructors"
 	query := `SELECT * FROM instructor WHERE section_id = $1`
-	PrepareAndSelect(query, instructors, sectionId)
+	if err := Select(GetCachedStmt(key, query), &instructors, sectionId); err != nil {
+		common.CheckError(err)
+	}
 	return
 }
 
-func SelectBooks(sectionId int64) (books []*common.Book) {
+func SelectBooks(sectionId int64) (books []common.Book) {
+	key := "books"
 	query := `SELECT * FROM book WHERE section_id = $1`
-	PrepareAndSelect(query, books, sectionId)
+	if err := Select(GetCachedStmt(key, query), &books, sectionId); err != nil {
+		common.CheckError(err)
+	}
 	return
 }
 
-func SelectRegistrations(universityId int64) (registrations []*common.Registration) {
+func SelectRegistrations(universityId int64) (registrations []common.Registration) {
+	key := "registrations"
 	query := `SELECT * FROM registrations WHERE university_id = $1`
-	PrepareAndSelect(query, registrations, universityId)
+	if err := Select(GetCachedStmt(key, query), &registrations, universityId); err != nil {
+		common.CheckError(err)
+	}
 	return
 }
 
-func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*common.Metadata) {
+func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []common.Metadata) {
 	var err error
 	var query string
 
 	if universityId != 0 {
-		query = `SELECT * FROM meeting WHERE university_id = $1`
-		PrepareAndSelect(query, metadata, universityId)
+		key := "university_metatdata"
+		query = `SELECT * FROM metadata WHERE university_id = $1`
+		err = Select(GetCachedStmt(key, query), &metadata, universityId)
 	} else if subjectId != 0 {
-		query = `SELECT * FROM meeting WHERE subject_id = $1`
-		PrepareAndSelect(query, metadata, subjectId)
+		key := "subject_metatdata"
+		query = `SELECT * FROM metadata WHERE subject_id = $1`
+		err = Select(GetCachedStmt(key, query), &metadata, subjectId)
 	} else if courseId != 0 {
-		query = `SELECT * FROM meeting WHERE course_id = $1`
-		PrepareAndSelect(query, metadata, courseId)
+		key := "course_metatdata"
+		query = `SELECT * FROM metadata WHERE course_id = $1`
+		err = Select(GetCachedStmt(key, query), &metadata, courseId)
 	} else if sectionId != 0 {
-		query = `SELECT * FROM meeting WHERE section_id = $1`
-		PrepareAndSelect(query, metadata, sectionId)
-
-	} else if sectionId != 0 {
-		query = `SELECT * FROM meeting WHERE meeting_id = $1`
-		PrepareAndSelect(query, metadata, meetingId)
+		key := "section_metatdata"
+		query = `SELECT * FROM metadata WHERE section_id = $1`
+		err = Select(GetCachedStmt(key, query), &metadata, sectionId)
+	} else if meetingId != 0 {
+		key := "meeting_metatdata"
+		query = `SELECT * FROM metadata WHERE meeting_id = $1`
+		err = Select(GetCachedStmt(key, query), &metadata, meetingId)
 	} else {
 		log.Panic("No valid metadata id was passed")
 	}
@@ -321,36 +355,67 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 	return
 }
 
-func PrepareAndSelect(query string, data *interface{}, args ...interface{}) {
+func PrepareAndSelect(query string, data interface{}, args ...interface{}) {
 	if named, err := database.Preparex(query); err != nil {
 		common.CheckError(err)
-		err = named.Select(data, args)
+	} else if err := named.Select(data, args...); err != nil {
 		common.CheckError(err)
 	}
 }
 
-func PrepareAndGet(query string, data *interface{}, args ...interface{}) {
+func Select(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
+	if err := named.Select(data, args...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func Get(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
+	if err := named.Get(data, args...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetCachedStmt(key, query string) *sqlx.Stmt {
+	if stmt := preparedStmts[key]; stmt == nil {
+		preparedStmts[key] = Prepare(query)
+	}
+	return preparedStmts[key]
+}
+
+func Prepare(query string) *sqlx.Stmt {
 	if named, err := database.Preparex(query); err != nil {
 		common.CheckError(err)
-		err = named.Get(data, args)
+		return nil
+	} else {
+		return named
+	}
+}
+
+func PrepareAndGet(query string, data interface{}, args ...interface{}) {
+	if named, err := database.Preparex(query); err != nil {
+		common.CheckError(err)
+	} else if err := named.Get(data, args...); err != nil {
 		common.CheckError(err)
 	}
 }
 
-func ParseSeason(season string) (common.Season, error) {
-	switch strings.ToLower(season) {
+func ParseSeason(s string) (season common.Season, err error) {
+	switch strings.ToLower(s) {
 	case "w":
 	case "winter":
-		return common.WINTER
+		return common.WINTER, err
 	case "s":
 	case "spring":
-		return common.SPRING
+		return common.SPRING, err
 	case "u":
 	case "summer":
-		return common.SUMMER
+		return common.SUMMER, err
 	case "f":
 	case "fall":
-		return common.FALL
+		return common.FALL, err
 	}
-	return errors.New("Could not parse season")
+	err = errors.New("Could not parse season")
+	return season, err
 }

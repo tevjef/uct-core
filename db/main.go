@@ -175,7 +175,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 					metadata := meetings[meetingIndex].Metadata
 					for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-						metadata[metadataIndex].MeetingId = meetingId
+						metadata[metadataIndex].MeetingId.Int64 = meetingId
 						insertMetadata(db, metadata[metadataIndex])
 					}
 				}
@@ -187,20 +187,20 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 				metadata := sections[sectionIndex].Metadata
 				for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-					metadata[metadataIndex].SectionId = sectionId
+					metadata[metadataIndex].SectionId.Int64 = sectionId
 					insertMetadata(db, metadata[metadataIndex])
 				}
 			}
 
 			metadata := courses[courseIndex].Metadata
 			for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-				metadata[metadataIndex].CourseId = courseId
+				metadata[metadataIndex].CourseId.Int64 = courseId
 				insertMetadata(db, metadata[metadataIndex])
 			}
 		}
 
 		for _, metadata := range uni.Subjects[subjectIndex].Metadata {
-			metadata.SubjectId = subId
+			metadata.SubjectId.Int64 = subId
 			insertMetadata(db, metadata)
 		}
 	}
@@ -211,7 +211,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	}
 
 	for _, metadata := range uni.Metadata {
-		metadata.UniversityId = university_id
+		metadata.UniversityId.Int64 = university_id
 		insertMetadata(db, metadata)
 	}
 }
@@ -373,7 +373,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
 
 	var insertQuery string
 	var updateQuery string
-	if metadata.UniversityId != 0 {
+	if metadata.UniversityId.Int64 != 0 {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.university_id = :university_id AND metadata.title = :title`
@@ -391,7 +391,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:university_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.SubjectId != 0 {
+	} else if metadata.SubjectId.Int64 != 0 {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.subject_id = :subject_id AND metadata.title = :title`
@@ -409,7 +409,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:subject_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.CourseId != 0 {
+	} else if metadata.CourseId.Int64 != 0 {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.course_id = :course_id AND metadata.title = :title`
@@ -427,7 +427,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:course_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.SectionId != 0 {
+	} else if metadata.SectionId.Int64 != 0 {
 		if !*fullUpsert {
 
 			existsQuery := `SELECT id FROM metadata
@@ -446,7 +446,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:section_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.MeetingId != 0 {
+	} else if metadata.MeetingId.Int64 != 0 {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title`
