@@ -58,7 +58,7 @@ func TestInsertUniversity(t *testing.T) {
 
 }
 
-/*
+
 
 func BenchmarkCourseInsert(b *testing.B) {
 	setup()
@@ -67,14 +67,22 @@ func BenchmarkCourseInsert(b *testing.B) {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	b.ReportAllocs()
-
-	var newCourse uct.Course
-
-	err := json.Unmarshal(course, &newCourse)
+	f, err := os.Open("C:\\Users\\Tevin\\Desktop\\Development\\Go\\src\\uct\\short.txt")
 	uct.CheckError(err)
 
-	for i := 0; i < b.N; i++ {
-		insertCourse(database, newCourse)
+	/*	f := bytes.NewReader(course)
+	 */
+
+	dec := ffjson.NewDecoder()
+
+	var universities []uct.University
+
+	if err := dec.DecodeReader(f, &universities); err != nil {
+		log.Panicln(err)
 	}
-}*/
+
+	for _, university := range universities {
+		insertUniversity(db, university)
+	}
+}
+//48777122700 48.8

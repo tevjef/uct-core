@@ -18,7 +18,7 @@ import (
 
 var (
 	database *sqlx.DB
-	sem      = make(chan int, 500)
+	sem      = make(chan int, 50)
 	input    *bufio.Reader
 )
 
@@ -48,14 +48,9 @@ var (
 	metadataCount int
 )
 
-func init() {
-	database = initDB(uct.DbUser, uct.DbPassword, uct.DbHost, uct.DbName)
 
-}
-
-func initDB(user, password, host, dbname string) *sqlx.DB {
-	database, err := sqlx.Open("postgres",
-		fmt.Sprintf("postgres://%s:%s@%s:5432/%s", user, password, host, dbname))
+func initDB(connection string) *sqlx.DB {
+	database, err := sqlx.Open("postgres", connection)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -100,6 +95,8 @@ func main() {
 			}
 		}()
 	}
+
+	database = initDB(uct.GetUniversityDB(true))
 
 	if *file != nil {
 		input = bufio.NewReader(*file)
@@ -156,9 +153,10 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 		courses := uni.Subjects[subjectIndex].Courses
 		for courseIndex := 0; courseIndex < len(courses); courseIndex++ {
 			courses[courseIndex].SubjectId = subId
-			courseId := insertCourse(db, courses[courseIndex])
+			course := courses[courseIndex]
+			courseId := insertCourse(db, course)
 
-			sections := courses[courseIndex].Sections
+			sections := course.Sections
 			for sectionIndex := 0; sectionIndex < len(sections); sectionIndex++ {
 				sections[sectionIndex].CourseId = courseId
 				sectionId := insertSection(db, sections[sectionIndex])
@@ -225,8 +223,7 @@ func insertSubject(db *sqlx.DB, sub uct.Subject) (subject_id int64) {
 
 	if !*fullUpsert {
 		existsQuery := `SELECT id FROM course
-						WHERE hash = :hash
-						RETURNING course.id`
+						WHERE hash = :hash`
 
 		if subject_id = exists(db, existsQuery, sub); subject_id != 0 {
 			return
@@ -253,8 +250,7 @@ func insertCourse(db *sqlx.DB, course uct.Course) (course_id int64) {
 
 	if !*fullUpsert {
 		existsQuery := `SELECT id FROM course
-						WHERE hash = :hash
-						RETURNING course.id`
+						WHERE hash = :hash`
 
 		if course_id = exists(db, existsQuery, course); course_id != 0 {
 			return
@@ -477,6 +473,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
 func insert(db *sqlx.DB, query string, data interface{}) (id int64) {
 	insertions++
 	typeName := reflect.TypeOf(data).Name()
+
 
 	if rows, err := db.NamedQuery(query, data); err != nil {
 		log.Panicln(err, typeName)
