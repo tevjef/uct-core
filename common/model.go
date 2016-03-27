@@ -15,10 +15,10 @@ import (
 )
 
 type (
-	Subjects []Subject
+/*	Subjects []Subject
 	Courses  []Course
 	Sections []Section
-	Meetings []Meeting
+	Meetings []Meeting*/
 
 	MeetingByDay    []Meeting
 	SectionByNumber []Section
@@ -158,6 +158,39 @@ type (
 	Period int
 	Season int
 	Status int
+
+	PostgresNotify struct {
+		Payload string `json:"topic_name,omitempty"`
+		University University `json:"university,omitempty"`
+
+	}
+
+	GCMMessage struct {
+		To              string             `json:"to,omitempty"`
+		RegistrationIds []string           `json:"registration_ids,omitempty"`
+		CollapseKey     string             `json:"collapse_key,omitempty"`
+		Priority        string             `json:"priority,omitempty"`
+		DelayWhileIdle  bool               `json:"delay_while_idle,omitempty"`
+		TimeToLive      int                `json:"time_to_live,omitempty"`
+		Data            Data            `json:"data,omitempty"`
+		Notification    *MobileNotification `json:"notification,omitempty"`
+		DryRun          bool `json:"dry_run,omitempty"`
+	}
+
+	GCMResponse struct {
+		MessageId int64 `json:"message_id,omitempty"`
+		Error     string `json:"error, omitempty"`
+	}
+
+	Data struct {
+		Message string `json:"message,omitempty"`
+	}
+
+	MobileNotification struct {
+		Title string `json:"title,omitempty"`
+		Body  string `json:"body,omitempty"`
+		Icon  string `json:"icon,omitempty"`
+	}
 )
 
 const (
