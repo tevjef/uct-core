@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -176,7 +175,9 @@ func SelectUniversity(university_id int64, deep bool) (university common.Univers
 func SelectUniversities(deep bool) (universities []common.University) {
 	key := "universities"
 	query := `SELECT * FROM university ORDER BY name`
-	if err := Select(GetCachedStmt(key, query), &universities)
+	if err := Select(GetCachedStmt(key, query), &universities); err != nil {
+		common.CheckError(err)
+	}
 	if deep {
 		for i, _ := range universities {
 			deepSelectUniversities(&universities[i])
