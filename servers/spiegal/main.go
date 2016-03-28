@@ -406,17 +406,13 @@ func PrepareAndGet(query string, data interface{}, args ...interface{}) {
 
 func ParseSeason(s string) (season common.Season, err error) {
 	switch strings.ToLower(s) {
-	case "w":
-	case "winter":
+	case "winter", "w":
 		return common.WINTER, err
-	case "s":
-	case "spring":
+	case "spring", "s":
 		return common.SPRING, err
-	case "u":
-	case "summer":
+	case "summer", "u":
 		return common.SUMMER, err
-	case "f":
-	case "fall":
+	case "fall", "f":
 		return common.FALL, err
 	}
 	err = errors.New("Could not parse season")
