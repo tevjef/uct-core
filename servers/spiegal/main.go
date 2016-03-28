@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"uct/common"
+	"time"
 )
 
 var (
@@ -220,6 +221,7 @@ func deepSelectUniversities(university *common.University) {
 }
 
 func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
+	defer common.TimeTrack(time.Now(), "SelectSubject deep:" + deep)
 	key := "subject"
 	query := `SELECT * FROM subject WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &subject, subject_id); err != nil {
@@ -232,6 +234,7 @@ func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
 }
 
 func SelectSubjects(university_id int64, season common.Season, year string, deep bool) (subjects []common.Subject) {
+	defer common.TimeTrack(time.Now(), "SelectSubjects deep:" + deep)
 	key := "subjects"
 	query := `SELECT * FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
@@ -251,6 +254,7 @@ func deepSelectSubject(subject *common.Subject) {
 }
 
 func SelectCourse(course_id int64, deep bool) (course common.Course) {
+	defer common.TimeTrack(time.Now(), "SelectCourse deep:" + deep)
 	key := "course"
 	query := `SELECT * FROM course WHERE id = $1 ORDER BY name`
 	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
@@ -263,6 +267,7 @@ func SelectCourse(course_id int64, deep bool) (course common.Course) {
 }
 
 func SelectCourses(subjectId int64, deep bool) (courses []common.Course) {
+	defer common.TimeTrack(time.Now(), "SelectCourses deep:" + deep)
 	key := "courses"
 	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY name`
 	if err := Select(GetCachedStmt(key, query), &courses, subjectId); err != nil {
@@ -282,6 +287,8 @@ func deepSelectCourse(course *common.Course) {
 }
 
 func SelectSection(section_id int64, deep bool) (section common.Section) {
+	defer common.TimeTrack(time.Now(), "SelectSection deep:" + deep)
+
 	key := "section"
 	query := `SELECT * FROM section WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &section, section_id); err != nil {
@@ -295,6 +302,8 @@ func SelectSection(section_id int64, deep bool) (section common.Section) {
 }
 
 func SelectSections(course_id int64, deep bool) (sections []common.Section) {
+	defer common.TimeTrack(time.Now(), "SelectSections deep:" + deep)
+
 	key := "sections"
 	query := `SELECT * FROM section WHERE course_id = $1 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &sections, course_id); err != nil {
@@ -317,6 +326,8 @@ func deepSelectSection(section *common.Section) {
 }
 
 func SelectMeetings(sectionId int64) (meetings []common.Meeting) {
+	defer common.TimeTrack(time.Now(), "SelectMeetings")
+
 	key := "meetings"
 	query := `SELECT * FROM meeting WHERE section_id = $1 ORDER BY index`
 	if err := Select(GetCachedStmt(key, query), &meetings, sectionId); err != nil {
@@ -329,6 +340,8 @@ func SelectMeetings(sectionId int64) (meetings []common.Meeting) {
 }
 
 func SelectInstructors(sectionId int64) (instructors []common.Instructor) {
+	defer common.TimeTrack(time.Now(), "SelectInstructors")
+
 	key := "instructors"
 	query := `SELECT * FROM instructor WHERE section_id = $1`
 	if err := Select(GetCachedStmt(key, query), &instructors, sectionId); err != nil {
@@ -338,6 +351,8 @@ func SelectInstructors(sectionId int64) (instructors []common.Instructor) {
 }
 
 func SelectBooks(sectionId int64) (books []common.Book) {
+	defer common.TimeTrack(time.Now(), "SelectInstructors")
+
 	key := "books"
 	query := `SELECT * FROM book WHERE section_id = $1`
 	if err := Select(GetCachedStmt(key, query), &books, sectionId); err != nil {
@@ -356,6 +371,8 @@ func SelectRegistrations(universityId int64) (registrations []common.Registratio
 }
 
 func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []common.Metadata) {
+	defer common.TimeTrack(time.Now(), "SelectMetadata")
+
 	var err error
 	var query string
 

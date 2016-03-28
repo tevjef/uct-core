@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -135,4 +136,9 @@ func TrimAll(str string) string {
 	str = string(bytes.Replace([]byte(str), []byte("\x00"), []byte(""), -1))
 	str = string(bytes.Replace([]byte(str), []byte("\x01"), []byte(""), -1))
 	return trim(str)
+}
+
+func TimeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
 }
