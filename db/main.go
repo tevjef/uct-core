@@ -96,7 +96,7 @@ func main() {
 		}()
 	}
 
-	database = initDB(uct.GetUniversityDB(true))
+	database = initDB(uct.GetUniversityDB(false))
 
 	if *file != nil {
 		input = bufio.NewReader(*file)
@@ -146,61 +146,89 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 	university_id = upsert(db, insertQuery, updateQuery, uni)
 
-	for subjectIndex := 0; subjectIndex < len(uni.Subjects); subjectIndex++ {
-		uni.Subjects[subjectIndex].UniversityId = university_id
-		subId := insertSubject(db, uni.Subjects[subjectIndex])
+	for subjectIndex := range uni.Subjects {
+		subject := uni.Subjects[subjectIndex]
 
-		courses := uni.Subjects[subjectIndex].Courses
-		for courseIndex := 0; courseIndex < len(courses); courseIndex++ {
-			courses[courseIndex].SubjectId = subId
+		subject.UniversityId = university_id
+		subId := insertSubject(db, subject)
+
+		courses := subject.Courses
+		for courseIndex := range courses {
 			course := courses[courseIndex]
+
+			course.SubjectId = subId
 			courseId := insertCourse(db, course)
 
 			sections := course.Sections
-			for sectionIndex := 0; sectionIndex < len(sections); sectionIndex++ {
-				sections[sectionIndex].CourseId = courseId
-				sectionId := insertSection(db, sections[sectionIndex])
+			for sectionIndex := range sections {
+				section := sections[sectionIndex]
 
-				instructors := sections[sectionIndex].Instructors
-				for instructorIndex := 0; instructorIndex < len(instructors); instructorIndex++ {
-					instructors[instructorIndex].SectionId = sectionId
-					insertInstructor(db, instructors[instructorIndex])
+				section.CourseId = courseId
+				sectionId := insertSection(db, section)
+
+				//[]Instructors
+				instructors := section.Instructors
+				for instructorIndex := range instructors {
+					instructor := instructors[instructorIndex]
+
+					instructor.SectionId = sectionId
+					insertInstructor(db, instructor)
 				}
 
-				meetings := sections[sectionIndex].Meetings
-				for meetingIndex := 0; meetingIndex > len(meetings); meetingIndex++ {
-					meetings[meetingIndex].SectionId = sectionId
-					meetings[meetingIndex].Index = meetingIndex
-					meetingId := insertMeeting(db, meetings[meetingIndex])
+				//[]Meeting
+				meetings := section.Meetings
+				for meetingIndex := range meetings {
+					meeting := meetings[meetingIndex]
 
-					metadata := meetings[meetingIndex].Metadata
-					for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-						metadata[metadataIndex].MeetingId.Int64 = meetingId
-						insertMetadata(db, metadata[metadataIndex])
+					meeting.SectionId = sectionId
+					meeting.Index = meetingIndex
+					meetingId := insertMeeting(db, meeting)
+
+					// Meeting []Metadata
+					metadatas := meeting.Metadata
+					for metadataIndex :=  range metadatas {
+						metadata := metadatas[metadataIndex]
+
+						metadata.MeetingId = &meetingId
+						insertMetadata(db, metadata)
 					}
 				}
 
-				for _, book := range sections[sectionIndex].Books {
+				//[]Books
+				books := section.Books
+				for bookIndex := range books {
+					book := books[bookIndex]
+
 					book.SectionId = sectionId
 					insertBook(db, book)
 				}
 
-				metadata := sections[sectionIndex].Metadata
-				for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-					metadata[metadataIndex].SectionId.Int64 = sectionId
-					insertMetadata(db, metadata[metadataIndex])
+				// Section []Metadata
+				metadatas := section.Metadata
+				for metadataIndex := range metadatas {
+					metadata := metadatas[metadataIndex]
+
+					metadata.SectionId = &sectionId
+					insertMetadata(db, metadata)
 				}
 			}
 
-			metadata := courses[courseIndex].Metadata
-			for metadataIndex := 0; metadataIndex < len(metadata); metadataIndex++ {
-				metadata[metadataIndex].CourseId.Int64 = courseId
-				insertMetadata(db, metadata[metadataIndex])
+			// Course []Metadata
+			metadatas := course.Metadata
+			for metadataIndex := range metadatas {
+				metadata := metadatas[metadataIndex]
+
+				metadata.CourseId = &courseId
+				insertMetadata(db, metadata)
 			}
 		}
 
-		for _, metadata := range uni.Subjects[subjectIndex].Metadata {
-			metadata.SubjectId.Int64 = subId
+		// Subject []Metadata
+		metadatas := subject.Metadata
+		for metadataIndex := range metadatas {
+			metadata := metadatas[metadataIndex]
+
+			metadata.SubjectId = &subId
 			insertMetadata(db, metadata)
 		}
 	}
@@ -210,8 +238,12 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 		insertRegistration(db, registrations)
 	}
 
-	for _, metadata := range uni.Metadata {
-		metadata.UniversityId.Int64 = university_id
+	// university []Metadata
+	metadatas := uni.Metadata
+	for metadataIndex := range metadatas {
+		metadata := metadatas[metadataIndex]
+
+		metadata.UniversityId = &university_id
 		insertMetadata(db, metadata)
 	}
 }
@@ -373,7 +405,8 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
 
 	var insertQuery string
 	var updateQuery string
-	if metadata.UniversityId.Int64 != 0 {
+
+	if metadata.UniversityId != nil {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.university_id = :university_id AND metadata.title = :title`
@@ -391,7 +424,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:university_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.SubjectId.Int64 != 0 {
+	} else if metadata.SubjectId != nil {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.subject_id = :subject_id AND metadata.title = :title`
@@ -409,7 +442,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:subject_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.CourseId.Int64 != 0 {
+	} else if metadata.CourseId != nil {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.course_id = :course_id AND metadata.title = :title`
@@ -427,7 +460,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:course_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.SectionId.Int64 != 0 {
+	} else if metadata.SectionId != nil {
 		if !*fullUpsert {
 
 			existsQuery := `SELECT id FROM metadata
@@ -446,7 +479,7 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
                        VALUES (:section_id, :title, :content) 
                        RETURNING metadata.id`
 
-	} else if metadata.MeetingId.Int64 != 0 {
+	} else if metadata.MeetingId != nil {
 		if !*fullUpsert {
 			existsQuery := `SELECT id FROM metadata
 						WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title`

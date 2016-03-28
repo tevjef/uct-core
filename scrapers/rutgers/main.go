@@ -264,7 +264,7 @@ func getCampus(campus string) uct.University {
 				newCourse := uct.Course{
 					Name:     course.ExpandedTitle,
 					Number:   course.CourseNumber,
-					Synopsis: uct.ToNullString(course.CourseDescription),
+					Synopsis: course.synopsis(),
 					Metadata: course.metadata()}
 
 				for _, section := range course.Sections {
@@ -285,8 +285,8 @@ func getCampus(campus string) uct.University {
 
 					for _, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
-							Room:      uct.ToNullString(meeting.room()),
-							Day:       uct.ToNullString(meeting.day()),
+							Room:      meeting.room(),
+							Day:       meeting.day(),
 							StartTime: meeting.getMeetingHourBegin(),
 							EndTime:   meeting.getMeetingHourEnd(),
 							Metadata:  meeting.metadata()}
@@ -652,11 +652,12 @@ func (meeting RMeetingTime) timeRank() int {
 	return -1
 }
 
-func (meeting RMeetingTime) room() string {
+func (meeting RMeetingTime) room() *string {
 	if meeting.BuildingCode != "" {
-		return meeting.BuildingCode + " - " + meeting.RoomNumber
+		room := meeting.BuildingCode + " - " + meeting.RoomNumber
+		return &room
 	}
-	return ""
+	return nil
 }
 
 func (meetingTime RMeetingTime) getMeetingHourBegin() string {
@@ -749,24 +750,29 @@ func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
 	return time.Unix(0, 0)
 }
 
-func (meeting RMeetingTime) day() string {
+func (meeting RMeetingTime) day() *string {
+	var day string
 	switch meeting.MeetingDay {
 	case "M":
-		return "Monday"
+		day = "Monday"
 	case "T":
-		return "Tuesday"
+		day = "Tuesday"
 	case "W":
-		return "Wednesday"
+		day = "Wednesday"
 	case "TH":
-		return "Thursday"
+		day = "Thursday"
 	case "F":
-		return "Friday"
+		day = "Friday"
 	case "S":
-		return "Saturday"
+		day = "Saturday"
 	case "U":
-		return "Sunday"
+		day = "Sunday"
 	}
-	return ""
+	if len(day) == 0 {
+		return nil
+	} else {
+		return &day
+	}
 }
 
 func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
@@ -778,6 +784,14 @@ func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
 	}
 
 	return
+}
+
+func (course RCourse) synopsis() *string {
+	if course.CourseDescription == "" {
+		return nil
+	} else {
+		return &course.CourseDescription
+	}
 }
 
 func (course RCourse) metadata() (metadata []uct.Metadata) {

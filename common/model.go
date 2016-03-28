@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"crypto/sha1"
-	"database/sql"
 	"fmt"
 	"golang.org/x/exp/utf8string"
 	"log"
@@ -15,10 +14,10 @@ import (
 )
 
 type (
-/*	Subjects []Subject
-	Courses  []Course
-	Sections []Section
-	Meetings []Meeting*/
+	/*	Subjects []Subject
+		Courses  []Course
+		Sections []Section
+		Meetings []Meeting*/
 
 	MeetingByDay    []Meeting
 	SectionByNumber []Section
@@ -26,7 +25,7 @@ type (
 	SubjectByName   []Subject
 
 	University struct {
-		Id               int64          `json:"id,omitempty" db:"id"`
+		Id               int64          `json:"-" db:"id"`
 		Name             string         `json:"name,omitempty" db:"name"`
 		Abbr             string         `json:"abbr,omitempty" db:"abbr"`
 		HomePage         string         `json:"home_page,omitempty" db:"home_page"`
@@ -43,13 +42,13 @@ type (
 
 	// Sort by name
 	Subject struct {
-		Id           int64      `json:"id,omitempty" db:"id"`
-		UniversityId int64      `json:"university_id,omitempty" db:"university_id"`
+		Id           int64      `json:"-" db:"id"`
+		UniversityId int64      `json:"-" db:"university_id"`
 		Name         string     `json:"name,omitempty" db:"name"`
 		Number       string     `json:"number,omitempty" db:"number"`
 		Season       string     `json:"season" db:"season"`
 		Year         int        `json:"year,omitempty" db:"year"`
-		Hash         string     `json:"-" db:"hash"`
+		Hash         string     `json:"hash,omitempty" db:"hash"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
 		Courses      []Course   `json:"courses,omitempty"`
 		Metadata     []Metadata `json:"metadata,omitempty"`
@@ -59,24 +58,23 @@ type (
 
 	// Sort by name
 	Course struct {
-		Id        int64          `json:"id,omitempty" db:"id"`
-		SubjectId int64          `json:"subject_id,omitempty" db:"subject_id"`
-		Name      string         `json:"name,omitempty" db:"name"`
-		Number    string         `json:"number,omitempty" db:"number"`
-		Synopsis  sql.NullString `json:"synopsis,omitempty" db:"synopsis"`
-		Hash      string         `json:"-" db:"hash"`
-		TopicName string         `json:"topic_name,omitempty" db:"topic_name"`
-		Sections  []Section      `json:"sections,omitempty"`
-		Metadata  []Metadata     `json:"metadata,omitempty"`
-		CreatedAt time.Time      `json:"-" db:"created_at"`
-		UpdatedAt time.Time      `json:"-" db:"updated_at"`
-
+		Id        int64      `json:"-" db:"id"`
+		SubjectId int64      `json:"-" db:"subject_id"`
+		Name      string     `json:"name,omitempty" db:"name"`
+		Number    string     `json:"number,omitempty" db:"number"`
+		Synopsis  *string    `json:"synopsis,omitempty" db:"synopsis"`
+		Hash      string     `json:"hash,omitempty" db:"hash"`
+		TopicName string     `json:"topic_name,omitempty" db:"topic_name"`
+		Sections  []Section  `json:"sections,omitempty"`
+		Metadata  []Metadata `json:"metadata,omitempty"`
+		CreatedAt time.Time  `json:"-" db:"created_at"`
+		UpdatedAt time.Time  `json:"-" db:"updated_at"`
 	}
 
 	// Sort by number
 	Section struct {
-		Id          int64        `json:"id,omitempty" db:"id"`
-		CourseId    int64        `json:"course_id,omitempty" db:"course_id"`
+		Id          int64        `json:"-" db:"id"`
+		CourseId    int64        `json:"-" db:"course_id"`
 		Number      string       `json:"number,omitempty" db:"number"`
 		CallNumber  string       `json:"call_number,omitempty" db:"call_number"`
 		Max         float64      `json:"max,omitempty" db:"max"`
@@ -94,29 +92,29 @@ type (
 
 	// Sort by day
 	Meeting struct {
-		Id        int64          `json:"id,omitempty" db:"id"`
-		SectionId int64          `json:"section_id,omitempty" db:"section_id"`
-		Room      sql.NullString `json:"room,omitempty" db:"room"`
-		Day       sql.NullString `json:"day,omitempty" db:"day"`
-		StartTime string         `json:"start_time,omitempty" db:"start_time"`
-		EndTime   string         `json:"end_time,omitempty" db:"end_time"`
-		Index     int            `json:"-" db:"index"`
-		Metadata  []Metadata     `json:"metadata,omitempty"`
-		CreatedAt time.Time      `json:"-" db:"created_at"`
-		UpdatedAt time.Time      `json:"-" db:"updated_at"`
+		Id        int64      `json:"-" db:"id"`
+		SectionId int64      `json:"-" db:"section_id"`
+		Room      *string    `json:"room,omitempty" db:"room"`
+		Day       *string    `json:"day,omitempty" db:"day"`
+		StartTime string     `json:"start_time,omitempty" db:"start_time"`
+		EndTime   string     `json:"end_time,omitempty" db:"end_time"`
+		Index     int        `json:"index" db:"index"`
+		Metadata  []Metadata `json:"metadata,omitempty"`
+		CreatedAt time.Time  `json:"-" db:"created_at"`
+		UpdatedAt time.Time  `json:"-" db:"updated_at"`
 	}
 
 	Instructor struct {
-		Id        int64     `json:"id,omitempty" db:"id"`
-		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
+		Id        int64     `json:"-" db:"id"`
+		SectionId int64     `json:"-" db:"section_id"`
 		Name      string    `json:"name,omitempty" db:"name"`
 		CreatedAt time.Time `json:"-" db:"created_at"`
 		UpdatedAt time.Time `json:"-" db:"updated_at"`
 	}
 
 	Book struct {
-		Id        int64     `json:"id,omitempty" db:"id"`
-		SectionId int64     `json:"section_id,omitempty" db:"section_id"`
+		Id        int64     `json:"-" db:"id"`
+		SectionId int64     `json:"-" db:"section_id"`
 		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
 		CreatedAt time.Time `json:"-" db:"created_at"`
@@ -124,12 +122,12 @@ type (
 	}
 
 	Metadata struct {
-		Id           int64     `json:"id,omitempty" db:"id"`
-		UniversityId sql.NullInt64     `json:"-" db:"university_id"`
-		SubjectId    sql.NullInt64      `json:"-" db:"subject_id"`
-		CourseId     sql.NullInt64      `json:"-" db:"course_id"`
-		SectionId    sql.NullInt64      `json:"-" db:"section_id"`
-		MeetingId    sql.NullInt64      `json:"-" db:"meeting_id"`
+		Id           int64     `json:"-" db:"id"`
+		UniversityId *int64    `json:"-" db:"university_id"`
+		SubjectId    *int64    `json:"-" db:"subject_id"`
+		CourseId     *int64    `json:"-" db:"course_id"`
+		SectionId    *int64    `json:"-" db:"section_id"`
+		MeetingId    *int64    `json:"-" db:"meeting_id"`
 		Title        string    `json:"title,omitempty" db:"title"`
 		Content      string    `json:"content,omitempty" db:"content"`
 		CreatedAt    time.Time `json:"-" db:"created_at"`
@@ -137,8 +135,8 @@ type (
 	}
 
 	Registration struct {
-		Id           int64     `json:"id,omitempty" db:"id"`
-		UniversityId int64     `json:"university_id,omitempty" db:"university_id"`
+		Id           int64     `json:"-" db:"id"`
+		UniversityId int64     `json:"-" db:"university_id"`
 		Period       string    `json:"period,omitempty" db:"period"`
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
 		CreatedAt    time.Time `json:"-" db:"created_at"`
@@ -161,25 +159,24 @@ type (
 	Status int
 
 	PostgresNotify struct {
-		Payload string `json:"topic_name,omitempty"`
+		Payload    string     `json:"topic_name,omitempty"`
 		University University `json:"university,omitempty"`
-
 	}
 
 	GCMMessage struct {
-		To              string             `json:"to,omitempty"`
-		RegistrationIds []string           `json:"registration_ids,omitempty"`
-		CollapseKey     string             `json:"collapse_key,omitempty"`
-		Priority        string             `json:"priority,omitempty"`
-		DelayWhileIdle  bool               `json:"delay_while_idle,omitempty"`
-		TimeToLive      int                `json:"time_to_live,omitempty"`
-		Data            Data            `json:"data,omitempty"`
+		To              string              `json:"to,omitempty"`
+		RegistrationIds []string            `json:"registration_ids,omitempty"`
+		CollapseKey     string              `json:"collapse_key,omitempty"`
+		Priority        string              `json:"priority,omitempty"`
+		DelayWhileIdle  bool                `json:"delay_while_idle,omitempty"`
+		TimeToLive      int                 `json:"time_to_live,omitempty"`
+		Data            Data                `json:"data,omitempty"`
 		Notification    *MobileNotification `json:"notification,omitempty"`
-		DryRun          bool `json:"dry_run,omitempty"`
+		DryRun          bool                `json:"dry_run,omitempty"`
 	}
 
 	GCMResponse struct {
-		MessageId int64 `json:"message_id,omitempty"`
+		MessageId int64  `json:"message_id,omitempty"`
 		Error     string `json:"error, omitempty"`
 	}
 
@@ -396,11 +393,13 @@ func (course *Course) VetAndBuild() {
 	}
 
 	// Synopsis
-	if course.Synopsis.String != "" {
+	if  course.Synopsis != nil {
 		regex, err := regexp.Compile("\\s\\s+")
 		CheckError(err)
-		course.Synopsis.String = regex.ReplaceAllString(course.Synopsis.String, " ")
-		course.Synopsis.String = utf8string.NewString(course.Synopsis.String).String()
+		temp := regex.ReplaceAllString(*course.Synopsis, " ")
+		course.Synopsis = &temp
+		temp = utf8string.NewString(*course.Synopsis).String()
+		course.Synopsis = &temp
 
 	}
 
@@ -600,7 +599,7 @@ func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester
 }
 
 func (meeting Meeting) dayRank() int {
-	switch meeting.Day.String {
+	switch *meeting.Day {
 	case "Monday":
 		return 1
 	case "Tuesday":

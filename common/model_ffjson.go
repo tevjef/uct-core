@@ -7,7 +7,6 @@ package common
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
@@ -35,16 +34,6 @@ func (mj *Book) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.SectionId != 0 {
-		buf.WriteString(`"section_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SectionId), 10, mj.SectionId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Title) != 0 {
 		buf.WriteString(`"title":`)
 		fflib.WriteJsonString(buf, string(mj.Title))
@@ -64,18 +53,10 @@ const (
 	ffj_t_Bookbase = iota
 	ffj_t_Bookno_such_key
 
-	ffj_t_Book_Id
-
-	ffj_t_Book_SectionId
-
 	ffj_t_Book_Title
 
 	ffj_t_Book_Url
 )
-
-var ffj_key_Book_Id = []byte("id")
-
-var ffj_key_Book_SectionId = []byte("section_id")
 
 var ffj_key_Book_Title = []byte("title")
 
@@ -140,22 +121,6 @@ mainparse:
 			} else {
 				switch kn[0] {
 
-				case 'i':
-
-					if bytes.Equal(ffj_key_Book_Id, kn) {
-						currentKey = ffj_t_Book_Id
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 's':
-
-					if bytes.Equal(ffj_key_Book_SectionId, kn) {
-						currentKey = ffj_t_Book_SectionId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				case 't':
 
 					if bytes.Equal(ffj_key_Book_Title, kn) {
@@ -186,18 +151,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Book_SectionId, kn) {
-					currentKey = ffj_t_Book_SectionId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Book_Id, kn) {
-					currentKey = ffj_t_Book_Id
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				currentKey = ffj_t_Bookno_such_key
 				state = fflib.FFParse_want_colon
 				goto mainparse
@@ -214,12 +167,6 @@ mainparse:
 
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
-
-				case ffj_t_Book_Id:
-					goto handle_Id
-
-				case ffj_t_Book_SectionId:
-					goto handle_SectionId
 
 				case ffj_t_Book_Title:
 					goto handle_Title
@@ -240,66 +187,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SectionId:
-
-	/* handler: uj.SectionId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SectionId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Title:
 
@@ -392,16 +279,6 @@ func (mj *Course) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.SubjectId != 0 {
-		buf.WriteString(`"subject_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SubjectId), 10, mj.SubjectId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Name) != 0 {
 		buf.WriteString(`"name":`)
 		fflib.WriteJsonString(buf, string(mj.Name))
@@ -412,13 +289,16 @@ func (mj *Course) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		fflib.WriteJsonString(buf, string(mj.Number))
 		buf.WriteByte(',')
 	}
-	if true {
-		/* Struct fall back. type=sql.NullString kind=struct */
-		buf.WriteString(`"synopsis":`)
-		err = buf.Encode(&mj.Synopsis)
-		if err != nil {
-			return err
+	if mj.Synopsis != nil {
+		if true {
+			buf.WriteString(`"synopsis":`)
+			fflib.WriteJsonString(buf, string(*mj.Synopsis))
+			buf.WriteByte(',')
 		}
+	}
+	if len(mj.Hash) != 0 {
+		buf.WriteString(`"hash":`)
+		fflib.WriteJsonString(buf, string(mj.Hash))
 		buf.WriteByte(',')
 	}
 	if len(mj.TopicName) != 0 {
@@ -483,15 +363,13 @@ const (
 	ffj_t_Coursebase = iota
 	ffj_t_Courseno_such_key
 
-	ffj_t_Course_Id
-
-	ffj_t_Course_SubjectId
-
 	ffj_t_Course_Name
 
 	ffj_t_Course_Number
 
 	ffj_t_Course_Synopsis
+
+	ffj_t_Course_Hash
 
 	ffj_t_Course_TopicName
 
@@ -500,15 +378,13 @@ const (
 	ffj_t_Course_Metadata
 )
 
-var ffj_key_Course_Id = []byte("id")
-
-var ffj_key_Course_SubjectId = []byte("subject_id")
-
 var ffj_key_Course_Name = []byte("name")
 
 var ffj_key_Course_Number = []byte("number")
 
 var ffj_key_Course_Synopsis = []byte("synopsis")
+
+var ffj_key_Course_Hash = []byte("hash")
 
 var ffj_key_Course_TopicName = []byte("topic_name")
 
@@ -575,10 +451,10 @@ mainparse:
 			} else {
 				switch kn[0] {
 
-				case 'i':
+				case 'h':
 
-					if bytes.Equal(ffj_key_Course_Id, kn) {
-						currentKey = ffj_t_Course_Id
+					if bytes.Equal(ffj_key_Course_Hash, kn) {
+						currentKey = ffj_t_Course_Hash
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -606,12 +482,7 @@ mainparse:
 
 				case 's':
 
-					if bytes.Equal(ffj_key_Course_SubjectId, kn) {
-						currentKey = ffj_t_Course_SubjectId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Course_Synopsis, kn) {
+					if bytes.Equal(ffj_key_Course_Synopsis, kn) {
 						currentKey = ffj_t_Course_Synopsis
 						state = fflib.FFParse_want_colon
 						goto mainparse
@@ -650,6 +521,12 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffj_key_Course_Hash, kn) {
+					currentKey = ffj_t_Course_Hash
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.EqualFoldRight(ffj_key_Course_Synopsis, kn) {
 					currentKey = ffj_t_Course_Synopsis
 					state = fflib.FFParse_want_colon
@@ -664,18 +541,6 @@ mainparse:
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Course_Name, kn) {
 					currentKey = ffj_t_Course_Name
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Course_SubjectId, kn) {
-					currentKey = ffj_t_Course_SubjectId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Course_Id, kn) {
-					currentKey = ffj_t_Course_Id
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -697,12 +562,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Course_Id:
-					goto handle_Id
-
-				case ffj_t_Course_SubjectId:
-					goto handle_SubjectId
-
 				case ffj_t_Course_Name:
 					goto handle_Name
 
@@ -711,6 +570,9 @@ mainparse:
 
 				case ffj_t_Course_Synopsis:
 					goto handle_Synopsis
+
+				case ffj_t_Course_Hash:
+					goto handle_Hash
 
 				case ffj_t_Course_TopicName:
 					goto handle_TopicName
@@ -734,66 +596,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SubjectId:
-
-	/* handler: uj.SubjectId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SubjectId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Name:
 
@@ -849,18 +651,54 @@ handle_Number:
 
 handle_Synopsis:
 
-	/* handler: uj.Synopsis type=sql.NullString kind=struct quoted=false*/
+	/* handler: uj.Synopsis type=string kind=string quoted=false*/
 
 	{
-		/* Falling back. type=sql.NullString kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
 		}
 
-		err = json.Unmarshal(tbuf, &uj.Synopsis)
-		if err != nil {
-			return fs.WrapErr(err)
+		if tok == fflib.FFTok_null {
+
+			uj.Synopsis = nil
+
+		} else {
+
+			var tval string
+			outBuf := fs.Output.Bytes()
+
+			tval = string(string(outBuf))
+			uj.Synopsis = &tval
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Hash:
+
+	/* handler: uj.Hash type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.Hash = string(string(outBuf))
+
 		}
 	}
 
@@ -2206,16 +2044,6 @@ func (mj *Instructor) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.SectionId != 0 {
-		buf.WriteString(`"section_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SectionId), 10, mj.SectionId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Name) != 0 {
 		buf.WriteString(`"name":`)
 		fflib.WriteJsonString(buf, string(mj.Name))
@@ -2230,16 +2058,8 @@ const (
 	ffj_t_Instructorbase = iota
 	ffj_t_Instructorno_such_key
 
-	ffj_t_Instructor_Id
-
-	ffj_t_Instructor_SectionId
-
 	ffj_t_Instructor_Name
 )
-
-var ffj_key_Instructor_Id = []byte("id")
-
-var ffj_key_Instructor_SectionId = []byte("section_id")
 
 var ffj_key_Instructor_Name = []byte("name")
 
@@ -2302,14 +2122,6 @@ mainparse:
 			} else {
 				switch kn[0] {
 
-				case 'i':
-
-					if bytes.Equal(ffj_key_Instructor_Id, kn) {
-						currentKey = ffj_t_Instructor_Id
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				case 'n':
 
 					if bytes.Equal(ffj_key_Instructor_Name, kn) {
@@ -2318,30 +2130,10 @@ mainparse:
 						goto mainparse
 					}
 
-				case 's':
-
-					if bytes.Equal(ffj_key_Instructor_SectionId, kn) {
-						currentKey = ffj_t_Instructor_SectionId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				}
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Instructor_Name, kn) {
 					currentKey = ffj_t_Instructor_Name
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Instructor_SectionId, kn) {
-					currentKey = ffj_t_Instructor_SectionId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Instructor_Id, kn) {
-					currentKey = ffj_t_Instructor_Id
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -2363,12 +2155,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Instructor_Id:
-					goto handle_Id
-
-				case ffj_t_Instructor_SectionId:
-					goto handle_SectionId
-
 				case ffj_t_Instructor_Name:
 					goto handle_Name
 
@@ -2385,66 +2171,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SectionId:
-
-	/* handler: uj.SectionId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SectionId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Name:
 
@@ -2511,33 +2237,19 @@ func (mj *Meeting) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.SectionId != 0 {
-		buf.WriteString(`"section_id":`)
-		fflib.FormatBits2(buf, uint64(mj.SectionId), 10, mj.SectionId < 0)
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullString kind=struct */
-		buf.WriteString(`"room":`)
-		err = buf.Encode(&mj.Room)
-		if err != nil {
-			return err
+	if mj.Room != nil {
+		if true {
+			buf.WriteString(`"room":`)
+			fflib.WriteJsonString(buf, string(*mj.Room))
+			buf.WriteByte(',')
 		}
-		buf.WriteByte(',')
 	}
-	if true {
-		/* Struct fall back. type=sql.NullString kind=struct */
-		buf.WriteString(`"day":`)
-		err = buf.Encode(&mj.Day)
-		if err != nil {
-			return err
+	if mj.Day != nil {
+		if true {
+			buf.WriteString(`"day":`)
+			fflib.WriteJsonString(buf, string(*mj.Day))
+			buf.WriteByte(',')
 		}
-		buf.WriteByte(',')
 	}
 	if len(mj.StartTime) != 0 {
 		buf.WriteString(`"start_time":`)
@@ -2549,6 +2261,9 @@ func (mj *Meeting) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		fflib.WriteJsonString(buf, string(mj.EndTime))
 		buf.WriteByte(',')
 	}
+	buf.WriteString(`"index":`)
+	fflib.FormatBits2(buf, uint64(mj.Index), 10, mj.Index < 0)
+	buf.WriteByte(',')
 	if len(mj.Metadata) != 0 {
 		buf.WriteString(`"metadata":`)
 		if mj.Metadata != nil {
@@ -2582,10 +2297,6 @@ const (
 	ffj_t_Meetingbase = iota
 	ffj_t_Meetingno_such_key
 
-	ffj_t_Meeting_Id
-
-	ffj_t_Meeting_SectionId
-
 	ffj_t_Meeting_Room
 
 	ffj_t_Meeting_Day
@@ -2594,12 +2305,10 @@ const (
 
 	ffj_t_Meeting_EndTime
 
+	ffj_t_Meeting_Index
+
 	ffj_t_Meeting_Metadata
 )
-
-var ffj_key_Meeting_Id = []byte("id")
-
-var ffj_key_Meeting_SectionId = []byte("section_id")
 
 var ffj_key_Meeting_Room = []byte("room")
 
@@ -2608,6 +2317,8 @@ var ffj_key_Meeting_Day = []byte("day")
 var ffj_key_Meeting_StartTime = []byte("start_time")
 
 var ffj_key_Meeting_EndTime = []byte("end_time")
+
+var ffj_key_Meeting_Index = []byte("index")
 
 var ffj_key_Meeting_Metadata = []byte("metadata")
 
@@ -2688,8 +2399,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_Meeting_Id, kn) {
-						currentKey = ffj_t_Meeting_Id
+					if bytes.Equal(ffj_key_Meeting_Index, kn) {
+						currentKey = ffj_t_Meeting_Index
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -2712,12 +2423,7 @@ mainparse:
 
 				case 's':
 
-					if bytes.Equal(ffj_key_Meeting_SectionId, kn) {
-						currentKey = ffj_t_Meeting_SectionId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Meeting_StartTime, kn) {
+					if bytes.Equal(ffj_key_Meeting_StartTime, kn) {
 						currentKey = ffj_t_Meeting_StartTime
 						state = fflib.FFParse_want_colon
 						goto mainparse
@@ -2727,6 +2433,12 @@ mainparse:
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Meeting_Metadata, kn) {
 					currentKey = ffj_t_Meeting_Metadata
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Meeting_Index, kn) {
+					currentKey = ffj_t_Meeting_Index
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -2755,18 +2467,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Meeting_SectionId, kn) {
-					currentKey = ffj_t_Meeting_SectionId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Meeting_Id, kn) {
-					currentKey = ffj_t_Meeting_Id
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				currentKey = ffj_t_Meetingno_such_key
 				state = fflib.FFParse_want_colon
 				goto mainparse
@@ -2784,12 +2484,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Meeting_Id:
-					goto handle_Id
-
-				case ffj_t_Meeting_SectionId:
-					goto handle_SectionId
-
 				case ffj_t_Meeting_Room:
 					goto handle_Room
 
@@ -2801,6 +2495,9 @@ mainparse:
 
 				case ffj_t_Meeting_EndTime:
 					goto handle_EndTime
+
+				case ffj_t_Meeting_Index:
+					goto handle_Index
 
 				case ffj_t_Meeting_Metadata:
 					goto handle_Metadata
@@ -2819,80 +2516,30 @@ mainparse:
 		}
 	}
 
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SectionId:
-
-	/* handler: uj.SectionId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.SectionId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
 handle_Room:
 
-	/* handler: uj.Room type=sql.NullString kind=struct quoted=false*/
+	/* handler: uj.Room type=string kind=string quoted=false*/
 
 	{
-		/* Falling back. type=sql.NullString kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
 		}
 
-		err = json.Unmarshal(tbuf, &uj.Room)
-		if err != nil {
-			return fs.WrapErr(err)
+		if tok == fflib.FFTok_null {
+
+			uj.Room = nil
+
+		} else {
+
+			var tval string
+			outBuf := fs.Output.Bytes()
+
+			tval = string(string(outBuf))
+			uj.Room = &tval
+
 		}
 	}
 
@@ -2901,18 +2548,28 @@ handle_Room:
 
 handle_Day:
 
-	/* handler: uj.Day type=sql.NullString kind=struct quoted=false*/
+	/* handler: uj.Day type=string kind=string quoted=false*/
 
 	{
-		/* Falling back. type=sql.NullString kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
 		}
 
-		err = json.Unmarshal(tbuf, &uj.Day)
-		if err != nil {
-			return fs.WrapErr(err)
+		if tok == fflib.FFTok_null {
+
+			uj.Day = nil
+
+		} else {
+
+			var tval string
+			outBuf := fs.Output.Bytes()
+
+			tval = string(string(outBuf))
+			uj.Day = &tval
+
 		}
 	}
 
@@ -2964,6 +2621,36 @@ handle_EndTime:
 			outBuf := fs.Output.Bytes()
 
 			uj.EndTime = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Index:
+
+	/* handler: uj.Index type=int kind=int quoted=false*/
+
+	{
+		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			uj.Index = int(tval)
 
 		}
 	}
@@ -3078,56 +2765,6 @@ func (mj *Metadata) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullInt64 kind=struct */
-		buf.WriteString(`"university_id":`)
-		err = buf.Encode(&mj.UniversityId)
-		if err != nil {
-			return err
-		}
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullInt64 kind=struct */
-		buf.WriteString(`"subject_id":`)
-		err = buf.Encode(&mj.SubjectId)
-		if err != nil {
-			return err
-		}
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullInt64 kind=struct */
-		buf.WriteString(`"course_id":`)
-		err = buf.Encode(&mj.CourseId)
-		if err != nil {
-			return err
-		}
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullInt64 kind=struct */
-		buf.WriteString(`"section_id":`)
-		err = buf.Encode(&mj.SectionId)
-		if err != nil {
-			return err
-		}
-		buf.WriteByte(',')
-	}
-	if true {
-		/* Struct fall back. type=sql.NullInt64 kind=struct */
-		buf.WriteString(`"meeting_id":`)
-		err = buf.Encode(&mj.MeetingId)
-		if err != nil {
-			return err
-		}
-		buf.WriteByte(',')
-	}
 	if len(mj.Title) != 0 {
 		buf.WriteString(`"title":`)
 		fflib.WriteJsonString(buf, string(mj.Title))
@@ -3147,34 +2784,10 @@ const (
 	ffj_t_Metadatabase = iota
 	ffj_t_Metadatano_such_key
 
-	ffj_t_Metadata_Id
-
-	ffj_t_Metadata_UniversityId
-
-	ffj_t_Metadata_SubjectId
-
-	ffj_t_Metadata_CourseId
-
-	ffj_t_Metadata_SectionId
-
-	ffj_t_Metadata_MeetingId
-
 	ffj_t_Metadata_Title
 
 	ffj_t_Metadata_Content
 )
-
-var ffj_key_Metadata_Id = []byte("id")
-
-var ffj_key_Metadata_UniversityId = []byte("university_id")
-
-var ffj_key_Metadata_SubjectId = []byte("subject_id")
-
-var ffj_key_Metadata_CourseId = []byte("course_id")
-
-var ffj_key_Metadata_SectionId = []byte("section_id")
-
-var ffj_key_Metadata_MeetingId = []byte("meeting_id")
 
 var ffj_key_Metadata_Title = []byte("title")
 
@@ -3241,42 +2854,8 @@ mainparse:
 
 				case 'c':
 
-					if bytes.Equal(ffj_key_Metadata_CourseId, kn) {
-						currentKey = ffj_t_Metadata_CourseId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Metadata_Content, kn) {
+					if bytes.Equal(ffj_key_Metadata_Content, kn) {
 						currentKey = ffj_t_Metadata_Content
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'i':
-
-					if bytes.Equal(ffj_key_Metadata_Id, kn) {
-						currentKey = ffj_t_Metadata_Id
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'm':
-
-					if bytes.Equal(ffj_key_Metadata_MeetingId, kn) {
-						currentKey = ffj_t_Metadata_MeetingId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 's':
-
-					if bytes.Equal(ffj_key_Metadata_SubjectId, kn) {
-						currentKey = ffj_t_Metadata_SubjectId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Metadata_SectionId, kn) {
-						currentKey = ffj_t_Metadata_SectionId
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -3285,14 +2864,6 @@ mainparse:
 
 					if bytes.Equal(ffj_key_Metadata_Title, kn) {
 						currentKey = ffj_t_Metadata_Title
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'u':
-
-					if bytes.Equal(ffj_key_Metadata_UniversityId, kn) {
-						currentKey = ffj_t_Metadata_UniversityId
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -3307,42 +2878,6 @@ mainparse:
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Metadata_Title, kn) {
 					currentKey = ffj_t_Metadata_Title
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.AsciiEqualFold(ffj_key_Metadata_MeetingId, kn) {
-					currentKey = ffj_t_Metadata_MeetingId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Metadata_SectionId, kn) {
-					currentKey = ffj_t_Metadata_SectionId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Metadata_CourseId, kn) {
-					currentKey = ffj_t_Metadata_CourseId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Metadata_SubjectId, kn) {
-					currentKey = ffj_t_Metadata_SubjectId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Metadata_UniversityId, kn) {
-					currentKey = ffj_t_Metadata_UniversityId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Metadata_Id, kn) {
-					currentKey = ffj_t_Metadata_Id
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -3364,24 +2899,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Metadata_Id:
-					goto handle_Id
-
-				case ffj_t_Metadata_UniversityId:
-					goto handle_UniversityId
-
-				case ffj_t_Metadata_SubjectId:
-					goto handle_SubjectId
-
-				case ffj_t_Metadata_CourseId:
-					goto handle_CourseId
-
-				case ffj_t_Metadata_SectionId:
-					goto handle_SectionId
-
-				case ffj_t_Metadata_MeetingId:
-					goto handle_MeetingId
-
 				case ffj_t_Metadata_Title:
 					goto handle_Title
 
@@ -3401,136 +2918,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_UniversityId:
-
-	/* handler: uj.UniversityId type=sql.NullInt64 kind=struct quoted=false*/
-
-	{
-		/* Falling back. type=sql.NullInt64 kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-
-		err = json.Unmarshal(tbuf, &uj.UniversityId)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SubjectId:
-
-	/* handler: uj.SubjectId type=sql.NullInt64 kind=struct quoted=false*/
-
-	{
-		/* Falling back. type=sql.NullInt64 kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-
-		err = json.Unmarshal(tbuf, &uj.SubjectId)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_CourseId:
-
-	/* handler: uj.CourseId type=sql.NullInt64 kind=struct quoted=false*/
-
-	{
-		/* Falling back. type=sql.NullInt64 kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-
-		err = json.Unmarshal(tbuf, &uj.CourseId)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_SectionId:
-
-	/* handler: uj.SectionId type=sql.NullInt64 kind=struct quoted=false*/
-
-	{
-		/* Falling back. type=sql.NullInt64 kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-
-		err = json.Unmarshal(tbuf, &uj.SectionId)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_MeetingId:
-
-	/* handler: uj.MeetingId type=sql.NullInt64 kind=struct quoted=false*/
-
-	{
-		/* Falling back. type=sql.NullInt64 kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-
-		err = json.Unmarshal(tbuf, &uj.MeetingId)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Title:
 
@@ -4168,16 +3555,6 @@ func (mj *Registration) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.UniversityId != 0 {
-		buf.WriteString(`"university_id":`)
-		fflib.FormatBits2(buf, uint64(mj.UniversityId), 10, mj.UniversityId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Period) != 0 {
 		buf.WriteString(`"period":`)
 		fflib.WriteJsonString(buf, string(mj.Period))
@@ -4206,18 +3583,10 @@ const (
 	ffj_t_Registrationbase = iota
 	ffj_t_Registrationno_such_key
 
-	ffj_t_Registration_Id
-
-	ffj_t_Registration_UniversityId
-
 	ffj_t_Registration_Period
 
 	ffj_t_Registration_PeriodDate
 )
-
-var ffj_key_Registration_Id = []byte("id")
-
-var ffj_key_Registration_UniversityId = []byte("university_id")
 
 var ffj_key_Registration_Period = []byte("period")
 
@@ -4282,14 +3651,6 @@ mainparse:
 			} else {
 				switch kn[0] {
 
-				case 'i':
-
-					if bytes.Equal(ffj_key_Registration_Id, kn) {
-						currentKey = ffj_t_Registration_Id
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				case 'p':
 
 					if bytes.Equal(ffj_key_Registration_Period, kn) {
@@ -4299,14 +3660,6 @@ mainparse:
 
 					} else if bytes.Equal(ffj_key_Registration_PeriodDate, kn) {
 						currentKey = ffj_t_Registration_PeriodDate
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'u':
-
-					if bytes.Equal(ffj_key_Registration_UniversityId, kn) {
-						currentKey = ffj_t_Registration_UniversityId
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -4321,18 +3674,6 @@ mainparse:
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Registration_Period, kn) {
 					currentKey = ffj_t_Registration_Period
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Registration_UniversityId, kn) {
-					currentKey = ffj_t_Registration_UniversityId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Registration_Id, kn) {
-					currentKey = ffj_t_Registration_Id
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -4354,12 +3695,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Registration_Id:
-					goto handle_Id
-
-				case ffj_t_Registration_UniversityId:
-					goto handle_UniversityId
-
 				case ffj_t_Registration_Period:
 					goto handle_Period
 
@@ -4379,66 +3714,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_UniversityId:
-
-	/* handler: uj.UniversityId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.UniversityId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Period:
 
@@ -4826,16 +4101,6 @@ func (mj *Section) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.CourseId != 0 {
-		buf.WriteString(`"course_id":`)
-		fflib.FormatBits2(buf, uint64(mj.CourseId), 10, mj.CourseId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Number) != 0 {
 		buf.WriteString(`"number":`)
 		fflib.WriteJsonString(buf, string(mj.Number))
@@ -4976,10 +4241,6 @@ const (
 	ffj_t_Sectionbase = iota
 	ffj_t_Sectionno_such_key
 
-	ffj_t_Section_Id
-
-	ffj_t_Section_CourseId
-
 	ffj_t_Section_Number
 
 	ffj_t_Section_CallNumber
@@ -5002,10 +4263,6 @@ const (
 
 	ffj_t_Section_Metadata
 )
-
-var ffj_key_Section_Id = []byte("id")
-
-var ffj_key_Section_CourseId = []byte("course_id")
 
 var ffj_key_Section_Number = []byte("number")
 
@@ -5098,12 +4355,7 @@ mainparse:
 
 				case 'c':
 
-					if bytes.Equal(ffj_key_Section_CourseId, kn) {
-						currentKey = ffj_t_Section_CourseId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Section_CallNumber, kn) {
+					if bytes.Equal(ffj_key_Section_CallNumber, kn) {
 						currentKey = ffj_t_Section_CallNumber
 						state = fflib.FFParse_want_colon
 						goto mainparse
@@ -5116,12 +4368,7 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_Section_Id, kn) {
-						currentKey = ffj_t_Section_Id
-						state = fflib.FFParse_want_colon
-						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Section_Instructors, kn) {
+					if bytes.Equal(ffj_key_Section_Instructors, kn) {
 						currentKey = ffj_t_Section_Instructors
 						state = fflib.FFParse_want_colon
 						goto mainparse
@@ -5242,18 +4489,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Section_CourseId, kn) {
-					currentKey = ffj_t_Section_CourseId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Section_Id, kn) {
-					currentKey = ffj_t_Section_Id
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				currentKey = ffj_t_Sectionno_such_key
 				state = fflib.FFParse_want_colon
 				goto mainparse
@@ -5270,12 +4505,6 @@ mainparse:
 
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
-
-				case ffj_t_Section_Id:
-					goto handle_Id
-
-				case ffj_t_Section_CourseId:
-					goto handle_CourseId
 
 				case ffj_t_Section_Number:
 					goto handle_Number
@@ -5323,66 +4552,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_CourseId:
-
-	/* handler: uj.CourseId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.CourseId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Number:
 
@@ -6130,16 +5299,6 @@ func (mj *Subject) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
-	if mj.UniversityId != 0 {
-		buf.WriteString(`"university_id":`)
-		fflib.FormatBits2(buf, uint64(mj.UniversityId), 10, mj.UniversityId < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Name) != 0 {
 		buf.WriteString(`"name":`)
 		fflib.WriteJsonString(buf, string(mj.Name))
@@ -6156,6 +5315,11 @@ func (mj *Subject) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	if mj.Year != 0 {
 		buf.WriteString(`"year":`)
 		fflib.FormatBits2(buf, uint64(mj.Year), 10, mj.Year < 0)
+		buf.WriteByte(',')
+	}
+	if len(mj.Hash) != 0 {
+		buf.WriteString(`"hash":`)
+		fflib.WriteJsonString(buf, string(mj.Hash))
 		buf.WriteByte(',')
 	}
 	if len(mj.TopicName) != 0 {
@@ -6220,10 +5384,6 @@ const (
 	ffj_t_Subjectbase = iota
 	ffj_t_Subjectno_such_key
 
-	ffj_t_Subject_Id
-
-	ffj_t_Subject_UniversityId
-
 	ffj_t_Subject_Name
 
 	ffj_t_Subject_Number
@@ -6232,16 +5392,14 @@ const (
 
 	ffj_t_Subject_Year
 
+	ffj_t_Subject_Hash
+
 	ffj_t_Subject_TopicName
 
 	ffj_t_Subject_Courses
 
 	ffj_t_Subject_Metadata
 )
-
-var ffj_key_Subject_Id = []byte("id")
-
-var ffj_key_Subject_UniversityId = []byte("university_id")
 
 var ffj_key_Subject_Name = []byte("name")
 
@@ -6250,6 +5408,8 @@ var ffj_key_Subject_Number = []byte("number")
 var ffj_key_Subject_Season = []byte("season")
 
 var ffj_key_Subject_Year = []byte("year")
+
+var ffj_key_Subject_Hash = []byte("hash")
 
 var ffj_key_Subject_TopicName = []byte("topic_name")
 
@@ -6324,10 +5484,10 @@ mainparse:
 						goto mainparse
 					}
 
-				case 'i':
+				case 'h':
 
-					if bytes.Equal(ffj_key_Subject_Id, kn) {
-						currentKey = ffj_t_Subject_Id
+					if bytes.Equal(ffj_key_Subject_Hash, kn) {
+						currentKey = ffj_t_Subject_Hash
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -6369,14 +5529,6 @@ mainparse:
 						goto mainparse
 					}
 
-				case 'u':
-
-					if bytes.Equal(ffj_key_Subject_UniversityId, kn) {
-						currentKey = ffj_t_Subject_UniversityId
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				case 'y':
 
 					if bytes.Equal(ffj_key_Subject_Year, kn) {
@@ -6405,6 +5557,12 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffj_key_Subject_Hash, kn) {
+					currentKey = ffj_t_Subject_Hash
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffj_key_Subject_Year, kn) {
 					currentKey = ffj_t_Subject_Year
 					state = fflib.FFParse_want_colon
@@ -6429,18 +5587,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Subject_UniversityId, kn) {
-					currentKey = ffj_t_Subject_UniversityId
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Subject_Id, kn) {
-					currentKey = ffj_t_Subject_Id
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				currentKey = ffj_t_Subjectno_such_key
 				state = fflib.FFParse_want_colon
 				goto mainparse
@@ -6458,12 +5604,6 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Subject_Id:
-					goto handle_Id
-
-				case ffj_t_Subject_UniversityId:
-					goto handle_UniversityId
-
 				case ffj_t_Subject_Name:
 					goto handle_Name
 
@@ -6475,6 +5615,9 @@ mainparse:
 
 				case ffj_t_Subject_Year:
 					goto handle_Year
+
+				case ffj_t_Subject_Hash:
+					goto handle_Hash
 
 				case ffj_t_Subject_TopicName:
 					goto handle_TopicName
@@ -6498,66 +5641,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_UniversityId:
-
-	/* handler: uj.UniversityId type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.UniversityId = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Name:
 
@@ -6660,6 +5743,32 @@ handle_Year:
 			}
 
 			uj.Year = int(tval)
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Hash:
+
+	/* handler: uj.Hash type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.Hash = string(string(outBuf))
 
 		}
 	}
@@ -6868,11 +5977,6 @@ func (mj *University) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Id != 0 {
-		buf.WriteString(`"id":`)
-		fflib.FormatBits2(buf, uint64(mj.Id), 10, mj.Id < 0)
-		buf.WriteByte(',')
-	}
 	if len(mj.Name) != 0 {
 		buf.WriteString(`"name":`)
 		fflib.WriteJsonString(buf, string(mj.Name))
@@ -6989,8 +6093,6 @@ const (
 	ffj_t_Universitybase = iota
 	ffj_t_Universityno_such_key
 
-	ffj_t_University_Id
-
 	ffj_t_University_Name
 
 	ffj_t_University_Abbr
@@ -7011,8 +6113,6 @@ const (
 
 	ffj_t_University_Metadata
 )
-
-var ffj_key_University_Id = []byte("id")
 
 var ffj_key_University_Name = []byte("name")
 
@@ -7110,14 +6210,6 @@ mainparse:
 
 					if bytes.Equal(ffj_key_University_HomePage, kn) {
 						currentKey = ffj_t_University_HomePage
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
-				case 'i':
-
-					if bytes.Equal(ffj_key_University_Id, kn) {
-						currentKey = ffj_t_University_Id
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -7234,12 +6326,6 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_University_Id, kn) {
-					currentKey = ffj_t_University_Id
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
 				currentKey = ffj_t_Universityno_such_key
 				state = fflib.FFParse_want_colon
 				goto mainparse
@@ -7256,9 +6342,6 @@ mainparse:
 
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
-
-				case ffj_t_University_Id:
-					goto handle_Id
 
 				case ffj_t_University_Name:
 					goto handle_Name
@@ -7303,36 +6386,6 @@ mainparse:
 			}
 		}
 	}
-
-handle_Id:
-
-	/* handler: uj.Id type=int64 kind=int64 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int64", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-		} else {
-
-			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			uj.Id = int64(tval)
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
 
 handle_Name:
 
