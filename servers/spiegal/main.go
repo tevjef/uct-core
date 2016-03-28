@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	database = initDB(common.GetUniversityDB(false))
+	database = initDB(common.GetUniversityDB())
 }
 
 func initDB(connection string) *sqlx.DB {
@@ -36,7 +36,7 @@ func main() {
 	r.GET("/subject", subjectHandler)
 	r.GET("/course", courseHandler)
 	r.GET("/section", sectionHandler)
-	r.Run(":80")
+	r.Run(":9876")
 }
 
 /*
