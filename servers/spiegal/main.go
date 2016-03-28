@@ -162,9 +162,11 @@ func sectionHandler(c *gin.Context) {
 }
 
 func SelectUniversity(university_id int64, deep bool) (university common.University) {
-	fmt.Println("Selecting universities")
+	key := "university"
 	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
-	PrepareAndGet(query, &university, university_id)
+	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
+		common.CheckError(err)
+	}
 	if deep && &university != nil {
 		deepSelectUniversities(&university)
 	}
@@ -172,9 +174,9 @@ func SelectUniversity(university_id int64, deep bool) (university common.Univers
 }
 
 func SelectUniversities(deep bool) (universities []common.University) {
-	fmt.Println("Selecting universities")
+	key := "universities"
 	query := `SELECT * FROM university ORDER BY name`
-	PrepareAndSelect(query, universities)
+	if err := Select(GetCachedStmt(key, query), &universities)
 	if deep {
 		for i, _ := range universities {
 			deepSelectUniversities(&universities[i])
