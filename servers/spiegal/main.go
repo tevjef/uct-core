@@ -72,7 +72,7 @@ func universityHandler(c *gin.Context) {
 }
 
 func subjectHandler(c *gin.Context) {
-	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyDeep := c.DefaultQuery("deep", "false")
 	dirtyUniversityId := c.Query("university_id")
 	dirtyId := c.DefaultQuery("id", "0")
 	dirtySeason := c.Query("season")
@@ -157,7 +157,35 @@ func courseHandler(c *gin.Context) {
 }
 
 func sectionHandler(c *gin.Context) {
+	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyId := c.DefaultQuery("id", "0")
+	dirtyCourse := c.Query("course_id")
 
+	var deep bool
+	var id int64
+	var err error
+	var courseId int64
+
+	if deep, err = strconv.ParseBool(dirtyDeep); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: deep=%s", dirtyDeep)
+	}
+
+	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
+	}
+
+	if courseId, err = strconv.ParseInt(dirtyCourse, 10, 64); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: course_id=%s", dirtyCourse)
+	}
+
+	if id != 0 {
+		c.JSON(http.StatusOK, SelectSection(id, deep))
+	} else {
+		c.JSON(http.StatusOK, SelectSections(courseId, deep))
+	}
 }
 
 func SelectUniversity(university_id int64, deep bool) (university common.University) {
@@ -358,14 +386,6 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 	return
 }
 
-func PrepareAndSelect(query string, data interface{}, args ...interface{}) {
-	if named, err := database.Preparex(query); err != nil {
-		common.CheckError(err)
-	} else if err := named.Select(data, args...); err != nil {
-		common.CheckError(err)
-	}
-}
-
 func Select(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
 	if err := named.Select(data, args...); err != nil {
 		return err
@@ -393,14 +413,6 @@ func Prepare(query string) *sqlx.Stmt {
 		return nil
 	} else {
 		return named
-	}
-}
-
-func PrepareAndGet(query string, data interface{}, args ...interface{}) {
-	if named, err := database.Preparex(query); err != nil {
-		common.CheckError(err)
-	} else if err := named.Get(data, args...); err != nil {
-		common.CheckError(err)
 	}
 }
 
