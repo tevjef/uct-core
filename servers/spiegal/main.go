@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -9,8 +10,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"uct/common"
 	"time"
+	"uct/common"
 )
 
 var (
@@ -221,7 +222,7 @@ func deepSelectUniversities(university *common.University) {
 }
 
 func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
-	defer common.TimeTrack(time.Now(), "SelectSubject deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectSubject deep:"+fmt.Sprint(deep))
 	key := "subject"
 	query := `SELECT * FROM subject WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &subject, subject_id); err != nil {
@@ -234,7 +235,7 @@ func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
 }
 
 func SelectSubjects(university_id int64, season common.Season, year string, deep bool) (subjects []common.Subject) {
-	defer common.TimeTrack(time.Now(), "SelectSubjects deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectSubjects deep:"+fmt.Sprint(deep))
 	key := "subjects"
 	query := `SELECT * FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
@@ -254,7 +255,7 @@ func deepSelectSubject(subject *common.Subject) {
 }
 
 func SelectCourse(course_id int64, deep bool) (course common.Course) {
-	defer common.TimeTrack(time.Now(), "SelectCourse deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectCourse deep:"+fmt.Sprint(deep))
 	key := "course"
 	query := `SELECT * FROM course WHERE id = $1 ORDER BY name`
 	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
@@ -267,7 +268,7 @@ func SelectCourse(course_id int64, deep bool) (course common.Course) {
 }
 
 func SelectCourses(subjectId int64, deep bool) (courses []common.Course) {
-	defer common.TimeTrack(time.Now(), "SelectCourses deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectCourses deep:"+fmt.Sprint(deep))
 	key := "courses"
 	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY name`
 	if err := Select(GetCachedStmt(key, query), &courses, subjectId); err != nil {
@@ -287,7 +288,7 @@ func deepSelectCourse(course *common.Course) {
 }
 
 func SelectSection(section_id int64, deep bool) (section common.Section) {
-	defer common.TimeTrack(time.Now(), "SelectSection deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectSection deep:"+fmt.Sprint(deep))
 
 	key := "section"
 	query := `SELECT * FROM section WHERE id = $1 ORDER BY number`
@@ -302,7 +303,7 @@ func SelectSection(section_id int64, deep bool) (section common.Section) {
 }
 
 func SelectSections(course_id int64, deep bool) (sections []common.Section) {
-	defer common.TimeTrack(time.Now(), "SelectSections deep:" + deep)
+	defer common.TimeTrack(time.Now(), "SelectSections deep:"+fmt.Sprint(deep))
 
 	key := "sections"
 	query := `SELECT * FROM section WHERE course_id = $1 ORDER BY number`

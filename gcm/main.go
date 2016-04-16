@@ -14,7 +14,7 @@ import (
 var (
 	httpClient    = http.DefaultClient
 	sem      = make(chan int, 100)
-	connectInfo   = uct.GetUniversityDB(false)
+	connectInfo   = uct.GetUniversityDB()
 	notifications int
 )
 
