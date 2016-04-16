@@ -2,20 +2,30 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/influxdata/influxdb/client/v2"
 	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"log"
+	"net/http"
+	"os"
 	"time"
 	uct "uct/common"
-	"net/http"
-	"github.com/pquerna/ffjson/ffjson"
-	"encoding/json"
 )
 
 var (
-	httpClient    = http.DefaultClient
-	sem      = make(chan int, 100)
-	connectInfo   = uct.GetUniversityDB()
-	notifications int
+	httpClient   = http.DefaultClient
+	sem          = make(chan int, 100)
+	connectInfo  = uct.GetUniversityDB()
+	influxClient client.Client
+)
+
+var (
+	app     = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
+	debug   = app.Flag("debug", "Enable debug mode").Short('d').Bool()
+	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 )
 
 const (
@@ -23,15 +33,26 @@ const (
 )
 
 func main() {
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+	kingpin.Version("1.0.0")
+
+	var err error
+
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
+		Addr:     uct.INFLUX_HOST,
+		Username: uct.INFLUX_USER,
+		Password: uct.INFLUX_PASS,
+	})
+	uct.CheckError(err)
+
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		fmt.Println(ev)
 	}
 
 	listener := pq.NewListener(connectInfo, 10*time.Second, time.Minute, reportProblem)
-	err := listener.Listen("status_events")
+	err = listener.Listen("status_events")
 	if err != nil {
 		panic(err)
 	}
@@ -47,24 +68,30 @@ func waitForNotification(l *pq.Listener) {
 		select {
 		case notification := <-l.Notify:
 			n := notification
-			notifications++
 			sem <- 1
 			go func() {
 				fmt.Println("Received data from channel [", n.Channel, "] :")
-				//fmt.Println(n.Extra)
+
 				var postgresMessage uct.PostgresNotify
-				ffjson.UnmarshalFast([]byte(n.Extra), &postgresMessage)
+				err := json.Unmarshal([]byte(n.Extra), &postgresMessage)
+				uct.CheckError(err)
+
+				go func(message uct.PostgresNotify) {
+					auditStatus(message)
+				}(postgresMessage)
+
+				uniBytes, err := ffjson.Marshal(postgresMessage.University)
+				uct.CheckError(err)
 
 				gcmMessage := uct.GCMMessage{
 					To:     "/topics/" + postgresMessage.Payload,
-					Data:   uct.Data{Message: "This was a successful message"},
-					DryRun: false,
+					Data:   uct.Data{Message: string(uniBytes)},
+					DryRun: *debug,
 				}
 
 				sendNotification(gcmMessage)
 				<-sem
 			}()
-			fmt.Println("Notifications:", notifications)
 			return
 		case <-time.After(90 * time.Second):
 			fmt.Println("Received no events for 90 seconds, checking connection")
@@ -86,11 +113,12 @@ func sendNotification(message uct.GCMMessage) {
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "key="+uct.GCM_API_KEY)
 
-	fmt.Println("Sending Request: ", string(bData))
+	fmt.Println("GCM Sending notification: to", message.To)
+	LogVerbose(string(bData))
+
 	resp, err := httpClient.Do(req)
 	uct.CheckError(err)
 
-	fmt.Println("Response from", GCM_SEND)
 	var gcmResponse uct.GCMResponse
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&gcmResponse)
@@ -99,7 +127,62 @@ func sendNotification(message uct.GCMMessage) {
 	if gcmResponse.Error != "" {
 		fmt.Println(gcmResponse.Error)
 	}
-	fmt.Println("HTTP Status:", resp.StatusCode, "\nResponse:", gcmResponse)
+	fmt.Println("GCM Response:", gcmResponse, "\nGCM HTTP Status:", resp.StatusCode)
 
-	defer resp.Body.Close()
+	defer func() {
+		resp.Body.Close()
+		if r := recover(); r != nil {
+			log.Println("Recovered in sendNotification", r)
+		}
+	}()
+}
+
+func auditStatus(message uct.PostgresNotify) {
+	subject := message.University.Subjects[0]
+	course := subject.Courses[0]
+	section := course.Sections[0]
+
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  "universityct",
+		Precision: "s",
+	})
+
+	tags := map[string]string{
+		"university": message.University.Name,
+		"subject":    subject.Name,
+		"course":     course.Name,
+		"semester":   subject.Season + " " + subject.Year,
+		"topic_name": section.TopicName,
+	}
+
+	fields := map[string]interface{}{
+		"now":    int(section.Now),
+		"status": section.Status,
+	}
+
+	point, err := client.NewPoint(
+		"section_status",
+		tags,
+		fields,
+		time.Now(),
+	)
+	uct.CheckError(err)
+
+	bp.AddPoint(point)
+
+	err = influxClient.Write(bp)
+	uct.CheckError(err)
+
+	fmt.Println("InfluxDB logging: ", tags, fields)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in auditStatus", r)
+		}
+	}()
+}
+
+func LogVerbose(v interface{}) {
+	if *verbose {
+		uct.LogVerbose(v)
+	}
 }
