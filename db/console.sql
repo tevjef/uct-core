@@ -525,7 +525,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT section.*
+  SELECT section.id, section.course_id, section.number, section.call_number, section.now, section.max, section.status, section.credits::TEXT, section.topic_name, subject.created_at, section.updated_at
   INTO _section
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -533,12 +533,15 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  _temp = jsonb_set(to_json(_course)::jsonb, '{section}', json_build_array(to_json(_section))::jsonb);
-  _temp = jsonb_set(to_json(_subject)::jsonb, '{course}', json_build_array(_temp)::jsonb);
-  _temp = jsonb_set(to_json(_university)::jsonb, '{subject}', json_build_array(_temp)::jsonb);
+  _temp = jsonb_set(to_json(_course)::jsonb, '{sections}', json_build_array(to_json(_section))::jsonb);
+  _temp = jsonb_set(to_json(_subject)::jsonb, '{courses}', json_build_array(_temp)::jsonb);
+  _temp = jsonb_set(to_json(_university)::jsonb, '{subjects}', json_build_array(_temp)::jsonb);
 
   _notification = json_build_object(
       'topic_name', NEW.topic_name,
+      'status', NEW.status,
+      'max', NEW.max,
+      'now', NEW.now,
       'university', jsonb_strip_nulls(_temp));
 
 
