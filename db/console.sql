@@ -199,19 +199,19 @@ CREATE TABLE IF NOT EXISTS public.book
 (
   id SERIAL,
   section_id BIGINT,
-  name TEXT,
+  title TEXT,
   url TEXT,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT book__pk PRIMARY KEY (id),
   CONSTRAINT book_section_id__fk FOREIGN KEY (section_id) REFERENCES public.section (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT unique_book_name__section_id UNIQUE (name, section_id)
+  CONSTRAINT unique_book_title__section_id UNIQUE (title, section_id)
 
 )WITH (OIDS = FALSE);
 
 ALTER TABLE public.book OWNER TO postgres;
 
-COMMENT ON COLUMN public.book.name IS 'The title of book';
+COMMENT ON COLUMN public.book.title IS 'The title of book';
 COMMENT ON COLUMN public.book.url IS 'The url of the book';
 COMMENT ON COLUMN public.book.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.book.updated_at IS 'Time this row was updated';
@@ -270,6 +270,7 @@ COMMENT ON COLUMN public.registration.period IS 'The period for which a season l
 COMMENT ON COLUMN public.registration.period_date IS 'The url of the registration';
 COMMENT ON COLUMN public.registration.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.registration.updated_at IS 'Time this row was updated';
+
 
 
 CREATE OR REPLACE FUNCTION update_row_time_stamp() RETURNS TRIGGER AS $$
@@ -399,9 +400,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-    NEW.topic_name = NEW.id || '_' || NEW.topic_name;
-  END IF;
+  NEW.topic_name = NEW.id || '_' || NEW.topic_name;
 
   RETURN NEW;
 END;
@@ -414,9 +413,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-    NEW.topic_name = NEW.id || '_' || NEW.topic_name;
-  END IF;
+  NEW.topic_name = NEW.id || '_' || NEW.topic_name || '_' || NEW.season::text || NEW.year ;
 
   RETURN NEW;
 END;
@@ -429,10 +426,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-    NEW.topic_name = NEW.id || '_' || NEW.topic_name;
-  END IF;
-
+  NEW.topic_name = NEW.id || '_' || NEW.topic_name;
 
   RETURN NEW;
 END;
@@ -465,31 +459,31 @@ BEGIN
   WHERE course.id = NEW.course_id;
 
   NEW.topic_name = _university_topic_name || '__' ||
-                     _subject_topic_name || '__' ||
-                     _course_topic_name || '__' ||
-                     NEW.id::text;
+                   _subject_topic_name || '__' ||
+                   _course_topic_name || '__' ||
+                   NEW.id::text;
   RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
 
 CREATE TRIGGER insert_university_topic_name
-BEFORE INSERT ON public.university
+BEFORE INSERT OR UPDATE ON public.university
 FOR EACH ROW
 EXECUTE PROCEDURE set_university_topic_name();
 
 CREATE TRIGGER insert_subject_topic_name
-BEFORE INSERT ON public.subject
+BEFORE INSERT OR UPDATE ON public.subject
 FOR EACH ROW
 EXECUTE PROCEDURE set_subject_topic_name();
 
 CREATE TRIGGER insert_course_topic_name
-BEFORE INSERT ON public.course
+BEFORE INSERT OR UPDATE ON public.course
 FOR EACH ROW
 EXECUTE PROCEDURE set_course_topic_name();
 
 CREATE TRIGGER insert_section_topic_name
-BEFORE INSERT ON public.section
+BEFORE INSERT OR UPDATE ON public.section
 FOR EACH ROW
 EXECUTE PROCEDURE set_section_topic_name();
 
@@ -499,17 +493,57 @@ CREATE OR REPLACE FUNCTION public.notify_status_change()
 $BODY$
 DECLARE
   _notification json;
+
+  _university record;
+  _subject record;
+  _course record;
+  _section record;
+  _temp jsonb;
 BEGIN
 
-  IF NEW.status IS DISTINCT FROM OLD.status THEN
-    _notification = json_build_object(
-        'table', TG_TABLE_NAME,
-        'action', TG_OP,
-        'payload', NEW.topic_name);
+  SELECT university.*
+  INTO _university
+  FROM university
+    JOIN subject ON university.id = subject.university_id
+    JOIN course ON subject.id = course.subject_id
+    JOIN section ON course.id = section.course_id
+  WHERE section.id = NEW.id;
 
-    -- Execute pg_notify(channel, notification)
-    PERFORM pg_notify('status_events',_notification::text);
-  END IF;
+  SELECT subject.*
+  INTO _subject
+  FROM university
+    JOIN subject ON university.id = subject.university_id
+    JOIN course ON subject.id = course.subject_id
+    JOIN section ON course.id = section.course_id
+  WHERE section.id = NEW.id;
+
+  SELECT course.*
+  INTO _course
+  FROM university
+    JOIN subject ON university.id = subject.university_id
+    JOIN course ON subject.id = course.subject_id
+    JOIN section ON course.id = section.course_id
+  WHERE section.id = NEW.id;
+
+  SELECT section.*
+  INTO _section
+  FROM university
+    JOIN subject ON university.id = subject.university_id
+    JOIN course ON subject.id = course.subject_id
+    JOIN section ON course.id = section.course_id
+  WHERE section.id = NEW.id;
+
+  _temp = jsonb_set(to_json(_course)::jsonb, '{section}', json_build_array(to_json(_section))::jsonb);
+  _temp = jsonb_set(to_json(_subject)::jsonb, '{course}', json_build_array(_temp)::jsonb);
+  _temp = jsonb_set(to_json(_university)::jsonb, '{subject}', json_build_array(_temp)::jsonb);
+
+  _notification = json_build_object(
+      'topic_name', NEW.topic_name,
+      'university', jsonb_strip_nulls(_temp));
+
+
+  -- Execute pg_notify(channel, notification)
+  PERFORM pg_notify('status_events',_notification::text);
 
   RETURN NULL;
 END;
@@ -520,6 +554,7 @@ CREATE TRIGGER notify_status_change
 AFTER UPDATE
 ON public.section
 FOR EACH ROW
+WHEN (OLD.status <> NEW.status)
 EXECUTE PROCEDURE public.notify_status_change();
 
 COMMIT;
