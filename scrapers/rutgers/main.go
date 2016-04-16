@@ -259,7 +259,7 @@ func getCampus(campus string) uct.University {
 				Name:   subject.Name,
 				Number: subject.Number,
 				Season: subject.Season.String(),
-				Year:   subject.Year}
+				Year:   strconv.Itoa(subject.Year)}
 			for _, course := range subject.Courses {
 				newCourse := uct.Course{
 					Name:     course.ExpandedTitle,

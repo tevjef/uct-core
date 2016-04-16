@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -25,7 +24,7 @@ type (
 	SubjectByName   []Subject
 
 	University struct {
-		Id               int64          `json:"-" db:"id"`
+		Id               int64          `json:"id,omitempty" db:"id"`
 		Name             string         `json:"name,omitempty" db:"name"`
 		Abbr             string         `json:"abbr,omitempty" db:"abbr"`
 		HomePage         string         `json:"home_page,omitempty" db:"home_page"`
@@ -42,12 +41,12 @@ type (
 
 	// Sort by name
 	Subject struct {
-		Id           int64      `json:"-" db:"id"`
-		UniversityId int64      `json:"-" db:"university_id"`
+		Id           int64      `json:"id,omitempty" db:"id"`
+		UniversityId int64      `json:"university_id,omiempty" db:"university_id"`
 		Name         string     `json:"name,omitempty" db:"name"`
 		Number       string     `json:"number,omitempty" db:"number"`
 		Season       string     `json:"season" db:"season"`
-		Year         int        `json:"year,omitempty" db:"year"`
+		Year         string        `json:"year,omitempty" db:"year"`
 		Hash         string     `json:"hash,omitempty" db:"hash"`
 		TopicName    string     `json:"topic_name,omitempty" db:"topic_name"`
 		Courses      []Course   `json:"courses,omitempty"`
@@ -58,8 +57,8 @@ type (
 
 	// Sort by name
 	Course struct {
-		Id        int64      `json:"-" db:"id"`
-		SubjectId int64      `json:"-" db:"subject_id"`
+		Id        int64      `json:"id,omitempty" db:"id"`
+		SubjectId int64      `json:"subject_id,omiempty" db:"subject_id"`
 		Name      string     `json:"name,omitempty" db:"name"`
 		Number    string     `json:"number,omitempty" db:"number"`
 		Synopsis  *string    `json:"synopsis,omitempty" db:"synopsis"`
@@ -73,8 +72,8 @@ type (
 
 	// Sort by number
 	Section struct {
-		Id          int64        `json:"-" db:"id"`
-		CourseId    int64        `json:"-" db:"course_id"`
+		Id          int64        `json:"id,omitempty" db:"id"`
+		CourseId    int64        `json:"course_id,omiempty" db:"course_id"`
 		Number      string       `json:"number,omitempty" db:"number"`
 		CallNumber  string       `json:"call_number,omitempty" db:"call_number"`
 		Max         float64      `json:"max,omitempty" db:"max"`
@@ -93,7 +92,7 @@ type (
 	// Sort by day
 	Meeting struct {
 		Id        int64      `json:"-" db:"id"`
-		SectionId int64      `json:"-" db:"section_id"`
+		SectionId int64      `json:"section_id,omiempty" db:"section_id"`
 		Room      *string    `json:"room,omitempty" db:"room"`
 		Day       *string    `json:"day,omitempty" db:"day"`
 		StartTime string     `json:"start_time,omitempty" db:"start_time"`
@@ -105,16 +104,16 @@ type (
 	}
 
 	Instructor struct {
-		Id        int64     `json:"-" db:"id"`
-		SectionId int64     `json:"-" db:"section_id"`
+		Id        int64     `json:"id,omitempty" db:"id"`
+		SectionId int64     `json:"section_id,omiempty" db:"section_id"`
 		Name      string    `json:"name,omitempty" db:"name"`
 		CreatedAt time.Time `json:"-" db:"created_at"`
 		UpdatedAt time.Time `json:"-" db:"updated_at"`
 	}
 
 	Book struct {
-		Id        int64     `json:"-" db:"id"`
-		SectionId int64     `json:"-" db:"section_id"`
+		Id        int64     `json:"id,omitempty" db:"id"`
+		SectionId int64     `json:"section_id,omiempty" db:"section_id"`
 		Title     string    `json:"title,omitempty" db:"title"`
 		Url       string    `json:"url,omitempty" db:"url"`
 		CreatedAt time.Time `json:"-" db:"created_at"`
@@ -122,7 +121,7 @@ type (
 	}
 
 	Metadata struct {
-		Id           int64     `json:"-" db:"id"`
+		Id           int64     `json:"id,omitempty" db:"id"`
 		UniversityId *int64    `json:"-" db:"university_id"`
 		SubjectId    *int64    `json:"-" db:"subject_id"`
 		CourseId     *int64    `json:"-" db:"course_id"`
@@ -135,7 +134,7 @@ type (
 	}
 
 	Registration struct {
-		Id           int64     `json:"-" db:"id"`
+		Id           int64     `json:"id,omitempty" db:"id"`
 		UniversityId int64     `json:"-" db:"university_id"`
 		Period       string    `json:"period,omitempty" db:"period"`
 		PeriodDate   time.Time `json:"period_date,omitempty" db:"period_date"`
@@ -160,6 +159,9 @@ type (
 
 	PostgresNotify struct {
 		Payload    string     `json:"topic_name,omitempty"`
+		Status     string     `json:"status,omitempty"`
+		Max        float64    `json:"max,omitempty"`
+		Now        float64    `json:"now,omitempty"`
 		University University `json:"university,omitempty"`
 	}
 
@@ -264,7 +266,7 @@ func (s Subject) hash() string {
 	for _, course := range s.Courses {
 		buffer.WriteString("a" + course.Hash)
 	}
-	return fmt.Sprintf("%x", sha1.Sum([]byte(s.Name+s.Number+s.Season+strconv.Itoa(s.Year)+buffer.String())))
+	return fmt.Sprintf("%x", sha1.Sum([]byte(s.Name+s.Number+s.Season+s.Year+buffer.String())))
 }
 
 func (c Course) hash() string {
@@ -393,7 +395,7 @@ func (course *Course) VetAndBuild() {
 	}
 
 	// Synopsis
-	if  course.Synopsis != nil {
+	if course.Synopsis != nil {
 		regex, err := regexp.Compile("\\s\\s+")
 		CheckError(err)
 		temp := regex.ReplaceAllString(*course.Synopsis, " ")
@@ -427,14 +429,19 @@ func (section *Section) VetAndBuild() {
 	}
 	section.CallNumber = trim(section.CallNumber)
 
-	// Max
-	if section.Max == 0 {
-		section.Now = section.Max
-	}
-
 	// Status
 	if section.Status == "" {
 		log.Panic("Status == is empty")
+	}
+
+	// Max
+	if section.Max == 0 {
+		section.Max = 1
+		if section.Status == OPEN.String() {
+			section.Now = 1
+		} else {
+			section.Now = 0
+		}
 	}
 
 	// Credits
