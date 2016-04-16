@@ -96,7 +96,7 @@ func main() {
 		}()
 	}
 
-	database = initDB(uct.GetUniversityDB(false))
+	database = initDB(uct.GetUniversityDB())
 
 	if *file != nil {
 		input = bufio.NewReader(*file)

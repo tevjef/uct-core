@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -11,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"uct/common"
+	"time"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	database = initDB(common.GetUniversityDB(false))
+	database = initDB(common.GetUniversityDB())
 }
 
 func initDB(connection string) *sqlx.DB {
@@ -36,7 +36,7 @@ func main() {
 	r.GET("/subject", subjectHandler)
 	r.GET("/course", courseHandler)
 	r.GET("/section", sectionHandler)
-	r.Run(":80")
+	r.Run(":9876")
 }
 
 /*
@@ -73,7 +73,7 @@ func universityHandler(c *gin.Context) {
 }
 
 func subjectHandler(c *gin.Context) {
-	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyDeep := c.DefaultQuery("deep", "false")
 	dirtyUniversityId := c.Query("university_id")
 	dirtyId := c.DefaultQuery("id", "0")
 	dirtySeason := c.Query("season")
@@ -158,13 +158,43 @@ func courseHandler(c *gin.Context) {
 }
 
 func sectionHandler(c *gin.Context) {
+	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyId := c.DefaultQuery("id", "0")
+	dirtyCourse := c.Query("course_id")
 
+	var deep bool
+	var id int64
+	var err error
+	var courseId int64
+
+	if deep, err = strconv.ParseBool(dirtyDeep); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: deep=%s", dirtyDeep)
+	}
+
+	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
+	}
+
+	if courseId, err = strconv.ParseInt(dirtyCourse, 10, 64); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: course_id=%s", dirtyCourse)
+	}
+
+	if id != 0 {
+		c.JSON(http.StatusOK, SelectSection(id, deep))
+	} else {
+		c.JSON(http.StatusOK, SelectSections(courseId, deep))
+	}
 }
 
 func SelectUniversity(university_id int64, deep bool) (university common.University) {
-	fmt.Println("Selecting universities")
+	key := "university"
 	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
-	PrepareAndGet(query, &university, university_id)
+	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
+		common.CheckError(err)
+	}
 	if deep && &university != nil {
 		deepSelectUniversities(&university)
 	}
@@ -172,9 +202,11 @@ func SelectUniversity(university_id int64, deep bool) (university common.Univers
 }
 
 func SelectUniversities(deep bool) (universities []common.University) {
-	fmt.Println("Selecting universities")
+	key := "universities"
 	query := `SELECT * FROM university ORDER BY name`
-	PrepareAndSelect(query, universities)
+	if err := Select(GetCachedStmt(key, query), &universities); err != nil {
+		common.CheckError(err)
+	}
 	if deep {
 		for i, _ := range universities {
 			deepSelectUniversities(&universities[i])
@@ -189,6 +221,7 @@ func deepSelectUniversities(university *common.University) {
 }
 
 func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
+	defer common.TimeTrack(time.Now(), "SelectSubject deep:" + deep)
 	key := "subject"
 	query := `SELECT * FROM subject WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &subject, subject_id); err != nil {
@@ -201,6 +234,7 @@ func SelectSubject(subject_id int64, deep bool) (subject common.Subject) {
 }
 
 func SelectSubjects(university_id int64, season common.Season, year string, deep bool) (subjects []common.Subject) {
+	defer common.TimeTrack(time.Now(), "SelectSubjects deep:" + deep)
 	key := "subjects"
 	query := `SELECT * FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
@@ -220,6 +254,7 @@ func deepSelectSubject(subject *common.Subject) {
 }
 
 func SelectCourse(course_id int64, deep bool) (course common.Course) {
+	defer common.TimeTrack(time.Now(), "SelectCourse deep:" + deep)
 	key := "course"
 	query := `SELECT * FROM course WHERE id = $1 ORDER BY name`
 	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
@@ -232,6 +267,7 @@ func SelectCourse(course_id int64, deep bool) (course common.Course) {
 }
 
 func SelectCourses(subjectId int64, deep bool) (courses []common.Course) {
+	defer common.TimeTrack(time.Now(), "SelectCourses deep:" + deep)
 	key := "courses"
 	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY name`
 	if err := Select(GetCachedStmt(key, query), &courses, subjectId); err != nil {
@@ -251,6 +287,8 @@ func deepSelectCourse(course *common.Course) {
 }
 
 func SelectSection(section_id int64, deep bool) (section common.Section) {
+	defer common.TimeTrack(time.Now(), "SelectSection deep:" + deep)
+
 	key := "section"
 	query := `SELECT * FROM section WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &section, section_id); err != nil {
@@ -264,6 +302,8 @@ func SelectSection(section_id int64, deep bool) (section common.Section) {
 }
 
 func SelectSections(course_id int64, deep bool) (sections []common.Section) {
+	defer common.TimeTrack(time.Now(), "SelectSections deep:" + deep)
+
 	key := "sections"
 	query := `SELECT * FROM section WHERE course_id = $1 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &sections, course_id); err != nil {
@@ -286,6 +326,8 @@ func deepSelectSection(section *common.Section) {
 }
 
 func SelectMeetings(sectionId int64) (meetings []common.Meeting) {
+	defer common.TimeTrack(time.Now(), "SelectMeetings")
+
 	key := "meetings"
 	query := `SELECT * FROM meeting WHERE section_id = $1 ORDER BY index`
 	if err := Select(GetCachedStmt(key, query), &meetings, sectionId); err != nil {
@@ -298,6 +340,8 @@ func SelectMeetings(sectionId int64) (meetings []common.Meeting) {
 }
 
 func SelectInstructors(sectionId int64) (instructors []common.Instructor) {
+	defer common.TimeTrack(time.Now(), "SelectInstructors")
+
 	key := "instructors"
 	query := `SELECT * FROM instructor WHERE section_id = $1`
 	if err := Select(GetCachedStmt(key, query), &instructors, sectionId); err != nil {
@@ -307,6 +351,8 @@ func SelectInstructors(sectionId int64) (instructors []common.Instructor) {
 }
 
 func SelectBooks(sectionId int64) (books []common.Book) {
+	defer common.TimeTrack(time.Now(), "SelectInstructors")
+
 	key := "books"
 	query := `SELECT * FROM book WHERE section_id = $1`
 	if err := Select(GetCachedStmt(key, query), &books, sectionId); err != nil {
@@ -325,6 +371,8 @@ func SelectRegistrations(universityId int64) (registrations []common.Registratio
 }
 
 func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []common.Metadata) {
+	defer common.TimeTrack(time.Now(), "SelectMetadata")
+
 	var err error
 	var query string
 
@@ -353,14 +401,6 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 	}
 	common.CheckError(err)
 	return
-}
-
-func PrepareAndSelect(query string, data interface{}, args ...interface{}) {
-	if named, err := database.Preparex(query); err != nil {
-		common.CheckError(err)
-	} else if err := named.Select(data, args...); err != nil {
-		common.CheckError(err)
-	}
 }
 
 func Select(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
@@ -393,27 +433,15 @@ func Prepare(query string) *sqlx.Stmt {
 	}
 }
 
-func PrepareAndGet(query string, data interface{}, args ...interface{}) {
-	if named, err := database.Preparex(query); err != nil {
-		common.CheckError(err)
-	} else if err := named.Get(data, args...); err != nil {
-		common.CheckError(err)
-	}
-}
-
 func ParseSeason(s string) (season common.Season, err error) {
 	switch strings.ToLower(s) {
-	case "w":
-	case "winter":
+	case "winter", "w":
 		return common.WINTER, err
-	case "s":
-	case "spring":
+	case "spring", "s":
 		return common.SPRING, err
-	case "u":
-	case "summer":
+	case "summer", "u":
 		return common.SUMMER, err
-	case "f":
-	case "fall":
+	case "fall", "f":
 		return common.FALL, err
 	}
 	err = errors.New("Could not parse season")
