@@ -15,6 +15,7 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
+	"github.com/golang/protobuf/ptypes/duration"
 )
 
 var (
@@ -48,7 +49,7 @@ var (
 	sectionCount  int
 	meetingCount  int
 	metadataCount int
-	startTime = time.Now()
+	startTime     = time.Now()
 )
 
 func init() {
@@ -133,10 +134,10 @@ func main() {
 
 }
 
-func auditStats(uniName string, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
+func auditStats(uniName string, elapsed duration.Duration, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "universityct",
-		Precision: "m",
+		Precision: "s",
 	})
 
 	tags := map[string]string{
@@ -153,6 +154,7 @@ func auditStats(uniName string, insertions, updates, upserts, existential, subje
 		"sectionCount":  sectionCount,
 		"meetingCount":  meetingCount,
 		"metadataCount": metadataCount,
+		"elapsed": elapsed.Seconds,
 	}
 
 	point, err := client.NewPoint(
@@ -174,6 +176,8 @@ func auditStats(uniName string, insertions, updates, upserts, existential, subje
 
 func insertUniversity(db *sqlx.DB, uni uct.University) {
 	//uni.VetAndBuild()
+	startTime := time.Now()
+
 	LogVerbose(fmt.Sprintln("In University:", uni.Name))
 	var university_id int64
 
@@ -298,7 +302,8 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	uct.Log("Sections: ", sectionCount)
 	uct.Log("Meetings: ", metadataCount)
 	uct.Log("Metadata: ", metadataCount)
-	auditStats(uni.TopicName, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
+	elapsed := time.Since(startTime)
+	auditStats(uni.TopicName, elapsed, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
 	insertions = 0
 	updates = 0
 	upserts = 0
