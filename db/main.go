@@ -297,9 +297,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	uct.Log("Sections: ", sectionCount)
 	uct.Log("Meetings: ", metadataCount)
 	uct.Log("Metadata: ", metadataCount)
-	go func(insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
-		auditStats(uni.Name, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
-	}(insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
+	auditStats(uni.Name, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
 	insertions = 0
 	updates = 0
 	upserts = 0
