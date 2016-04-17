@@ -48,6 +48,7 @@ var (
 	sectionCount  int
 	meetingCount  int
 	metadataCount int
+	startTime = time.Now()
 )
 
 func init() {
@@ -135,7 +136,7 @@ func main() {
 func auditStats(uniName string, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "universityct",
-		Precision: "s",
+		Precision: "m",
 	})
 
 	tags := map[string]string{
@@ -158,7 +159,7 @@ func auditStats(uniName string, insertions, updates, upserts, existential, subje
 		"db_ops",
 		tags,
 		fields,
-		time.Now(),
+		startTime,
 	)
 
 	uct.CheckError(err)
