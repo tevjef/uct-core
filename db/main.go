@@ -155,7 +155,7 @@ func auditStats(uniName string, insertions, updates, upserts, existential, subje
 	}
 
 	point, err := client.NewPoint(
-		"section_count",
+		"db_ops",
 		tags,
 		fields,
 		time.Now(),
