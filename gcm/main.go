@@ -78,6 +78,11 @@ func waitForNotification(l *pq.Listener) {
 
 				go func(message uct.PostgresNotify) {
 					auditStatus(message)
+					defer func() {
+						if r := recover(); r != nil {
+							log.Println("Recovered in auditStatus", r)
+						}
+					}()
 				}(postgresMessage)
 
 				uniBytes, err := ffjson.Marshal(postgresMessage.University)
@@ -148,10 +153,10 @@ func auditStatus(message uct.PostgresNotify) {
 	})
 
 	tags := map[string]string{
-		"university": message.University.Name,
-		"subject":    subject.Name,
-		"course":     course.Name,
-		"semester":   subject.Season + " " + subject.Year,
+		"university": message.University.TopicName,
+		"subject":    subject.TopicName,
+		"course":     course.TopicName,
+		"semester":   subject.Season + subject.Year,
 		"topic_name": section.TopicName,
 	}
 
@@ -174,11 +179,6 @@ func auditStatus(message uct.PostgresNotify) {
 	uct.CheckError(err)
 
 	fmt.Println("InfluxDB logging: ", tags, fields)
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in auditStatus", r)
-		}
-	}()
 }
 
 func LogVerbose(v interface{}) {

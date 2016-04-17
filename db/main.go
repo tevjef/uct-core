@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
@@ -17,9 +18,10 @@ import (
 )
 
 var (
-	database *sqlx.DB
-	sem      = make(chan int, 50)
-	input    *bufio.Reader
+	database     *sqlx.DB
+	connection   = uct.GetUniversityDB()
+	influxClient client.Client
+	input        *bufio.Reader
 )
 
 var (
@@ -48,6 +50,17 @@ var (
 	metadataCount int
 )
 
+func init() {
+	database = initDB(connection)
+
+	var err error
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
+		Addr:     uct.INFLUX_HOST,
+		Username: uct.INFLUX_USER,
+		Password: uct.INFLUX_PASS,
+	})
+	uct.CheckError(err)
+}
 
 func initDB(connection string) *sqlx.DB {
 	database, err := sqlx.Open("postgres", connection)
@@ -96,8 +109,6 @@ func main() {
 		}()
 	}
 
-	database = initDB(uct.GetUniversityDB())
-
 	if *file != nil {
 		input = bufio.NewReader(*file)
 	} else {
@@ -114,20 +125,50 @@ func main() {
 		insertUniversity(database, university)
 	}
 
-	uct.Log("Insertions: ", insertions)
-	uct.Log("Updates: ", updates)
-	uct.Log("Upserts: ", upserts)
-	uct.Log("Existential: ", existential)
-	uct.Log("Subjects: ", subjectCount)
-	uct.Log("Courses: ", courseCount)
-	uct.Log("Sections: ", sectionCount)
-	uct.Log("Meetings: ", metadataCount)
-	uct.Log("Metadata: ", metadataCount)
 	defer func() {
 		database.Close()
 		pprof.StopCPUProfile()
 	}()
 
+}
+
+func auditStats(uniName string, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  "universityct",
+		Precision: "s",
+	})
+
+	tags := map[string]string{
+		"university_name": uniName,
+	}
+
+	fields := map[string]interface{}{
+		"insertions":    insertions,
+		"updates":       updates,
+		"upserts":       upserts,
+		"existential":   existential,
+		"subjectCount":  subjectCount,
+		"courseCount":   courseCount,
+		"sectionCount":  sectionCount,
+		"meetingCount":  meetingCount,
+		"metadataCount": metadataCount,
+	}
+
+	point, err := client.NewPoint(
+		"section_count",
+		tags,
+		fields,
+		time.Now(),
+	)
+
+	uct.CheckError(err)
+
+	bp.AddPoint(point)
+
+	err = influxClient.Write(bp)
+	uct.CheckError(err)
+
+	fmt.Println("InfluxDB logging: ", tags, fields)
 }
 
 func insertUniversity(db *sqlx.DB, uni uct.University) {
@@ -186,7 +227,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 					// Meeting []Metadata
 					metadatas := meeting.Metadata
-					for metadataIndex :=  range metadatas {
+					for metadataIndex := range metadatas {
 						metadata := metadatas[metadataIndex]
 
 						metadata.MeetingId = &meetingId
@@ -246,6 +287,33 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 		metadata.UniversityId = &university_id
 		insertMetadata(db, metadata)
 	}
+
+	uct.Log("Insertions: ", insertions)
+	uct.Log("Updates: ", updates)
+	uct.Log("Upserts: ", upserts)
+	uct.Log("Existential: ", existential)
+	uct.Log("Subjects: ", subjectCount)
+	uct.Log("Courses: ", courseCount)
+	uct.Log("Sections: ", sectionCount)
+	uct.Log("Meetings: ", metadataCount)
+	uct.Log("Metadata: ", metadataCount)
+	go func(insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
+		auditStats(uni.Name, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
+	}(insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
+	insertions = 0
+	updates = 0
+	upserts = 0
+	existential = 0
+	subjectCount = 0
+	courseCount = 0
+	sectionCount = 0
+	meetingCount = 0
+	metadataCount = 0
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in insertUniverisity", r)
+		}
+	}()
 }
 
 func insertSubject(db *sqlx.DB, sub uct.Subject) (subject_id int64) {
@@ -506,7 +574,6 @@ func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
 func insert(db *sqlx.DB, query string, data interface{}) (id int64) {
 	insertions++
 	typeName := reflect.TypeOf(data).Name()
-
 
 	if rows, err := db.NamedQuery(query, data); err != nil {
 		log.Panicln(err, typeName)
