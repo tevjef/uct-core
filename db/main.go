@@ -15,7 +15,6 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
-	"github.com/golang/protobuf/ptypes/duration"
 )
 
 var (
@@ -134,7 +133,7 @@ func main() {
 
 }
 
-func auditStats(uniName string, elapsed duration.Duration, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
+func auditStats(uniName string, elapsed time.Duration, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "universityct",
 		Precision: "s",
@@ -154,7 +153,7 @@ func auditStats(uniName string, elapsed duration.Duration, insertions, updates, 
 		"sectionCount":  sectionCount,
 		"meetingCount":  meetingCount,
 		"metadataCount": metadataCount,
-		"elapsed": elapsed.Seconds,
+		"elapsed": elapsed.Seconds(),
 	}
 
 	point, err := client.NewPoint(
