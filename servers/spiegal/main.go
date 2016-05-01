@@ -160,8 +160,9 @@ func courseHandler(c *gin.Context) {
 
 func sectionHandler(c *gin.Context) {
 	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyTopicName := c.DefaultQuery("topic", "")
 	dirtyId := c.DefaultQuery("id", "0")
-	dirtyCourse := c.Query("course_id")
+	dirtyCourse := c.DefaultQuery("course_id", "0")
 
 	var deep bool
 	var id int64
@@ -185,6 +186,8 @@ func sectionHandler(c *gin.Context) {
 
 	if id != 0 {
 		c.JSON(http.StatusOK, SelectSection(id, deep))
+	} else if dirtyTopicName != "" {
+		c.JSON(http.StatusOK, SelectSectionByTopic(dirtyTopicName, deep))
 	} else {
 		c.JSON(http.StatusOK, SelectSections(courseId, deep))
 	}
@@ -257,7 +260,7 @@ func deepSelectSubject(subject *common.Subject) {
 func SelectCourse(course_id int64, deep bool) (course common.Course) {
 	defer common.TimeTrack(time.Now(), "SelectCourse deep:"+fmt.Sprint(deep))
 	key := "course"
-	query := `SELECT * FROM course WHERE id = $1 ORDER BY name`
+	query := `SELECT * FROM course WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
 		common.CheckError(err)
 	}
@@ -270,7 +273,7 @@ func SelectCourse(course_id int64, deep bool) (course common.Course) {
 func SelectCourses(subjectId int64, deep bool) (courses []common.Course) {
 	defer common.TimeTrack(time.Now(), "SelectCourses deep:"+fmt.Sprint(deep))
 	key := "courses"
-	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY name`
+	query := `SELECT * FROM course WHERE subject_id = $1 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &courses, subjectId); err != nil {
 		common.CheckError(err)
 	}
@@ -293,6 +296,21 @@ func SelectSection(section_id int64, deep bool) (section common.Section) {
 	key := "section"
 	query := `SELECT * FROM section WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &section, section_id); err != nil {
+		common.CheckError(err)
+	}
+	if deep && &section != nil {
+		deepSelectSection(&section)
+	}
+
+	return
+}
+
+func SelectSectionByTopic(topicName string, deep bool) (section common.Section) {
+	defer common.TimeTrack(time.Now(), "SelectSection deep:"+fmt.Sprint(deep))
+
+	key := "section"
+	query := `SELECT * FROM section WHERE topic_name = $1 ORDER BY number`
+	if err := Get(GetCachedStmt(key, query), &section, topicName); err != nil {
 		common.CheckError(err)
 	}
 	if deep && &section != nil {
