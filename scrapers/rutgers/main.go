@@ -18,10 +18,6 @@ import (
 )
 
 var (
-	/*	rutgersNB *uct.University
-		rutgersNK *uct.University
-		rutgersCAM *uct.University*/
-
 	host = "http://sis.rutgers.edu/soc"
 )
 
@@ -654,7 +650,7 @@ func (meeting RMeetingTime) timeRank() int {
 
 func (meeting RMeetingTime) room() *string {
 	if meeting.BuildingCode != "" {
-		room := meeting.BuildingCode + " - " + meeting.RoomNumber
+		room := meeting.BuildingCode + "-" + meeting.RoomNumber
 		return &room
 	}
 	return nil
