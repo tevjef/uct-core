@@ -491,10 +491,10 @@ var seasons = [...]string{
 }
 
 var seasonsFull = [...]string{
-	"Fall",
-	"Spring",
-	"Summer",
-	"Winter",
+	"fall",
+	"spring",
+	"summer",
+	"winter",
 }
 
 func (s NSemester) String() string {
