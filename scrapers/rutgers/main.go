@@ -21,106 +21,6 @@ var (
 	host = "http://sis.rutgers.edu/soc"
 )
 
-type (
-	MeetingByClass []RMeetingTime
-
-	RSubject struct {
-		Name    string    `json:"description,omitempty"`
-		Number  string    `json:"code,omitempty"`
-		Courses []RCourse `json:"courses,omitempty"`
-		Season  uct.Season
-		Year    int
-	}
-
-	RCourse struct {
-		SubjectNotes      string        `json:"subjectNotes"`
-		CourseNumber      string        `json:"courseNumber"`
-		Subject           string        `json:"subject"`
-		CampusCode        string        `json:"campusCode"`
-		OpenSections      int           `json:"openSections"`
-		SynopsisURL       string        `json:"synopsisUrl"`
-		SubjectGroupNotes string        `json:"subjectGroupNotes"`
-		OfferingUnitCode  string        `json:"offeringUnitCode"`
-		OfferingUnitTitle string        `json:"offeringUnitTitle"`
-		Title             string        `json:"title"`
-		CourseDescription string        `json:"courseDescription"`
-		PreReqNotes       string        `json:"preReqNotes"`
-		Sections          []RSection    `json:"sections"`
-		SupplementCode    string        `json:"supplementCode"`
-		Credits           float64       `json:"credits"`
-		UnitNotes         string        `json:"unitNotes"`
-		CoreCodes         []interface{} `json:"coreCodes"`
-		CourseNotes       string        `json:"courseNotes"`
-		ExpandedTitle     string        `json:"expandedTitle"`
-	}
-
-	RSection struct {
-		SectionEligibility                   string                 `json:"sectionEligibility"`
-		SessionDatePrintIndicator            string                 `json:"sessionDatePrintIndicator"`
-		ExamCode                             string                 `json:"examCode"`
-		SpecialPermissionAddCode             string                 `json:"specialPermissionAddCode"`
-		CrossListedSections                  []RCrossListedSections `json:"crossListedSections"`
-		SectionNotes                         string                 `json:"sectionNotes"`
-		SpecialPermissionDropCode            string                 `json:"specialPermissionDropCode"`
-		Instructor                           []RInstructor          `json:"instructors"`
-		Number                               string                 `json:"number"`
-		Majors                               []RMajor               `json:"majors"`
-		SessionDates                         string                 `json:"sessionDates"`
-		SpecialPermissionDropCodeDescription string                 `json:"specialPermissionDropCodeDescription"`
-		Subtopic                             string                 `json:"subtopic"`
-		SynopsisUrl                          string                 `json:"synopsisUrl"`
-		OpenStatus                           bool                   `json:"openStatus"`
-		Comments                             []RComment             `json:"comments"`
-		Minors                               []interface{}          `json:"minors"`
-		CampusCode                           string                 `json:"campusCode"`
-		Index                                string                 `json:"index"`
-		UnitMajors                           []interface{}          `json:"unitMajors"`
-		Printed                              string                 `json:"printed"`
-		SpecialPermissionAddCodeDescription  string                 `json:"specialPermissionAddCodeDescription"`
-		Subtitle                             string                 `json:"subtitle"`
-		MeetingTimes                         []RMeetingTime         `json:"meetingTimes"`
-		LegendKey                            string                 `json:"legendKey"`
-		HonorPrograms                        []interface{}          `json:"honorPrograms"`
-	}
-
-	RInstructor struct {
-		Name string `json:"name"`
-	}
-
-	RMajor struct {
-		isMajorCode bool   `json:"isMajorCode"`
-		isUnitCode  bool   `json:"isUnitCode"`
-		code        string `json:"code"`
-	}
-
-	RComment struct {
-		Code        string `json:"code"`
-		Description string `json:"description"`
-	}
-
-	RCrossListedSections struct {
-		sectionNumber    string `json:"sectionNumber"`
-		offeringUnitCode string `json:"offeringUnitCode"`
-		courseNumber     string `json:"courseNumber"`
-		subjectCode      string `json:"subjectCode"`
-	}
-
-	RMeetingTime struct {
-		CampusLocation  string `json:"campusLocation"`
-		BaClassHours    string `json:"baClassHours"`
-		RoomNumber      string `json:"roomNumber"`
-		PmCode          string `json:"pmCode"`
-		CampusAbbrev    string `json:"campusAbbrev"`
-		CampusName      string `json:"campusName"`
-		MeetingDay      string `json:"meetingDay"`
-		BuildingCode    string `json:"buildingCode"`
-		StartTime       string `json:"startTime"`
-		EndTime         string `json:"endTime"`
-		MeetingModeDesc string `json:"meetingModeDesc"`
-		MeetingModeCode string `json:"meetingModeCode"`
-	}
-)
-
 func main() {
 
 	enc := ffjson.NewEncoder(os.Stdout)
@@ -150,51 +50,51 @@ func getCampus(campus string) uct.University {
 		Registrations: []uct.Registration{
 			uct.Registration{
 				Period:     uct.SEM_FALL.String(),
-				PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.SEM_SPRING.String(),
-				PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.SEM_SUMMER.String(),
-				PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.SEM_WINTER.String(),
-				PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.START_FALL.String(),
-				PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.START_SPRING.String(),
-				PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.October, 18, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.START_SUMMER.String(),
-				PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.START_WINTER.String(),
-				PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.END_FALL.String(),
-				PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.END_SPRING.String(),
-				PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.END_SUMMER.String(),
-				PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.August, 15, 0, 0, 0, 0, time.UTC),
 			},
 			uct.Registration{
 				Period:     uct.END_WINTER.String(),
-				PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC),
+				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC),
 			},
 		},
 		Metadata: []uct.Metadata{
@@ -840,3 +740,104 @@ func AppendRSubjects(subjects []RSubject, toAppend []RSubject) []RSubject {
 	}
 	return subjects
 }
+
+
+type (
+	MeetingByClass []RMeetingTime
+
+	RSubject struct {
+		Name    string    `json:"description,omitempty"`
+		Number  string    `json:"code,omitempty"`
+		Courses []RCourse `json:"courses,omitempty"`
+		Season  uct.Season
+		Year    int
+	}
+
+	RCourse struct {
+		SubjectNotes      string        `json:"subjectNotes"`
+		CourseNumber      string        `json:"courseNumber"`
+		Subject           string        `json:"subject"`
+		CampusCode        string        `json:"campusCode"`
+		OpenSections      int           `json:"openSections"`
+		SynopsisURL       string        `json:"synopsisUrl"`
+		SubjectGroupNotes string        `json:"subjectGroupNotes"`
+		OfferingUnitCode  string        `json:"offeringUnitCode"`
+		OfferingUnitTitle string        `json:"offeringUnitTitle"`
+		Title             string        `json:"title"`
+		CourseDescription string        `json:"courseDescription"`
+		PreReqNotes       string        `json:"preReqNotes"`
+		Sections          []RSection    `json:"sections"`
+		SupplementCode    string        `json:"supplementCode"`
+		Credits           float64       `json:"credits"`
+		UnitNotes         string        `json:"unitNotes"`
+		CoreCodes         []interface{} `json:"coreCodes"`
+		CourseNotes       string        `json:"courseNotes"`
+		ExpandedTitle     string        `json:"expandedTitle"`
+	}
+
+	RSection struct {
+		SectionEligibility                   string                 `json:"sectionEligibility"`
+		SessionDatePrintIndicator            string                 `json:"sessionDatePrintIndicator"`
+		ExamCode                             string                 `json:"examCode"`
+		SpecialPermissionAddCode             string                 `json:"specialPermissionAddCode"`
+		CrossListedSections                  []RCrossListedSections `json:"crossListedSections"`
+		SectionNotes                         string                 `json:"sectionNotes"`
+		SpecialPermissionDropCode            string                 `json:"specialPermissionDropCode"`
+		Instructor                           []RInstructor          `json:"instructors"`
+		Number                               string                 `json:"number"`
+		Majors                               []RMajor               `json:"majors"`
+		SessionDates                         string                 `json:"sessionDates"`
+		SpecialPermissionDropCodeDescription string                 `json:"specialPermissionDropCodeDescription"`
+		Subtopic                             string                 `json:"subtopic"`
+		SynopsisUrl                          string                 `json:"synopsisUrl"`
+		OpenStatus                           bool                   `json:"openStatus"`
+		Comments                             []RComment             `json:"comments"`
+		Minors                               []interface{}          `json:"minors"`
+		CampusCode                           string                 `json:"campusCode"`
+		Index                                string                 `json:"index"`
+		UnitMajors                           []interface{}          `json:"unitMajors"`
+		Printed                              string                 `json:"printed"`
+		SpecialPermissionAddCodeDescription  string                 `json:"specialPermissionAddCodeDescription"`
+		Subtitle                             string                 `json:"subtitle"`
+		MeetingTimes                         []RMeetingTime         `json:"meetingTimes"`
+		LegendKey                            string                 `json:"legendKey"`
+		HonorPrograms                        []interface{}          `json:"honorPrograms"`
+	}
+
+	RInstructor struct {
+		Name string `json:"name"`
+	}
+
+	RMajor struct {
+		isMajorCode bool   `json:"isMajorCode"`
+		isUnitCode  bool   `json:"isUnitCode"`
+		code        string `json:"code"`
+	}
+
+	RComment struct {
+		Code        string `json:"code"`
+		Description string `json:"description"`
+	}
+
+	RCrossListedSections struct {
+		sectionNumber    string `json:"sectionNumber"`
+		offeringUnitCode string `json:"offeringUnitCode"`
+		courseNumber     string `json:"courseNumber"`
+		subjectCode      string `json:"subjectCode"`
+	}
+
+	RMeetingTime struct {
+		CampusLocation  string `json:"campusLocation"`
+		BaClassHours    string `json:"baClassHours"`
+		RoomNumber      string `json:"roomNumber"`
+		PmCode          string `json:"pmCode"`
+		CampusAbbrev    string `json:"campusAbbrev"`
+		CampusName      string `json:"campusName"`
+		MeetingDay      string `json:"meetingDay"`
+		BuildingCode    string `json:"buildingCode"`
+		StartTime       string `json:"startTime"`
+		EndTime         string `json:"endTime"`
+		MeetingModeDesc string `json:"meetingModeDesc"`
+		MeetingModeCode string `json:"meetingModeCode"`
+	}
+)
