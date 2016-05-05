@@ -147,7 +147,7 @@ func getUniversity() (university uct.University) {
 
 					}
 					
-					for i, meeting := range section.MeetingTimes {
+					for _, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
 							Room:      &meeting.Room,
 							Day:       &meeting.Day,
