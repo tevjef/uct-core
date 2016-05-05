@@ -31,12 +31,12 @@ func main() {
 
 func getUniversity() (university uct.University) {
 	university = uct.University{
-		Name:             "Rutgers University–New Brunswick",
-		Abbr:             "RU-NB",
+		Name:             "New Jersey Institute of Technolog",
+		Abbr:             "NJIT",
 		MainColor:        "F44336",
 		AccentColor:      "607D8B",
-		HomePage:         "http://newbrunswick.rutgers.edu/",
-		RegistrationPage: "https://sims.rutgers.edu/webreg/",
+		HomePage:         "http://njit.edu/",
+		RegistrationPage: "https://www.njit.edu/cp/login.php",
 		Registrations: []uct.Registration{
 			uct.Registration{
 				Period:     uct.SEM_FALL.String(),
