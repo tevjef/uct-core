@@ -31,7 +31,7 @@ func main() {
 
 func getUniversity() (university uct.University) {
 	university = uct.University{
-		Name:             "New Jersey Institute of Technolog",
+		Name:             "New Jersey Institute of Technology",
 		Abbr:             "NJIT",
 		MainColor:        "F44336",
 		AccentColor:      "607D8B",
@@ -122,7 +122,7 @@ func getUniversity() (university uct.University) {
 				Name:   subject.SubjectName,
 				Number: subject.SubjectId,
 				Season: subject.Semester.Season.FullString(),
-				Year:   string(subject.Semester.Year)}
+				Year:   strconv.Itoa(subject.Semester.Year)}
 			for _, course := range subject.Courses {
 				newCourse := uct.Course{
 					Name:     course.CourseName,
@@ -147,7 +147,7 @@ func getUniversity() (university uct.University) {
 
 					}
 					
-					for _, meeting := range section.MeetingTimes {
+					for i, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
 							Room:      &meeting.Room,
 							Day:       &meeting.Day,
@@ -191,8 +191,12 @@ func extractSubjectList(doc *goquery.Document, semester NSemester) (subjectList 
 
 		num := trim(substringBefore(s.Text(), "-"))
 		name := trim(substringAfter(s.Text(), "-"))
-		if name == "" {
+		if num[:1] == "R" && name == "" {
 			name = "Offered by Rutgers"
+		} else if num == "MIT" {
+			name = "Offered by Electrical Tech"
+		} else if name == "" {
+			name = "UNKNOWN NAME"
 		}
 
 		subject := NSubject{
