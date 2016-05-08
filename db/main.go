@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -16,6 +15,24 @@ import (
 	"time"
 	uct "uct/common"
 )
+
+type App struct {
+	dbHandler DatabaseHandler
+}
+
+type AuditStats struct {
+	uniName       string
+	elapsed       time.Duration
+	insertions    int
+	updates       int
+	upserts       int
+	existential   int
+	subjectCount  int
+	courseCount   int
+	sectionCount  int
+	meetingCount  int
+	metadataCount int
+}
 
 var (
 	database     *sqlx.DB
@@ -48,7 +65,6 @@ var (
 	sectionCount  int
 	meetingCount  int
 	metadataCount int
-	startTime     = time.Now()
 )
 
 func init() {
@@ -122,8 +138,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	app := App{dbHandler: DatabaseHandlerImpl{Database: database}}
+
 	for _, university := range universities {
-		insertUniversity(database, university)
+		stats := app.insertUniversity(university)
+		stats.audit()
 	}
 
 	defer func() {
@@ -133,51 +152,9 @@ func main() {
 
 }
 
-func auditStats(uniName string, elapsed time.Duration, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount int) {
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  "universityct",
-		Precision: "s",
-	})
-
-	tags := map[string]string{
-		"university_name": uniName,
-	}
-
-	fields := map[string]interface{}{
-		"insertions":    insertions,
-		"updates":       updates,
-		"upserts":       upserts,
-		"existential":   existential,
-		"subjectCount":  subjectCount,
-		"courseCount":   courseCount,
-		"sectionCount":  sectionCount,
-		"meetingCount":  meetingCount,
-		"metadataCount": metadataCount,
-		"elapsed": elapsed.Seconds(),
-	}
-
-	point, err := client.NewPoint(
-		"db_ops",
-		tags,
-		fields,
-		startTime,
-	)
-
-	uct.CheckError(err)
-
-	bp.AddPoint(point)
-
-	err = influxClient.Write(bp)
-	uct.CheckError(err)
-
-	fmt.Println("InfluxDB logging: ", tags, fields)
-}
-
-func insertUniversity(db *sqlx.DB, uni uct.University) {
-	//uni.VetAndBuild()
+func (app App) insertUniversity(uni uct.University) AuditStats {
 	startTime := time.Now()
 
-	LogVerbose(fmt.Sprintln("In University:", uni.Name))
 	var university_id int64
 
 	insertQuery := `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name)
@@ -189,27 +166,27 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 	                WHERE name = :name
 	                RETURNING university.id`
 
-	university_id = upsert(db, insertQuery, updateQuery, uni)
+	university_id = app.dbHandler.upsert(insertQuery, updateQuery, uni)
 
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
 		subject.UniversityId = university_id
-		subId := insertSubject(db, subject)
+		subId := app.insertSubject(subject)
 
 		courses := subject.Courses
 		for courseIndex := range courses {
 			course := courses[courseIndex]
 
 			course.SubjectId = subId
-			courseId := insertCourse(db, course)
+			courseId := app.insertCourse(course)
 
 			sections := course.Sections
 			for sectionIndex := range sections {
 				section := sections[sectionIndex]
 
 				section.CourseId = courseId
-				sectionId := insertSection(db, section)
+				sectionId := app.insertSection(section)
 
 				//[]Instructors
 				instructors := section.Instructors
@@ -217,7 +194,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 					instructor := instructors[instructorIndex]
 
 					instructor.SectionId = sectionId
-					insertInstructor(db, instructor)
+					app.insertInstructor(instructor)
 				}
 
 				//[]Meeting
@@ -227,7 +204,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 
 					meeting.SectionId = sectionId
 					meeting.Index = meetingIndex
-					meetingId := insertMeeting(db, meeting)
+					meetingId := app.insertMeeting(meeting)
 
 					// Meeting []Metadata
 					metadatas := meeting.Metadata
@@ -235,7 +212,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 						metadata := metadatas[metadataIndex]
 
 						metadata.MeetingId = &meetingId
-						insertMetadata(db, metadata)
+						app.insertMetadata(metadata)
 					}
 				}
 
@@ -245,7 +222,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 					book := books[bookIndex]
 
 					book.SectionId = sectionId
-					insertBook(db, book)
+					app.insertBook(book)
 				}
 
 				// Section []Metadata
@@ -254,7 +231,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 					metadata := metadatas[metadataIndex]
 
 					metadata.SectionId = &sectionId
-					insertMetadata(db, metadata)
+					app.insertMetadata(metadata)
 				}
 			}
 
@@ -264,7 +241,7 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 				metadata := metadatas[metadataIndex]
 
 				metadata.CourseId = &courseId
-				insertMetadata(db, metadata)
+				app.insertMetadata(metadata)
 			}
 		}
 
@@ -274,13 +251,13 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 			metadata := metadatas[metadataIndex]
 
 			metadata.SubjectId = &subId
-			insertMetadata(db, metadata)
+			app.insertMetadata(metadata)
 		}
 	}
 
 	for _, registrations := range uni.Registrations {
 		registrations.UniversityId = university_id
-		insertRegistration(db, registrations)
+		app.insertRegistration(registrations)
 	}
 
 	// university []Metadata
@@ -289,296 +266,298 @@ func insertUniversity(db *sqlx.DB, uni uct.University) {
 		metadata := metadatas[metadataIndex]
 
 		metadata.UniversityId = &university_id
-		insertMetadata(db, metadata)
+		app.insertMetadata(metadata)
 	}
 
-	uct.Log("Insertions: ", insertions)
-	uct.Log("Updates: ", updates)
-	uct.Log("Upserts: ", upserts)
-	uct.Log("Existential: ", existential)
-	uct.Log("Subjects: ", subjectCount)
-	uct.Log("Courses: ", courseCount)
-	uct.Log("Sections: ", sectionCount)
-	uct.Log("Meetings: ", metadataCount)
-	uct.Log("Metadata: ", metadataCount)
 	elapsed := time.Since(startTime)
-	auditStats(uni.TopicName, elapsed, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount)
-	insertions = 0
-	updates = 0
-	upserts = 0
-	existential = 0
-	subjectCount = 0
-	courseCount = 0
-	sectionCount = 0
-	meetingCount = 0
-	metadataCount = 0
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("Recovered in insertUniverisity", r)
 		}
 	}()
+	stats := AuditStats{uni.TopicName, elapsed, insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount}
+	insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount = 0, 0, 0, 0, 0, 0, 0, 0, 0
+	return stats
 }
 
-func insertSubject(db *sqlx.DB, sub uct.Subject) (subject_id int64) {
+var (
+	SubjectExistQuery = `SELECT id FROM course
+						WHERE hash = :hash`
+	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
+                   	VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name)
+                   	RETURNING subject.id`
+	SubjectUpdateQuery = `UPDATE subject SET (name, season, year, topic_name) = (:name, :season, :year, :topic_name)
+					WHERE hash = :hash
+                   	RETURNING subject.id`
+)
+
+func (app App) insertSubject(sub uct.Subject) (subject_id int64) {
 	//sub.VetAndBuild()
 	subjectCount++
-	LogVerbose(fmt.Sprintln("In Subjects:", sub.UniversityId, sub.Name, sub.Number, sub.Season, sub.Year, sub.Hash, "Course: len ", len(sub.Courses)))
 
 	if !*fullUpsert {
-		existsQuery := `SELECT id FROM course
-						WHERE hash = :hash`
 
-		if subject_id = exists(db, existsQuery, sub); subject_id != 0 {
+		if subject_id = app.dbHandler.exists(SubjectExistQuery, sub); subject_id != 0 {
 			return
 		}
 	}
 
-	insertQuery := `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
-                   	VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name) 
-                   	RETURNING subject.id`
-
-	updateQuery := `UPDATE subject SET (name, season, year, topic_name) = (:name, :season, :year, :topic_name)
-					WHERE hash = :hash
-                   	RETURNING subject.id`
-
-	subject_id = upsert(db, insertQuery, updateQuery, sub)
+	subject_id = app.dbHandler.upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
 
 	return subject_id
 }
 
-func insertCourse(db *sqlx.DB, course uct.Course) (course_id int64) {
-	//course.VetAndBuild()
-	courseCount++
-	LogVerbose(fmt.Sprintln("In Course:", course.SubjectId, course.Name, course.Number, course.Hash, "Section len: ", len(course.Sections)))
-
-	if !*fullUpsert {
-		existsQuery := `SELECT id FROM course
+var (
+	CourseExistQuery = `SELECT id FROM course
 						WHERE hash = :hash`
 
-		if course_id = exists(db, existsQuery, course); course_id != 0 {
-			return
-		}
-	}
-
-	updateQuery := `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name)
+	CourseUpdateQuery = `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name)
 					WHERE hash = :hash
                     RETURNING course.id`
 
-	insertQuery := `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
-                    VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name) 
+	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
+                    VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name)
                     RETURNING course.id`
+)
 
-	course_id = upsert(db, insertQuery, updateQuery, course)
+func (app App) insertCourse(course uct.Course) (course_id int64) {
+	//course.VetAndBuild()
+	courseCount++
+
+	if !*fullUpsert {
+
+		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
+			return
+		}
+	}
+	course_id = app.dbHandler.upsert(CourseInsertQuery, CourseUpdateQuery, course)
 
 	return course_id
 }
 
-func insertSection(db *sqlx.DB, section uct.Section) (section_id int64) {
-	//section.VetAndBuild()
-	sectionCount++
-	LogVerbose(fmt.Sprintln("In Section:", section.CourseId, section.Number, section.CallNumber, section.Status, section.Meetings, section.Instructors, section.Books))
-
-	updateQuery := `UPDATE section SET (max, now, status, credits, topic_name) = (:max, :now, :status, :credits, :topic_name)
-					WHERE course_id = :course_id AND call_number = :call_number AND number = :number
-                    RETURNING section.id`
-
-	insertQuery := `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name)
+var (
+	SectionInsertQuery = `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name)
                     VALUES  (:course_id, :number, :call_number, :max, :now, :status, :credits, :topic_name)
                     RETURNING section.id`
 
-	section_id = upsert(db, insertQuery, updateQuery, section)
+	SectionUpdateQuery = `UPDATE section SET (max, now, status, credits, topic_name) = (:max, :now, :status, :credits, :topic_name)
+					WHERE course_id = :course_id AND call_number = :call_number AND number = :number
+                    RETURNING section.id`
+)
+
+func (app App) insertSection(section uct.Section) (section_id int64) {
+	//section.VetAndBuild()
+	sectionCount++
+
+	section_id = app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 
 	return section_id
 }
 
-func insertMeeting(db *sqlx.DB, meeting uct.Meeting) (meeting_id int64) {
-	//meeting.VetAndBuild()
-	meetingCount++
-	LogVerbose(fmt.Sprintln("In Meeting:", meeting))
-
-	if !*fullUpsert {
-		existsQuery := `SELECT id FROM meeting
+var (
+	MeetingExistQuery = `SELECT id FROM meeting
 						WHERE section_id = :section_id AND index = :index`
 
-		if meeting_id = exists(db, existsQuery, meeting); meeting_id != 0 {
-			return
-		}
-	}
-
-	updateQuery := `UPDATE meeting SET (room, day, start_time, end_time) = (:room, :day, :start_time, :end_time)
+	MeetingUpdateQuery = `UPDATE meeting SET (room, day, start_time, end_time) = (:room, :day, :start_time, :end_time)
 					WHERE section_id = :section_id AND index = :index
                     RETURNING meeting.id`
 
-	insertQuery := `INSERT INTO meeting (section_id, room, day, start_time, end_time, index)
+	MeetingInsertQuery = `INSERT INTO meeting (section_id, room, day, start_time, end_time, index)
                     VALUES  (:section_id, :room, :day, :start_time, :end_time, :index)
                     RETURNING meeting.id`
+)
 
-	meeting_id = upsert(db, insertQuery, updateQuery, meeting)
+func (app App) insertMeeting(meeting uct.Meeting) (meeting_id int64) {
+	//meeting.VetAndBuild()
+	meetingCount++
 
+	if !*fullUpsert {
+		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
+			return
+		}
+	}
+	meeting_id = app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 	return meeting_id
 }
 
-func insertInstructor(db *sqlx.DB, instructor uct.Instructor) (instructor_id int64) {
-	//instructor.VetAndBuild()
-	LogVerbose(fmt.Sprintln("In Instructor:", instructor))
-
-	existsQuery := `SELECT id FROM instructor
+var (
+	InstructorExistQuery = `SELECT id FROM instructor
 				WHERE section_id = :section_id AND name = :name`
 
-	if instructor_id = exists(db, existsQuery, instructor); instructor_id != 0 {
+	InstructorInsertQuery = `INSERT INTO instructor (section_id, name)
+				VALUES  (:section_id, :name)
+				RETURNING instructor.id`
+)
+
+func (app App) insertInstructor(instructor uct.Instructor) (instructor_id int64) {
+	//instructor.VetAndBuild()
+
+	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
 		return
 	}
 
-	insertQuery := `INSERT INTO instructor (section_id, name)
-				VALUES  (:section_id, :name)
-				RETURNING instructor.id`
-	instructor_id = insert(db, insertQuery, instructor)
+	instructor_id = app.dbHandler.insert(InstructorInsertQuery, instructor)
 
 	return instructor_id
 }
 
-func insertBook(db *sqlx.DB, book uct.Book) (book_id int64) {
-	LogVerbose(fmt.Sprintln("In Book:", book))
-
-	updateQuery := `UPDATE book SET (title, url) = (:title, :url)
+var (
+	BookUpdateQuery = `UPDATE book SET (title, url) = (:title, :url)
 					WHERE section_id = :section_id AND title = :title
                     RETURNING book.id`
 
-	insertQuery := `INSERT INTO meeting (section_id, title, url)
+	BookInsertQuery = `INSERT INTO meeting (section_id, title, url)
                     VALUES  (:section_id, :title, :url)
                     RETURNING book.id`
+)
 
-	book_id = upsert(db, insertQuery, updateQuery, book)
+func (app App) insertBook(book uct.Book) (book_id int64) {
+
+	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return book_id
 }
 
-func insertRegistration(db *sqlx.DB, registration uct.Registration) int64 {
-	LogVerbose(fmt.Sprintln("In Registration:", registration))
-	var registration_id int64
-
-	updateQuery := `UPDATE registration SET (period_date) = (:period_date) 
+var (
+	RegistrationUpdateQuery = `UPDATE registration SET (period_date) = (:period_date)
 					WHERE university_id = :university_id AND period = :period
 	                RETURNING registration.id`
 
-	insertQuery := `INSERT INTO registration (university_id, period, period_date)
-                    VALUES (:university_id, :period, :period_date) 
+	RegistrationInsertQuery = `INSERT INTO registration (university_id, period, period_date)
+                    VALUES (:university_id, :period, :period_date)
                     RETURNING registration.id`
+)
 
-	registration_id = upsert(db, insertQuery, updateQuery, registration)
+func (app App) insertRegistration(registration uct.Registration) int64 {
+
+	var registration_id int64
+	registration_id = app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 
 	return registration_id
 }
 
-func insertMetadata(db *sqlx.DB, metadata uct.Metadata) (metadata_id int64) {
+var (
+	MetaUniExistQuery = `SELECT id FROM metadata
+						WHERE metadata.university_id = :university_id AND metadata.title = :title`
+	MetaUniUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
+					   WHERE metadata.university_id = :university_id AND metadata.title = :title
+		               RETURNING metadata.id`
+	MetaUniInsertQuery = `INSERT INTO metadata (university_id, title, content)
+                       VALUES (:university_id, :title, :content)
+                       RETURNING metadata.id`
+
+	MetaSubjectExistQuery = `SELECT id FROM metadata
+						WHERE metadata.subject_id = :subject_id AND metadata.title = :title`
+	MetaSubjectUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
+					   WHERE metadata.subject_id = :subject_id AND metadata.title = :title
+		               RETURNING metadata.id`
+	MetaSubjectInsertQuery = `INSERT INTO metadata (subject_id, title, content)
+                       VALUES (:subject_id, :title, :content)
+                       RETURNING metadata.id`
+
+	MetaCourseExistQuery = `SELECT id FROM metadata
+						WHERE metadata.course_id = :course_id AND metadata.title = :title`
+
+	MetaCourseUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
+					   WHERE metadata.course_id = :course_id AND metadata.title = :title
+		               RETURNING metadata.id`
+
+	MetaCourseInsertQuery = `INSERT INTO metadata (subject_id, title, content)
+                       VALUES (:subject_id, :title, :content)
+                       RETURNING metadata.id`
+
+	MetaSectionExistQuery = `SELECT id FROM metadata
+						WHERE metadata.section_id = :section_id AND metadata.title = :title`
+	MetaSectionInsertQuery = `INSERT INTO metadata (section_id, title, content)
+                       VALUES (:section_id, :title, :content)
+                       RETURNING metadata.id`
+	MetaSectionUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
+					   WHERE metadata.section_id = :section_id AND metadata.title = :title
+		               RETURNING metadata.id`
+
+	MetaMeetingExistQuery = `SELECT id FROM metadata
+						WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title`
+	MetaMeetingInsertQuery = `INSERT INTO metadata (meeting_id, title, content)
+                       VALUES (:meeting_id, :title, :content)
+                       RETURNING metadata.id`
+	MetaMeetingUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
+					   WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title
+		               RETURNING metadata.id`
+)
+
+func (app App) insertMetadata(metadata uct.Metadata) (metadata_id int64) {
 	metadataCount++
-	LogVerbose(fmt.Sprintln("In Metadata:", metadata))
 
 	var insertQuery string
 	var updateQuery string
 
 	if metadata.UniversityId != nil {
 		if !*fullUpsert {
-			existsQuery := `SELECT id FROM metadata
-						WHERE metadata.university_id = :university_id AND metadata.title = :title`
-
-			if metadata_id = exists(db, existsQuery, metadata); metadata_id != 0 {
+			if metadata_id = app.dbHandler.exists(MetaUniExistQuery, metadata); metadata_id != 0 {
 				return
 			}
 		}
-
-		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
-					   WHERE metadata.university_id = :university_id AND metadata.title = :title
-		               RETURNING metadata.id`
-
-		insertQuery = `INSERT INTO metadata (university_id, title, content)
-                       VALUES (:university_id, :title, :content) 
-                       RETURNING metadata.id`
+		updateQuery = MetaUniUpdateQuery
+		insertQuery = MetaUniInsertQuery
 
 	} else if metadata.SubjectId != nil {
 		if !*fullUpsert {
-			existsQuery := `SELECT id FROM metadata
-						WHERE metadata.subject_id = :subject_id AND metadata.title = :title`
-
-			if metadata_id = exists(db, existsQuery, metadata); metadata_id != 0 {
+			if metadata_id = app.dbHandler.exists(MetaSubjectExistQuery, metadata); metadata_id != 0 {
 				return
 			}
 		}
-
-		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
-					   WHERE metadata.subject_id = :subject_id AND metadata.title = :title
-		               RETURNING metadata.id`
-
-		insertQuery = `INSERT INTO metadata (subject_id, title, content)
-                       VALUES (:subject_id, :title, :content) 
-                       RETURNING metadata.id`
+		updateQuery = MetaSubjectUpdateQuery
+		insertQuery = MetaSubjectInsertQuery
 
 	} else if metadata.CourseId != nil {
 		if !*fullUpsert {
-			existsQuery := `SELECT id FROM metadata
-						WHERE metadata.course_id = :course_id AND metadata.title = :title`
-
-			if metadata_id = exists(db, existsQuery, metadata); metadata_id != 0 {
+			if metadata_id = app.dbHandler.exists(MetaCourseExistQuery, metadata); metadata_id != 0 {
 				return
 			}
 		}
-
-		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
-					   WHERE metadata.course_id = :course_id AND metadata.title = :title
-		               RETURNING metadata.id`
-
-		insertQuery = `INSERT INTO metadata (course_id, title, content)
-                       VALUES (:course_id, :title, :content) 
-                       RETURNING metadata.id`
+		updateQuery = MetaCourseUpdateQuery
+		insertQuery = MetaCourseInsertQuery
 
 	} else if metadata.SectionId != nil {
 		if !*fullUpsert {
-
-			existsQuery := `SELECT id FROM metadata
-						WHERE metadata.section_id = :section_id AND metadata.title = :title`
-
-			if metadata_id = exists(db, existsQuery, metadata); metadata_id != 0 {
+			if metadata_id = app.dbHandler.exists(MetaSectionExistQuery, metadata); metadata_id != 0 {
 				return
 			}
 		}
-
-		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
-					   WHERE metadata.section_id = :section_id AND metadata.title = :title
-		               RETURNING metadata.id`
-
-		insertQuery = `INSERT INTO metadata (section_id, title, content)
-                       VALUES (:section_id, :title, :content) 
-                       RETURNING metadata.id`
+		updateQuery = MetaSectionUpdateQuery
+		insertQuery = MetaSectionInsertQuery
 
 	} else if metadata.MeetingId != nil {
 		if !*fullUpsert {
-			existsQuery := `SELECT id FROM metadata
-						WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title`
-
-			if metadata_id = exists(db, existsQuery, metadata); metadata_id != 0 {
+			if metadata_id = app.dbHandler.exists(MetaMeetingExistQuery, metadata); metadata_id != 0 {
 				return
 			}
 		}
-
-		updateQuery = `UPDATE metadata SET (title, content) = (:title, :content) 
-					   WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title
-		               RETURNING metadata.id`
-
-		insertQuery = `INSERT INTO metadata (meeting_id, title, content)
-                       VALUES (:meeting_id, :title, :content) 
-                       RETURNING metadata.id`
+		updateQuery = MetaMeetingUpdateQuery
+		insertQuery = MetaMeetingInsertQuery
 	}
 
-	metadata_id = upsert(db, insertQuery, updateQuery, metadata)
+	metadata_id = app.dbHandler.upsert(insertQuery, updateQuery, metadata)
 
 	return metadata_id
 }
 
-func insert(db *sqlx.DB, query string, data interface{}) (id int64) {
+type DatabaseHandler interface {
+	insert(query string, data interface{}) (id int64)
+	update(query string, data interface{}) (id int64)
+	upsert(insertQuery, updateQuery string, data interface{}) (id int64)
+	exists(query string, data interface{}) (id int64)
+}
+
+type DatabaseHandlerImpl struct {
+	Database *sqlx.DB
+}
+
+func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
 	insertions++
 	typeName := reflect.TypeOf(data).Name()
 
-	if rows, err := db.NamedQuery(query, data); err != nil {
+	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
 		log.Panicln(err, typeName)
 	} else {
 		for rows.Next() {
@@ -592,11 +571,11 @@ func insert(db *sqlx.DB, query string, data interface{}) (id int64) {
 	return id
 }
 
-func update(db *sqlx.DB, query string, data interface{}) (id int64) {
+func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
 	updates++
 	typeName := reflect.TypeOf(data).Name()
 
-	if rows, err := db.NamedQuery(query, data); err != nil {
+	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
 		log.Panicln(err, typeName)
 	} else {
 		for rows.Next() {
@@ -611,18 +590,19 @@ func update(db *sqlx.DB, query string, data interface{}) (id int64) {
 	return id
 }
 
-func upsert(db *sqlx.DB, insertQuery, updateQuery string, data interface{}) (id int64) {
+func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {
 	upserts++
-	if id = update(db, updateQuery, data); id != 0 {
+	if id = dbHandler.update(updateQuery, data); id != 0 {
 	} else if id == 0 {
-		id = insert(db, insertQuery, data)
+		id = dbHandler.insert(insertQuery, data)
 	}
 	return
 }
 
-func exists(db *sqlx.DB, query string, data interface{}) (id int64) {
+func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
 	existential++
-	if rows, err := db.NamedQuery(query, data); err != nil {
+
+	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
 		log.Panicln(err)
 	} else {
 		for rows.Next() {
@@ -635,26 +615,72 @@ func exists(db *sqlx.DB, query string, data interface{}) (id int64) {
 	return
 }
 
-func LogVerbose(v ...interface{}) {
-	if *verbose {
-		uct.LogVerbose(v)
+var preparedStmts = make(map[string]*sqlx.NamedStmt)
+
+func GetCachedStmt(key, query string, DatabaseHandler DatabaseHandlerImpl) *sqlx.NamedStmt {
+	if stmt := preparedStmts[key]; stmt == nil {
+		preparedStmts[key] = DatabaseHandler.prepare(query)
+	}
+	return preparedStmts[key]
+}
+
+func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
+	if named, err := dbHandler.Database.PrepareNamed(query); err != nil {
+		uct.CheckError(err)
+		return nil
+	} else {
+		return named
 	}
 }
 
-type DataType int
-
-const (
-	SUBJECT DataType = iota
-	COURSE
-	SECTION
-)
-
-var datatype = [...]string{
-	"subject",
-	"course",
-	"section",
+func (stats AuditStats) Log() {
+	uct.Log("Insertions: ", stats.insertions)
+	uct.Log("Updates: ", stats.updates)
+	uct.Log("Upserts: ", stats.upserts)
+	uct.Log("Existential: ", stats.existential)
+	uct.Log("Subjects: ", stats.subjectCount)
+	uct.Log("Courses: ", stats.courseCount)
+	uct.Log("Sections: ", stats.sectionCount)
+	uct.Log("Meetings: ", stats.metadataCount)
+	uct.Log("Metadata: ", stats.metadataCount)
 }
 
-func (s DataType) String() string {
-	return datatype[s]
+func (stats AuditStats) audit() {
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  "universityct",
+		Precision: "s",
+	})
+
+	tags := map[string]string{
+		"university_name": stats.uniName,
+	}
+
+	fields := map[string]interface{}{
+		"insertions":    stats.insertions,
+		"updates":       stats.updates,
+		"upserts":       stats.upserts,
+		"existential":   stats.existential,
+		"subjectCount":  stats.subjectCount,
+		"courseCount":   stats.courseCount,
+		"sectionCount":  stats.sectionCount,
+		"meetingCount":  stats.meetingCount,
+		"metadataCount": stats.metadataCount,
+		"elapsed":       stats.elapsed.Seconds(),
+	}
+
+	point, err := client.NewPoint(
+		"db_ops",
+		tags,
+		fields,
+		time.Now(),
+	)
+
+	uct.CheckError(err)
+
+	bp.AddPoint(point)
+
+	err = influxClient.Write(bp)
+	uct.CheckError(err)
+
+	log.Println("InfluxDB logging: ", tags, fields)
 }

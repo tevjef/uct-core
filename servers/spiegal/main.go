@@ -199,6 +199,13 @@ func SelectUniversity(university_id int64, deep bool) (university common.Univers
 	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
 		common.CheckError(err)
 	}
+
+	s := []common.Semester{}
+	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", university_id); err != nil {
+		common.CheckError(err)
+	}
+	university.AvailableSemesters = s;
+
 	if deep && &university != nil {
 		deepSelectUniversities(&university)
 	}
@@ -211,6 +218,15 @@ func SelectUniversities(deep bool) (universities []common.University) {
 	if err := Select(GetCachedStmt(key, query), &universities); err != nil {
 		common.CheckError(err)
 	}
+
+	for i, _ := range universities {
+		s := []common.Semester{}
+		if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", universities[i].Id); err != nil {
+			common.CheckError(err)
+		}
+		universities[i].AvailableSemesters = s;
+	}
+
 	if deep {
 		for i, _ := range universities {
 			deepSelectUniversities(&universities[i])
@@ -220,7 +236,8 @@ func SelectUniversities(deep bool) (universities []common.University) {
 }
 
 func deepSelectUniversities(university *common.University) {
-	university.Registrations = SelectRegistrations(university.Id)
+	// Broken until times are fixed
+	//university.Registrations = SelectRegistrations(university.Id)
 	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 }
 
@@ -381,11 +398,12 @@ func SelectBooks(sectionId int64) (books []common.Book) {
 }
 
 func SelectRegistrations(universityId int64) (registrations []common.Registration) {
-	key := "registrations"
-	query := `SELECT * FROM registrations WHERE university_id = $1`
+	key := "registration"
+	query := `SELECT * FROM registration WHERE university_id = $1`
 	if err := Select(GetCachedStmt(key, query), &registrations, universityId); err != nil {
 		common.CheckError(err)
 	}
+	common.LogVerbose(registrations)
 	return
 }
 
