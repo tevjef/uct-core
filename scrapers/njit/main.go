@@ -262,8 +262,14 @@ func extractCourseNum(selection *goquery.Selection) string {
 	return trim(substringAfterLast(trim(substringBefore(selection.Find(".catalogdescription").Text(), "-")), " "))
 }
 
+var descriptionCache = make(map[string]string)
+
 func extractCourseDescription(selection *goquery.Selection) string {
 	url := trim(fmt.Sprintln(selection.Find(".catalogdescription a").AttrOr("href", "")))
+	if descriptionCache[url] != "" {
+		uct.Log("Get Cached Descriptiion: ", url)
+		return descriptionCache[url]
+	}
 	uct.Log("Get Course Descriptiion: ", url)
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", "http://catalog.njit.edu/ribbit/index.cgi?format=html&page=fsinjector.rjs&fullpage=true", nil)
@@ -289,7 +295,8 @@ func extractCourseDescription(selection *goquery.Selection) string {
 	result = strings.Replace(result, "\\\"", "\"", -1)
 	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(result))
 
-	return trim(doc.Text())
+	descriptionCache[url] = trim(doc.Text())
+	return descriptionCache[url]
 }
 
 func extractSectionNum(selection *goquery.Selection) string {
