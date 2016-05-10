@@ -64,6 +64,7 @@ var (
 	sectionCount  int
 	meetingCount  int
 	metadataCount int
+	startTime = time.Now()
 )
 
 func init() {
@@ -669,7 +670,7 @@ func (stats AuditStats) audit() {
 		"db_ops",
 		tags,
 		fields,
-		time.Now(),
+		startTime,
 	)
 
 	uct.CheckError(err)

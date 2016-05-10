@@ -1,5 +1,11 @@
 echo "Installing rutgers scraper ..."
 go install uct/scrapers/rutgers
+
+
+echo "Installing njit scraper ..."
+go install uct/scrapers/njit
+
+
 echo "Installing spiegal ..."
 go install uct/servers/spiegal
 echo "**Restarting spiegal ..."
