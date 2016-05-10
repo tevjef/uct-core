@@ -14,6 +14,7 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
+ _ "net/http/pprof"
 )
 
 type App struct {
@@ -47,9 +48,7 @@ var (
 	add            = app.Command("add", "A command-line application for inserting and updated university information").Hidden().Default()
 	fullUpsert     = add.Flag("insert-all", "Full insert/update of all json objects.").Default("true").Short('i').Bool()
 	file           = add.Flag("file", "File to read university data from.").Short('f').File()
-	verbose        = add.Flag("verbose", "Verbose log of object representations.").Default("false").Short('v').Bool()
 	debug          = app.Command("debug", "Enable debug mode.")
-	server         = debug.Flag("server", "Debug server address to enable profiling.").PlaceHolder("hostname:port").Default("127.0.0.1:6060").TCP()
 	cpuprofile     = debug.Flag("cpuprofile", "Write cpu profile to file.").PlaceHolder("cpu.pprof").String()
 	memprofile     = debug.Flag("memprofile", "Write memory profile to file.").PlaceHolder("mem.pprof").String()
 	memprofileRate = debug.Flag("memprofile-rate", "Rate at which memory is profiled.").Default("20s").Duration()
@@ -96,12 +95,10 @@ func main() {
 		debugBool = false
 	}
 
-	if *server != nil && debugBool {
-		go func() {
-			log.Println("**Starting debug server on...", (*server).String())
-			log.Println(http.ListenAndServe((*server).String(), nil))
-		}()
-	}
+	go func() {
+		log.Println("**Starting debug server on...", uct.DB_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(uct.DB_DEBUG_SERVER, nil))
+	}()
 
 	if *cpuprofile != "" && debugBool {
 		if f, err := os.Create(*cpuprofile); err != nil {

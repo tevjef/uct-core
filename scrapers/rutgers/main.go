@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	_ "net/http/pprof"
 	uct "uct/common"
 )
 
@@ -22,6 +23,10 @@ var (
 )
 
 func main() {
+	go func() {
+		log.Println("**Starting debug server on...", uct.RUTGERS_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(uct.RUTGERS_DEBUG_SERVER, nil))
+	}()
 
 	enc := ffjson.NewEncoder(os.Stdout)
 

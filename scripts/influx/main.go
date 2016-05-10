@@ -8,6 +8,8 @@ import (
 	uct "uct/common"
 	"time"
 	"fmt"
+	_ "net/http/pprof"
+	"net/http"
 )
 
 var (
@@ -48,6 +50,10 @@ type SectionsStatus struct {
 }
 
 func main() {
+	go func() {
+		log.Println("**Starting debug server on...", uct.INFLUX_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(uct.INFLUX_DEBUG_SERVER, nil))
+	}()
 	sections := getSectionStatus()
 
 	time := time.Now()

@@ -4,20 +4,25 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/pquerna/ffjson/ffjson"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"strconv"
 	uct "uct/common"
-	"os"
-	"github.com/pquerna/ffjson/ffjson"
-"net/http"
-"log"
+	_ "net/http/pprof"
+	"log"
 )
 
 func main() {
+	go func() {
+		log.Println("**Starting debug server on...", uct.NJIT_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(uct.NJIT_DEBUG_SERVER, nil))
+	}()
 	enc := ffjson.NewEncoder(os.Stdout)
 
 	var schools []uct.University
@@ -26,7 +31,6 @@ func main() {
 	uct.CheckError(err)
 
 }
-
 
 func getUniversity() (university uct.University) {
 	university = uct.University{
@@ -110,7 +114,7 @@ func getUniversity() (university uct.University) {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
 
-				sub.Courses =courses
+				sub.Courses = courses
 				wg.Done()
 			}(&subjects[i])
 
@@ -126,7 +130,7 @@ func getUniversity() (university uct.University) {
 				newCourse := uct.Course{
 					Name:     course.CourseName,
 					Number:   course.CourseNum,
-					Synopsis: &course.CourseDescription,}
+					Synopsis: &course.CourseDescription}
 
 				for _, section := range course.Section {
 					newSection := uct.Section{
@@ -135,7 +139,7 @@ func getUniversity() (university uct.University) {
 						Status:     section.Status,
 						Credits:    section.Credits,
 						Max:        section.Max,
-						Now:        section.Now, }
+						Now:        section.Now}
 
 					if section.Instructor != "" {
 						newInstructor := uct.Instructor{Name: section.Instructor}
@@ -143,9 +147,8 @@ func getUniversity() (university uct.University) {
 						newInstructor.VetAndBuild()
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 
-
 					}
-					
+
 					for _, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
 							Room:      &meeting.Room,
@@ -174,10 +177,9 @@ func getUniversity() (university uct.University) {
 }
 
 func getSubjectList(semester NSemester) []NSubject {
-	log.Println("GETTING SUBJECT LIST")
 	url := fmt.Sprintf("https://courseschedules.njit.edu/index.aspx?semester=%s%s",
 		strconv.Itoa(semester.Year), semester.Season.String())
-	log.Println("Getting: ",url)
+	uct.Log("Getting: ", url)
 
 	doc, err := goquery.NewDocument(url)
 	checkError(err)
@@ -199,20 +201,18 @@ func extractSubjectList(doc *goquery.Document, semester NSemester) (subjectList 
 		}
 
 		subject := NSubject{
-			SubjectId:  num,
-			SubjectName:name,
-			Semester:semester}
-		log.Printf("FOUND SUBJECT in Semester %#v :: %#v", semester, subject)
+			SubjectId:   num,
+			SubjectName: name,
+			Semester:    semester}
 		subjectList = append(subjectList, subject)
 	})
 	return
 }
 
-
 func getCourses(subject NSubject) (courses []NCourse) {
 	var url = fmt.Sprintf("https://courseschedules.njit.edu/index.aspx?semester=%s%s&subjectID=%s",
-	strconv.Itoa(subject.Semester.Year), subject.Semester.Season.String(), subject.SubjectId)
-	log.Println("Url: ", url)
+		strconv.Itoa(subject.Semester.Year), subject.Semester.Season.String(), subject.SubjectId)
+	uct.Log("Geting Course: ", url)
 	doc, err := goquery.NewDocument(url)
 	checkError(err)
 
@@ -227,8 +227,6 @@ func extractCourseList(doc *goquery.Document) (courses []NCourse) {
 			CourseDescription: extractCourseDescription(s),
 			Section:           getSections(s),
 		}
-		log.Printf("FOUND Course in document :: %#v", course)
-
 		if course.CourseNum != "" {
 			courses = append(courses, course)
 		}
@@ -251,8 +249,6 @@ func getSections(s *goquery.Selection) (sections []NSection) {
 			Credits:      extractCredits(s),
 		}
 
-		log.Printf("FOUND Section in document :: %#v", section)
-
 		sections = append(sections, section)
 	})
 	return
@@ -268,13 +264,12 @@ func extractCourseNum(selection *goquery.Selection) string {
 
 func extractCourseDescription(selection *goquery.Selection) string {
 	url := trim(fmt.Sprintln(selection.Find(".catalogdescription a").AttrOr("href", "")))
-	log.Println("LOGGING URL", url)
+	uct.Log("Get Course Descriptiion: ", url)
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", "http://catalog.njit.edu/ribbit/index.cgi?format=html&page=fsinjector.rjs&fullpage=true", nil)
-	req.Header.Add("Referer",url)
+	req.Header.Add("Referer", url)
 	resp, err := client.Do(req)
 	if err != nil {
-
 		return ""
 	}
 	if resp != nil {
@@ -288,7 +283,7 @@ func extractCourseDescription(selection *goquery.Selection) string {
 		return ""
 	}
 	result = substringBefore(result[3:], "<b")
-	if string(result[0]) == "<" || strings.Contains(result, "at SISConnxService"){
+	if string(result[0]) == "<" || strings.Contains(result, "at SISConnxService") {
 		return ""
 	}
 	result = strings.Replace(result, "\\\"", "\"", -1)
@@ -314,7 +309,7 @@ func extractRoomNum(selection *goquery.Selection) string {
 	s = strings.Replace(s, "<br/>", "\n", -1)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(s))
 	if err != nil {
-		log.Print(err)
+		uct.Log(err)
 	}
 	return trim(doc.Text())
 }
@@ -330,7 +325,7 @@ func extractTimes(selection *goquery.Selection) (meetingTimes []NMeetingTime) {
 	rooms := strings.Split(rawroom, "\n")
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(s))
 	if err != nil {
-		log.Print(err)
+		uct.Log(err)
 	}
 	result := trim(doc.Text())
 	scanner := bufio.NewScanner(strings.NewReader(result))
@@ -419,7 +414,7 @@ func extractInstructor(selection *goquery.Selection) string {
 }
 
 func extractCredits(selection *goquery.Selection) string {
-	if result :=trim (selection.Find(".credits").Text()); strings.Contains(result, "#") {
+	if result := trim(selection.Find(".credits").Text()); strings.Contains(result, "#") {
 		return "0"
 	} else {
 		return result
@@ -432,26 +427,25 @@ type (
 		SubjectName string `json:"name,omitempty"`
 		Semester    NSemester
 		Courses     []NCourse `json:"sections,omitempty"`
-
 	}
 
 	NCourse struct {
-		CourseName        string    `json:"name,omitempty"`
-		CourseNum         string    `json:"number,omitempty"`
-		CourseDescription string    `json:"description,omitempty"`
+		CourseName        string     `json:"name,omitempty"`
+		CourseNum         string     `json:"number,omitempty"`
+		CourseDescription string     `json:"description,omitempty"`
 		Section           []NSection `json:"sections,omitempty"`
 	}
 
 	NSection struct {
-		SectionNum   string        `json:"section_number,omitempty"`
-		CallNum      string        `json:"call_number,omitempty"`
+		SectionNum   string         `json:"section_number,omitempty"`
+		CallNum      string         `json:"call_number,omitempty"`
 		MeetingTimes []NMeetingTime `json:"meeting_time,omitempty"`
-		Status       string        `json:"status,omitempty"`
+		Status       string         `json:"status,omitempty"`
 		Max          float64        `json:"max,omitempty"`
 		Now          float64        `json:"now,omitempty"`
-		Instructor   string        `json:"instructor,omitempty"`
-		BookUrl      string        `json:"book_url,omitempty"`
-		Credits      string        `json:"credits,omitempty"`
+		Instructor   string         `json:"instructor,omitempty"`
+		BookUrl      string         `json:"book_url,omitempty"`
+		Credits      string         `json:"credits,omitempty"`
 	}
 
 	NMeetingTime struct {
@@ -497,14 +491,14 @@ var seasonsFull = [...]string{
 }
 
 func (s NSemester) String() string {
-	if (s.Season == FALL) {
-		return "Sep-01-"+ strconv.Itoa(s.Year)
-	} else if (s.Season == WINTER) {
-		return "Dec-01-"+ strconv.Itoa(s.Year)
-	} else if (s.Season == SPRING) {
-		return "Feb-01-"+ strconv.Itoa(s.Year)
+	if s.Season == FALL {
+		return "Sep-01-" + strconv.Itoa(s.Year)
+	} else if s.Season == WINTER {
+		return "Dec-01-" + strconv.Itoa(s.Year)
+	} else if s.Season == SPRING {
+		return "Feb-01-" + strconv.Itoa(s.Year)
 	} else {
-		return "Jun-01-"+ strconv.Itoa(s.Year)
+		return "Jun-01-" + strconv.Itoa(s.Year)
 	}
 }
 
@@ -529,5 +523,5 @@ func uctToNjitSeason(sem uct.Semester) NSemester {
 		season = WINTER
 	}
 
-	return NSemester{Year:sem.Year, Season:season}
+	return NSemester{Year: sem.Year, Season: season}
 }

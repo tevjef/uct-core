@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	_ "net/http/pprof"
 	uct "uct/common"
 )
 
@@ -33,6 +34,10 @@ const (
 )
 
 func main() {
+	go func() {
+		log.Println("**Starting debug server on...", uct.GCM_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(uct.GCM_DEBUG_SERVER, nil))
+	}()
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	kingpin.Version("1.0.0")
 
