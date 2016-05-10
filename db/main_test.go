@@ -36,6 +36,8 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
+	go audit()
+
 	testApp = App{dbHandler: MockDatabaseHandler{}}
 
 	os.Exit(m.Run())
