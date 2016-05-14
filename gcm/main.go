@@ -29,6 +29,28 @@ var (
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 )
 
+var audit = func(message uct.PostgresNotify) {
+	auditStatus(message)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in auditStatus", r)
+		}
+	}()
+}
+
+var createGcmNotification = func(pgNotification uct.PostgresNotify) {
+	uniBytes, err := ffjson.Marshal(pgNotification.University)
+	uct.CheckError(err)
+
+	gcmMessage := uct.GCMMessage{
+		To:     "/topics/" + pgNotification.Payload,
+		Data:   uct.Data{Message: string(uniBytes)},
+		DryRun: *debug,
+	}
+
+	sendNotification(gcmMessage)
+}
+
 const (
 	GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 )
@@ -75,31 +97,19 @@ func waitForNotification(l *pq.Listener) {
 			n := notification
 			sem <- 1
 			go func() {
-				fmt.Println("Received data from channel [", n.Channel, "] :")
-
-				var postgresMessage uct.PostgresNotify
-				err := json.Unmarshal([]byte(n.Extra), &postgresMessage)
+				var pgNotification uct.PostgresNotify
+				err := json.Unmarshal([]byte(n.Extra), &pgNotification)
 				uct.CheckError(err)
 
-				go func(message uct.PostgresNotify) {
-					auditStatus(message)
-					defer func() {
-						if r := recover(); r != nil {
-							log.Println("Recovered in auditStatus", r)
-						}
-					}()
-				}(postgresMessage)
+				go audit(pgNotification)
 
-				uniBytes, err := ffjson.Marshal(postgresMessage.University)
-				uct.CheckError(err)
+				createGcmNotification(pgNotification)
 
-				gcmMessage := uct.GCMMessage{
-					To:     "/topics/" + postgresMessage.Payload,
-					Data:   uct.Data{Message: string(uniBytes)},
-					DryRun: *debug,
-				}
-
-				sendNotification(gcmMessage)
+				defer func() {
+					if r := recover(); r != nil {
+						log.Println("Recovered in auditStatus", r)
+					}
+				}()
 				<-sem
 			}()
 			return

@@ -13,7 +13,6 @@ import (
 	"os"
 	"reflect"
 	"runtime/pprof"
-	"sync"
 	"time"
 	uct "uct/common"
 )
@@ -130,30 +129,20 @@ func main() {
 
 }
 
-var ()
-
 func (app App) insertUniversity(uni uct.University) {
 	var university_id int64
 	university_id = app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
-	var wg sync.WaitGroup
 	subjectCountCh <- len(uni.Subjects)
 	for subjectIndex := range uni.Subjects {
-		wg.Add(1)
 		subject := uni.Subjects[subjectIndex]
 		subject.UniversityId = university_id
 
 		subChan := make(chan ChannelSubjects)
-		go func() {
-			subChan <- ChannelSubjects{app.insertSubject(subject), subject.Courses}
-		}()
+		subChan <- ChannelSubjects{app.insertSubject(subject), subject.Courses}
 
-		go func() {
-			app.PrepareCourses(subChan)
-			wg.Done()
-		}()
+		app.PrepareCourses(subChan)
 	}
-	wg.Wait()
 
 	for _, registrations := range uni.Registrations {
 		registrations.UniversityId = university_id

@@ -16,18 +16,39 @@ import (
 	uct "uct/common"
 	_ "net/http/pprof"
 	"log"
+	"github.com/boltdb/bolt"
 )
+
+
+var boltDb *bolt.DB
 
 func main() {
 	go func() {
 		log.Println("**Starting debug server on...", uct.NJIT_DEBUG_SERVER)
 		log.Println(http.ListenAndServe(uct.NJIT_DEBUG_SERVER, nil))
 	}()
+
+	var err error
+	boltDb, err = bolt.Open("my.db", 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	boltDb.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("MyBucket"))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		return nil
+	})
+
+	defer boltDb.Close()
+
 	enc := ffjson.NewEncoder(os.Stdout)
 
 	var schools []uct.University
 	schools = append(schools, getUniversity())
-	err := enc.Encode(schools)
+	err = enc.Encode(schools)
 	uct.CheckError(err)
 
 }
@@ -266,11 +287,12 @@ var descriptionCache = make(map[string]string)
 
 func extractCourseDescription(selection *goquery.Selection) string {
 	url := trim(fmt.Sprintln(selection.Find(".catalogdescription a").AttrOr("href", "")))
-	if descriptionCache[url] != "" {
+	if cacheContainDesc(url) {
 		uct.Log("Get Cached Descriptiion: ", url)
-		return descriptionCache[url]
+		return getCacheDescription(url)
 	}
-	uct.Log("Get Course Descriptiion: ", url)
+
+	uct.LogVerbose(url)
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", "http://catalog.njit.edu/ribbit/index.cgi?format=html&page=fsinjector.rjs&fullpage=true", nil)
 	req.Header.Add("Referer", url)
@@ -295,8 +317,47 @@ func extractCourseDescription(selection *goquery.Selection) string {
 	result = strings.Replace(result, "\\\"", "\"", -1)
 	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(result))
 
-	descriptionCache[url] = trim(doc.Text())
-	return descriptionCache[url]
+	desc := trim(doc.Text())
+	if desc !=  "" {
+		putDesc(url, "-1")
+	}
+	return desc
+}
+
+func getCacheDescription(url string) (desc string) {
+	err := boltDb.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("MyBucket"))
+		v := b.Get([]byte(url))
+		desc = string(v)
+		if desc == "-1" {
+			desc = ""
+		}
+		return nil
+	})
+	checkError(err)
+	return
+}
+
+func cacheContainDesc(url string) (exists bool) {
+	err := boltDb.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("MyBucket"))
+		v := b.Get([]byte(url))
+		if (string(v) != "") {
+			exists = true
+		}
+		return nil
+	})
+	checkError(err)
+	return
+}
+
+func putDesc(url, desc string) {
+	err := boltDb.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("MyBucket"))
+		err := b.Put([]byte(url), []byte(desc))
+		return err
+	})
+	checkError(err)
 }
 
 func extractSectionNum(selection *goquery.Selection) string {
