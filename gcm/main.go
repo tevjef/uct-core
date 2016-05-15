@@ -10,49 +10,26 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
-	_ "net/http/pprof"
 	uct "uct/common"
 )
 
 var (
 	httpClient   = http.DefaultClient
-	sem          = make(chan int, 100)
 	connectInfo  = uct.GetUniversityDB()
 	influxClient client.Client
+	workRoutines = 500
+
 )
+
+const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 
 var (
 	app     = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
 	debug   = app.Flag("debug", "Enable debug mode").Short('d').Bool()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
-)
-
-var audit = func(message uct.PostgresNotify) {
-	auditStatus(message)
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in auditStatus", r)
-		}
-	}()
-}
-
-var createGcmNotification = func(pgNotification uct.PostgresNotify) {
-	uniBytes, err := ffjson.Marshal(pgNotification.University)
-	uct.CheckError(err)
-
-	gcmMessage := uct.GCMMessage{
-		To:     "/topics/" + pgNotification.Payload,
-		Data:   uct.Data{Message: string(uniBytes)},
-		DryRun: *debug,
-	}
-
-	sendNotification(gcmMessage)
-}
-
-const (
-	GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 )
 
 func main() {
@@ -61,7 +38,6 @@ func main() {
 		log.Println(http.ListenAndServe(uct.GCM_DEBUG_SERVER, nil))
 	}()
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	kingpin.Version("1.0.0")
 
 	var err error
 
@@ -74,7 +50,7 @@ func main() {
 
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		}
 	}
 
@@ -91,28 +67,23 @@ func main() {
 }
 
 func waitForNotification(l *pq.Listener) {
+	sem := make(chan int, workRoutines)
 	for {
 		select {
 		case notification := <-l.Notify:
-			n := notification
-			sem <- 1
-			go func() {
-				var pgNotification uct.PostgresNotify
-				err := json.Unmarshal([]byte(n.Extra), &pgNotification)
-				uct.CheckError(err)
-
-				go audit(pgNotification)
-
-				createGcmNotification(pgNotification)
-
-				defer func() {
-					if r := recover(); r != nil {
-						log.Println("Recovered in auditStatus", r)
-					}
-				}()
-				<-sem
-			}()
-			return
+			select {
+			// Acquire a workRoutine
+			case sem <- 1:
+				// Log notification
+				audit(notification)
+				// Process and send notification, free workRoutine when done.
+				recvNotification(notification, sem)
+			// If all workRoutines are filled for 5 minutes, kill the program. Very unlikely that this will happen.
+			// Notifications will be lost.
+			case <-time.After(5 * time.Minute):
+				log.Fatalf("Go routine buffer was filled too long")
+			}
+		// Received no notification from the database for 90 seconds.
 		case <-time.After(90 * time.Second):
 			fmt.Println("Received no events for 90 seconds, checking connection")
 			go func() {
@@ -123,38 +94,81 @@ func waitForNotification(l *pq.Listener) {
 	}
 }
 
-func sendNotification(message uct.GCMMessage) {
-	bData, err := ffjson.Marshal(message)
-	uct.CheckError(err)
+func recvNotification(n *pq.Notification, sem chan int) {
+	go func() {
+		var pgNotification uct.PostgresNotify
+		err := json.Unmarshal([]byte(n.Extra), &pgNotification)
+		uct.CheckError(err)
+		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid. 10 retries is quite generous.
+		for i, retries := 0, 10; i < retries; i++ {
+			time.Sleep(time.Duration(i*2) * time.Second)
+			if i > 0 {
+				log.Println("Retrying...", i)
+			}
+			if err := sendGcmNotification(pgNotification); err != nil && i == retries-1 {
+				log.Println("ERROR:", err, string(uct.Stack(3)))
+			} else if err == nil {
+				break
+			}
+		}
+		<-sem
+	}()
+}
 
-	req, err := http.NewRequest("POST", GCM_SEND, bytes.NewReader(bData))
-	uct.CheckError(err)
+func sendGcmNotification(pgNotification uct.PostgresNotify) (err error) {
+	var uniBytes []byte
+	if uniBytes, err = ffjson.Marshal(pgNotification.University); err != nil {
+		return
+	}
 
+	// Construct GCM message
+	gcmMessage := uct.GCMMessage{
+		To:     "/topics/" + pgNotification.Payload,
+		Data:   uct.Data{Message: string(uniBytes)},
+		DryRun: *debug,
+	}
+	return sendNotification(gcmMessage)
+}
+
+func sendNotification(message uct.GCMMessage) (err error) {
+	var messageBytes []byte
+	if messageBytes, err = ffjson.Marshal(message); err != nil {
+		return
+	}
+	LogVerbose(string(messageBytes))
+
+	// New request to GCM
+	var req *http.Request
+	if req, err = http.NewRequest("POST", GCM_SEND, bytes.NewReader(messageBytes)); err != nil {
+		return
+	}
+
+	// Add request authorization headers so that GCM knows who this is.
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "key="+uct.GCM_API_KEY)
 
 	fmt.Println("GCM Sending notification: to", message.To)
-	LogVerbose(string(bData))
 
-	resp, err := httpClient.Do(req)
-	uct.CheckError(err)
-
-	var gcmResponse uct.GCMResponse
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&gcmResponse)
-	uct.CheckError(err)
-
-	if gcmResponse.Error != "" {
-		fmt.Println(gcmResponse.Error)
+	// Send request to GCM
+	var response *http.Response
+	if response, err = httpClient.Do(req); err != nil {
+		return
 	}
-	fmt.Println("GCM Response:", gcmResponse, "\nGCM HTTP Status:", resp.StatusCode)
+	defer response.Body.Close()
 
-	defer func() {
-		resp.Body.Close()
-		if r := recover(); r != nil {
-			log.Println("Recovered in sendNotification", r)
-		}
-	}()
+	// Read response from GCM
+	var gcmResponse uct.GCMResponse
+	if err = json.NewDecoder(response.Body).Decode(&gcmResponse); err != nil {
+		return
+	}
+
+	// Print GCM errors, but don't panic
+	if gcmResponse.Error != "" {
+		log.Println(gcmResponse.Error)
+	}
+
+	fmt.Println("GCM Response: ", gcmResponse, " Status: ", response.StatusCode)
+	return
 }
 
 func auditStatus(message uct.PostgresNotify) {
@@ -193,7 +207,18 @@ func auditStatus(message uct.PostgresNotify) {
 	err = influxClient.Write(bp)
 	uct.CheckError(err)
 
-	fmt.Println("InfluxDB logging: ", tags, fields)
+	fmt.Println("InfluxDB log: ", tags, fields)
+}
+
+func audit(message uct.PostgresNotify) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in auditStatus", r)
+		}
+	}()
+	go func() {
+		auditStatus(message)
+	}()
 }
 
 func LogVerbose(v interface{}) {
