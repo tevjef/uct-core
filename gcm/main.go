@@ -4,24 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"time"
 	uct "uct/common"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	httpClient   = http.DefaultClient
 	connectInfo  = uct.GetUniversityDB()
-	influxClient client.Client
 	workRoutines = 500
-
+	messageLog = make(chan uct.PostgresNotify)
 )
 
 const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
@@ -37,26 +36,21 @@ func main() {
 		log.Println("**Starting debug server on...", uct.GCM_DEBUG_SERVER)
 		log.Println(http.ListenAndServe(uct.GCM_DEBUG_SERVER, nil))
 	}()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	var err error
+	// Start influx logging
+	go influxLog()
 
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     uct.INFLUX_HOST,
-		Username: uct.INFLUX_USER,
-		Password: uct.INFLUX_PASS,
-	})
-	uct.CheckError(err)
-
-	reportProblem := func(ev pq.ListenerEventType, err error) {
+	// Open connection to posgresql
+	listener := pq.NewListener(connectInfo, 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
 		}
-	}
+	})
 
-	listener := pq.NewListener(connectInfo, 10*time.Second, time.Minute, reportProblem)
-	err = listener.Listen("status_events")
-	if err != nil {
+	// Listen on channel
+	if err := listener.Listen("status_events"); err != nil {
 		panic(err)
 	}
 
@@ -74,18 +68,23 @@ func waitForNotification(l *pq.Listener) {
 			select {
 			// Acquire a workRoutine
 			case sem <- 1:
-				// Log notification
-				audit(notification)
-				// Process and send notification, free workRoutine when done.
-				recvNotification(notification, sem)
+				go func() {
+					var pgNotification uct.PostgresNotify
+					err := json.Unmarshal([]byte(notification.Extra), &pgNotification)
+					uct.CheckError(err)
+					// Log notification
+					messageLog <- pgNotification
+					// Process and send notification, free workRoutine when done.
+					recvNotification(pgNotification, sem)
+				}()
 			// If all workRoutines are filled for 5 minutes, kill the program. Very unlikely that this will happen.
 			// Notifications will be lost.
 			case <-time.After(5 * time.Minute):
 				log.Fatalf("Go routine buffer was filled too long")
 			}
 		// Received no notification from the database for 90 seconds.
-		case <-time.After(90 * time.Second):
-			fmt.Println("Received no events for 90 seconds, checking connection")
+		case <-time.After(1 * time.Minute):
+			fmt.Println("Received no events 1 minute, checking connection")
 			go func() {
 				l.Ping()
 			}()
@@ -94,11 +93,9 @@ func waitForNotification(l *pq.Listener) {
 	}
 }
 
-func recvNotification(n *pq.Notification, sem chan int) {
+func recvNotification(pgNotification uct.PostgresNotify, sem chan int) {
 	go func() {
-		var pgNotification uct.PostgresNotify
-		err := json.Unmarshal([]byte(n.Extra), &pgNotification)
-		uct.CheckError(err)
+		defer uct.TimeTrack(time.Now(), "Send notification")
 		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid. 10 retries is quite generous.
 		for i, retries := 0, 10; i < retries; i++ {
 			time.Sleep(time.Duration(i*2) * time.Second)
@@ -171,54 +168,65 @@ func sendNotification(message uct.GCMMessage) (err error) {
 	return
 }
 
-func auditStatus(message uct.PostgresNotify) {
-	subject := message.University.Subjects[0]
-	course := subject.Courses[0]
-	section := course.Sections[0]
+func influxLog() {
+	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     uct.INFLUX_HOST,
+		Username: uct.INFLUX_USER,
+		Password: uct.INFLUX_PASS,
+	})
+	uct.CheckError(err)
 
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "universityct",
 		Precision: "s",
 	})
 
-	tags := map[string]string{
-		"university": message.University.TopicName,
-		"subject":    subject.TopicName,
-		"course":     course.TopicName,
-		"semester":   subject.Season + subject.Year,
-		"topic_name": section.TopicName,
-	}
+	for {
+		select {
+		case message := <- messageLog:
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Println("Recovered from influx error", r, string(uct.Stack(3)))
+					}
+				}()
+				subject := message.University.Subjects[0]
+				course := subject.Courses[0]
+				section := course.Sections[0]
 
-	fields := map[string]interface{}{
-		"now":    int(section.Now),
-		"status": section.Status,
-	}
+				tags := map[string]string{
+					"university": message.University.TopicName,
+					"subject":    subject.TopicName,
+					"course":     course.TopicName,
+					"semester":   subject.Season + subject.Year,
+					"topic_name": section.TopicName,
+				}
 
-	point, err := client.NewPoint(
-		"section_status",
-		tags,
-		fields,
-		time.Now(),
-	)
-	uct.CheckError(err)
+				fields := map[string]interface{}{
+					"now":    int(section.Now),
+					"status": section.Status,
+				}
 
-	bp.AddPoint(point)
-
-	err = influxClient.Write(bp)
-	uct.CheckError(err)
-
-	fmt.Println("InfluxDB log: ", tags, fields)
-}
-
-func audit(message uct.PostgresNotify) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in auditStatus", r)
+				point, err := client.NewPoint(
+					"section_status",
+					tags,
+					fields,
+					time.Now(),
+				)
+				uct.CheckError(err)
+				bp.AddPoint(point)
+				fmt.Println("InfluxDB log: ", tags, fields)
+			}()
+		case <- time.NewTicker(time.Minute).C:
+			err := influxClient.Write(bp)
+			uct.CheckError(err)
+			bp, err = client.NewBatchPoints(client.BatchPointsConfig{
+				Database:  "universityct",
+				Precision: "s",
+			})
+			uct.CheckError(err)
 		}
-	}()
-	go func() {
-		auditStatus(message)
-	}()
+	}
 }
 
 func LogVerbose(v interface{}) {

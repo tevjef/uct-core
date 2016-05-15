@@ -144,8 +144,6 @@ func TimeTrack(start time.Time, name string) {
 	log.Printf("%s took %s", name, elapsed)
 }
 
-
-
 // stack returns a nicely formated stack frame, skipping skip frames
 func Stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
