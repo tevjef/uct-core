@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 	file, err := os.Open("C:\\Users\\Tevin\\Desktop\\Development\\Go\\src\\uct\\output.txt")
 	uct.CheckError(err)
 
-	input = bufio.NewReader(file)
+	input := bufio.NewReader(file)
 
 	dec := ffjson.NewDecoder()
 	if err := dec.DecodeReader(input, &universities); err != nil {
@@ -54,30 +54,19 @@ func BenchmarkInsertUniversity(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, university := range universities {
 			testApp.insertUniversity(university)
-			//stats.Log()
 		}
 	}
 }
-
-
-func BenchmarkInsertMetadata(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		testApp.insertMetadata(uct.Metadata{})
-	}
-}
-
-
 
 type MockDatabaseHandler struct {
 }
 
 func (dbHandler MockDatabaseHandler) insert(query string, data interface{}) (id int64) {
-	return id
+	return
 }
 
 func (dbHandler MockDatabaseHandler) update(query string, data interface{}) (id int64) {
-	return id
+	return
 }
 
 func (dbHandler MockDatabaseHandler) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {

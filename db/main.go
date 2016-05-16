@@ -22,13 +22,6 @@ type App struct {
 }
 
 var (
-	database     *sqlx.DB
-	connection   = uct.GetUniversityDB()
-	influxClient client.Client
-	input        *bufio.Reader
-)
-
-var (
 	debugBool      bool
 	app            = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
 	add            = app.Command("add", "A command-line application for inserting and updated university information").Hidden().Default()
@@ -39,19 +32,6 @@ var (
 	memprofile     = debug.Flag("memprofile", "Write memory profile to file.").PlaceHolder("mem.pprof").String()
 	memprofileRate = debug.Flag("memprofile-rate", "Rate at which memory is profiled.").Default("20s").Duration()
 )
-
-func init() {
-	database = initDB(connection)
-	database.SetMaxOpenConns(50)
-
-	var err error
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     uct.INFLUX_HOST,
-		Username: uct.INFLUX_USER,
-		Password: uct.INFLUX_PASS,
-	})
-	uct.CheckError(err)
-}
 
 func initDB(connection string) *sqlx.DB {
 	database, err := sqlx.Open("postgres", connection)
@@ -98,22 +78,27 @@ func main() {
 		}()
 	}
 
+	var input *bufio.Reader
 	if *file != nil {
 		input = bufio.NewReader(*file)
 	} else {
 		input = bufio.NewReader(os.Stdin)
 	}
 
+	// Decode university from input
 	dec := ffjson.NewDecoder()
 	var universities []uct.University
 	if err := dec.DecodeReader(input, &universities); err != nil {
 		log.Fatal(err)
 	}
 
+	// Initialize database connection
+	database := initDB(uct.GetUniversityDB())
 	dbHandler := DatabaseHandlerImpl{Database: database}
-	PrepareAllStmts(dbHandler)
+	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
 
+	// Start logging with influx
 	go audit()
 
 	for _, university := range universities {
@@ -122,6 +107,7 @@ func main() {
 		endAudit <- true
 	}
 
+	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
 		pprof.StopCPUProfile()
@@ -130,18 +116,96 @@ func main() {
 }
 
 func (app App) insertUniversity(uni uct.University) {
-	var university_id int64
-	university_id = app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered in insertUniverisity", r)
+		}
+	}()
+	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 		subject.UniversityId = university_id
 
-		subChan := make(chan ChannelSubjects)
-		subChan <- ChannelSubjects{app.insertSubject(subject), subject.Courses}
+		subjectId := app.insertSubject(subject)
 
-		app.PrepareCourses(subChan)
+		courses := subject.Courses
+		courseCountCh <- len(courses)
+		for courseIndex := range courses {
+			course := courses[courseIndex]
+
+			course.SubjectId = subjectId
+			courseId := app.insertCourse(course)
+
+			sections := course.Sections
+			sectionCountCh <- len(sections)
+			for sectionIndex := range sections {
+				section := sections[sectionIndex]
+
+				section.CourseId = courseId
+				sectionId := app.insertSection(section)
+
+				//[]Instructors
+				instructors := section.Instructors
+				for instructorIndex := range instructors {
+					instructor := instructors[instructorIndex]
+
+					instructor.SectionId = sectionId
+					app.insertInstructor(instructor)
+				}
+
+				//[]Meeting
+				meetings := section.Meetings
+				meetingCountCh <- len(meetings)
+				for meetingIndex := range meetings {
+					meeting := meetings[meetingIndex]
+
+					meeting.SectionId = sectionId
+					meeting.Index = meetingIndex
+					meetingId := app.insertMeeting(meeting)
+
+					// Meeting []Metadata
+					metadatas := meeting.Metadata
+					metadataCountCh <- len(metadatas)
+					for metadataIndex := range metadatas {
+						metadata := metadatas[metadataIndex]
+
+						metadata.MeetingId = &meetingId
+						app.insertMetadata(metadata)
+					}
+				}
+
+				//[]Books
+				books := section.Books
+				for bookIndex := range books {
+					book := books[bookIndex]
+
+					book.SectionId = sectionId
+					app.insertBook(book)
+				}
+
+				// Section []Metadata
+				metadatas := section.Metadata
+				metadataCountCh <- len(metadatas)
+				for metadataIndex := range metadatas {
+					metadata := metadatas[metadataIndex]
+
+					metadata.SectionId = &sectionId
+					app.insertMetadata(metadata)
+				}
+			}
+
+			// Course []Metadata
+			metadatas := course.Metadata
+			metadataCountCh <- len(metadatas)
+			for metadataIndex := range metadatas {
+				metadata := metadatas[metadataIndex]
+
+				metadata.CourseId = &courseId
+				app.insertMetadata(metadata)
+			}
+		}
 	}
 
 	for _, registrations := range uni.Registrations {
@@ -157,99 +221,7 @@ func (app App) insertUniversity(uni uct.University) {
 		metadata.UniversityId = &university_id
 		app.insertMetadata(metadata)
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in insertUniverisity", r)
-		}
-	}()
 }
-
-func (app App) PrepareCourses(subChan chan ChannelSubjects) (done <-chan int) {
-	var courses []uct.Course
-	ChanSubs := <-subChan
-
-	courses = ChanSubs.courses
-
-	courseCountCh <- len(courses)
-	for courseIndex := range courses {
-		course := courses[courseIndex]
-
-		course.SubjectId = ChanSubs.subjectId
-		courseId := app.insertCourse(course)
-
-		sections := course.Sections
-		sectionCountCh <- len(sections)
-		for sectionIndex := range sections {
-			section := sections[sectionIndex]
-
-			section.CourseId = courseId
-			sectionId := app.insertSection(section)
-
-			//[]Instructors
-			instructors := section.Instructors
-			for instructorIndex := range instructors {
-				instructor := instructors[instructorIndex]
-
-				instructor.SectionId = sectionId
-				app.insertInstructor(instructor)
-			}
-
-			//[]Meeting
-			meetings := section.Meetings
-			meetingCountCh <- len(meetings)
-			for meetingIndex := range meetings {
-				meeting := meetings[meetingIndex]
-
-				meeting.SectionId = sectionId
-				meeting.Index = meetingIndex
-				meetingId := app.insertMeeting(meeting)
-
-				// Meeting []Metadata
-				metadatas := meeting.Metadata
-				metadataCountCh <- len(metadatas)
-				for metadataIndex := range metadatas {
-					metadata := metadatas[metadataIndex]
-
-					metadata.MeetingId = &meetingId
-					app.insertMetadata(metadata)
-				}
-			}
-
-			//[]Books
-			books := section.Books
-			for bookIndex := range books {
-				book := books[bookIndex]
-
-				book.SectionId = sectionId
-				app.insertBook(book)
-			}
-
-			// Section []Metadata
-			metadatas := section.Metadata
-			metadataCountCh <- len(metadatas)
-			for metadataIndex := range metadatas {
-				metadata := metadatas[metadataIndex]
-
-				metadata.SectionId = &sectionId
-				app.insertMetadata(metadata)
-			}
-		}
-
-		// Course []Metadata
-		metadatas := course.Metadata
-		metadataCountCh <- len(metadatas)
-		for metadataIndex := range metadatas {
-			metadata := metadatas[metadataIndex]
-
-			metadata.CourseId = &courseId
-			app.insertMetadata(metadata)
-		}
-	}
-	return
-}
-
-var ()
 
 func (app App) insertSubject(sub uct.Subject) (subject_id int64) {
 	//sub.VetAndBuild()
@@ -272,10 +244,7 @@ func (app App) insertSubject(sub uct.Subject) (subject_id int64) {
 	return subject_id
 }
 
-var ()
-
 func (app App) insertCourse(course uct.Course) (course_id int64) {
-	//course.VetAndBuild()
 	if !*fullUpsert {
 
 		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
@@ -287,18 +256,12 @@ func (app App) insertCourse(course uct.Course) (course_id int64) {
 	return course_id
 }
 
-var ()
-
 func (app App) insertSection(section uct.Section) (section_id int64) {
-	//section.VetAndBuild()
 	section_id = app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 	return section_id
 }
 
-var ()
-
 func (app App) insertMeeting(meeting uct.Meeting) (meeting_id int64) {
-	//meeting.VetAndBuild()
 	if !*fullUpsert {
 		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
 			return
@@ -308,11 +271,7 @@ func (app App) insertMeeting(meeting uct.Meeting) (meeting_id int64) {
 	return meeting_id
 }
 
-var ()
-
 func (app App) insertInstructor(instructor uct.Instructor) (instructor_id int64) {
-	//instructor.VetAndBuild()
-
 	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
 		return
 	}
@@ -322,19 +281,13 @@ func (app App) insertInstructor(instructor uct.Instructor) (instructor_id int64)
 	return instructor_id
 }
 
-var ()
-
 func (app App) insertBook(book uct.Book) (book_id int64) {
-
 	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return book_id
 }
 
-var ()
-
 func (app App) insertRegistration(registration uct.Registration) int64 {
-
 	var registration_id int64
 	registration_id = app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 
@@ -410,7 +363,7 @@ type DatabaseHandlerImpl struct {
 func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
 	insertionsCh <- 1
 	typeName := reflect.TypeOf(data).Name()
-	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
+	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
 		log.Panicln(err, typeName)
 	} else {
 		for rows.Next() {
@@ -428,7 +381,7 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 	updatesCh <- 1
 	typeName := reflect.TypeOf(data).Name()
 
-	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
+	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
 		log.Panicln(err, typeName)
 	} else {
 		for rows.Next() {
@@ -455,7 +408,7 @@ func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, dat
 func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
 	existentialCh <- 1
 
-	if rows, err := GetCachedStmt(query, query, dbHandler).Queryx(data); err != nil {
+	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
 		log.Panicln(err)
 	} else {
 		for rows.Next() {
@@ -468,7 +421,7 @@ func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id 
 	return
 }
 
-func GetCachedStmt(key, query string, DatabaseHandler DatabaseHandlerImpl) (stmt *sqlx.NamedStmt) {
+func GetCachedStmt(key string) (stmt *sqlx.NamedStmt) {
 	return preparedStmts[key]
 }
 
@@ -527,13 +480,20 @@ func (stats AuditStats) audit() {
 
 	bp.AddPoint(point)
 
-	err = influxClient.Write(bp)
+	err = stats.influxClient.Write(bp)
 	uct.CheckError(err)
 
 	log.Println("InfluxDB logging: ", tags, fields)
 }
 
 func audit() {
+	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     uct.INFLUX_HOST,
+		Username: uct.INFLUX_USER,
+		Password: uct.INFLUX_PASS,
+	})
+	uct.CheckError(err)
+
 	var university string
 	var insertions int
 	var updates int
@@ -568,7 +528,7 @@ func audit() {
 		case t9 := <-metadataCountCh:
 			metadataCount += t9
 		case <-endAudit:
-			stats := AuditStats{university, time.Since(startTime), insertions, updates,
+			stats := AuditStats{influxClient, university, time.Since(startTime), insertions, updates,
 				upserts, existential, subjectCount,
 				courseCount, sectionCount, meetingCount, metadataCount}
 			insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount = 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -580,53 +540,45 @@ func audit() {
 
 var preparedStmts = make(map[string]*sqlx.NamedStmt)
 
-func PrepareAllStmts(dbHandler DatabaseHandlerImpl) {
-	preparedStmts[UniversityInsertQuery] = dbHandler.prepare(UniversityInsertQuery)
-	preparedStmts[UniversityUpdateQuery] = dbHandler.prepare(UniversityUpdateQuery)
+func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
+	queries := []string{UniversityInsertQuery,
+		UniversityUpdateQuery,
+		SubjectExistQuery,
+		SubjectInsertQuery,
+		SubjectUpdateQuery,
+		CourseUpdateQuery,
+		CourseExistQuery,
+		CourseInsertQuery,
+		SectionInsertQuery,
+		SectionUpdateQuery,
+		MeetingUpdateQuery,
+		MeetingInsertQuery,
+		MeetingExistQuery,
+		InstructorExistQuery,
+		InstructorInsertQuery,
+		BookUpdateQuery,
+		BookInsertQuery,
+		RegistrationUpdateQuery,
+		RegistrationInsertQuery,
+		MetaUniExistQuery,
+		MetaUniUpdateQuery,
+		MetaUniInsertQuery,
+		MetaSubjectExistQuery,
+		MetaSubjectUpdateQuery,
+		MetaSubjectInsertQuery,
+		MetaCourseExistQuery,
+		MetaCourseUpdateQuery,
+		MetaCourseInsertQuery,
+		MetaSectionExistQuery,
+		MetaSectionInsertQuery,
+		MetaSectionUpdateQuery,
+		MetaSectionExistQuery,
+		MetaMeetingInsertQuery,
+		MetaMeetingUpdateQuery}
 
-	preparedStmts[SubjectExistQuery] = dbHandler.prepare(SubjectExistQuery)
-	preparedStmts[SubjectInsertQuery] = dbHandler.prepare(SubjectInsertQuery)
-	preparedStmts[SubjectUpdateQuery] = dbHandler.prepare(SubjectUpdateQuery)
-
-	preparedStmts[CourseUpdateQuery] = dbHandler.prepare(CourseUpdateQuery)
-	preparedStmts[CourseExistQuery] = dbHandler.prepare(CourseExistQuery)
-	preparedStmts[CourseInsertQuery] = dbHandler.prepare(CourseInsertQuery)
-
-	preparedStmts[SectionInsertQuery] = dbHandler.prepare(SectionInsertQuery)
-	preparedStmts[SectionUpdateQuery] = dbHandler.prepare(SectionUpdateQuery)
-
-	preparedStmts[MeetingUpdateQuery] = dbHandler.prepare(MeetingUpdateQuery)
-	preparedStmts[MeetingInsertQuery] = dbHandler.prepare(MeetingInsertQuery)
-	preparedStmts[MeetingExistQuery] = dbHandler.prepare(MeetingExistQuery)
-
-	preparedStmts[InstructorExistQuery] = dbHandler.prepare(InstructorExistQuery)
-	preparedStmts[InstructorInsertQuery] = dbHandler.prepare(InstructorInsertQuery)
-
-	preparedStmts[BookUpdateQuery] = dbHandler.prepare(BookUpdateQuery)
-	preparedStmts[BookInsertQuery] = dbHandler.prepare(BookInsertQuery)
-
-	preparedStmts[RegistrationUpdateQuery] = dbHandler.prepare(RegistrationUpdateQuery)
-	preparedStmts[RegistrationInsertQuery] = dbHandler.prepare(RegistrationInsertQuery)
-
-	preparedStmts[MetaUniExistQuery] = dbHandler.prepare(MetaUniExistQuery)
-	preparedStmts[MetaUniUpdateQuery] = dbHandler.prepare(MetaUniUpdateQuery)
-	preparedStmts[MetaUniInsertQuery] = dbHandler.prepare(MetaUniInsertQuery)
-
-	preparedStmts[MetaSubjectExistQuery] = dbHandler.prepare(MetaSubjectExistQuery)
-	preparedStmts[MetaSubjectUpdateQuery] = dbHandler.prepare(MetaSubjectUpdateQuery)
-	preparedStmts[MetaSubjectInsertQuery] = dbHandler.prepare(MetaSubjectInsertQuery)
-
-	preparedStmts[MetaCourseExistQuery] = dbHandler.prepare(MetaCourseExistQuery)
-	preparedStmts[MetaCourseUpdateQuery] = dbHandler.prepare(MetaCourseUpdateQuery)
-	preparedStmts[MetaCourseInsertQuery] = dbHandler.prepare(MetaCourseInsertQuery)
-
-	preparedStmts[MetaSectionExistQuery] = dbHandler.prepare(MetaSectionExistQuery)
-	preparedStmts[MetaSectionInsertQuery] = dbHandler.prepare(MetaSectionInsertQuery)
-	preparedStmts[MetaSectionUpdateQuery] = dbHandler.prepare(MetaSectionUpdateQuery)
-
-	preparedStmts[MetaMeetingExistQuery] = dbHandler.prepare(MetaSectionExistQuery)
-	preparedStmts[MetaMeetingInsertQuery] = dbHandler.prepare(MetaMeetingInsertQuery)
-	preparedStmts[MetaMeetingUpdateQuery] = dbHandler.prepare(MetaMeetingUpdateQuery)
+	for _, query := range queries {
+		preparedStmts[query] = dbHandler.prepare(query)
+	}
 }
 
 var (
@@ -750,10 +702,11 @@ var (
 
 type ChannelSubjects struct {
 	subjectId int64
-	courses []uct.Course
+	courses   []uct.Course
 }
 
 type AuditStats struct {
+	influxClient  client.Client
 	uniName       string
 	elapsed       time.Duration
 	insertions    int
