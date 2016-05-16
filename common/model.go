@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"fmt"
 	"golang.org/x/exp/utf8string"
 	"log"
@@ -10,14 +9,10 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"hash/fnv"
 )
 
 type (
-	/*	Subjects []Subject
-		Courses  []Course
-		Sections []Section
-		Meetings []Meeting*/
-
 	MeetingByDay    []Meeting
 	SectionByNumber []Section
 	CourseByName    []Course
@@ -267,7 +262,8 @@ func (s Subject) hash() string {
 	for _, course := range s.Courses {
 		buffer.WriteString("a" + course.Hash)
 	}
-	return fmt.Sprintf("%x", sha1.Sum([]byte(s.Name+s.Number+s.Season+s.Year+buffer.String())))
+
+	return fmt.Sprintf("%x", fnv.New64a().Sum([]byte(s.Name+s.Number+s.Season+s.Year+buffer.String())))
 }
 
 func (c Course) hash() string {
@@ -275,7 +271,7 @@ func (c Course) hash() string {
 	for _, section := range c.Sections {
 		buffer.WriteString(section.CallNumber + section.Number)
 	}
-	return fmt.Sprintf("%x", sha1.Sum([]byte(c.Name+c.Number+buffer.String())))
+	return fmt.Sprintf("%x", fnv.New64a().Sum([]byte(c.Name+c.Number+buffer.String())))
 }
 
 func (u *University) Validate() {
