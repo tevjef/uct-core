@@ -165,7 +165,7 @@ func getUniversity() (university uct.University) {
 					if section.Instructor != "" {
 						newInstructor := uct.Instructor{Name: section.Instructor}
 
-						newInstructor.VetAndBuild()
+						newInstructor.Validate()
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 
 					}
@@ -178,22 +178,22 @@ func getUniversity() (university uct.University) {
 							EndTime:   meeting.EndTime,
 						}
 
-						newMeeting.VetAndBuild()
+						newMeeting.Validate()
 						newSection.Meetings = append(newSection.Meetings, newMeeting)
 					}
 
-					newSection.VetAndBuild()
+					newSection.Validate()
 					newCourse.Sections = append(newCourse.Sections, newSection)
 
 				}
-				newCourse.VetAndBuild()
+				newCourse.Validate()
 				newSubject.Courses = append(newSubject.Courses, newCourse)
 			}
-			newSubject.VetAndBuild()
+			newSubject.Validate()
 			university.Subjects = append(university.Subjects, newSubject)
 		}
 	}
-	university.VetAndBuild()
+	university.Validate()
 	return
 }
 

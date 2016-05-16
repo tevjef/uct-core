@@ -278,7 +278,7 @@ func (c Course) hash() string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(c.Name+c.Number+buffer.String())))
 }
 
-func (u *University) VetAndBuild() {
+func (u *University) Validate() {
 	// Name
 	if u.Name == "" {
 		log.Panic("University name == is empty")
@@ -340,7 +340,7 @@ func (u *University) VetAndBuild() {
 	}
 }
 
-func (sub *Subject) VetAndBuild() {
+func (sub *Subject) Validate() {
 	// Name
 	if sub.Name == "" {
 		log.Panic("Subject name == is empty")
@@ -376,7 +376,7 @@ func (sub *Subject) VetAndBuild() {
 	sub.Hash = sub.hash()
 }
 
-func (course *Course) VetAndBuild() {
+func (course *Course) Validate() {
 	// Name
 
 	if course.Name == "" {
@@ -417,7 +417,7 @@ func (course *Course) VetAndBuild() {
 	course.Hash = course.hash()
 }
 
-func (section *Section) VetAndBuild() {
+func (section *Section) Validate() {
 	// Number
 	if section.Number == "" {
 		log.Panic("Number == is empty")
@@ -451,7 +451,7 @@ func (section *Section) VetAndBuild() {
 	}
 }
 
-func (meeting *Meeting) VetAndBuild() {
+func (meeting *Meeting) Validate() {
 
 	if meeting.StartTime == "" {
 		meeting.StartTime = "00:00 AM"
@@ -462,7 +462,7 @@ func (meeting *Meeting) VetAndBuild() {
 	meeting.EndTime.String = TrimAll(meeting.EndTime.String)*/
 }
 
-func (instructor *Instructor) VetAndBuild() {
+func (instructor *Instructor) Validate() {
 	// Name
 	if instructor.Name == "" {
 		log.Panic("Instructor name == is empty")
@@ -470,7 +470,7 @@ func (instructor *Instructor) VetAndBuild() {
 	instructor.Name = trim(instructor.Name)
 }
 
-func (book *Book) vetAndBuild() {
+func (book *Book) Validate() {
 	// Title
 	if book.Title == "" {
 		log.Panic("Title  == is empty")
@@ -487,7 +487,7 @@ func (book *Book) vetAndBuild() {
 	book.Url = url.String()
 }
 
-func (metaData *Metadata) vetAndBuild() {
+func (metaData *Metadata) Validate() {
 	// Title
 	if metaData.Title == "" {
 		log.Panic("Title == is empty")

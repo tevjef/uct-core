@@ -180,7 +180,7 @@ func getCampus(campus string) uct.University {
 					for _, instructor := range section.Instructor {
 						newInstructor := uct.Instructor{Name: instructor.Name}
 
-						newInstructor.VetAndBuild()
+						newInstructor.Validate()
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 					}
 
@@ -192,18 +192,18 @@ func getCampus(campus string) uct.University {
 							EndTime:   meeting.getMeetingHourEnd(),
 							Metadata:  meeting.metadata()}
 
-						newMeeting.VetAndBuild()
+						newMeeting.Validate()
 						newSection.Meetings = append(newSection.Meetings, newMeeting)
 					}
 
-					newSection.VetAndBuild()
+					newSection.Validate()
 					newCourse.Sections = append(newCourse.Sections, newSection)
 
 				}
-				newCourse.VetAndBuild()
+				newCourse.Validate()
 				newSubject.Courses = append(newSubject.Courses, newCourse)
 			}
-			newSubject.VetAndBuild()
+			newSubject.Validate()
 			university.Subjects = append(university.Subjects, newSubject)
 		}
 	}
@@ -265,7 +265,7 @@ func getCampus(campus string) uct.University {
 			},
 		}
 	}
-	university.VetAndBuild()
+	university.Validate()
 	return university
 }
 
