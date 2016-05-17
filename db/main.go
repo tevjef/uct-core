@@ -15,6 +15,8 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
+	"github.com/golang/protobuf/proto"
+	"io/ioutil"
 )
 
 type App struct {
@@ -85,12 +87,30 @@ func main() {
 		input = bufio.NewReader(os.Stdin)
 	}
 
-	// Decode university from input
-	dec := ffjson.NewDecoder()
+
 	var universities []uct.University
-	if err := dec.DecodeReader(input, &universities); err != nil {
-		log.Fatal(err)
-	}
+
+	/*func(input *bufio.Reader) {
+		// Decode university from input
+		dec := ffjson.NewDecoder()
+		var universities []uct.University
+		jsonErr := dec.DecodeReader(input, &universities)
+
+		if jsonErr != nil {
+			data, err := ioutil.ReadAll(input);
+			uct.CheckError(err)
+			protoUniversity := uct.ProtoUniversity{}
+			err = proto.Unmarshal(data, &protoUniversity)
+			uct.CheckError(err)
+
+			university := uct.University{
+				Id:protoUniversity.Id,
+				Name:protoUniversity.Name,
+				Abbr:
+			}
+
+		}
+	}(input)*/
 
 	// Initialize database connection
 	database := initDB(uct.GetUniversityDB())
