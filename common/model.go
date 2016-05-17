@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"golang.org/x/exp/utf8string"
+	"hash/fnv"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
-	"hash/fnv"
 )
 
 type (
@@ -17,7 +17,6 @@ type (
 	SectionByNumber []Section
 	CourseByName    []Course
 	SubjectByName   []Subject
-
 
 	ResolvedSemester struct {
 		Last    Semester `json:"last,omitempty"`
@@ -104,7 +103,6 @@ const (
 	SUMMER
 	WINTER
 )
-
 
 const (
 	OPEN Status = 1 + iota
@@ -257,13 +255,13 @@ func (course *Course) Validate() {
 	}
 
 	// Synopsis
-	if course.Synopsis != "" {
+	if course.Synopsis != nil {
 		regex, err := regexp.Compile("\\s\\s+")
 		CheckError(err)
-		temp := regex.ReplaceAllString(course.Synopsis, " ")
-		course.Synopsis = temp
-		temp = utf8string.NewString(course.Synopsis).String()
-		course.Synopsis = temp
+		temp := regex.ReplaceAllString(*course.Synopsis, " ")
+		course.Synopsis = &temp
+		temp = utf8string.NewString(*course.Synopsis).String()
+		course.Synopsis = &temp
 
 	}
 
@@ -389,7 +387,7 @@ func (r Registration) season() string {
 	}
 }
 
-func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemester {
+func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester {
 	month := t.Month()
 	day := t.Day()
 	year := t.Year()
@@ -468,7 +466,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 }
 
 func (meeting Meeting) dayRank() int {
-	switch meeting.Day {
+	switch *meeting.Day {
 	case "Monday":
 		return 1
 	case "Tuesday":

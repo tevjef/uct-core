@@ -8,52 +8,52 @@ import (
 
 var rutgers = []Registration{
 	Registration{
-		Period:     SEM_FALL,
-		PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC),
+		Period:     SEM_FALL.String(),
+		PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     SEM_SPRING,
-		PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC),
+		Period:     SEM_SPRING.String(),
+		PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     SEM_SUMMER,
-		PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC),
+		Period:     SEM_SUMMER.String(),
+		PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     SEM_WINTER,
-		PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC),
+		Period:     SEM_WINTER.String(),
+		PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     START_FALL,
-		PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC),
+		Period:     START_FALL.String(),
+		PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     START_SPRING,
-		PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC),
+		Period:     START_SPRING.String(),
+		PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     START_SUMMER,
-		PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC),
+		Period:     START_SUMMER.String(),
+		PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     START_WINTER,
-		PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC),
+		Period:     START_WINTER.String(),
+		PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     END_FALL,
-		PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC),
+		Period:     END_FALL.String(),
+		PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     END_SPRING,
-		PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC),
+		Period:     END_SPRING.String(),
+		PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     END_SUMMER,
-		PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC),
+		Period:     END_SUMMER.String(),
+		PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	Registration{
-		Period:     END_WINTER,
-		PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC),
+		Period:     END_WINTER.String(),
+		PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 	}}
 
 /*

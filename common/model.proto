@@ -1,110 +1,117 @@
-syntax = "proto3";
+syntax = "proto2";
+
+package common;
+import "gogo.proto";
+
+option go_package = "common";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
 
 message University {
-    int64 id = 1;
-    string name = 2;
-    string abbr = 3;
-    string home_page = 4;
-    string registration_page = 5;
-    string main_color = 6;
-    string accent_color = 7;
-    string topic_name = 8;
-    repeated Subject subjects = 9;
-    repeated Semester available_semesters = 10;
-    repeated Registration registrations = 11;
-    repeated Metadata metadata = 12;
-
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional string name = 2 [(gogoproto.moretags) = "db:\"name\"", (gogoproto.nullable) = false];
+    optional string abbr = 3 [(gogoproto.moretags) = "db:\"abbr\"", (gogoproto.nullable) = false];
+    optional string home_page = 4 [(gogoproto.moretags) = "db:\"home_page\"", (gogoproto.nullable) = false];
+    optional string registration_page = 5 [(gogoproto.moretags) = "db:\"registration_page\"", (gogoproto.nullable) = false];
+    optional string main_color = 6 [(gogoproto.moretags) = "db:\"main_color\"", (gogoproto.nullable) = false];
+    optional string accent_color = 7 [(gogoproto.moretags) = "db:\"accent_color\"", (gogoproto.nullable) = false];
+    optional string topic_name = 8 [(gogoproto.moretags) = "db:\"topic_name\"", (gogoproto.nullable) = false];
+    repeated Subject subjects = 9 [(gogoproto.nullable) = false];
+    repeated Semester available_semesters = 10 [(gogoproto.nullable) = false];
+    repeated Registration registrations = 11 [(gogoproto.nullable) = false];
+    repeated Metadata metadata = 12 [(gogoproto.nullable) = false];
 }
 
 message Subject {
-    int64 id = 1;
-    int64 university_id = 2;
-    string name = 3;
-    string number = 4;
-    string season = 5;
-    string year = 6;
-    string hash = 7;
-    string topic_name = 8;
-    repeated Course courses = 9;
-    repeated Metadata metadata = 10;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 university_id = 2 [(gogoproto.moretags) = "db:\"university_id\"", (gogoproto.nullable) = false];
+    optional string name = 3 [(gogoproto.moretags) = "db:\"name\"", (gogoproto.nullable) = false];
+    optional string number = 4 [(gogoproto.moretags) = "db:\"number\"", (gogoproto.nullable) = false];
+    optional string season = 5 [(gogoproto.moretags) = "db:\"season\"", (gogoproto.nullable) = false];
+    optional string year = 6 [(gogoproto.moretags) = "db:\"year\"", (gogoproto.nullable) = false];
+    optional string hash = 7 [(gogoproto.moretags) = "db:\"hash\"", (gogoproto.nullable) = false];
+    optional string topic_name = 8 [(gogoproto.moretags) = "db:\"topic_name\"", (gogoproto.nullable) = false];
+    repeated Course courses = 9 [(gogoproto.nullable) = false];
+    repeated Metadata metadata = 10 [(gogoproto.nullable) = false];
 
 }
 
 message Course {
-    int64 id = 1;
-    int64 subject_id = 2;
-    string name = 3;
-    string number = 4;
-    string synopsis = 5;
-    string hash = 6;
-    string topic_name = 7;
-    repeated Section sections = 9;
-    repeated Metadata metadata = 10;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 subject_id = 2 [(gogoproto.moretags) = "db:\"subject_id\"", (gogoproto.nullable) = false];
+    optional string name = 3 [(gogoproto.moretags) = "db:\"name\"", (gogoproto.nullable) = false];
+    optional string number = 4 [(gogoproto.moretags) = "db:\"number\"", (gogoproto.nullable) = false];
+    optional string synopsis = 5 [(gogoproto.moretags) = "db:\"synopsis\""];
+    optional string hash = 6 [(gogoproto.moretags) = "db:\"hash\"", (gogoproto.nullable) = false];
+    optional string topic_name = 7 [(gogoproto.moretags) = "db:\"topic_name\"", (gogoproto.nullable) = false];
+    repeated Section sections = 9 [(gogoproto.nullable) = false];
+    repeated Metadata metadata = 10 [(gogoproto.nullable) = false];
 }
 
 message Section {
-    int64 id = 1;
-    int64 course_id = 2;
-    string number = 3;
-    string call_number = 4;
-    int64 max = 5;
-    int64 now = 6;
-    string status = 7;
-    string credits = 8;
-    string topic_name = 9;
-    repeated Meeting meetings = 10;
-    repeated Instructor instructors = 11;
-    repeated Book books = 12;
-    repeated Metadata metadata = 13;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 course_id = 2 [(gogoproto.moretags) = "db:\"course_id\"", (gogoproto.nullable) = false];
+    optional string number = 3 [(gogoproto.moretags) = "db:\"number\"", (gogoproto.nullable) = false];
+    optional string call_number = 4 [(gogoproto.moretags) = "db:\"call_number\"", (gogoproto.nullable) = false];
+    optional int64 max = 5 [(gogoproto.moretags) = "db:\"max\"", (gogoproto.nullable) = false];
+    optional int64 now = 6 [(gogoproto.moretags) = "db:\"now\"", (gogoproto.nullable) = false];
+    optional string status = 7 [(gogoproto.moretags) = "db:\"status\"", (gogoproto.nullable) = false];
+    optional string credits = 8 [(gogoproto.moretags) = "db:\"credits\"", (gogoproto.nullable) = false];
+    optional string topic_name = 9 [(gogoproto.moretags) = "db:\"topic_name\"", (gogoproto.nullable) = false];
+    repeated Meeting meetings = 10 [(gogoproto.nullable) = false];
+    repeated Instructor instructors = 11 [(gogoproto.nullable) = false];
+    repeated Book books = 12 [(gogoproto.nullable) = false];
+    repeated Metadata metadata = 13 [(gogoproto.nullable) = false];
 
 }
 
 message Meeting {
-    int64 id = 1;
-    int64 section_id = 2;
-    string room = 3;
-    string day = 4;
-    string start_time = 5;
-    string end_time = 6;
-    string index = 7;
-    repeated Metadata metadata = 8;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 section_id = 2 [(gogoproto.moretags) = "db:\"section_id\"", (gogoproto.nullable) = false];
+    optional string room = 3 [(gogoproto.moretags) = "db:\"room\""];
+    optional string day = 4 [(gogoproto.moretags) = "db:\"day\""];
+    optional string start_time = 5 [(gogoproto.moretags) = "db:\"start_time\"", (gogoproto.nullable) = false];
+    optional string end_time = 6 [(gogoproto.moretags) = "db:\"end_time\"", (gogoproto.nullable) = false];
+    optional string index = 7 [(gogoproto.moretags) = "db:\"index\"", (gogoproto.nullable) = false];
+    repeated Metadata metadata = 8 [(gogoproto.nullable) = false];
 }
 
 message Instructor {
-    int64 id = 1;
-    int64 section_id = 2;
-    string name = 3;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 section_id = 2 [(gogoproto.moretags) = "db:\"section_id\"", (gogoproto.nullable) = false];
+    optional string name = 3 [(gogoproto.moretags) = "db:\"name\"", (gogoproto.nullable) = false];
 }
 
 message Book {
-    int64 id = 1;
-    int64 section_id = 2;
-    string title = 3;
-    string url = 4;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 section_id = 2 [(gogoproto.moretags) = "db:\"section_id\"", (gogoproto.nullable) = false];
+    optional string title = 3 [(gogoproto.moretags) = "db:\"title\"", (gogoproto.nullable) = false];
+    optional string url = 4 [(gogoproto.moretags) = "db:\"url\"", (gogoproto.nullable) = false];
 }
 
 message Metadata {
-    int64 id = 1;
-    int64 university_id = 2;
-    int64 subject_id = 3;
-    int64 course_id = 4;
-    int64 section_id = 5;
-    int64 meeting_id = 6;
-    string title = 7;
-    string content = 8;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 university_id = 2 [(gogoproto.moretags) = "db:\"university_id\"", (gogoproto.nullable) = false];
+    optional int64 subject_id = 3 [(gogoproto.moretags) = "db:\"subject_id\"", (gogoproto.nullable) = false];
+    optional int64 course_id = 4 [(gogoproto.moretags) = "db:\"course_id\"", (gogoproto.nullable) = false];
+    optional int64 section_id = 5 [(gogoproto.moretags) = "db:\"section_id\"", (gogoproto.nullable) = false];
+    optional int64 meeting_id = 6 [(gogoproto.moretags) = "db:\"meeting_id\"", (gogoproto.nullable) = false];
+    optional string title = 7 [(gogoproto.moretags) = "db:\"title\"", (gogoproto.nullable) = false];
+    optional string content = 8 [(gogoproto.moretags) = "db:\"content\"", (gogoproto.nullable) = false];
 }
 
 message Registration {
-    int64 id = 1;
-    int64 university_id = 2;
-    string period = 3;
-    int64 period_date = 4;
+    optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
+    optional int64 university_id = 2 [(gogoproto.moretags) = "db:\"university_id\"", (gogoproto.nullable) = false];
+    optional string period = 3 [(gogoproto.moretags) = "db:\"period\"", (gogoproto.nullable) = false];
+    optional int64 period_date = 4 [(gogoproto.moretags) = "db:\"period_date\"", (gogoproto.nullable) = false];
 
 }
 
 message Semester {
-    int32 year = 1;
-    Season season = 2;
+    optional int32 year = 1 [(gogoproto.nullable) = false];
+    optional Season season = 2 [(gogoproto.nullable) = false];
 }
 
 enum Season {
