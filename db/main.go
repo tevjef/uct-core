@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"github.com/golang/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -15,8 +17,6 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
-	"github.com/golang/protobuf/proto"
-	"io/ioutil"
 )
 
 type App struct {
@@ -27,12 +27,13 @@ var (
 	debugBool      bool
 	app            = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
 	add            = app.Command("add", "A command-line application for inserting and updated university information").Hidden().Default()
-	fullUpsert     = add.Flag("insert-all", "Full insert/update of all json objects.").Default("true").Short('i').Bool()
-	file           = add.Flag("file", "File to read university data from.").Short('f').File()
+	fullUpsert     = add.Flag("insert-all", "Full insert/update of all json objects.").Default("true").Short('a').Bool()
+	file           = add.Flag("input", "File to read university data from.").Short('i').File()
+	format         = app.Flag("format", "Choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
 	debug          = app.Command("debug", "Enable debug mode.")
 	cpuprofile     = debug.Flag("cpuprofile", "Write cpu profile to file.").PlaceHolder("cpu.pprof").String()
 	memprofile     = debug.Flag("memprofile", "Write memory profile to file.").PlaceHolder("mem.pprof").String()
-	memprofileRate = debug.Flag("memprofile-rate", "Rate at which memory is profiled.").Default("20s").Duration()
+	memprofileRate = debug.Flag("memprofile-rate", "Ratae at which memory is profiled.").Default("20s").Duration()
 )
 
 func initDB(connection string) *sqlx.DB {
@@ -50,6 +51,10 @@ func main() {
 		break
 	case "add":
 		debugBool = false
+	}
+
+	if *format != "json" && *format != "protobuf" {
+		log.Fatalln("Invalid format:", *format)
 	}
 
 	go func() {
@@ -87,30 +92,19 @@ func main() {
 		input = bufio.NewReader(os.Stdin)
 	}
 
+	var university uct.University
 
-	var universities []uct.University
-
-	/*func(input *bufio.Reader) {
-		// Decode university from input
+	if *format == "json" {
 		dec := ffjson.NewDecoder()
-		var universities []uct.University
-		jsonErr := dec.DecodeReader(input, &universities)
-
-		if jsonErr != nil {
-			data, err := ioutil.ReadAll(input);
-			uct.CheckError(err)
-			protoUniversity := uct.ProtoUniversity{}
-			err = proto.Unmarshal(data, &protoUniversity)
-			uct.CheckError(err)
-
-			university := uct.University{
-				Id:protoUniversity.Id,
-				Name:protoUniversity.Name,
-				Abbr:
-			}
-
+		if err := dec.DecodeReader(input, &university); err != nil {
+			log.Fatalln("Failed to parse university:", err)
 		}
-	}(input)*/
+	} else if *format == "protobuf" {
+		data, err := ioutil.ReadAll(input)
+		if err = proto.Unmarshal(data, &university); err != nil {
+			log.Fatalln("Failed to parse university:", err)
+		}
+	}
 
 	// Initialize database connection
 	database := initDB(uct.GetUniversityDB())
@@ -121,11 +115,10 @@ func main() {
 	// Start logging with influx
 	go audit()
 
-	for _, university := range universities {
-		startAudit <- true
-		app.insertUniversity(university)
-		endAudit <- true
-	}
+	// Was originally designed to insert an array of universities.
+	startAudit <- true
+	app.insertUniversity(university)
+	endAudit <- true
 
 	// Before main ends, close the database and stop writing profile
 	defer func() {
@@ -136,11 +129,6 @@ func main() {
 }
 
 func (app App) insertUniversity(uni uct.University) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered in insertUniverisity", r)
-		}
-	}()
 	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
@@ -182,7 +170,7 @@ func (app App) insertUniversity(uni uct.University) {
 					meeting := meetings[meetingIndex]
 
 					meeting.SectionId = sectionId
-					meeting.Index = meetingIndex
+					meeting.Index = int32(meetingIndex)
 					meetingId := app.insertMeeting(meeting)
 
 					// Meeting []Metadata

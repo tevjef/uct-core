@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	_ "github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"log"
@@ -8,8 +10,6 @@ import (
 	"os"
 	"testing"
 	uct "uct/common"
-	"bufio"
-	"flag"
 )
 
 func setup() {
@@ -20,19 +20,19 @@ func setup() {
 	}
 }
 
-var universities []uct.University
+var university uct.University
 var testApp App
 
 func TestMain(m *testing.M) {
 	flag.Parse()
 
-	file, err := os.Open("C:\\Users\\Tevin\\Desktop\\Development\\Go\\src\\uct\\output.txt")
+	file, err := os.Open("C:\\Users\\Tevin\\Desktop\\Development\\Go\\src\\uct\\scrapers\\rutgers\\json.out")
 	uct.CheckError(err)
 
 	input := bufio.NewReader(file)
 
 	dec := ffjson.NewDecoder()
-	if err := dec.DecodeReader(input, &universities); err != nil {
+	if err := dec.DecodeReader(input, &university); err != nil {
 		log.Fatal(err)
 	}
 
@@ -44,17 +44,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestInsertUniversity(t *testing.T) {
-	for _, university := range universities {
-		testApp.insertUniversity(university)
-	}
+	testApp.insertUniversity(university)
 }
 
 func BenchmarkInsertUniversity(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		for _, university := range universities {
-			testApp.insertUniversity(university)
-		}
+		testApp.insertUniversity(university)
 	}
 }
 
