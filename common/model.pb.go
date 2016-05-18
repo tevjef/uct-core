@@ -26,6 +26,14 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
+import bytes "bytes"
+
+import strings "strings"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+import sort "sort"
+import strconv "strconv"
+import reflect "reflect"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -94,7 +102,6 @@ type University struct {
 }
 
 func (m *University) Reset()                    { *m = University{} }
-func (m *University) String() string            { return proto.CompactTextString(m) }
 func (*University) ProtoMessage()               {}
 func (*University) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{0} }
 
@@ -197,7 +204,6 @@ type Subject struct {
 }
 
 func (m *Subject) Reset()                    { *m = Subject{} }
-func (m *Subject) String() string            { return proto.CompactTextString(m) }
 func (*Subject) ProtoMessage()               {}
 func (*Subject) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{1} }
 
@@ -285,7 +291,6 @@ type Course struct {
 }
 
 func (m *Course) Reset()                    { *m = Course{} }
-func (m *Course) String() string            { return proto.CompactTextString(m) }
 func (*Course) ProtoMessage()               {}
 func (*Course) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{2} }
 
@@ -370,7 +375,6 @@ type Section struct {
 }
 
 func (m *Section) Reset()                    { *m = Section{} }
-func (m *Section) String() string            { return proto.CompactTextString(m) }
 func (*Section) ProtoMessage()               {}
 func (*Section) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{3} }
 
@@ -472,13 +476,12 @@ type Meeting struct {
 	Day              *string    `protobuf:"bytes,4,opt,name=day" json:"day,omitempty" db:"day"`
 	StartTime        string     `protobuf:"bytes,5,opt,name=start_time,json=startTime" json:"start_time" db:"start_time"`
 	EndTime          string     `protobuf:"bytes,6,opt,name=end_time,json=endTime" json:"end_time" db:"end_time"`
-	Index            string     `protobuf:"bytes,7,opt,name=index" json:"index" db:"index"`
+	Index            int32      `protobuf:"varint,7,opt,name=index" json:"index" db:"index"`
 	Metadata         []Metadata `protobuf:"bytes,8,rep,name=metadata" json:"metadata"`
 	XXX_unrecognized []byte     `json:"-"`
 }
 
 func (m *Meeting) Reset()                    { *m = Meeting{} }
-func (m *Meeting) String() string            { return proto.CompactTextString(m) }
 func (*Meeting) ProtoMessage()               {}
 func (*Meeting) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{4} }
 
@@ -524,11 +527,11 @@ func (m *Meeting) GetEndTime() string {
 	return ""
 }
 
-func (m *Meeting) GetIndex() string {
+func (m *Meeting) GetIndex() int32 {
 	if m != nil {
 		return m.Index
 	}
-	return ""
+	return 0
 }
 
 func (m *Meeting) GetMetadata() []Metadata {
@@ -546,7 +549,6 @@ type Instructor struct {
 }
 
 func (m *Instructor) Reset()                    { *m = Instructor{} }
-func (m *Instructor) String() string            { return proto.CompactTextString(m) }
 func (*Instructor) ProtoMessage()               {}
 func (*Instructor) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{5} }
 
@@ -580,7 +582,6 @@ type Book struct {
 }
 
 func (m *Book) Reset()                    { *m = Book{} }
-func (m *Book) String() string            { return proto.CompactTextString(m) }
 func (*Book) ProtoMessage()               {}
 func (*Book) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{6} }
 
@@ -614,18 +615,17 @@ func (m *Book) GetUrl() string {
 
 type Metadata struct {
 	Id               int64  `protobuf:"varint,1,opt,name=id" json:"id" db:"id"`
-	UniversityId     int64  `protobuf:"varint,2,opt,name=university_id,json=universityId" json:"university_id" db:"university_id"`
-	SubjectId        int64  `protobuf:"varint,3,opt,name=subject_id,json=subjectId" json:"subject_id" db:"subject_id"`
-	CourseId         int64  `protobuf:"varint,4,opt,name=course_id,json=courseId" json:"course_id" db:"course_id"`
-	SectionId        int64  `protobuf:"varint,5,opt,name=section_id,json=sectionId" json:"section_id" db:"section_id"`
-	MeetingId        int64  `protobuf:"varint,6,opt,name=meeting_id,json=meetingId" json:"meeting_id" db:"meeting_id"`
+	UniversityId     *int64 `protobuf:"varint,2,opt,name=university_id,json=universityId" json:"university_id,omitempty" db:"university_id"`
+	SubjectId        *int64 `protobuf:"varint,3,opt,name=subject_id,json=subjectId" json:"subject_id,omitempty" db:"subject_id"`
+	CourseId         *int64 `protobuf:"varint,4,opt,name=course_id,json=courseId" json:"course_id,omitempty" db:"course_id"`
+	SectionId        *int64 `protobuf:"varint,5,opt,name=section_id,json=sectionId" json:"section_id,omitempty" db:"section_id"`
+	MeetingId        *int64 `protobuf:"varint,6,opt,name=meeting_id,json=meetingId" json:"meeting_id,omitempty" db:"meeting_id"`
 	Title            string `protobuf:"bytes,7,opt,name=title" json:"title" db:"title"`
 	Content          string `protobuf:"bytes,8,opt,name=content" json:"content" db:"content"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
 func (m *Metadata) Reset()                    { *m = Metadata{} }
-func (m *Metadata) String() string            { return proto.CompactTextString(m) }
 func (*Metadata) ProtoMessage()               {}
 func (*Metadata) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{7} }
 
@@ -637,36 +637,36 @@ func (m *Metadata) GetId() int64 {
 }
 
 func (m *Metadata) GetUniversityId() int64 {
-	if m != nil {
-		return m.UniversityId
+	if m != nil && m.UniversityId != nil {
+		return *m.UniversityId
 	}
 	return 0
 }
 
 func (m *Metadata) GetSubjectId() int64 {
-	if m != nil {
-		return m.SubjectId
+	if m != nil && m.SubjectId != nil {
+		return *m.SubjectId
 	}
 	return 0
 }
 
 func (m *Metadata) GetCourseId() int64 {
-	if m != nil {
-		return m.CourseId
+	if m != nil && m.CourseId != nil {
+		return *m.CourseId
 	}
 	return 0
 }
 
 func (m *Metadata) GetSectionId() int64 {
-	if m != nil {
-		return m.SectionId
+	if m != nil && m.SectionId != nil {
+		return *m.SectionId
 	}
 	return 0
 }
 
 func (m *Metadata) GetMeetingId() int64 {
-	if m != nil {
-		return m.MeetingId
+	if m != nil && m.MeetingId != nil {
+		return *m.MeetingId
 	}
 	return 0
 }
@@ -694,7 +694,6 @@ type Registration struct {
 }
 
 func (m *Registration) Reset()                    { *m = Registration{} }
-func (m *Registration) String() string            { return proto.CompactTextString(m) }
 func (*Registration) ProtoMessage()               {}
 func (*Registration) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{8} }
 
@@ -733,7 +732,6 @@ type Semester struct {
 }
 
 func (m *Semester) Reset()                    { *m = Semester{} }
-func (m *Semester) String() string            { return proto.CompactTextString(m) }
 func (*Semester) ProtoMessage()               {}
 func (*Semester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{9} }
 
@@ -763,6 +761,1530 @@ func init() {
 	proto.RegisterType((*Registration)(nil), "common.Registration")
 	proto.RegisterType((*Semester)(nil), "common.Semester")
 	proto.RegisterEnum("common.Season", Season_name, Season_value)
+}
+func (this *University) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*University)
+	if !ok {
+		that2, ok := that.(University)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *University")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *University but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *University but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if this.Abbr != that1.Abbr {
+		return fmt.Errorf("Abbr this(%v) Not Equal that(%v)", this.Abbr, that1.Abbr)
+	}
+	if this.HomePage != that1.HomePage {
+		return fmt.Errorf("HomePage this(%v) Not Equal that(%v)", this.HomePage, that1.HomePage)
+	}
+	if this.RegistrationPage != that1.RegistrationPage {
+		return fmt.Errorf("RegistrationPage this(%v) Not Equal that(%v)", this.RegistrationPage, that1.RegistrationPage)
+	}
+	if this.MainColor != that1.MainColor {
+		return fmt.Errorf("MainColor this(%v) Not Equal that(%v)", this.MainColor, that1.MainColor)
+	}
+	if this.AccentColor != that1.AccentColor {
+		return fmt.Errorf("AccentColor this(%v) Not Equal that(%v)", this.AccentColor, that1.AccentColor)
+	}
+	if this.TopicName != that1.TopicName {
+		return fmt.Errorf("TopicName this(%v) Not Equal that(%v)", this.TopicName, that1.TopicName)
+	}
+	if len(this.Subjects) != len(that1.Subjects) {
+		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
+	}
+	for i := range this.Subjects {
+		if !this.Subjects[i].Equal(&that1.Subjects[i]) {
+			return fmt.Errorf("Subjects this[%v](%v) Not Equal that[%v](%v)", i, this.Subjects[i], i, that1.Subjects[i])
+		}
+	}
+	if len(this.AvailableSemesters) != len(that1.AvailableSemesters) {
+		return fmt.Errorf("AvailableSemesters this(%v) Not Equal that(%v)", len(this.AvailableSemesters), len(that1.AvailableSemesters))
+	}
+	for i := range this.AvailableSemesters {
+		if !this.AvailableSemesters[i].Equal(&that1.AvailableSemesters[i]) {
+			return fmt.Errorf("AvailableSemesters this[%v](%v) Not Equal that[%v](%v)", i, this.AvailableSemesters[i], i, that1.AvailableSemesters[i])
+		}
+	}
+	if len(this.Registrations) != len(that1.Registrations) {
+		return fmt.Errorf("Registrations this(%v) Not Equal that(%v)", len(this.Registrations), len(that1.Registrations))
+	}
+	for i := range this.Registrations {
+		if !this.Registrations[i].Equal(&that1.Registrations[i]) {
+			return fmt.Errorf("Registrations this[%v](%v) Not Equal that[%v](%v)", i, this.Registrations[i], i, that1.Registrations[i])
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", len(this.Metadata), len(that1.Metadata))
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return fmt.Errorf("Metadata this[%v](%v) Not Equal that[%v](%v)", i, this.Metadata[i], i, that1.Metadata[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *University) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*University)
+	if !ok {
+		that2, ok := that.(University)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.Abbr != that1.Abbr {
+		return false
+	}
+	if this.HomePage != that1.HomePage {
+		return false
+	}
+	if this.RegistrationPage != that1.RegistrationPage {
+		return false
+	}
+	if this.MainColor != that1.MainColor {
+		return false
+	}
+	if this.AccentColor != that1.AccentColor {
+		return false
+	}
+	if this.TopicName != that1.TopicName {
+		return false
+	}
+	if len(this.Subjects) != len(that1.Subjects) {
+		return false
+	}
+	for i := range this.Subjects {
+		if !this.Subjects[i].Equal(&that1.Subjects[i]) {
+			return false
+		}
+	}
+	if len(this.AvailableSemesters) != len(that1.AvailableSemesters) {
+		return false
+	}
+	for i := range this.AvailableSemesters {
+		if !this.AvailableSemesters[i].Equal(&that1.AvailableSemesters[i]) {
+			return false
+		}
+	}
+	if len(this.Registrations) != len(that1.Registrations) {
+		return false
+	}
+	for i := range this.Registrations {
+		if !this.Registrations[i].Equal(&that1.Registrations[i]) {
+			return false
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return false
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Subject) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Subject)
+	if !ok {
+		that2, ok := that.(Subject)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Subject")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Subject but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Subject but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.UniversityId != that1.UniversityId {
+		return fmt.Errorf("UniversityId this(%v) Not Equal that(%v)", this.UniversityId, that1.UniversityId)
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if this.Number != that1.Number {
+		return fmt.Errorf("Number this(%v) Not Equal that(%v)", this.Number, that1.Number)
+	}
+	if this.Season != that1.Season {
+		return fmt.Errorf("Season this(%v) Not Equal that(%v)", this.Season, that1.Season)
+	}
+	if this.Year != that1.Year {
+		return fmt.Errorf("Year this(%v) Not Equal that(%v)", this.Year, that1.Year)
+	}
+	if this.Hash != that1.Hash {
+		return fmt.Errorf("Hash this(%v) Not Equal that(%v)", this.Hash, that1.Hash)
+	}
+	if this.TopicName != that1.TopicName {
+		return fmt.Errorf("TopicName this(%v) Not Equal that(%v)", this.TopicName, that1.TopicName)
+	}
+	if len(this.Courses) != len(that1.Courses) {
+		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", len(this.Courses), len(that1.Courses))
+	}
+	for i := range this.Courses {
+		if !this.Courses[i].Equal(&that1.Courses[i]) {
+			return fmt.Errorf("Courses this[%v](%v) Not Equal that[%v](%v)", i, this.Courses[i], i, that1.Courses[i])
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", len(this.Metadata), len(that1.Metadata))
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return fmt.Errorf("Metadata this[%v](%v) Not Equal that[%v](%v)", i, this.Metadata[i], i, that1.Metadata[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Subject) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Subject)
+	if !ok {
+		that2, ok := that.(Subject)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.UniversityId != that1.UniversityId {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.Number != that1.Number {
+		return false
+	}
+	if this.Season != that1.Season {
+		return false
+	}
+	if this.Year != that1.Year {
+		return false
+	}
+	if this.Hash != that1.Hash {
+		return false
+	}
+	if this.TopicName != that1.TopicName {
+		return false
+	}
+	if len(this.Courses) != len(that1.Courses) {
+		return false
+	}
+	for i := range this.Courses {
+		if !this.Courses[i].Equal(&that1.Courses[i]) {
+			return false
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return false
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Course) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Course)
+	if !ok {
+		that2, ok := that.(Course)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Course")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Course but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Course but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.SubjectId != that1.SubjectId {
+		return fmt.Errorf("SubjectId this(%v) Not Equal that(%v)", this.SubjectId, that1.SubjectId)
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if this.Number != that1.Number {
+		return fmt.Errorf("Number this(%v) Not Equal that(%v)", this.Number, that1.Number)
+	}
+	if this.Synopsis != nil && that1.Synopsis != nil {
+		if *this.Synopsis != *that1.Synopsis {
+			return fmt.Errorf("Synopsis this(%v) Not Equal that(%v)", *this.Synopsis, *that1.Synopsis)
+		}
+	} else if this.Synopsis != nil {
+		return fmt.Errorf("this.Synopsis == nil && that.Synopsis != nil")
+	} else if that1.Synopsis != nil {
+		return fmt.Errorf("Synopsis this(%v) Not Equal that(%v)", this.Synopsis, that1.Synopsis)
+	}
+	if this.Hash != that1.Hash {
+		return fmt.Errorf("Hash this(%v) Not Equal that(%v)", this.Hash, that1.Hash)
+	}
+	if this.TopicName != that1.TopicName {
+		return fmt.Errorf("TopicName this(%v) Not Equal that(%v)", this.TopicName, that1.TopicName)
+	}
+	if len(this.Sections) != len(that1.Sections) {
+		return fmt.Errorf("Sections this(%v) Not Equal that(%v)", len(this.Sections), len(that1.Sections))
+	}
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(&that1.Sections[i]) {
+			return fmt.Errorf("Sections this[%v](%v) Not Equal that[%v](%v)", i, this.Sections[i], i, that1.Sections[i])
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", len(this.Metadata), len(that1.Metadata))
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return fmt.Errorf("Metadata this[%v](%v) Not Equal that[%v](%v)", i, this.Metadata[i], i, that1.Metadata[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Course) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Course)
+	if !ok {
+		that2, ok := that.(Course)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.SubjectId != that1.SubjectId {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.Number != that1.Number {
+		return false
+	}
+	if this.Synopsis != nil && that1.Synopsis != nil {
+		if *this.Synopsis != *that1.Synopsis {
+			return false
+		}
+	} else if this.Synopsis != nil {
+		return false
+	} else if that1.Synopsis != nil {
+		return false
+	}
+	if this.Hash != that1.Hash {
+		return false
+	}
+	if this.TopicName != that1.TopicName {
+		return false
+	}
+	if len(this.Sections) != len(that1.Sections) {
+		return false
+	}
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(&that1.Sections[i]) {
+			return false
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return false
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Section) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Section)
+	if !ok {
+		that2, ok := that.(Section)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Section")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Section but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Section but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.CourseId != that1.CourseId {
+		return fmt.Errorf("CourseId this(%v) Not Equal that(%v)", this.CourseId, that1.CourseId)
+	}
+	if this.Number != that1.Number {
+		return fmt.Errorf("Number this(%v) Not Equal that(%v)", this.Number, that1.Number)
+	}
+	if this.CallNumber != that1.CallNumber {
+		return fmt.Errorf("CallNumber this(%v) Not Equal that(%v)", this.CallNumber, that1.CallNumber)
+	}
+	if this.Max != that1.Max {
+		return fmt.Errorf("Max this(%v) Not Equal that(%v)", this.Max, that1.Max)
+	}
+	if this.Now != that1.Now {
+		return fmt.Errorf("Now this(%v) Not Equal that(%v)", this.Now, that1.Now)
+	}
+	if this.Status != that1.Status {
+		return fmt.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
+	}
+	if this.Credits != that1.Credits {
+		return fmt.Errorf("Credits this(%v) Not Equal that(%v)", this.Credits, that1.Credits)
+	}
+	if this.TopicName != that1.TopicName {
+		return fmt.Errorf("TopicName this(%v) Not Equal that(%v)", this.TopicName, that1.TopicName)
+	}
+	if len(this.Meetings) != len(that1.Meetings) {
+		return fmt.Errorf("Meetings this(%v) Not Equal that(%v)", len(this.Meetings), len(that1.Meetings))
+	}
+	for i := range this.Meetings {
+		if !this.Meetings[i].Equal(&that1.Meetings[i]) {
+			return fmt.Errorf("Meetings this[%v](%v) Not Equal that[%v](%v)", i, this.Meetings[i], i, that1.Meetings[i])
+		}
+	}
+	if len(this.Instructors) != len(that1.Instructors) {
+		return fmt.Errorf("Instructors this(%v) Not Equal that(%v)", len(this.Instructors), len(that1.Instructors))
+	}
+	for i := range this.Instructors {
+		if !this.Instructors[i].Equal(&that1.Instructors[i]) {
+			return fmt.Errorf("Instructors this[%v](%v) Not Equal that[%v](%v)", i, this.Instructors[i], i, that1.Instructors[i])
+		}
+	}
+	if len(this.Books) != len(that1.Books) {
+		return fmt.Errorf("Books this(%v) Not Equal that(%v)", len(this.Books), len(that1.Books))
+	}
+	for i := range this.Books {
+		if !this.Books[i].Equal(&that1.Books[i]) {
+			return fmt.Errorf("Books this[%v](%v) Not Equal that[%v](%v)", i, this.Books[i], i, that1.Books[i])
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", len(this.Metadata), len(that1.Metadata))
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return fmt.Errorf("Metadata this[%v](%v) Not Equal that[%v](%v)", i, this.Metadata[i], i, that1.Metadata[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Section) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Section)
+	if !ok {
+		that2, ok := that.(Section)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.CourseId != that1.CourseId {
+		return false
+	}
+	if this.Number != that1.Number {
+		return false
+	}
+	if this.CallNumber != that1.CallNumber {
+		return false
+	}
+	if this.Max != that1.Max {
+		return false
+	}
+	if this.Now != that1.Now {
+		return false
+	}
+	if this.Status != that1.Status {
+		return false
+	}
+	if this.Credits != that1.Credits {
+		return false
+	}
+	if this.TopicName != that1.TopicName {
+		return false
+	}
+	if len(this.Meetings) != len(that1.Meetings) {
+		return false
+	}
+	for i := range this.Meetings {
+		if !this.Meetings[i].Equal(&that1.Meetings[i]) {
+			return false
+		}
+	}
+	if len(this.Instructors) != len(that1.Instructors) {
+		return false
+	}
+	for i := range this.Instructors {
+		if !this.Instructors[i].Equal(&that1.Instructors[i]) {
+			return false
+		}
+	}
+	if len(this.Books) != len(that1.Books) {
+		return false
+	}
+	for i := range this.Books {
+		if !this.Books[i].Equal(&that1.Books[i]) {
+			return false
+		}
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return false
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Meeting) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Meeting)
+	if !ok {
+		that2, ok := that.(Meeting)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Meeting")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Meeting but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Meeting but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.SectionId != that1.SectionId {
+		return fmt.Errorf("SectionId this(%v) Not Equal that(%v)", this.SectionId, that1.SectionId)
+	}
+	if this.Room != nil && that1.Room != nil {
+		if *this.Room != *that1.Room {
+			return fmt.Errorf("Room this(%v) Not Equal that(%v)", *this.Room, *that1.Room)
+		}
+	} else if this.Room != nil {
+		return fmt.Errorf("this.Room == nil && that.Room != nil")
+	} else if that1.Room != nil {
+		return fmt.Errorf("Room this(%v) Not Equal that(%v)", this.Room, that1.Room)
+	}
+	if this.Day != nil && that1.Day != nil {
+		if *this.Day != *that1.Day {
+			return fmt.Errorf("Day this(%v) Not Equal that(%v)", *this.Day, *that1.Day)
+		}
+	} else if this.Day != nil {
+		return fmt.Errorf("this.Day == nil && that.Day != nil")
+	} else if that1.Day != nil {
+		return fmt.Errorf("Day this(%v) Not Equal that(%v)", this.Day, that1.Day)
+	}
+	if this.StartTime != that1.StartTime {
+		return fmt.Errorf("StartTime this(%v) Not Equal that(%v)", this.StartTime, that1.StartTime)
+	}
+	if this.EndTime != that1.EndTime {
+		return fmt.Errorf("EndTime this(%v) Not Equal that(%v)", this.EndTime, that1.EndTime)
+	}
+	if this.Index != that1.Index {
+		return fmt.Errorf("Index this(%v) Not Equal that(%v)", this.Index, that1.Index)
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", len(this.Metadata), len(that1.Metadata))
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return fmt.Errorf("Metadata this[%v](%v) Not Equal that[%v](%v)", i, this.Metadata[i], i, that1.Metadata[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Meeting) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Meeting)
+	if !ok {
+		that2, ok := that.(Meeting)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.SectionId != that1.SectionId {
+		return false
+	}
+	if this.Room != nil && that1.Room != nil {
+		if *this.Room != *that1.Room {
+			return false
+		}
+	} else if this.Room != nil {
+		return false
+	} else if that1.Room != nil {
+		return false
+	}
+	if this.Day != nil && that1.Day != nil {
+		if *this.Day != *that1.Day {
+			return false
+		}
+	} else if this.Day != nil {
+		return false
+	} else if that1.Day != nil {
+		return false
+	}
+	if this.StartTime != that1.StartTime {
+		return false
+	}
+	if this.EndTime != that1.EndTime {
+		return false
+	}
+	if this.Index != that1.Index {
+		return false
+	}
+	if len(this.Metadata) != len(that1.Metadata) {
+		return false
+	}
+	for i := range this.Metadata {
+		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Instructor) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Instructor)
+	if !ok {
+		that2, ok := that.(Instructor)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Instructor")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Instructor but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Instructor but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.SectionId != that1.SectionId {
+		return fmt.Errorf("SectionId this(%v) Not Equal that(%v)", this.SectionId, that1.SectionId)
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Instructor) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Instructor)
+	if !ok {
+		that2, ok := that.(Instructor)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.SectionId != that1.SectionId {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Book) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Book)
+	if !ok {
+		that2, ok := that.(Book)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Book")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Book but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Book but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.SectionId != that1.SectionId {
+		return fmt.Errorf("SectionId this(%v) Not Equal that(%v)", this.SectionId, that1.SectionId)
+	}
+	if this.Title != that1.Title {
+		return fmt.Errorf("Title this(%v) Not Equal that(%v)", this.Title, that1.Title)
+	}
+	if this.Url != that1.Url {
+		return fmt.Errorf("Url this(%v) Not Equal that(%v)", this.Url, that1.Url)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Book) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Book)
+	if !ok {
+		that2, ok := that.(Book)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.SectionId != that1.SectionId {
+		return false
+	}
+	if this.Title != that1.Title {
+		return false
+	}
+	if this.Url != that1.Url {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Metadata) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Metadata)
+	if !ok {
+		that2, ok := that.(Metadata)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Metadata")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Metadata but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Metadata but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.UniversityId != nil && that1.UniversityId != nil {
+		if *this.UniversityId != *that1.UniversityId {
+			return fmt.Errorf("UniversityId this(%v) Not Equal that(%v)", *this.UniversityId, *that1.UniversityId)
+		}
+	} else if this.UniversityId != nil {
+		return fmt.Errorf("this.UniversityId == nil && that.UniversityId != nil")
+	} else if that1.UniversityId != nil {
+		return fmt.Errorf("UniversityId this(%v) Not Equal that(%v)", this.UniversityId, that1.UniversityId)
+	}
+	if this.SubjectId != nil && that1.SubjectId != nil {
+		if *this.SubjectId != *that1.SubjectId {
+			return fmt.Errorf("SubjectId this(%v) Not Equal that(%v)", *this.SubjectId, *that1.SubjectId)
+		}
+	} else if this.SubjectId != nil {
+		return fmt.Errorf("this.SubjectId == nil && that.SubjectId != nil")
+	} else if that1.SubjectId != nil {
+		return fmt.Errorf("SubjectId this(%v) Not Equal that(%v)", this.SubjectId, that1.SubjectId)
+	}
+	if this.CourseId != nil && that1.CourseId != nil {
+		if *this.CourseId != *that1.CourseId {
+			return fmt.Errorf("CourseId this(%v) Not Equal that(%v)", *this.CourseId, *that1.CourseId)
+		}
+	} else if this.CourseId != nil {
+		return fmt.Errorf("this.CourseId == nil && that.CourseId != nil")
+	} else if that1.CourseId != nil {
+		return fmt.Errorf("CourseId this(%v) Not Equal that(%v)", this.CourseId, that1.CourseId)
+	}
+	if this.SectionId != nil && that1.SectionId != nil {
+		if *this.SectionId != *that1.SectionId {
+			return fmt.Errorf("SectionId this(%v) Not Equal that(%v)", *this.SectionId, *that1.SectionId)
+		}
+	} else if this.SectionId != nil {
+		return fmt.Errorf("this.SectionId == nil && that.SectionId != nil")
+	} else if that1.SectionId != nil {
+		return fmt.Errorf("SectionId this(%v) Not Equal that(%v)", this.SectionId, that1.SectionId)
+	}
+	if this.MeetingId != nil && that1.MeetingId != nil {
+		if *this.MeetingId != *that1.MeetingId {
+			return fmt.Errorf("MeetingId this(%v) Not Equal that(%v)", *this.MeetingId, *that1.MeetingId)
+		}
+	} else if this.MeetingId != nil {
+		return fmt.Errorf("this.MeetingId == nil && that.MeetingId != nil")
+	} else if that1.MeetingId != nil {
+		return fmt.Errorf("MeetingId this(%v) Not Equal that(%v)", this.MeetingId, that1.MeetingId)
+	}
+	if this.Title != that1.Title {
+		return fmt.Errorf("Title this(%v) Not Equal that(%v)", this.Title, that1.Title)
+	}
+	if this.Content != that1.Content {
+		return fmt.Errorf("Content this(%v) Not Equal that(%v)", this.Content, that1.Content)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Metadata) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Metadata)
+	if !ok {
+		that2, ok := that.(Metadata)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.UniversityId != nil && that1.UniversityId != nil {
+		if *this.UniversityId != *that1.UniversityId {
+			return false
+		}
+	} else if this.UniversityId != nil {
+		return false
+	} else if that1.UniversityId != nil {
+		return false
+	}
+	if this.SubjectId != nil && that1.SubjectId != nil {
+		if *this.SubjectId != *that1.SubjectId {
+			return false
+		}
+	} else if this.SubjectId != nil {
+		return false
+	} else if that1.SubjectId != nil {
+		return false
+	}
+	if this.CourseId != nil && that1.CourseId != nil {
+		if *this.CourseId != *that1.CourseId {
+			return false
+		}
+	} else if this.CourseId != nil {
+		return false
+	} else if that1.CourseId != nil {
+		return false
+	}
+	if this.SectionId != nil && that1.SectionId != nil {
+		if *this.SectionId != *that1.SectionId {
+			return false
+		}
+	} else if this.SectionId != nil {
+		return false
+	} else if that1.SectionId != nil {
+		return false
+	}
+	if this.MeetingId != nil && that1.MeetingId != nil {
+		if *this.MeetingId != *that1.MeetingId {
+			return false
+		}
+	} else if this.MeetingId != nil {
+		return false
+	} else if that1.MeetingId != nil {
+		return false
+	}
+	if this.Title != that1.Title {
+		return false
+	}
+	if this.Content != that1.Content {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Registration) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Registration)
+	if !ok {
+		that2, ok := that.(Registration)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Registration")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Registration but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Registration but is not nil && this == nil")
+	}
+	if this.Id != that1.Id {
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	}
+	if this.UniversityId != that1.UniversityId {
+		return fmt.Errorf("UniversityId this(%v) Not Equal that(%v)", this.UniversityId, that1.UniversityId)
+	}
+	if this.Period != that1.Period {
+		return fmt.Errorf("Period this(%v) Not Equal that(%v)", this.Period, that1.Period)
+	}
+	if this.PeriodDate != that1.PeriodDate {
+		return fmt.Errorf("PeriodDate this(%v) Not Equal that(%v)", this.PeriodDate, that1.PeriodDate)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Registration) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Registration)
+	if !ok {
+		that2, ok := that.(Registration)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.UniversityId != that1.UniversityId {
+		return false
+	}
+	if this.Period != that1.Period {
+		return false
+	}
+	if this.PeriodDate != that1.PeriodDate {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Semester) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Semester)
+	if !ok {
+		that2, ok := that.(Semester)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Semester")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Semester but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Semester but is not nil && this == nil")
+	}
+	if this.Year != that1.Year {
+		return fmt.Errorf("Year this(%v) Not Equal that(%v)", this.Year, that1.Year)
+	}
+	if this.Season != that1.Season {
+		return fmt.Errorf("Season this(%v) Not Equal that(%v)", this.Season, that1.Season)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Semester) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Semester)
+	if !ok {
+		that2, ok := that.(Semester)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Year != that1.Year {
+		return false
+	}
+	if this.Season != that1.Season {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *University) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 16)
+	s = append(s, "&common.University{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Abbr: "+fmt.Sprintf("%#v", this.Abbr)+",\n")
+	s = append(s, "HomePage: "+fmt.Sprintf("%#v", this.HomePage)+",\n")
+	s = append(s, "RegistrationPage: "+fmt.Sprintf("%#v", this.RegistrationPage)+",\n")
+	s = append(s, "MainColor: "+fmt.Sprintf("%#v", this.MainColor)+",\n")
+	s = append(s, "AccentColor: "+fmt.Sprintf("%#v", this.AccentColor)+",\n")
+	s = append(s, "TopicName: "+fmt.Sprintf("%#v", this.TopicName)+",\n")
+	if this.Subjects != nil {
+		s = append(s, "Subjects: "+fmt.Sprintf("%#v", this.Subjects)+",\n")
+	}
+	if this.AvailableSemesters != nil {
+		s = append(s, "AvailableSemesters: "+fmt.Sprintf("%#v", this.AvailableSemesters)+",\n")
+	}
+	if this.Registrations != nil {
+		s = append(s, "Registrations: "+fmt.Sprintf("%#v", this.Registrations)+",\n")
+	}
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Subject) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 14)
+	s = append(s, "&common.Subject{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "UniversityId: "+fmt.Sprintf("%#v", this.UniversityId)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Number: "+fmt.Sprintf("%#v", this.Number)+",\n")
+	s = append(s, "Season: "+fmt.Sprintf("%#v", this.Season)+",\n")
+	s = append(s, "Year: "+fmt.Sprintf("%#v", this.Year)+",\n")
+	s = append(s, "Hash: "+fmt.Sprintf("%#v", this.Hash)+",\n")
+	s = append(s, "TopicName: "+fmt.Sprintf("%#v", this.TopicName)+",\n")
+	if this.Courses != nil {
+		s = append(s, "Courses: "+fmt.Sprintf("%#v", this.Courses)+",\n")
+	}
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Course) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 13)
+	s = append(s, "&common.Course{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "SubjectId: "+fmt.Sprintf("%#v", this.SubjectId)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Number: "+fmt.Sprintf("%#v", this.Number)+",\n")
+	if this.Synopsis != nil {
+		s = append(s, "Synopsis: "+valueToGoStringModel(this.Synopsis, "string")+",\n")
+	}
+	s = append(s, "Hash: "+fmt.Sprintf("%#v", this.Hash)+",\n")
+	s = append(s, "TopicName: "+fmt.Sprintf("%#v", this.TopicName)+",\n")
+	if this.Sections != nil {
+		s = append(s, "Sections: "+fmt.Sprintf("%#v", this.Sections)+",\n")
+	}
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Section) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 17)
+	s = append(s, "&common.Section{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "CourseId: "+fmt.Sprintf("%#v", this.CourseId)+",\n")
+	s = append(s, "Number: "+fmt.Sprintf("%#v", this.Number)+",\n")
+	s = append(s, "CallNumber: "+fmt.Sprintf("%#v", this.CallNumber)+",\n")
+	s = append(s, "Max: "+fmt.Sprintf("%#v", this.Max)+",\n")
+	s = append(s, "Now: "+fmt.Sprintf("%#v", this.Now)+",\n")
+	s = append(s, "Status: "+fmt.Sprintf("%#v", this.Status)+",\n")
+	s = append(s, "Credits: "+fmt.Sprintf("%#v", this.Credits)+",\n")
+	s = append(s, "TopicName: "+fmt.Sprintf("%#v", this.TopicName)+",\n")
+	if this.Meetings != nil {
+		s = append(s, "Meetings: "+fmt.Sprintf("%#v", this.Meetings)+",\n")
+	}
+	if this.Instructors != nil {
+		s = append(s, "Instructors: "+fmt.Sprintf("%#v", this.Instructors)+",\n")
+	}
+	if this.Books != nil {
+		s = append(s, "Books: "+fmt.Sprintf("%#v", this.Books)+",\n")
+	}
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Meeting) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&common.Meeting{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "SectionId: "+fmt.Sprintf("%#v", this.SectionId)+",\n")
+	if this.Room != nil {
+		s = append(s, "Room: "+valueToGoStringModel(this.Room, "string")+",\n")
+	}
+	if this.Day != nil {
+		s = append(s, "Day: "+valueToGoStringModel(this.Day, "string")+",\n")
+	}
+	s = append(s, "StartTime: "+fmt.Sprintf("%#v", this.StartTime)+",\n")
+	s = append(s, "EndTime: "+fmt.Sprintf("%#v", this.EndTime)+",\n")
+	s = append(s, "Index: "+fmt.Sprintf("%#v", this.Index)+",\n")
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Instructor) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&common.Instructor{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "SectionId: "+fmt.Sprintf("%#v", this.SectionId)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Book) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&common.Book{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "SectionId: "+fmt.Sprintf("%#v", this.SectionId)+",\n")
+	s = append(s, "Title: "+fmt.Sprintf("%#v", this.Title)+",\n")
+	s = append(s, "Url: "+fmt.Sprintf("%#v", this.Url)+",\n")
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Metadata) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&common.Metadata{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	if this.UniversityId != nil {
+		s = append(s, "UniversityId: "+valueToGoStringModel(this.UniversityId, "int64")+",\n")
+	}
+	if this.SubjectId != nil {
+		s = append(s, "SubjectId: "+valueToGoStringModel(this.SubjectId, "int64")+",\n")
+	}
+	if this.CourseId != nil {
+		s = append(s, "CourseId: "+valueToGoStringModel(this.CourseId, "int64")+",\n")
+	}
+	if this.SectionId != nil {
+		s = append(s, "SectionId: "+valueToGoStringModel(this.SectionId, "int64")+",\n")
+	}
+	if this.MeetingId != nil {
+		s = append(s, "MeetingId: "+valueToGoStringModel(this.MeetingId, "int64")+",\n")
+	}
+	s = append(s, "Title: "+fmt.Sprintf("%#v", this.Title)+",\n")
+	s = append(s, "Content: "+fmt.Sprintf("%#v", this.Content)+",\n")
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Registration) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&common.Registration{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "UniversityId: "+fmt.Sprintf("%#v", this.UniversityId)+",\n")
+	s = append(s, "Period: "+fmt.Sprintf("%#v", this.Period)+",\n")
+	s = append(s, "PeriodDate: "+fmt.Sprintf("%#v", this.PeriodDate)+",\n")
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Semester) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&common.Semester{")
+	s = append(s, "Year: "+fmt.Sprintf("%#v", this.Year)+",\n")
+	s = append(s, "Season: "+fmt.Sprintf("%#v", this.Season)+",\n")
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func valueToGoStringModel(v interface{}, typ string) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
+}
+func extensionToGoStringModel(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+	if e == nil {
+		return "nil"
+	}
+	s := "map[int32]proto.Extension{"
+	keys := make([]int, 0, len(e))
+	for k := range e {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+	ss := []string{}
+	for _, k := range keys {
+		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
+	}
+	s += strings.Join(ss, ",") + "}"
+	return s
 }
 func (m *University) Marshal() (data []byte, err error) {
 	size := m.Size()
@@ -1154,10 +2676,9 @@ func (m *Meeting) MarshalTo(data []byte) (int, error) {
 	i++
 	i = encodeVarintModel(data, i, uint64(len(m.EndTime)))
 	i += copy(data[i:], m.EndTime)
-	data[i] = 0x3a
+	data[i] = 0x38
 	i++
-	i = encodeVarintModel(data, i, uint64(len(m.Index)))
-	i += copy(data[i:], m.Index)
+	i = encodeVarintModel(data, i, uint64(m.Index))
 	if len(m.Metadata) > 0 {
 		for _, msg := range m.Metadata {
 			data[i] = 0x42
@@ -1260,21 +2781,31 @@ func (m *Metadata) MarshalTo(data []byte) (int, error) {
 	data[i] = 0x8
 	i++
 	i = encodeVarintModel(data, i, uint64(m.Id))
-	data[i] = 0x10
-	i++
-	i = encodeVarintModel(data, i, uint64(m.UniversityId))
-	data[i] = 0x18
-	i++
-	i = encodeVarintModel(data, i, uint64(m.SubjectId))
-	data[i] = 0x20
-	i++
-	i = encodeVarintModel(data, i, uint64(m.CourseId))
-	data[i] = 0x28
-	i++
-	i = encodeVarintModel(data, i, uint64(m.SectionId))
-	data[i] = 0x30
-	i++
-	i = encodeVarintModel(data, i, uint64(m.MeetingId))
+	if m.UniversityId != nil {
+		data[i] = 0x10
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.UniversityId))
+	}
+	if m.SubjectId != nil {
+		data[i] = 0x18
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.SubjectId))
+	}
+	if m.CourseId != nil {
+		data[i] = 0x20
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.CourseId))
+	}
+	if m.SectionId != nil {
+		data[i] = 0x28
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.SectionId))
+	}
+	if m.MeetingId != nil {
+		data[i] = 0x30
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.MeetingId))
+	}
 	data[i] = 0x3a
 	i++
 	i = encodeVarintModel(data, i, uint64(len(m.Title)))
@@ -1376,6 +2907,424 @@ func encodeVarintModel(data []byte, offset int, v uint64) int {
 	}
 	data[offset] = uint8(v)
 	return offset + 1
+}
+func NewPopulatedUniversity(r randyModel, easy bool) *University {
+	this := &University{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.Name = randStringModel(r)
+	this.Abbr = randStringModel(r)
+	this.HomePage = randStringModel(r)
+	this.RegistrationPage = randStringModel(r)
+	this.MainColor = randStringModel(r)
+	this.AccentColor = randStringModel(r)
+	this.TopicName = randStringModel(r)
+	if r.Intn(10) != 0 {
+		v1 := r.Intn(5)
+		this.Subjects = make([]Subject, v1)
+		for i := 0; i < v1; i++ {
+			v2 := NewPopulatedSubject(r, easy)
+			this.Subjects[i] = *v2
+		}
+	}
+	if r.Intn(10) != 0 {
+		v3 := r.Intn(5)
+		this.AvailableSemesters = make([]Semester, v3)
+		for i := 0; i < v3; i++ {
+			v4 := NewPopulatedSemester(r, easy)
+			this.AvailableSemesters[i] = *v4
+		}
+	}
+	if r.Intn(10) != 0 {
+		v5 := r.Intn(5)
+		this.Registrations = make([]Registration, v5)
+		for i := 0; i < v5; i++ {
+			v6 := NewPopulatedRegistration(r, easy)
+			this.Registrations[i] = *v6
+		}
+	}
+	if r.Intn(10) != 0 {
+		v7 := r.Intn(5)
+		this.Metadata = make([]Metadata, v7)
+		for i := 0; i < v7; i++ {
+			v8 := NewPopulatedMetadata(r, easy)
+			this.Metadata[i] = *v8
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 13)
+	}
+	return this
+}
+
+func NewPopulatedSubject(r randyModel, easy bool) *Subject {
+	this := &Subject{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.UniversityId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.UniversityId *= -1
+	}
+	this.Name = randStringModel(r)
+	this.Number = randStringModel(r)
+	this.Season = randStringModel(r)
+	this.Year = randStringModel(r)
+	this.Hash = randStringModel(r)
+	this.TopicName = randStringModel(r)
+	if r.Intn(10) != 0 {
+		v9 := r.Intn(5)
+		this.Courses = make([]Course, v9)
+		for i := 0; i < v9; i++ {
+			v10 := NewPopulatedCourse(r, easy)
+			this.Courses[i] = *v10
+		}
+	}
+	if r.Intn(10) != 0 {
+		v11 := r.Intn(5)
+		this.Metadata = make([]Metadata, v11)
+		for i := 0; i < v11; i++ {
+			v12 := NewPopulatedMetadata(r, easy)
+			this.Metadata[i] = *v12
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 11)
+	}
+	return this
+}
+
+func NewPopulatedCourse(r randyModel, easy bool) *Course {
+	this := &Course{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.SubjectId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.SubjectId *= -1
+	}
+	this.Name = randStringModel(r)
+	this.Number = randStringModel(r)
+	if r.Intn(10) != 0 {
+		v13 := randStringModel(r)
+		this.Synopsis = &v13
+	}
+	this.Hash = randStringModel(r)
+	this.TopicName = randStringModel(r)
+	if r.Intn(10) != 0 {
+		v14 := r.Intn(5)
+		this.Sections = make([]Section, v14)
+		for i := 0; i < v14; i++ {
+			v15 := NewPopulatedSection(r, easy)
+			this.Sections[i] = *v15
+		}
+	}
+	if r.Intn(10) != 0 {
+		v16 := r.Intn(5)
+		this.Metadata = make([]Metadata, v16)
+		for i := 0; i < v16; i++ {
+			v17 := NewPopulatedMetadata(r, easy)
+			this.Metadata[i] = *v17
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 11)
+	}
+	return this
+}
+
+func NewPopulatedSection(r randyModel, easy bool) *Section {
+	this := &Section{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.CourseId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.CourseId *= -1
+	}
+	this.Number = randStringModel(r)
+	this.CallNumber = randStringModel(r)
+	this.Max = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Max *= -1
+	}
+	this.Now = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Now *= -1
+	}
+	this.Status = randStringModel(r)
+	this.Credits = randStringModel(r)
+	this.TopicName = randStringModel(r)
+	if r.Intn(10) != 0 {
+		v18 := r.Intn(5)
+		this.Meetings = make([]Meeting, v18)
+		for i := 0; i < v18; i++ {
+			v19 := NewPopulatedMeeting(r, easy)
+			this.Meetings[i] = *v19
+		}
+	}
+	if r.Intn(10) != 0 {
+		v20 := r.Intn(5)
+		this.Instructors = make([]Instructor, v20)
+		for i := 0; i < v20; i++ {
+			v21 := NewPopulatedInstructor(r, easy)
+			this.Instructors[i] = *v21
+		}
+	}
+	if r.Intn(10) != 0 {
+		v22 := r.Intn(5)
+		this.Books = make([]Book, v22)
+		for i := 0; i < v22; i++ {
+			v23 := NewPopulatedBook(r, easy)
+			this.Books[i] = *v23
+		}
+	}
+	if r.Intn(10) != 0 {
+		v24 := r.Intn(5)
+		this.Metadata = make([]Metadata, v24)
+		for i := 0; i < v24; i++ {
+			v25 := NewPopulatedMetadata(r, easy)
+			this.Metadata[i] = *v25
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 14)
+	}
+	return this
+}
+
+func NewPopulatedMeeting(r randyModel, easy bool) *Meeting {
+	this := &Meeting{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.SectionId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.SectionId *= -1
+	}
+	if r.Intn(10) != 0 {
+		v26 := randStringModel(r)
+		this.Room = &v26
+	}
+	if r.Intn(10) != 0 {
+		v27 := randStringModel(r)
+		this.Day = &v27
+	}
+	this.StartTime = randStringModel(r)
+	this.EndTime = randStringModel(r)
+	this.Index = int32(r.Int31())
+	if r.Intn(2) == 0 {
+		this.Index *= -1
+	}
+	if r.Intn(10) != 0 {
+		v28 := r.Intn(5)
+		this.Metadata = make([]Metadata, v28)
+		for i := 0; i < v28; i++ {
+			v29 := NewPopulatedMetadata(r, easy)
+			this.Metadata[i] = *v29
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 9)
+	}
+	return this
+}
+
+func NewPopulatedInstructor(r randyModel, easy bool) *Instructor {
+	this := &Instructor{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.SectionId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.SectionId *= -1
+	}
+	this.Name = randStringModel(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 4)
+	}
+	return this
+}
+
+func NewPopulatedBook(r randyModel, easy bool) *Book {
+	this := &Book{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.SectionId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.SectionId *= -1
+	}
+	this.Title = randStringModel(r)
+	this.Url = randStringModel(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 5)
+	}
+	return this
+}
+
+func NewPopulatedMetadata(r randyModel, easy bool) *Metadata {
+	this := &Metadata{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	if r.Intn(10) != 0 {
+		v30 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v30 *= -1
+		}
+		this.UniversityId = &v30
+	}
+	if r.Intn(10) != 0 {
+		v31 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v31 *= -1
+		}
+		this.SubjectId = &v31
+	}
+	if r.Intn(10) != 0 {
+		v32 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v32 *= -1
+		}
+		this.CourseId = &v32
+	}
+	if r.Intn(10) != 0 {
+		v33 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v33 *= -1
+		}
+		this.SectionId = &v33
+	}
+	if r.Intn(10) != 0 {
+		v34 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v34 *= -1
+		}
+		this.MeetingId = &v34
+	}
+	this.Title = randStringModel(r)
+	this.Content = randStringModel(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 9)
+	}
+	return this
+}
+
+func NewPopulatedRegistration(r randyModel, easy bool) *Registration {
+	this := &Registration{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.UniversityId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.UniversityId *= -1
+	}
+	this.Period = randStringModel(r)
+	this.PeriodDate = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.PeriodDate *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 5)
+	}
+	return this
+}
+
+func NewPopulatedSemester(r randyModel, easy bool) *Semester {
+	this := &Semester{}
+	this.Year = int32(r.Int31())
+	if r.Intn(2) == 0 {
+		this.Year *= -1
+	}
+	this.Season = Season([]int32{0, 1, 2, 3}[r.Intn(4)])
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 3)
+	}
+	return this
+}
+
+type randyModel interface {
+	Float32() float32
+	Float64() float64
+	Int63() int64
+	Int31() int32
+	Uint32() uint32
+	Intn(n int) int
+}
+
+func randUTF8RuneModel(r randyModel) rune {
+	ru := r.Intn(62)
+	if ru < 10 {
+		return rune(ru + 48)
+	} else if ru < 36 {
+		return rune(ru + 55)
+	}
+	return rune(ru + 61)
+}
+func randStringModel(r randyModel) string {
+	v35 := r.Intn(100)
+	tmps := make([]rune, v35)
+	for i := 0; i < v35; i++ {
+		tmps[i] = randUTF8RuneModel(r)
+	}
+	return string(tmps)
+}
+func randUnrecognizedModel(r randyModel, maxFieldNumber int) (data []byte) {
+	l := r.Intn(5)
+	for i := 0; i < l; i++ {
+		wire := r.Intn(4)
+		if wire == 3 {
+			wire = 5
+		}
+		fieldNumber := maxFieldNumber + r.Intn(100)
+		data = randFieldModel(data, r, fieldNumber, wire)
+	}
+	return data
+}
+func randFieldModel(data []byte, r randyModel, fieldNumber int, wire int) []byte {
+	key := uint32(fieldNumber)<<3 | uint32(wire)
+	switch wire {
+	case 0:
+		data = encodeVarintPopulateModel(data, uint64(key))
+		v36 := r.Int63()
+		if r.Intn(2) == 0 {
+			v36 *= -1
+		}
+		data = encodeVarintPopulateModel(data, uint64(v36))
+	case 1:
+		data = encodeVarintPopulateModel(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+	case 2:
+		data = encodeVarintPopulateModel(data, uint64(key))
+		ll := r.Intn(100)
+		data = encodeVarintPopulateModel(data, uint64(ll))
+		for j := 0; j < ll; j++ {
+			data = append(data, byte(r.Intn(256)))
+		}
+	default:
+		data = encodeVarintPopulateModel(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+	}
+	return data
+}
+func encodeVarintPopulateModel(data []byte, v uint64) []byte {
+	for v >= 1<<7 {
+		data = append(data, uint8(uint64(v)&0x7f|0x80))
+		v >>= 7
+	}
+	data = append(data, uint8(v))
+	return data
 }
 func (m *University) Size() (n int) {
 	var l int
@@ -1559,8 +3508,7 @@ func (m *Meeting) Size() (n int) {
 	n += 1 + l + sovModel(uint64(l))
 	l = len(m.EndTime)
 	n += 1 + l + sovModel(uint64(l))
-	l = len(m.Index)
-	n += 1 + l + sovModel(uint64(l))
+	n += 1 + sovModel(uint64(m.Index))
 	if len(m.Metadata) > 0 {
 		for _, e := range m.Metadata {
 			l = e.Size()
@@ -1605,11 +3553,21 @@ func (m *Metadata) Size() (n int) {
 	var l int
 	_ = l
 	n += 1 + sovModel(uint64(m.Id))
-	n += 1 + sovModel(uint64(m.UniversityId))
-	n += 1 + sovModel(uint64(m.SubjectId))
-	n += 1 + sovModel(uint64(m.CourseId))
-	n += 1 + sovModel(uint64(m.SectionId))
-	n += 1 + sovModel(uint64(m.MeetingId))
+	if m.UniversityId != nil {
+		n += 1 + sovModel(uint64(*m.UniversityId))
+	}
+	if m.SubjectId != nil {
+		n += 1 + sovModel(uint64(*m.SubjectId))
+	}
+	if m.CourseId != nil {
+		n += 1 + sovModel(uint64(*m.CourseId))
+	}
+	if m.SectionId != nil {
+		n += 1 + sovModel(uint64(*m.SectionId))
+	}
+	if m.MeetingId != nil {
+		n += 1 + sovModel(uint64(*m.MeetingId))
+	}
 	l = len(m.Title)
 	n += 1 + l + sovModel(uint64(l))
 	l = len(m.Content)
@@ -1657,6 +3615,187 @@ func sovModel(x uint64) (n int) {
 }
 func sozModel(x uint64) (n int) {
 	return sovModel(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (this *University) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&University{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Abbr:` + fmt.Sprintf("%v", this.Abbr) + `,`,
+		`HomePage:` + fmt.Sprintf("%v", this.HomePage) + `,`,
+		`RegistrationPage:` + fmt.Sprintf("%v", this.RegistrationPage) + `,`,
+		`MainColor:` + fmt.Sprintf("%v", this.MainColor) + `,`,
+		`AccentColor:` + fmt.Sprintf("%v", this.AccentColor) + `,`,
+		`TopicName:` + fmt.Sprintf("%v", this.TopicName) + `,`,
+		`Subjects:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subject", "Subject", 1), `&`, ``, 1) + `,`,
+		`AvailableSemesters:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.AvailableSemesters), "Semester", "Semester", 1), `&`, ``, 1) + `,`,
+		`Registrations:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Registrations), "Registration", "Registration", 1), `&`, ``, 1) + `,`,
+		`Metadata:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1), `&`, ``, 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Subject) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Subject{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`UniversityId:` + fmt.Sprintf("%v", this.UniversityId) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Number:` + fmt.Sprintf("%v", this.Number) + `,`,
+		`Season:` + fmt.Sprintf("%v", this.Season) + `,`,
+		`Year:` + fmt.Sprintf("%v", this.Year) + `,`,
+		`Hash:` + fmt.Sprintf("%v", this.Hash) + `,`,
+		`TopicName:` + fmt.Sprintf("%v", this.TopicName) + `,`,
+		`Courses:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Courses), "Course", "Course", 1), `&`, ``, 1) + `,`,
+		`Metadata:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1), `&`, ``, 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Course) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Course{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`SubjectId:` + fmt.Sprintf("%v", this.SubjectId) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Number:` + fmt.Sprintf("%v", this.Number) + `,`,
+		`Synopsis:` + valueToStringModel(this.Synopsis) + `,`,
+		`Hash:` + fmt.Sprintf("%v", this.Hash) + `,`,
+		`TopicName:` + fmt.Sprintf("%v", this.TopicName) + `,`,
+		`Sections:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Sections), "Section", "Section", 1), `&`, ``, 1) + `,`,
+		`Metadata:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1), `&`, ``, 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Section) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Section{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`CourseId:` + fmt.Sprintf("%v", this.CourseId) + `,`,
+		`Number:` + fmt.Sprintf("%v", this.Number) + `,`,
+		`CallNumber:` + fmt.Sprintf("%v", this.CallNumber) + `,`,
+		`Max:` + fmt.Sprintf("%v", this.Max) + `,`,
+		`Now:` + fmt.Sprintf("%v", this.Now) + `,`,
+		`Status:` + fmt.Sprintf("%v", this.Status) + `,`,
+		`Credits:` + fmt.Sprintf("%v", this.Credits) + `,`,
+		`TopicName:` + fmt.Sprintf("%v", this.TopicName) + `,`,
+		`Meetings:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Meetings), "Meeting", "Meeting", 1), `&`, ``, 1) + `,`,
+		`Instructors:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Instructors), "Instructor", "Instructor", 1), `&`, ``, 1) + `,`,
+		`Books:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Books), "Book", "Book", 1), `&`, ``, 1) + `,`,
+		`Metadata:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1), `&`, ``, 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Meeting) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Meeting{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`SectionId:` + fmt.Sprintf("%v", this.SectionId) + `,`,
+		`Room:` + valueToStringModel(this.Room) + `,`,
+		`Day:` + valueToStringModel(this.Day) + `,`,
+		`StartTime:` + fmt.Sprintf("%v", this.StartTime) + `,`,
+		`EndTime:` + fmt.Sprintf("%v", this.EndTime) + `,`,
+		`Index:` + fmt.Sprintf("%v", this.Index) + `,`,
+		`Metadata:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1), `&`, ``, 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Instructor) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Instructor{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`SectionId:` + fmt.Sprintf("%v", this.SectionId) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Book) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Book{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`SectionId:` + fmt.Sprintf("%v", this.SectionId) + `,`,
+		`Title:` + fmt.Sprintf("%v", this.Title) + `,`,
+		`Url:` + fmt.Sprintf("%v", this.Url) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Metadata) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Metadata{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`UniversityId:` + valueToStringModel(this.UniversityId) + `,`,
+		`SubjectId:` + valueToStringModel(this.SubjectId) + `,`,
+		`CourseId:` + valueToStringModel(this.CourseId) + `,`,
+		`SectionId:` + valueToStringModel(this.SectionId) + `,`,
+		`MeetingId:` + valueToStringModel(this.MeetingId) + `,`,
+		`Title:` + fmt.Sprintf("%v", this.Title) + `,`,
+		`Content:` + fmt.Sprintf("%v", this.Content) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Registration) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Registration{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`UniversityId:` + fmt.Sprintf("%v", this.UniversityId) + `,`,
+		`Period:` + fmt.Sprintf("%v", this.Period) + `,`,
+		`PeriodDate:` + fmt.Sprintf("%v", this.PeriodDate) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Semester) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Semester{`,
+		`Year:` + fmt.Sprintf("%v", this.Year) + `,`,
+		`Season:` + fmt.Sprintf("%v", this.Season) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func valueToStringModel(v interface{}) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("*%v", pv)
 }
 func (m *University) Unmarshal(data []byte) error {
 	l := len(data)
@@ -3259,10 +5398,10 @@ func (m *Meeting) Unmarshal(data []byte) error {
 			m.EndTime = string(data[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 7:
-			if wireType != 2 {
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
 			}
-			var stringLen uint64
+			m.Index = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3272,21 +5411,11 @@ func (m *Meeting) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				m.Index |= (int32(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Index = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
@@ -3657,7 +5786,7 @@ func (m *Metadata) Unmarshal(data []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UniversityId", wireType)
 			}
-			m.UniversityId = 0
+			var v int64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3667,16 +5796,17 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				m.UniversityId |= (int64(b) & 0x7F) << shift
+				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.UniversityId = &v
 		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SubjectId", wireType)
 			}
-			m.SubjectId = 0
+			var v int64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3686,16 +5816,17 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				m.SubjectId |= (int64(b) & 0x7F) << shift
+				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.SubjectId = &v
 		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CourseId", wireType)
 			}
-			m.CourseId = 0
+			var v int64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3705,16 +5836,17 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				m.CourseId |= (int64(b) & 0x7F) << shift
+				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.CourseId = &v
 		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SectionId", wireType)
 			}
-			m.SectionId = 0
+			var v int64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3724,16 +5856,17 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				m.SectionId |= (int64(b) & 0x7F) << shift
+				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.SectionId = &v
 		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MeetingId", wireType)
 			}
-			m.MeetingId = 0
+			var v int64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowModel
@@ -3743,11 +5876,12 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				m.MeetingId |= (int64(b) & 0x7F) << shift
+				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.MeetingId = &v
 		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
@@ -4160,77 +6294,81 @@ var (
 )
 
 var fileDescriptorModel = []byte{
-	// 1151 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x57, 0xcd, 0x6e, 0x1c, 0x45,
-	0x10, 0xce, 0x7a, 0xd6, 0xfb, 0x53, 0xbb, 0xb6, 0xd7, 0x9d, 0x10, 0x86, 0x1c, 0xec, 0x30, 0x12,
-	0x92, 0xc5, 0x8f, 0x81, 0x20, 0x45, 0x22, 0x42, 0x02, 0x39, 0x48, 0x28, 0x42, 0x44, 0x68, 0x02,
-	0x17, 0x2e, 0xab, 0xd9, 0x9d, 0xc6, 0x1e, 0xd8, 0x99, 0x5e, 0xcd, 0xf4, 0x26, 0xf6, 0x3b, 0xf0,
-	0x0a, 0x9c, 0xb8, 0x21, 0xf1, 0x1e, 0x1c, 0x39, 0x21, 0x4e, 0x11, 0xe2, 0xce, 0x01, 0x9e, 0x80,
-	0xaa, 0xee, 0xea, 0x99, 0x6d, 0x3b, 0x64, 0xd7, 0x91, 0x9c, 0x83, 0x77, 0xba, 0xab, 0xbe, 0xea,
-	0x9f, 0xfa, 0xbe, 0xae, 0x6e, 0x83, 0x98, 0xaa, 0x3c, 0x57, 0xc5, 0xbb, 0xb9, 0x4a, 0xe5, 0xec,
-	0x70, 0x5e, 0x2a, 0xad, 0x44, 0xc7, 0xda, 0x6e, 0xc1, 0xb1, 0x3a, 0x56, 0xd6, 0x16, 0xfd, 0xb8,
-	0x09, 0xf0, 0x75, 0x91, 0x3d, 0x96, 0x65, 0x95, 0xe9, 0x33, 0xb1, 0x0f, 0x1b, 0x59, 0x1a, 0xb6,
-	0x6e, 0xb7, 0x0e, 0x82, 0xa3, 0x9d, 0x5f, 0x9f, 0xee, 0x5f, 0xfb, 0xf7, 0xe9, 0x7e, 0x37, 0x9d,
-	0xdc, 0x8b, 0xb2, 0x34, 0x8a, 0xd1, 0x25, 0xde, 0x80, 0x76, 0x91, 0xe4, 0x32, 0xdc, 0x40, 0x48,
-	0xff, 0x68, 0x97, 0x21, 0x7d, 0x82, 0x90, 0x3d, 0x8a, 0x8d, 0x9b, 0x60, 0xc9, 0x64, 0x52, 0x86,
-	0xc1, 0x45, 0x18, 0xd9, 0x11, 0x46, 0x1f, 0xf1, 0x01, 0xf4, 0x4f, 0x54, 0x2e, 0xc7, 0xf3, 0xe4,
-	0x58, 0x86, 0x6d, 0x83, 0xbd, 0xc9, 0xd8, 0x6d, 0xc2, 0xd6, 0xce, 0x28, 0xee, 0x51, 0xfb, 0x4b,
-	0x6c, 0x8a, 0xcf, 0x61, 0xb7, 0x94, 0xc7, 0x59, 0xa5, 0xcb, 0x44, 0x67, 0xaa, 0xb0, 0xc1, 0x9b,
-	0x26, 0x78, 0x8f, 0x83, 0x6f, 0x52, 0xf0, 0x05, 0x50, 0x14, 0x8f, 0x96, 0x6d, 0x66, 0xb0, 0xbb,
-	0x00, 0x79, 0x92, 0x15, 0xe3, 0xa9, 0x9a, 0xa9, 0x32, 0xec, 0x98, 0x51, 0x5e, 0xe5, 0x51, 0x76,
-	0x68, 0x94, 0xc6, 0x1b, 0xc5, 0x7d, 0xea, 0xdc, 0xa7, 0xb6, 0xf8, 0x08, 0x86, 0xc9, 0x74, 0x2a,
-	0x0b, 0xcd, 0x91, 0x5d, 0x13, 0xf9, 0x1a, 0x47, 0xee, 0x9a, 0x8d, 0x2e, 0xf9, 0xa3, 0x78, 0x60,
-	0xbb, 0x36, 0x1a, 0x67, 0xd5, 0x6a, 0x9e, 0x4d, 0xc7, 0x26, 0x97, 0xbd, 0x8b, 0xb3, 0x36, 0x5e,
-	0x9c, 0xd5, 0x74, 0x1e, 0x52, 0x5a, 0xdf, 0x87, 0x5e, 0xb5, 0x98, 0x7c, 0x27, 0xa7, 0xba, 0x0a,
-	0xfb, 0xb7, 0x83, 0x83, 0xc1, 0x9d, 0x9d, 0x43, 0x4b, 0xea, 0xe1, 0x23, 0x6b, 0x3f, 0x6a, 0xd3,
-	0x30, 0x71, 0x0d, 0x13, 0x9f, 0xc1, 0xf5, 0xe4, 0x71, 0x92, 0xcd, 0x92, 0xc9, 0x4c, 0x8e, 0x2b,
-	0x99, 0xcb, 0x4a, 0x23, 0xd7, 0x21, 0x98, 0xe8, 0x51, 0x1d, 0xcd, 0x0e, 0x0e, 0x17, 0x75, 0x88,
-	0x73, 0x54, 0xe2, 0x13, 0xd8, 0x5a, 0xce, 0x5e, 0x15, 0x0e, 0xcc, 0x10, 0x37, 0xdc, 0x10, 0xf1,
-	0x92, 0x93, 0x87, 0xf1, 0x03, 0xc4, 0x1d, 0xe8, 0xe5, 0x52, 0x27, 0x69, 0xa2, 0x93, 0x70, 0xe8,
-	0xcf, 0xff, 0x05, 0xdb, 0xdd, 0xf2, 0x1d, 0x2e, 0xfa, 0x3d, 0x80, 0x2e, 0x6f, 0x6d, 0xb5, 0x38,
-	0x3f, 0x86, 0xad, 0x45, 0xad, 0xe5, 0x31, 0x62, 0x37, 0x0c, 0xf6, 0x16, 0x63, 0x05, 0x61, 0x3d,
-	0x40, 0x14, 0x0f, 0x9b, 0xfe, 0x83, 0x46, 0xdd, 0xc1, 0xf3, 0xd5, 0xfd, 0x16, 0x74, 0x8a, 0x45,
-	0x3e, 0x91, 0x25, 0x6b, 0xf6, 0x3a, 0x03, 0x07, 0x06, 0x68, 0x3c, 0x51, 0xcc, 0x10, 0x02, 0x57,
-	0x32, 0xa9, 0x54, 0xc1, 0x1a, 0xf5, 0xc0, 0xd6, 0x83, 0x60, 0xdb, 0xa0, 0x05, 0x9c, 0xc9, 0xc4,
-	0x09, 0xd1, 0x5b, 0x00, 0xd9, 0x71, 0x01, 0xf4, 0x21, 0xd8, 0x49, 0x52, 0x9d, 0xb0, 0xea, 0x3c,
-	0x18, 0xd9, 0x11, 0x46, 0x9f, 0x17, 0x96, 0xd9, 0x21, 0x74, 0xa7, 0x6a, 0x51, 0x56, 0xd2, 0xa9,
-	0x6c, 0xdb, 0xf1, 0x74, 0xdf, 0x98, 0x99, 0x25, 0x07, 0xf2, 0x88, 0x85, 0x35, 0x89, 0xfd, 0x39,
-	0x80, 0x8e, 0x1d, 0x6d, 0x35, 0xaf, 0xb8, 0x0f, 0xd6, 0x73, 0x43, 0xaa, 0xb7, 0x8f, 0xc6, 0x8b,
-	0xfb, 0xe0, 0xce, 0x15, 0xd1, 0xf9, 0x0e, 0x1e, 0xc1, 0xb3, 0x42, 0xcd, 0xab, 0xac, 0x62, 0x42,
-	0x77, 0x11, 0xba, 0x65, 0x56, 0xc1, 0x76, 0x2c, 0x56, 0xae, 0x59, 0x33, 0xd5, 0xb9, 0x0c, 0x53,
-	0xdd, 0x4b, 0x15, 0x04, 0xdc, 0xab, 0x39, 0x8f, 0xe7, 0x0b, 0x82, 0xb5, 0xd7, 0x05, 0x81, 0x61,
-	0x2f, 0x44, 0xd6, 0x3f, 0x6d, 0x3c, 0x85, 0x76, 0x80, 0xd5, 0x6c, 0x61, 0x51, 0xb7, 0xc2, 0x68,
-	0xc8, 0xf2, 0x8a, 0x7a, 0xed, 0xc4, 0x3c, 0xd9, 0x36, 0x52, 0xd5, 0x70, 0x10, 0xac, 0xe6, 0xe0,
-	0x43, 0x18, 0x4c, 0x93, 0xd9, 0x6c, 0xec, 0xb1, 0x16, 0x72, 0xc4, 0xc8, 0xcc, 0xd1, 0xb8, 0xa3,
-	0x18, 0xa8, 0xf7, 0xd0, 0x86, 0x46, 0x10, 0xe4, 0xc9, 0xa9, 0x61, 0x2e, 0x38, 0x1a, 0x71, 0x48,
-	0xcf, 0x16, 0xfa, 0xd3, 0x28, 0x26, 0x27, 0x61, 0x0a, 0xf5, 0xc4, 0x50, 0x76, 0x0e, 0x83, 0x66,
-	0xc4, 0xe0, 0xaf, 0x39, 0xd5, 0x3a, 0xd1, 0x8b, 0x8a, 0xc9, 0xf2, 0x4f, 0xb5, 0xf1, 0xd0, 0xa9,
-	0x36, 0x0d, 0x73, 0x9e, 0x4a, 0x99, 0x66, 0x58, 0xb5, 0xed, 0x21, 0xbc, 0xc1, 0xe8, 0xa1, 0x59,
-	0xab, 0x75, 0x45, 0xb1, 0x03, 0x9d, 0x53, 0x43, 0xff, 0x32, 0x6a, 0xc8, 0xa5, 0xd4, 0x59, 0x71,
-	0xec, 0x0a, 0xfc, 0x4e, 0x43, 0xad, 0xb1, 0x37, 0xcc, 0x5a, 0x98, 0xb8, 0x07, 0x83, 0xac, 0xc0,
-	0x12, 0xbd, 0x98, 0x6a, 0x55, 0xba, 0x9a, 0x2e, 0x5c, 0xd4, 0x83, 0xda, 0xc5, 0x81, 0xcb, 0x60,
-	0x71, 0x00, 0x9b, 0x13, 0xa5, 0xbe, 0xaf, 0xb8, 0x98, 0x0f, 0x5d, 0xd4, 0x11, 0x1a, 0x19, 0x6f,
-	0x01, 0x9e, 0xe6, 0xb6, 0xd6, 0xd4, 0xdc, 0xdf, 0x1b, 0xd0, 0xe5, 0x55, 0xaf, 0x57, 0x21, 0xac,
-	0x3e, 0xff, 0xaf, 0x42, 0xd4, 0x5e, 0xaa, 0x10, 0xb6, 0x83, 0xb2, 0x7b, 0x1d, 0xda, 0xa5, 0x52,
-	0x39, 0x8b, 0x6e, 0xcb, 0x1d, 0x4d, 0xb2, 0xe1, 0xd1, 0xa4, 0x8f, 0xd8, 0x83, 0x20, 0x4d, 0xce,
-	0x58, 0x64, 0x43, 0xa7, 0x04, 0x34, 0xa1, 0x12, 0xf0, 0xd7, 0x4c, 0xad, 0x93, 0x52, 0x8f, 0x75,
-	0x96, 0xbb, 0x77, 0x88, 0x3f, 0x75, 0xed, 0xa5, 0xa9, 0xa9, 0xf3, 0x15, 0xb6, 0xc5, 0x7b, 0xd0,
-	0x93, 0x45, 0x6a, 0xa3, 0x6c, 0x75, 0x78, 0x85, 0xa3, 0x4c, 0x31, 0x71, 0x3e, 0x94, 0x05, 0x36,
-	0x4d, 0x04, 0xe6, 0x3b, 0x2b, 0x52, 0x79, 0xca, 0x92, 0x13, 0x0c, 0x07, 0x93, 0x08, 0x72, 0x44,
-	0xb1, 0x05, 0x78, 0xf9, 0xee, 0xad, 0x99, 0xef, 0x1f, 0x5a, 0x00, 0x0d, 0xdf, 0x57, 0x97, 0xf2,
-	0xf5, 0x8a, 0x72, 0xf4, 0x4b, 0x0b, 0xda, 0x24, 0xa4, 0xab, 0x5b, 0x08, 0xa6, 0x53, 0x67, 0x7a,
-	0xe6, 0x56, 0xe2, 0xa5, 0xd3, 0x38, 0x30, 0x9d, 0xe6, 0x4b, 0x05, 0x61, 0x51, 0xce, 0x58, 0x02,
-	0x5e, 0x41, 0x40, 0x33, 0xca, 0x80, 0x7e, 0x7f, 0x0a, 0xa0, 0xe7, 0x72, 0xfb, 0x12, 0x5e, 0x2a,
-	0xfe, 0x95, 0x18, 0xac, 0x7d, 0x25, 0x7a, 0xc5, 0xb9, 0xbd, 0x66, 0x71, 0xf6, 0x33, 0xbc, 0xb9,
-	0x76, 0x86, 0xe9, 0x71, 0x6d, 0x4f, 0x30, 0xc5, 0x75, 0x2e, 0xc6, 0x35, 0x5e, 0x7a, 0x5c, 0xdb,
-	0xce, 0x32, 0x33, 0xdd, 0x55, 0xcc, 0x98, 0x97, 0x4a, 0xa1, 0xf1, 0x61, 0xfd, 0xcc, 0xca, 0x6a,
-	0x5d, 0x54, 0x59, 0xb9, 0xf5, 0x47, 0x0b, 0x86, 0xcb, 0x0f, 0xd5, 0x97, 0xc0, 0x14, 0xde, 0x14,
-	0x73, 0x59, 0x66, 0x2a, 0x7d, 0xd6, 0xcd, 0x66, 0x3d, 0x78, 0x53, 0xd8, 0x06, 0xdd, 0x6c, 0xb6,
-	0x35, 0x46, 0x1d, 0x49, 0x26, 0xc8, 0xbb, 0xd9, 0x96, 0xdc, 0x78, 0xb3, 0xd9, 0xde, 0xa7, 0xb6,
-	0xd3, 0x73, 0x8f, 0x75, 0x11, 0xf2, 0x33, 0x92, 0xf6, 0xb5, 0xc9, 0x27, 0xdd, 0xbe, 0x1c, 0xdf,
-	0xae, 0x5f, 0xa3, 0xb4, 0x8f, 0xed, 0xe6, 0x65, 0xf7, 0xc8, 0x58, 0x19, 0xcb, 0x98, 0x37, 0xef,
-	0x42, 0xc7, 0xda, 0x45, 0x0f, 0xda, 0xdf, 0xe2, 0x2d, 0x3a, 0xba, 0x26, 0x00, 0x47, 0x98, 0x97,
-	0x48, 0xd4, 0xa8, 0x65, 0xda, 0x8b, 0x3c, 0x97, 0xe5, 0x68, 0x83, 0xda, 0x4f, 0x32, 0xcc, 0x72,
-	0x39, 0x0a, 0x90, 0x85, 0xbf, 0xf6, 0x5a, 0xbf, 0xe1, 0xdf, 0x9f, 0xf8, 0xf7, 0x0d, 0xff, 0xdf,
-	0xf9, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xee, 0x95, 0xfb, 0x1f, 0x94, 0x0e, 0x00, 0x00,
+	// 1201 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x57, 0xcd, 0x6f, 0x1b, 0x45,
+	0x14, 0x8f, 0xb3, 0x8e, 0x3f, 0x9e, 0x9d, 0xc4, 0x99, 0x94, 0xb0, 0xf4, 0x90, 0x94, 0x95, 0x90,
+	0x22, 0x3e, 0x52, 0x08, 0xa8, 0x12, 0x05, 0x09, 0xe4, 0x22, 0xa1, 0x0a, 0x51, 0xa1, 0x2d, 0x5c,
+	0xb8, 0x58, 0x6b, 0xef, 0xe0, 0x2c, 0x78, 0x77, 0xac, 0xdd, 0x75, 0x9b, 0xdc, 0xf8, 0x03, 0x90,
+	0xf8, 0x0b, 0xb8, 0x23, 0x24, 0xee, 0x1c, 0x39, 0xf6, 0xc8, 0x09, 0xf5, 0x54, 0xb5, 0xdc, 0x91,
+	0x80, 0x13, 0x47, 0xde, 0x9b, 0x79, 0xb3, 0xeb, 0x4d, 0x42, 0xed, 0x54, 0x4a, 0x0f, 0xe3, 0x7d,
+	0xf3, 0xde, 0xef, 0xcd, 0xc7, 0xfb, 0xbd, 0x79, 0x33, 0x06, 0x31, 0x52, 0x71, 0xac, 0x92, 0xeb,
+	0xb1, 0x0a, 0xe5, 0xe4, 0x60, 0x9a, 0xaa, 0x5c, 0x89, 0x86, 0xd1, 0x5d, 0x85, 0xb1, 0x1a, 0x2b,
+	0xa3, 0xf3, 0x7e, 0x58, 0x03, 0xf8, 0x22, 0x89, 0xee, 0xc9, 0x34, 0x8b, 0xf2, 0x13, 0xb1, 0x07,
+	0xab, 0x51, 0xe8, 0xd6, 0xae, 0xd5, 0xf6, 0x9d, 0xfe, 0xe6, 0x83, 0x47, 0x7b, 0x2b, 0xff, 0x3c,
+	0xda, 0x6b, 0x86, 0xc3, 0x9b, 0x5e, 0x14, 0x7a, 0x3e, 0x9a, 0xc4, 0x2b, 0x50, 0x4f, 0x82, 0x58,
+	0xba, 0xab, 0x08, 0x69, 0xf7, 0xb7, 0x18, 0xd2, 0x26, 0x08, 0xe9, 0x3d, 0x5f, 0x9b, 0x09, 0x16,
+	0x0c, 0x87, 0xa9, 0xeb, 0x9c, 0x85, 0x91, 0x1e, 0x61, 0xf4, 0x11, 0x6f, 0x43, 0xfb, 0x48, 0xc5,
+	0x72, 0x30, 0x0d, 0xc6, 0xd2, 0xad, 0x6b, 0xec, 0x0e, 0x63, 0x37, 0x08, 0x5b, 0x18, 0x3d, 0xbf,
+	0x45, 0xf2, 0x67, 0x28, 0x8a, 0x4f, 0x60, 0x2b, 0x95, 0xe3, 0x28, 0xcb, 0xd3, 0x20, 0x8f, 0x54,
+	0x62, 0x9c, 0xd7, 0xb4, 0xf3, 0x2e, 0x3b, 0xef, 0x90, 0xf3, 0x19, 0x90, 0xe7, 0xf7, 0xe6, 0x75,
+	0x7a, 0xb0, 0x1b, 0x00, 0x71, 0x10, 0x25, 0x83, 0x91, 0x9a, 0xa8, 0xd4, 0x6d, 0xe8, 0x51, 0x5e,
+	0xe4, 0x51, 0x36, 0x69, 0x94, 0xd2, 0xea, 0xf9, 0x6d, 0xea, 0xdc, 0x22, 0x59, 0xbc, 0x0f, 0xdd,
+	0x60, 0x34, 0x92, 0x49, 0xce, 0x9e, 0x4d, 0xed, 0xf9, 0x12, 0x7b, 0x6e, 0xe9, 0x8d, 0xce, 0xd9,
+	0x3d, 0xbf, 0x63, 0xba, 0xc6, 0x1b, 0x67, 0xcd, 0xd5, 0x34, 0x1a, 0x0d, 0x74, 0x2c, 0x5b, 0x67,
+	0x67, 0x2d, 0xad, 0x38, 0xab, 0xee, 0xdc, 0xa1, 0xb0, 0xbe, 0x05, 0xad, 0x6c, 0x36, 0xfc, 0x5a,
+	0x8e, 0xf2, 0xcc, 0x6d, 0x5f, 0x73, 0xf6, 0x3b, 0x87, 0x9b, 0x07, 0x86, 0xd4, 0x83, 0xbb, 0x46,
+	0xdf, 0xaf, 0xd3, 0x30, 0x7e, 0x01, 0x13, 0x1f, 0xc3, 0x76, 0x70, 0x2f, 0x88, 0x26, 0xc1, 0x70,
+	0x22, 0x07, 0x99, 0x8c, 0x65, 0x96, 0x23, 0xd7, 0x2e, 0x68, 0xef, 0x5e, 0xe1, 0xcd, 0x06, 0x76,
+	0x17, 0x85, 0x8b, 0x35, 0x64, 0xe2, 0x43, 0x58, 0x9f, 0x8f, 0x5e, 0xe6, 0x76, 0xf4, 0x10, 0x57,
+	0xec, 0x10, 0xfe, 0x9c, 0x91, 0x87, 0xa9, 0x3a, 0x88, 0x43, 0x68, 0xc5, 0x32, 0x0f, 0xc2, 0x20,
+	0x0f, 0xdc, 0x6e, 0x75, 0xfe, 0x4f, 0x59, 0x6f, 0x97, 0x6f, 0x71, 0xde, 0xef, 0x0e, 0x34, 0x79,
+	0x6b, 0x8b, 0x93, 0xf3, 0x03, 0x58, 0x9f, 0x15, 0xb9, 0x3c, 0x40, 0xec, 0xaa, 0xc6, 0x5e, 0x65,
+	0xac, 0x20, 0x6c, 0x05, 0xe0, 0xf9, 0xdd, 0xb2, 0x7f, 0xbb, 0xcc, 0x6e, 0xe7, 0xe9, 0xd9, 0xfd,
+	0x1a, 0x34, 0x92, 0x59, 0x3c, 0x94, 0x29, 0xe7, 0xec, 0x36, 0x03, 0x3b, 0x1a, 0xa8, 0x2d, 0x9e,
+	0xcf, 0x10, 0x02, 0x67, 0x32, 0xc8, 0x54, 0xc2, 0x39, 0x5a, 0x01, 0x1b, 0x0b, 0x82, 0x8d, 0x40,
+	0x0b, 0x38, 0x91, 0x81, 0x4d, 0xc4, 0xca, 0x02, 0x48, 0x8f, 0x0b, 0xa0, 0x0f, 0xc1, 0x8e, 0x82,
+	0xec, 0x88, 0xb3, 0xae, 0x02, 0x23, 0x3d, 0xc2, 0xe8, 0xf3, 0xcc, 0x69, 0x76, 0x00, 0xcd, 0x91,
+	0x9a, 0xa5, 0x99, 0xb4, 0x59, 0xb6, 0x61, 0x79, 0xba, 0xa5, 0xd5, 0xcc, 0x92, 0x05, 0x55, 0x88,
+	0x85, 0x25, 0x89, 0xfd, 0xc9, 0x81, 0x86, 0x19, 0x6d, 0x31, 0xaf, 0xb8, 0x0f, 0xce, 0xe7, 0x92,
+	0xd4, 0xca, 0x3e, 0x4a, 0x2b, 0xee, 0x83, 0x3b, 0x97, 0x44, 0xe7, 0x1b, 0x78, 0x04, 0x4f, 0x12,
+	0x35, 0xcd, 0xa2, 0x8c, 0x09, 0xdd, 0x42, 0xe8, 0xba, 0x5e, 0x05, 0xeb, 0xb1, 0x58, 0x59, 0xb1,
+	0x60, 0xaa, 0x71, 0x11, 0xa6, 0x9a, 0x17, 0x2a, 0x08, 0xb8, 0x57, 0x7d, 0x1e, 0x4f, 0x17, 0x04,
+	0xa3, 0x2f, 0x0a, 0x02, 0xc3, 0x9e, 0x89, 0xac, 0xbf, 0xeb, 0x78, 0x0a, 0xcd, 0x00, 0x8b, 0xd9,
+	0xc2, 0xa2, 0x6e, 0x12, 0xa3, 0x24, 0xab, 0x52, 0xd4, 0x0b, 0x23, 0xc6, 0xc9, 0xc8, 0x48, 0x55,
+	0xc9, 0x81, 0xb3, 0x98, 0x83, 0x77, 0xa1, 0x33, 0x0a, 0x26, 0x93, 0x41, 0x85, 0x35, 0x97, 0x3d,
+	0x7a, 0x7a, 0x8e, 0xd2, 0xec, 0xf9, 0x40, 0xbd, 0x3b, 0xc6, 0xd5, 0x03, 0x27, 0x0e, 0x8e, 0x35,
+	0x73, 0x4e, 0xbf, 0xc7, 0x2e, 0x2d, 0x53, 0xe8, 0x8f, 0x3d, 0x9f, 0x8c, 0x84, 0x49, 0xd4, 0x7d,
+	0x4d, 0xd9, 0x29, 0x0c, 0xaa, 0x11, 0x83, 0xbf, 0xfa, 0x54, 0xe7, 0x41, 0x3e, 0xcb, 0x98, 0xac,
+	0xea, 0xa9, 0xd6, 0x16, 0x3a, 0xd5, 0x5a, 0xd0, 0xe7, 0x29, 0x95, 0x61, 0x84, 0x55, 0xdb, 0x1c,
+	0xc2, 0x2b, 0x8c, 0xee, 0xea, 0xb5, 0x1a, 0x93, 0xe7, 0x5b, 0xd0, 0xa9, 0x6c, 0x68, 0x5f, 0x24,
+	0x1b, 0x62, 0x29, 0xf3, 0x28, 0x19, 0xdb, 0x02, 0xbf, 0x59, 0x52, 0xab, 0xf5, 0x25, 0xb3, 0x06,
+	0x26, 0x6e, 0x42, 0x27, 0x4a, 0xb0, 0x44, 0xcf, 0x46, 0xb9, 0x4a, 0x6d, 0x4d, 0x17, 0xd6, 0xeb,
+	0x76, 0x61, 0x62, 0xc7, 0x79, 0xb0, 0xd8, 0x87, 0xb5, 0xa1, 0x52, 0xdf, 0x64, 0x5c, 0xcc, 0xbb,
+	0xd6, 0xab, 0x8f, 0x4a, 0xc6, 0x1b, 0x40, 0x25, 0xe7, 0xd6, 0x97, 0xcc, 0xb9, 0x3f, 0x57, 0xa1,
+	0xc9, 0xab, 0x5e, 0xae, 0x42, 0x98, 0xfc, 0xfc, 0xbf, 0x0a, 0x51, 0x58, 0xa9, 0x42, 0x98, 0x0e,
+	0xa6, 0xdd, 0xcb, 0x50, 0x4f, 0x95, 0x8a, 0x39, 0xe9, 0xd6, 0xed, 0xd1, 0x24, 0x1d, 0x1e, 0x4d,
+	0xfa, 0x88, 0x5d, 0x70, 0xc2, 0xe0, 0x84, 0x93, 0xac, 0x6b, 0x33, 0x01, 0x55, 0x98, 0x09, 0xf8,
+	0xab, 0xa7, 0xce, 0x83, 0x34, 0x1f, 0xe4, 0x51, 0x6c, 0xdf, 0x21, 0xd5, 0xa9, 0x0b, 0x2b, 0x4d,
+	0x4d, 0x9d, 0xcf, 0x51, 0x16, 0x6f, 0x42, 0x4b, 0x26, 0xa1, 0xf1, 0x32, 0xd5, 0xe1, 0x05, 0xf6,
+	0xd2, 0xc5, 0xc4, 0xda, 0x30, 0x2d, 0x50, 0xd4, 0x1e, 0x18, 0xef, 0x28, 0x09, 0xe5, 0xb1, 0x4e,
+	0xb9, 0xb5, 0xbe, 0x60, 0x38, 0xe8, 0x40, 0x90, 0xc1, 0xf3, 0x0d, 0xa0, 0x12, 0xef, 0xd6, 0x92,
+	0xf1, 0xfe, 0xae, 0x06, 0x50, 0xf2, 0x7d, 0x79, 0x21, 0x5f, 0xae, 0x28, 0x7b, 0x3f, 0xd7, 0xa0,
+	0x4e, 0x89, 0x74, 0x79, 0x0b, 0xc1, 0x70, 0xe6, 0x51, 0x3e, 0xb1, 0x2b, 0xa9, 0x84, 0x53, 0x1b,
+	0x30, 0x9c, 0xfa, 0x4b, 0x05, 0x61, 0x96, 0x4e, 0x38, 0x05, 0x2a, 0x05, 0x01, 0xd5, 0x98, 0x06,
+	0xf4, 0xfb, 0xbd, 0x03, 0x2d, 0x1b, 0xdb, 0xc5, 0x6b, 0x7e, 0xef, 0xfc, 0x97, 0xca, 0xce, 0x52,
+	0xaf, 0x94, 0xc3, 0xca, 0x75, 0xe8, 0x68, 0xcf, 0xed, 0x05, 0x57, 0xe1, 0xf5, 0xf9, 0xa2, 0x5c,
+	0xd7, 0x2e, 0xe2, 0xa9, 0x05, 0xf9, 0xb0, 0x12, 0xd5, 0xb5, 0x53, 0x93, 0x9c, 0x1f, 0x51, 0xf4,
+	0xe1, 0xc2, 0x42, 0x3e, 0x8d, 0xaa, 0x4f, 0x69, 0xa1, 0x87, 0xb4, 0xe9, 0xcc, 0xb3, 0xd0, 0x5c,
+	0xc4, 0x82, 0x7e, 0x95, 0x24, 0x39, 0x3e, 0xa2, 0xcf, 0xad, 0xa2, 0xc6, 0x44, 0x55, 0x94, 0xa5,
+	0x87, 0x35, 0xe8, 0xce, 0x3f, 0x4a, 0x9f, 0xc3, 0xfb, 0x11, 0x6f, 0x85, 0xa9, 0x4c, 0x23, 0x15,
+	0x9e, 0x77, 0x8b, 0x19, 0x0b, 0xde, 0x0a, 0x46, 0xa0, 0x5b, 0xcc, 0x48, 0x03, 0xcc, 0x19, 0xc9,
+	0xa4, 0x54, 0x6e, 0xb1, 0x39, 0x33, 0xde, 0x62, 0xa6, 0xf7, 0x91, 0xe9, 0xb4, 0xec, 0xc3, 0x5c,
+	0xb8, 0xfc, 0x64, 0xac, 0xe9, 0xa2, 0x60, 0x4e, 0xb5, 0x79, 0x25, 0xbe, 0x5e, 0xbc, 0x3c, 0x69,
+	0x1f, 0x1b, 0xe5, 0x2b, 0xee, 0xae, 0xd6, 0x32, 0x96, 0x31, 0xaf, 0xde, 0x80, 0x86, 0xd1, 0x8b,
+	0x16, 0xd4, 0xbf, 0xc2, 0x1b, 0xb3, 0xb7, 0x22, 0x00, 0x47, 0x98, 0xa6, 0x48, 0x54, 0xaf, 0xa6,
+	0xe5, 0x59, 0x1c, 0xcb, 0xb4, 0xb7, 0x4a, 0xf2, 0xfd, 0x08, 0xa3, 0x9c, 0xf6, 0x9c, 0xfe, 0x3b,
+	0x0f, 0x9f, 0xec, 0xae, 0x3c, 0x7e, 0xb2, 0x5b, 0xfb, 0x0b, 0xdb, 0xbf, 0xd8, 0xbe, 0xfd, 0x63,
+	0xb7, 0xf6, 0x23, 0xb6, 0x5f, 0xb0, 0xfd, 0x8a, 0xed, 0x01, 0xb6, 0xdf, 0xb0, 0x3d, 0xc6, 0xf6,
+	0x25, 0xff, 0x07, 0xfd, 0x2f, 0x00, 0x00, 0xff, 0xff, 0x48, 0x14, 0x07, 0xb7, 0xa0, 0x0e, 0x00,
+	0x00,
 }
