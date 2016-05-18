@@ -4,23 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"time"
 	uct "uct/common"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	httpClient   = http.DefaultClient
 	connectInfo  = uct.GetUniversityDB()
 	workRoutines = 500
-	messageLog = make(chan uct.PostgresNotify)
+	messageLog   = make(chan uct.PostgresNotify)
 )
 
 const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
@@ -32,12 +32,11 @@ var (
 )
 
 func main() {
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 	go func() {
 		log.Println("**Starting debug server on...", uct.GCM_DEBUG_SERVER)
 		log.Println(http.ListenAndServe(uct.GCM_DEBUG_SERVER, nil))
 	}()
-
-	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Start influx logging
 	go influxLog()
@@ -183,7 +182,7 @@ func influxLog() {
 
 	for {
 		select {
-		case message := <- messageLog:
+		case message := <-messageLog:
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
@@ -217,7 +216,7 @@ func influxLog() {
 				bp.AddPoint(point)
 				fmt.Println("InfluxDB log: ", tags, fields)
 			}()
-		case <- time.NewTicker(time.Minute).C:
+		case <-time.NewTicker(time.Minute).C:
 			err := influxClient.Write(bp)
 			uct.CheckError(err)
 			bp, err = client.NewBatchPoints(client.BatchPointsConfig{
