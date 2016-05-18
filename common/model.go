@@ -2,9 +2,9 @@ package common
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"fmt"
 	"golang.org/x/exp/utf8string"
-	"hash/fnv"
 	"log"
 	"net/url"
 	"regexp"
@@ -123,18 +123,33 @@ func (s Status) String() string {
 func (s Subject) hash() string {
 	var buffer bytes.Buffer
 	for _, course := range s.Courses {
-		buffer.WriteString("a" + course.Hash)
+		buffer.WriteString(course.Hash)
 	}
+	buffer.WriteString(s.Name)
+	buffer.WriteString(s.Number)
+	buffer.WriteString(s.Season)
+	buffer.WriteString(s.Year)
 
-	return fmt.Sprintf("%x", fnv.New64a().Sum([]byte(s.Name+s.Number+s.Season+s.Year+buffer.String())))
+	h := fmt.Sprintf("%x", sha1.Sum([]byte(buffer.String())))
+	/*	if len(h) >= 64 {
+		return h[:64]
+	}*/
+	return h[:]
 }
 
 func (c Course) hash() string {
 	var buffer bytes.Buffer
 	for _, section := range c.Sections {
-		buffer.WriteString(section.CallNumber + section.Number)
+		buffer.WriteString(section.CallNumber)
+		buffer.WriteString(section.Number)
 	}
-	return fmt.Sprintf("%x", fnv.New64a().Sum([]byte(c.Name+c.Number+buffer.String())))
+	buffer.WriteString(c.Name)
+	buffer.WriteString(c.Number)
+	h := fmt.Sprintf("%x", sha1.Sum([]byte(buffer.String())))
+	/*	if len(h) >= 64 {
+		return h[:64]
+	}*/
+	return h[:]
 }
 
 func (u *University) Validate() {
@@ -361,15 +376,15 @@ func (metaData *Metadata) Validate() {
 }
 
 func (r Registration) month() time.Month {
-	return time.Unix(r.PeriodDate, 0).Month()
+	return time.Unix(r.PeriodDate, 0).UTC().Month()
 }
 
 func (r Registration) day() int {
-	return time.Unix(r.PeriodDate, 0).Day()
+	return time.Unix(r.PeriodDate, 0).UTC().Day()
 }
 
 func (r Registration) dayOfYear() int {
-	return time.Unix(r.PeriodDate, 0).YearDay()
+	return time.Unix(r.PeriodDate, 0).UTC().YearDay()
 }
 
 func (r Registration) season() string {
@@ -428,24 +443,21 @@ func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester
 			winter.Year = winter.Year - 1
 			fall.Year = fall.Year - 1
 		}
-		Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
-
+		//Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
 		return ResolvedSemester{
 			Last:    winter,
 			Current: spring,
 			Next:    summer}
 
 	} else if yearDay >= startFallReg.dayOfYear() && yearDay < endSummerReg.dayOfYear() {
-		Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
+		//Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    spring,
 			Current: summer,
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
-
-		Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
-
+		//Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    summer,
 			Current: fall,
@@ -453,8 +465,7 @@ func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester
 		}
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
-		Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
-
+		//Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    fall,
 			Current: winter,
