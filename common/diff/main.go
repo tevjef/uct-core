@@ -12,11 +12,10 @@ import (
 )
 
 var (
-	app     = kingpin.New("model-diff", "An application to filter unchanged sections")
-	format  = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
-	old = app.Arg("old", "the first file to compare").Required().File()
-	new = app.Arg("new", "the second file to compare").File()
-	verbose = app.Flag("verbose", "verbose log of object representations.").Short('v').Bool()
+	app     = kingpin.New("model-diff", "An application to filter unchanged objects")
+	format  = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	old     = app.Arg("old", "the first file to compare").Required().File()
+	new     = app.Arg("new", "the second file to compare").File()
 )
 
 func main() {
@@ -31,7 +30,7 @@ func main() {
 
 	if *new != nil {
 		secondFile = bufio.NewReader(*new)
-	} else if *new != nil {
+	} else {
 		secondFile = bufio.NewReader(os.Stdin)
 	}
 
@@ -63,9 +62,7 @@ func main() {
 		}
 	}
 
-	var filteredUniversity uct.University
-
-	filteredUniversity = diffAndFilter(oldUniversity, newUniversity)
+	filteredUniversity := diffAndFilter(oldUniversity, newUniversity)
 
 	if *format == "json" {
 		enc := ffjson.NewEncoder(os.Stdout)
@@ -82,27 +79,41 @@ func main() {
 	}
 }
 
-
 func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University) {
 	filteredUniversity = uni2
 	oldSubjects := uni.Subjects
 	newSubjects := uni2.Subjects
 	var filteredSubjects []uct.Subject
+	// For each newer subject
 	for s := range newSubjects {
+		// If current index is out of range of the old subjects[] break and add every subject
+		if s >= len(oldSubjects) {
+			filteredSubjects = newSubjects
+			break
+		}
+		// If newSubject != oldSubject, log why, then drill deeper to filter out ones tht haven't changed
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
-			uct.Log(err)
+			uct.Log("Subject: ", err)
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []uct.Course
 			for c := range newCourses {
+				if c >= len(oldCourses) {
+					filteredCourses = newCourses
+					break
+				}
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
-					uct.Log(err)
+					uct.Log("Course: ",err)
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					var filteredSections []uct.Section
 					for e := range newSections {
+						if c >= len(oldCourses) {
+							filteredSections = newSections
+							break
+						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							uct.Log(err)
+							uct.Log("Section: ",err)
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}
