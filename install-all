@@ -1,26 +1,26 @@
 echo "Installing diff ..."
-go install -o uct-diff -v uct/common/diff
+go install uct/common/diff
 
 echo "Installing rutgers scraper ..."
-go install -v uct/scrapers/rutgers
+go install uct/scrapers/rutgers
 
 echo "Installing njit scraper ..."
-go install -v uct/scrapers/njit
+go install uct/scrapers/njit
 
 echo "Installing spiegal ..."
-go install -v uct/servers/spiegal
+go install uct/servers/spiegal
 
 echo "**Restarting spiegal ..."
 sudo sv restart spiegal
 
 echo "Installing db ..."
-go install -o uct-db  uct/db
+go install uct/db
 
 echo "Installing gcm ..."
-go install -o -v uct/gcm
+go install uct/gcm
 
 echo "**Restarting gcm ..."
 sudo sv restart gcm
 
 echo "Installing influx-loggin ..."
-go install -o uct-influx -v uct/scripts/influx
+go install uct/scripts/influx
