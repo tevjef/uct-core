@@ -934,6 +934,7 @@ func (this *University) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *Subject) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
