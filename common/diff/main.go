@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	app     = kingpin.New("model-diff", "An application to filter unchanged objects")
-	format  = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
-	old     = app.Arg("old", "the first file to compare").Required().File()
-	new     = app.Arg("new", "the second file to compare").File()
+	app    = kingpin.New("model-diff", "An application to filter unchanged objects")
+	format = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	old    = app.Arg("old", "the first file to compare").Required().File()
+	new    = app.Arg("new", "the second file to compare").File()
 )
 
 func main() {
@@ -93,7 +93,7 @@ func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University)
 		}
 		// If newSubject != oldSubject, log why, then drill deeper to filter out ones tht haven't changed
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
-			uct.Log("Subject: ", err)
+			//uct.Log("Subject: ", err)
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []uct.Course
@@ -103,7 +103,7 @@ func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University)
 					break
 				}
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
-					uct.Log("Course: ",err)
+					//uct.Log("Course: ",err)
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					var filteredSections []uct.Section
@@ -113,7 +113,7 @@ func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University)
 							break
 						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							uct.Log("Section: ",err)
+							uct.Log("Section: ", err)
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}
