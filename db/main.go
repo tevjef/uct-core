@@ -10,7 +10,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io/ioutil"
 	"log"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"reflect"
@@ -24,66 +23,21 @@ type App struct {
 }
 
 var (
-	debugBool      bool
-	app            = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
-	add            = app.Command("add", "A command-line application for inserting and updated university information").Hidden().Default()
-	fullUpsert     = add.Flag("insert-all", "Full insert/update of all json objects.").Default("true").Short('a').Bool()
-	file           = add.Flag("input", "File to read university data from.").Short('i').File()
-	format         = app.Flag("format", "Choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
-	debug          = app.Command("debug", "Enable debug mode.")
-	cpuprofile     = debug.Flag("cpuprofile", "Write cpu profile to file.").PlaceHolder("cpu.pprof").String()
-	memprofile     = debug.Flag("memprofile", "Write memory profile to file.").PlaceHolder("mem.pprof").String()
-	memprofileRate = debug.Flag("memprofile-rate", "Ratae at which memory is profiled.").Default("20s").Duration()
+	app        = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
+	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
+	file       = app.Flag("input", "file to read university data from.").Short('i').File()
+	format     = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	server     = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.DB_DEBUG_SERVER).TCP()
 )
 
-func initDB(connection string) *sqlx.DB {
-	database, err := sqlx.Open("postgres", connection)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return database
-}
-
 func main() {
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	case "debug":
-		debugBool = true
-		break
-	case "add":
-		debugBool = false
-	}
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	if *format != "json" && *format != "protobuf" {
 		log.Fatalln("Invalid format:", *format)
 	}
 
-	go func() {
-		log.Println("**Starting debug server on...", uct.DB_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.DB_DEBUG_SERVER, nil))
-	}()
-
-	if *cpuprofile != "" && debugBool {
-		if f, err := os.Create(*cpuprofile); err != nil {
-			log.Println(err)
-		} else {
-			pprof.StartCPUProfile(f)
-			defer pprof.StopCPUProfile()
-
-		}
-	}
-
-	if *memprofile != "" && debugBool {
-		ticker := time.NewTicker(*memprofileRate)
-		go func() {
-			for t := range ticker.C {
-				if f, err := os.Create(*memprofile + "-" + t.String()); err != nil {
-					log.Println(err)
-				} else {
-					pprof.WriteHeapProfile(f)
-				}
-			}
-		}()
-	}
+	go uct.StartPprof(*server)
 
 	var input *bufio.Reader
 	if *file != nil {
@@ -107,7 +61,7 @@ func main() {
 	}
 
 	// Initialize database connection
-	database := initDB(uct.GetUniversityDB())
+	database := uct.InitDB(uct.GetUniversityDB())
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}

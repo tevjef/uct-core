@@ -6,8 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -19,29 +21,27 @@ var (
 	preparedStmts = make(map[string]*sqlx.Stmt)
 )
 
-func init() {
-	database = initDB(uct.GetUniversityDB())
-}
-
-func initDB(connection string) *sqlx.DB {
-	database, err := sqlx.Open("postgres", connection)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return database
-}
+var (
+	app = kingpin.New("spiegal", "A command-line application to serve university course information")
+	//format         = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	port   = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
+	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.SPIEGAL_DEBUG_SERVER).TCP()
+)
 
 func main() {
-	go func() {
-		log.Println("**Starting debug server on...", uct.SPIEGAL_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.SPIEGAL_DEBUG_SERVER, nil))
-	}()
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	// Start profiling
+	go uct.StartPprof(*server)
+
+	database = uct.InitDB(uct.GetUniversityDB())
+
 	r := gin.Default()
 	r.GET("/university", universityHandler)
 	r.GET("/subject", subjectHandler)
 	r.GET("/course", courseHandler)
 	r.GET("/section", sectionHandler)
-	r.Run(":9876")
+	r.Run(":" + strconv.Itoa(int(*port)))
 }
 
 /*
@@ -208,7 +208,7 @@ func SelectUniversity(university_id int64, deep bool) (university uct.University
 	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", university_id); err != nil {
 		uct.CheckError(err)
 	}
-	university.AvailableSemesters = s;
+	university.AvailableSemesters = s
 
 	if deep && &university != nil {
 		deepSelectUniversities(&university)
@@ -228,7 +228,7 @@ func SelectUniversities(deep bool) (universities []uct.University) {
 		if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", universities[i].Id); err != nil {
 			uct.CheckError(err)
 		}
-		universities[i].AvailableSemesters = s;
+		universities[i].AvailableSemesters = s
 	}
 
 	if deep {

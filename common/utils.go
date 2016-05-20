@@ -5,14 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/jmoiron/sqlx"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"runtime"
 )
 
 const (
@@ -179,6 +183,7 @@ func source(lines [][]byte, n int) []byte {
 	}
 	return bytes.TrimSpace(lines[n])
 }
+
 var (
 	dunno     = []byte("???")
 	centerDot = []byte("·")
@@ -209,4 +214,27 @@ func function(pc uintptr) []byte {
 	}
 	name = bytes.Replace(name, centerDot, dot, -1)
 	return name
+}
+
+func StartPprof(host *net.TCPAddr) {
+	log.Println("**Starting debug server on...", (*host).String())
+	log.Println(http.ListenAndServe((*host).String(), nil))
+}
+
+func InitDB(connection string) *sqlx.DB {
+	database, err := sqlx.Open("postgres", connection)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return database
+}
+
+func InitTnfluxServer() client.Client {
+	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     INFLUX_HOST,
+		Username: INFLUX_USER,
+		Password: INFLUX_PASS,
+	})
+	CheckError(err)
+	return influxClient
 }

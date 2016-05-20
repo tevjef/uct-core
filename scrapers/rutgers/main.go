@@ -28,20 +28,19 @@ var (
 	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
 	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('c').PlaceHolder("[CM, NK, NB]").Required().String()
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.RUTGERS_DEBUG_SERVER).TCP()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	go func() {
-		log.Println("**Starting debug server on...", uct.RUTGERS_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.RUTGERS_DEBUG_SERVER, nil))
-	}()
-
 	if *format != "json" && *format != "protobuf" {
 		log.Fatalln("Invalid format:", *format)
 	}
+
+	// Start profiling
+	go uct.StartPprof(*server)
 
 	var school uct.University
 

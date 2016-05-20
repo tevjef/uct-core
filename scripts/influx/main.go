@@ -1,43 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
-	uct "uct/common"
-	"time"
-	"fmt"
+	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
-	"net/http"
+	"os"
+	"time"
+	uct "uct/common"
 )
 
 var (
 	database     *sqlx.DB
 	influxClient client.Client
-	sem      = make(chan int, 50)
-	connection = uct.GetUniversityDB()
+	sem          = make(chan int, 50)
 )
-
-func init() {
-	database = initDB(connection)
-
-	var err error
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     uct.INFLUX_HOST,
-		Username: uct.INFLUX_USER,
-		Password: uct.INFLUX_PASS,
-	})
-	uct.CheckError(err)
-}
-
-func initDB(connection string) *sqlx.DB {
-	database, err := sqlx.Open("postgres", connection)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return database
-}
 
 type SectionsStatus struct {
 	Count      int64  `db:"count"`
@@ -49,11 +28,19 @@ type SectionsStatus struct {
 	Year       string `db:"year"`
 }
 
+var (
+	app    = kingpin.New("influx-logger", "A command-line application logging status inflomation about the database")
+	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.INFLUX_DEBUG_SERVER).TCP()
+)
+
 func main() {
-	go func() {
-		log.Println("**Starting debug server on...", uct.INFLUX_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.INFLUX_DEBUG_SERVER, nil))
-	}()
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	go uct.StartPprof(*server)
+
+	database = uct.InitDB(uct.GetUniversityDB())
+	influxClient = uct.InitTnfluxServer()
+
 	sections := getSectionStatus()
 
 	time := time.Now()
@@ -72,12 +59,12 @@ func main() {
 				"university": val.University,
 				"subject":    val.Subject,
 				"course":     val.Course,
-				"season":   val.Season + val.Year,
-				"status": val.Status,
+				"season":     val.Season + val.Year,
+				"status":     val.Status,
 			}
 
 			fields := map[string]interface{}{
-				"value":    val.Count,
+				"value": val.Count,
 			}
 
 			point, err := client.NewPoint(
@@ -94,7 +81,7 @@ func main() {
 			fmt.Println(val)
 
 			fmt.Println("InfluxDB logging: ", tags, fields)
-			<- sem
+			<-sem
 		}()
 	}
 

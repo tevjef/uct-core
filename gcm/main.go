@@ -27,21 +27,20 @@ const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 
 var (
 	app     = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	debug   = app.Flag("debug", "Enable debug mode").Short('d').Bool()
-	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
+	debug   = app.Flag("debug", "enable debug mode").Short('d').Bool()
+	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
+	verbose = app.Flag("verbose", "verbose log of object representations.").Short('v').Bool()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	go func() {
-		log.Println("**Starting debug server on...", uct.GCM_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.GCM_DEBUG_SERVER, nil))
-	}()
 
+	// Start profiling
+	go uct.StartPprof(*server)
 	// Start influx logging
 	go influxLog()
 
-	// Open connection to posgresql
+	// Open connection to postgresql
 	listener := pq.NewListener(connectInfo, 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
