@@ -1,0 +1,36 @@
+package: uct
+import:
+- package: github.com/PuerkitoBio/goquery
+  subpackages:
+  - github.com\PuerkitoBio\goquery
+- package: github.com/boltdb/bolt
+  subpackages:
+  - github.com\boltdb\bolt
+- package: github.com/gin-gonic/gin
+  subpackages:
+  - github.com\gin-gonic\gin
+- package: github.com/gogo/protobuf
+  subpackages:
+  - github.com\gogo\protobuf\proto
+- package: github.com/golang/protobuf
+  subpackages:
+  - github.com\golang\protobuf\proto
+- package: github.com/influxdata/influxdb
+  subpackages:
+  - github.com\influxdata\influxdb\client\v2
+- package: github.com/jmoiron/sqlx
+  subpackages:
+  - github.com\jmoiron\sqlx
+- package: github.com/lib/pq
+  subpackages:
+  - github.com\lib\pq
+- package: github.com/pquerna/ffjson
+  subpackages:
+  - github.com\pquerna\ffjson\ffjson
+  - github.com\pquerna\ffjson\fflib\v1
+- package: golang.org/x/exp
+  subpackages:
+  - golang.org\x\exp\utf8string
+- package: gopkg.in/alecthomas/kingpin.v2
+  subpackages:
+  - gopkg.in\alecthomas\kingpin.v2

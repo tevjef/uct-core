@@ -1,0 +1,91 @@
+hash: 4b905ab470861f33a3aef0be93db1c665375e651b46e81a560c8703830092955
+updated: 2016-05-20T00:33:32.6081704-04:00
+imports:
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - github.com\alecthomas\template
+  - github.com\alecthomas\template\parse
+- name: github.com/alecthomas/units
+  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+  subpackages:
+  - github.com\alecthomas\units
+- name: github.com/andybalholm/cascadia
+  version: 3ad29d1ad1c4f2023e355603324348cf1f4b2d48
+  subpackages:
+  - github.com\andybalholm\cascadia
+- name: github.com/boltdb/bolt
+  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+  subpackages:
+  - github.com\boltdb\bolt
+- name: github.com/gin-gonic/gin
+  version: 542be2fe77724f800fcab7eb6c01a4e597fb8506
+  subpackages:
+  - github.com\gin-gonic\gin
+  - github.com\gin-gonic\gin\binding
+  - github.com\gin-gonic\gin\render
+- name: github.com/gogo/protobuf
+  version: c18eea6ad611eecf94a9ba38471f59706199409e
+  subpackages:
+  - github.com\gogo\protobuf\proto
+- name: github.com/golang/protobuf
+  version: 2402d76f3d41f928c7902a765dfc872356dd3aad
+  subpackages:
+  - github.com\golang\protobuf\proto
+- name: github.com/influxdata/influxdb
+  version: 6b1cc645a0fd58839362483153b933c768176923
+  subpackages:
+  - github.com\influxdata\influxdb\client\v2
+  - github.com\influxdata\influxdb\models
+  - github.com\influxdata\influxdb\pkg\escape
+- name: github.com/jmoiron/sqlx
+  version: 398dd5876282499cdfd4cb8ea0f31a672abe9495
+  subpackages:
+  - github.com\jmoiron\sqlx
+  - github.com\jmoiron\sqlx\reflectx
+- name: github.com/lib/pq
+  version: ee1442bda7bd1b6a84e913bdb421cb1874ec629d
+  subpackages:
+  - github.com\lib\pq
+  - github.com\lib\pq\oid
+- name: github.com/manucorporat/sse
+  version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
+  subpackages:
+  - github.com\manucorporat\sse
+- name: github.com/pquerna/ffjson
+  version: fa49a9f5832ba121db144795c147fe8449124aeb
+  subpackages:
+  - github.com\pquerna\ffjson\ffjson
+  - github.com\pquerna\ffjson\fflib\v1
+  - github.com\pquerna\ffjson\fflib\v1\internal
+- name: github.com/PuerkitoBio/goquery
+  version: 2e29ea41f0d13f4a303c75553f4eeadddc7a4c56
+  subpackages:
+  - github.com\PuerkitoBio\goquery
+- name: golang.org/x/exp
+  version: e13ba9bcbccbd5852a0ff1f4399d54a0f1e14f8f
+  subpackages:
+  - golang.org\x\exp\utf8string
+- name: golang.org/x/net
+  version: f315505cf3349909cdf013ea56690da34e96a451
+  subpackages:
+  - golang.org\x\net\html
+  - golang.org\x\net\context
+  - golang.org\x\net\html\atom
+- name: golang.org/x/sys
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+  subpackages:
+  - golang.org\x\sys\unix
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: 8cccfa8eb2e3183254457fb1749b2667fbc364c7
+  subpackages:
+  - gopkg.in\alecthomas\kingpin.v2
+- name: gopkg.in/go-playground/validator.v8
+  version: c193cecd124b5cc722d7ee5538e945bdb3348435
+  subpackages:
+  - gopkg.in\go-playground\validator.v8
+- name: gopkg.in/yaml.v2
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  subpackages:
+  - gopkg.in\yaml.v2
+devImports: []
