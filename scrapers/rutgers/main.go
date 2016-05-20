@@ -44,14 +44,15 @@ func main() {
 
 	var school uct.University
 
-	if *campus == "CM" {
+	campus := strings.ToUpper(*campus)
+	if campus == "CM" {
 		school = getCampus("CM")
-	} else if *campus == "NK" {
+	} else if campus == "NK" {
 		school = getCampus("NK")
-	} else if *campus == "NB" {
+	} else if campus == "NB" {
 		school = getCampus("NB")
 	} else {
-		log.Fatalln("Invalid campus code:", *campus)
+		log.Fatalln("Invalid campus code:", campus)
 	}
 
 	if *format == "json" {
