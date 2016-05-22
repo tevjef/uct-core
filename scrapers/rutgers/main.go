@@ -175,12 +175,12 @@ func getCampus(campus string) uct.University {
 		// Shadow copy variable
 		ThisSemester := ThisSemester
 		subjects := getSubjects(ThisSemester, campus)
+
 		var wg sync.WaitGroup
-		wg.Add(len(subjects))
 		for i, _ := range subjects {
+			wg.Add(1)
 			go func(sub *RSubject) {
 				courses := getCourses(sub.Number, campus, ThisSemester)
-
 				for j, _ := range courses {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
@@ -313,6 +313,7 @@ func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
 	}
 
 	dec := json.NewDecoder(resp.Body)
+	defer resp.Body.Close()
 	if err := dec.Decode(&subjects); err == io.EOF {
 	} else if err != nil {
 		log.Fatal(err)
@@ -323,12 +324,10 @@ func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
 		subjects[i].Season = semester.Season
 		subjects[i].Year = int(semester.Year)
 	}
-
-	defer resp.Body.Close()
 	return
 }
 
-func getCourses(subject string, campus string, semester uct.Semester) (courses []RCourse) {
+func getCourses(subject, campus string, semester uct.Semester) (courses []RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	uct.Log("GET  ", url)
 	resp, err := http.Get(url)
@@ -338,9 +337,10 @@ func getCourses(subject string, campus string, semester uct.Semester) (courses [
 	}
 
 	dec := json.NewDecoder(resp.Body)
+	defer resp.Body.Close()
 	if err := dec.Decode(&courses); err == io.EOF {
 	} else if err != nil {
-		uct.LogVerbose(err)
+		uct.Log(err)
 	}
 
 	sort.Sort(courseSorter{courses})
@@ -355,7 +355,6 @@ func getCourses(subject string, campus string, semester uct.Semester) (courses [
 		return len(course.Sections) > 0
 	})
 
-	defer resp.Body.Close()
 	return
 }
 
