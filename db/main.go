@@ -16,6 +16,7 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
+
 )
 
 type App struct {
@@ -25,6 +26,7 @@ type App struct {
 var (
 	app        = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
+	oldFile       = app.Flag("diff", "file to read university data from.").Short('d').File()
 	file       = app.Flag("input", "file to read university data from.").Short('i').File()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
 	server     = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.DB_DEBUG_SERVER).TCP()
@@ -47,17 +49,39 @@ func main() {
 	}
 
 	var university uct.University
-
+	var newUniversity *uct.University
 	if *format == "json" {
 		dec := ffjson.NewDecoder()
-		if err := dec.DecodeReader(input, &university); err != nil {
+		if err := dec.DecodeReader(input, newUniversity); err != nil {
 			log.Fatalln("Failed to parse university:", err)
 		}
 	} else if *format == "protobuf" {
 		data, err := ioutil.ReadAll(input)
-		if err = proto.Unmarshal(data, &university); err != nil {
+		if err = proto.Unmarshal(data, newUniversity); err != nil {
 			log.Fatalln("Failed to parse university:", err)
 		}
+	}
+
+	var oldUniversity *uct.University
+	if *oldFile != nil {
+		old := bufio.NewReader(*oldFile)
+		if *format == "json" {
+			dec := ffjson.NewDecoder()
+			if err := dec.DecodeReader(old, oldUniversity); err != nil {
+				log.Fatalln("Failed to unmarshal old university:", err)
+			}
+		} else if *format == "protobuf" {
+			data, err := ioutil.ReadAll(old)
+			if err = proto.Unmarshal(data, oldUniversity); err != nil {
+				log.Fatalln("Failed to unmarshal old university:", err)
+			}
+		}
+	}
+
+	if oldUniversity != nil {
+		university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
+	} else {
+		university = *newUniversity
 	}
 
 	// Initialize database connection
@@ -74,6 +98,7 @@ func main() {
 	app.insertUniversity(university)
 	endAudit <- true
 
+	app.insertSerializedUniversity(*newUniversity)
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()

@@ -65,7 +65,7 @@ func main() {
 		}
 	}
 
-	filteredUniversity := diffAndFilter(oldUniversity, newUniversity)
+	filteredUniversity := DiffAndFilter(oldUniversity, newUniversity)
 
 	if *format == "json" {
 		enc := ffjson.NewEncoder(os.Stdout)
@@ -82,7 +82,7 @@ func main() {
 	}
 }
 
-func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University) {
+func DiffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University) {
 	if UniEqual(&uni, uni2) {
 		uni2.MainColor = ""
 		uni2.AccentColor = ""
@@ -113,7 +113,7 @@ func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University)
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []uct.Course
 			for c := range newCourses {
-				Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
+				//Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
 				if oldCourses[c].Number != newCourses[c].Number {
 					fmt.Printf("%s %s", oldCourses[c].Name, newCourses[c].Name)
 				}
@@ -128,7 +128,7 @@ func diffAndFilter(uni, uni2 uct.University) (filteredUniversity uct.University)
 					newSections := newCourses[c].Sections
 					var filteredSections []uct.Section
 					for e := range newSections {
-						Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
+						//Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
 						if e >= len(oldSections) {
 							filteredSections = newSections
 							break
