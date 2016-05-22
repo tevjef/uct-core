@@ -2,6 +2,8 @@ package common
 
 import (
 	"github.com/stretchr/testify/assert"
+	"log"
+	"sort"
 	"testing"
 	"time"
 )
@@ -174,4 +176,41 @@ func TestResolveSemesters(t *testing.T) {
 	assert.Equal(t, SPRING, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
+}
+
+func TestMeetingSorter(t *testing.T) {
+	m := "Monday"
+	tu := "Tuesday"
+	w := "Wednesday"
+	th := "Thursday"
+	f := "Friday"
+
+	meetings := []Meeting{Meeting{Day: &tu},
+		Meeting{Day: &w}, Meeting{Day: &th}, Meeting{Day: &m}, Meeting{Day: &f}}
+
+	sort.Sort(meetingSorter{meetings})
+
+	if meetings[0].Day != &m {
+		log.Printf("%s != %s", meetings[0].Day, &m)
+		t.Fail()
+	}
+	/*for i := range meetings {
+		switch i {
+		case 0:
+			if meetings[0].Day != &m {
+				log.Printf("%s != %s", meetings[0].Day,&m)
+				t.Fail()
+			}
+		case 1:
+			if meetings[1].Day != &tu {
+				log.Printf("%s != %s", meetings[1].Day,&tu)
+				t.Fail()
+			}
+		case 2:
+			if meetings[2].Day != &w {
+				log.Printf("%s != %s", meetings[2].Day,&w)
+				t.Fail()
+			}
+		}
+	}*/
 }

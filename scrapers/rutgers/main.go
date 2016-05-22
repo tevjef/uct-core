@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"log"
@@ -56,9 +55,13 @@ func main() {
 	}
 
 	if *format == "json" {
-		enc := ffjson.NewEncoder(os.Stdout)
-		err := enc.Encode(school)
-		uct.CheckError(err)
+		out, err := json.MarshalIndent(school, "", "   ")
+		if err != nil {
+			log.Fatalln("Failed to encode university:", err)
+		}
+		if _, err := os.Stdout.Write(out); err != nil {
+			log.Fatalln("Failed to write university:", err)
+		}
 	} else if *format == "protobuf" {
 		out, err := proto.Marshal(&school)
 		if err != nil {
@@ -169,6 +172,8 @@ func getCampus(campus string) uct.University {
 			ThisSemester.Year += 1
 		}
 
+		// Shadow copy variable
+		ThisSemester := ThisSemester
 		subjects := getSubjects(ThisSemester, campus)
 		var wg sync.WaitGroup
 		wg.Add(len(subjects))
@@ -216,9 +221,9 @@ func getCampus(campus string) uct.University {
 					for _, meeting := range section.MeetingTimes {
 						newMeeting := uct.Meeting{
 							Room:      meeting.room(),
-							Day:       meeting.day(),
-							StartTime: meeting.getMeetingHourBegin(),
-							EndTime:   meeting.getMeetingHourEnd(),
+							Day:       meeting.dayPointer(),
+							StartTime: meeting.StartTime,
+							EndTime:   meeting.EndTime,
 							Metadata:  meeting.metadata()}
 
 						newMeeting.Validate()
@@ -338,13 +343,11 @@ func getCourses(subject string, campus string, semester uct.Semester) (courses [
 		uct.LogVerbose(err)
 	}
 
+	sort.Sort(courseSorter{courses})
 	for i, _ := range courses {
 		courses[i].clean()
 		for j, _ := range courses[i].Sections {
 			courses[i].Sections[j].clean()
-			for k, _ := range courses[i].Sections[j].MeetingTimes {
-				courses[i].Sections[j].MeetingTimes[k].clean()
-			}
 		}
 	}
 
@@ -408,12 +411,20 @@ func (section *RSection) clean() {
 	section.CampusCode = uct.TrimAll(section.CampusCode)
 	section.SpecialPermissionAddCodeDescription = uct.TrimAll(section.SpecialPermissionAddCodeDescription)
 
+	for i := range section.MeetingTimes {
+		section.MeetingTimes[i].clean()
+	}
+
 	sort.Stable(MeetingByClass(section.MeetingTimes))
 }
 
 func (meeting *RMeetingTime) clean() {
 	meeting.StartTime = uct.TrimAll(meeting.StartTime)
 	meeting.EndTime = uct.TrimAll(meeting.EndTime)
+
+	meeting.MeetingDay = meeting.day()
+	meeting.StartTime = meeting.getMeetingHourBegin()
+	meeting.EndTime = meeting.getMeetingHourEnd()
 
 }
 
@@ -449,10 +460,12 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 	}
 
 	if len(section.Comments) > 0 {
+		sort.Sort(commentSorter{section.Comments})
 		str := ""
 		for _, comment := range section.Comments {
-			str += comment.Description + ", \n"
+			str += (comment.Description + ", ")
 		}
+		str = str[:len(str)-2]
 		metadata = append(metadata, uct.Metadata{
 			Title:   "Comments",
 			Content: str,
@@ -535,6 +548,48 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 	return
 }
 
+type courseSorter struct {
+	courses []RCourse
+}
+
+func (a courseSorter) Len() int {
+	return len(a.courses)
+}
+
+func (a courseSorter) Swap(i, j int) {
+	a.courses[i], a.courses[j] = a.courses[j], a.courses[i]
+}
+
+func (a courseSorter) Less(i, j int) bool {
+	c1 := a.courses[i]
+	c2 := a.courses[j]
+	var hash = func(s []RSection) string {
+		var buffer bytes.Buffer
+		for i := range s {
+			buffer.WriteString(s[i].SectionNotes)
+			buffer.WriteString(s[i].Subtitle)
+		}
+		return buffer.String()
+	}
+	return (c1.Title + c1.CourseNumber + strconv.Itoa(int(c1.Credits)) + strconv.Itoa(len(c1.Sections)) + hash(c1.Sections)) < (c2.Title + c2.CourseNumber + strconv.Itoa(int(c2.Credits)) + strconv.Itoa(len(c2.Sections)) + hash(c2.Sections))
+}
+
+type commentSorter struct {
+	comments []RComment
+}
+
+func (a commentSorter) Len() int {
+	return len(a.comments)
+}
+
+func (a commentSorter) Swap(i, j int) {
+	a.comments[i], a.comments[j] = a.comments[j], a.comments[i]
+}
+
+func (a commentSorter) Less(i, j int) bool {
+	return a.comments[i].Code < a.comments[j].Code
+}
+
 func (meeting MeetingByClass) Len() int {
 	return len(meeting)
 }
@@ -544,7 +599,13 @@ func (meeting MeetingByClass) Swap(i, j int) {
 }
 
 func (meeting MeetingByClass) Less(i, j int) bool {
-	return meeting[i].classRank() < meeting[j].classRank()
+	if meeting[i].dayRank() == meeting[j].dayRank() {
+		if meeting[i].classRank() == meeting[j].classRank() {
+			return IsAfter(meeting[i].StartTime, meeting[j].StartTime)
+		}
+		return meeting[i].classRank() < meeting[j].classRank()
+	}
+	return meeting[i].dayRank() < meeting[j].dayRank()
 }
 
 func (meeting RMeetingTime) classRank() int {
@@ -562,24 +623,24 @@ func (meeting RMeetingTime) classRank() int {
 	return 99
 }
 
-func (meeting RMeetingTime) timeRank() int {
+func (meeting RMeetingTime) dayRank() int {
 	switch meeting.MeetingDay {
 	case "Monday":
-		return 10
+		return 1
 	case "Tuesday":
-		return 9
+		return 2
 	case "Wednesday":
-		return 8
+		return 3
 	case "Thurdsday":
-		return 7
-	case "Friday":
-		return 6
-	case "Saturday":
-		return 5
-	case "Sunday":
 		return 4
+	case "Friday":
+		return 5
+	case "Saturday":
+		return 6
+	case "Sunday":
+		return 7
 	}
-	return -1
+	return 8
 }
 
 func (meeting RMeetingTime) room() *string {
@@ -617,12 +678,12 @@ func (meetingTime RMeetingTime) getMeetingHourEnd() string {
 		end, _ := strconv.Atoi(endtime[:2])
 		start, _ := strconv.Atoi(starttime[:2])
 
-		if !(pmcode == "A") {
+		if pmcode != "A" {
 			meridian = "PM"
 		} else if end < start {
 			meridian = "PM"
 		} else if endtime[:2] == "12" {
-			meridian = "AM"
+			meridian = "PM"
 		} else {
 			meridian = "AM"
 		}
@@ -651,58 +712,6 @@ func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
 		return time
 	}
 	return time.Unix(0, 0)
-}
-
-func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
-	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
-		var meridian string
-		starttime := meetingTime.StartTime
-		endtime := meetingTime.EndTime
-		pmcode := meetingTime.PmCode
-
-		end, _ := strconv.Atoi(endtime[:2])
-		start, _ := strconv.Atoi(starttime[:2])
-
-		if !(pmcode == "A") {
-			meridian = "PM"
-		} else if end < start {
-			meridian = "PM"
-		} else if endtime[:2] == "12" {
-			meridian = "AM"
-		} else {
-			meridian = "AM"
-		}
-
-		time, err := time.Parse(time.Kitchen, formatMeetingHours(meetingTime.EndTime)+meridian)
-		uct.CheckError(err)
-		return time
-	}
-	return time.Unix(0, 0)
-}
-
-func (meeting RMeetingTime) day() *string {
-	var day string
-	switch meeting.MeetingDay {
-	case "M":
-		day = "Monday"
-	case "T":
-		day = "Tuesday"
-	case "W":
-		day = "Wednesday"
-	case "TH":
-		day = "Thursday"
-	case "F":
-		day = "Friday"
-	case "S":
-		day = "Saturday"
-	case "U":
-		day = "Sunday"
-	}
-	if len(day) == 0 {
-		return nil
-	} else {
-		return &day
-	}
 }
 
 func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
@@ -746,6 +755,16 @@ func (course RCourse) metadata() (metadata []uct.Metadata) {
 	}
 
 	return metadata
+}
+
+func FilterSubjects(vs []RSubject, f func(RSubject) bool) []RSubject {
+	vsf := make([]RSubject, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
 }
 
 func FilterCourses(vs []RCourse, f func(RCourse) bool) []RCourse {

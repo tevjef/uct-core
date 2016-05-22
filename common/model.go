@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -120,11 +121,9 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
-func (s Subject) hash() string {
+func (s Subject) hash(uni University) string {
 	var buffer bytes.Buffer
-	for _, course := range s.Courses {
-		buffer.WriteString(course.Hash)
-	}
+	buffer.WriteString(uni.Name)
 	buffer.WriteString(s.Name)
 	buffer.WriteString(s.Number)
 	buffer.WriteString(s.Season)
@@ -137,9 +136,11 @@ func (s Subject) hash() string {
 	return h[:]
 }
 
-func (c Course) hash() string {
+func (c Course) hash(uni University, sub Subject) string {
 	var buffer bytes.Buffer
 	for _, section := range c.Sections {
+		buffer.WriteString(uni.Name)
+		buffer.WriteString(sub.Name)
 		buffer.WriteString(section.CallNumber)
 		buffer.WriteString(section.Number)
 	}
@@ -209,8 +210,18 @@ func (u *University) Validate() {
 	regex, err = regexp.Compile("[^A-Za-z.]")
 	CheckError(err)
 	u.TopicName = trim(regex.ReplaceAllString(u.TopicName, ""))
-	if len(u.TopicName) > 26 {
-		u.TopicName = u.TopicName[:25]
+	limit := 25
+	if len(u.TopicName) >= limit {
+		u.TopicName = u.TopicName[:limit]
+	}
+
+	for s := range u.Subjects {
+		sub := u.Subjects[s]
+		sub.Hash = sub.hash(*u)
+		for c := range sub.Courses {
+			course := sub.Courses[c]
+			course.Hash = course.hash(*u, sub)
+		}
 	}
 }
 
@@ -246,13 +257,11 @@ func (sub *Subject) Validate() {
 	regex, err = regexp.Compile("[^A-Za-z.]")
 	CheckError(err)
 	sub.TopicName = trim(regex.ReplaceAllString(sub.TopicName, "."))
-
-	sub.Hash = sub.hash()
+	sort.Sort(courseSorter{sub.Courses})
 }
 
 func (course *Course) Validate() {
 	// Name
-
 	if course.Name == "" {
 		log.Panic("Course name == is empty", course)
 	}
@@ -288,7 +297,7 @@ func (course *Course) Validate() {
 	CheckError(err)
 	course.TopicName = trim(regex.ReplaceAllString(course.TopicName, "."))
 
-	course.Hash = course.hash()
+	sort.Stable(sectionSorter{course.Sections})
 }
 
 func (section *Section) Validate() {
@@ -323,6 +332,10 @@ func (section *Section) Validate() {
 	if section.Credits == "" {
 		log.Panic("Credits == is empty")
 	}
+
+	//sort.Stable(meetingSorter{section.Meetings})
+	sort.Stable(instructorSorter{section.Instructors})
+
 }
 
 func (meeting *Meeting) Validate() {
@@ -341,6 +354,10 @@ func (instructor *Instructor) Validate() {
 	if instructor.Name == "" {
 		log.Panic("Instructor name == is empty")
 	}
+	if instructor.Name[len(instructor.Name)-1:] == "-" {
+		instructor.Name = instructor.Name[:len(instructor.Name)-1]
+	}
+
 	instructor.Name = trim(instructor.Name)
 }
 
@@ -477,6 +494,9 @@ func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester
 }
 
 func (meeting Meeting) dayRank() int {
+	if meeting.Day == nil {
+		return 8
+	}
 	switch *meeting.Day {
 	case "Monday":
 		return 1
@@ -496,16 +516,103 @@ func (meeting Meeting) dayRank() int {
 	return 8
 }
 
-func (a MeetingByDay) Len() int {
-	return len(a)
+func (meeting Meeting) hash() string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString(meeting.StartTime)
+	buffer.WriteString(meeting.EndTime)
+	for i := range meeting.Metadata {
+		buffer.WriteString(meeting.Metadata[i].Title)
+		buffer.WriteString(meeting.Metadata[i].Content)
+	}
+	return buffer.String()
 }
 
-func (a MeetingByDay) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
+type courseSorter struct {
+	courses []Course
 }
 
-func (a MeetingByDay) Less(i, j int) bool {
-	return a[i].dayRank() < a[j].dayRank()
+func (a courseSorter) Len() int {
+	return len(a.courses)
+}
+
+func (a courseSorter) Swap(i, j int) {
+	a.courses[i], a.courses[j] = a.courses[j], a.courses[i]
+}
+
+func (a courseSorter) Less(i, j int) bool {
+	c1 := a.courses[i]
+	c2 := a.courses[j]
+	return (c1.Number + c1.GoString()) < (c2.Number + c1.GoString())
+}
+
+type sectionSorter struct {
+	sections []Section
+}
+
+func (a sectionSorter) Len() int {
+	return len(a.sections)
+}
+
+func (a sectionSorter) Swap(i, j int) {
+	a.sections[i], a.sections[j] = a.sections[j], a.sections[i]
+}
+
+func (a sectionSorter) Less(i, j int) bool {
+	return a.sections[i].Number < a.sections[j].Number
+}
+
+type instructorSorter struct {
+	instructors []Instructor
+}
+
+func (a instructorSorter) Len() int {
+	return len(a.instructors)
+}
+
+func (a instructorSorter) Swap(i, j int) {
+	a.instructors[i], a.instructors[j] = a.instructors[j], a.instructors[i]
+}
+
+func (a instructorSorter) Less(i, j int) bool {
+	return a.instructors[i].Name < a.instructors[j].Name
+}
+
+type metadataSorter struct {
+	metadatas []Metadata
+}
+
+func (a metadataSorter) Len() int {
+	return len(a.metadatas)
+}
+
+func (a metadataSorter) Swap(i, j int) {
+	a.metadatas[i], a.metadatas[j] = a.metadatas[j], a.metadatas[i]
+}
+
+func (a metadataSorter) Less(i, j int) bool {
+	m1 := a.metadatas[i]
+	m2 := a.metadatas[j]
+	return (m1.Title + m1.Content) < (m2.Title + m2.Content)
+}
+
+type meetingSorter struct {
+	meetings []Meeting
+}
+
+func (a meetingSorter) Len() int {
+	return len(a.meetings)
+}
+
+func (a meetingSorter) Swap(i, j int) {
+	a.meetings[i], a.meetings[j] = a.meetings[j], a.meetings[i]
+}
+
+func (a meetingSorter) Less(i, j int) bool {
+	/*	if a.meetings[i].dayRank() < a.meetings[j].dayRank() {
+		return a.meetings[i].hash() < a.meetings[j].hash()
+	}*/
+	return a.meetings[i].dayRank() < a.meetings[j].dayRank()
 }
 
 func (a SectionByNumber) Len() int {
