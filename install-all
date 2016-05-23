@@ -1,6 +1,9 @@
 echo "Installing diff ..."
 go install uct/common/diff
 
+echo "Installing print ..."
+go install uct/common/print
+
 echo "Installing rutgers scraper ..."
 go install uct/scrapers/rutgers
 

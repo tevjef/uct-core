@@ -3,17 +3,19 @@
 format=protobuf #protobuf or json
 path=/home/tevin/go/bin/
 
+home=/var/lib/uct/scrapers
+sudo mkdir -p ${home}
 campus() {
     code=$1
-    OLD=/tmp/uct/rutgers-${code}-old.out
-    LATEST=/tmp/uct/rutgers-${code}-latest.out
+    OLD=${home}/rutgers-${code}-old.${format}
+    LATEST=${home}/rutgers-${code}-latest.${format}
     LOG=/var/log/uct/rutgers-${code}.log
     if [ ! -f ${LATEST} ]; then
-        ${path}rutgers -c ${code} -f ${format} | tee ${LATEST} | ${path}db -f ${format} 2>&1 | tee -a ${LOG}
+        sudo ${path}rutgers -c ${code} -f ${format} | tee ${LATEST} | ${path}db -f ${format} 2>&1 | tee -a ${LOG}
         exit 0
     fi
-    cp ${LATEST} ${OLD}
-    ${path}rutgers -c ${code} -f ${format} | tee ${LATEST} | ${path}diff -f ${format} ${OLD} | ${path}db -f ${format} 2>&1 | tee -a ${LOG}
+    sudo cp ${LATEST} ${OLD}
+    sudo ${path}rutgers -c ${code} -f ${format} | tee ${LATEST} | ${path}db -f ${format} -d ${OLD} 2>&1 | tee -a ${LOG}
 }
 
 campus CM &
