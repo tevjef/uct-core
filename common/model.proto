@@ -31,6 +31,14 @@ message University {
     repeated Metadata metadata = 12 [(gogoproto.nullable) = false];
 }
 
+message Universities {
+    repeated University universities = 1 [(gogoproto.nullable) = false];
+}
+
+message Subjects {
+    repeated Subject subjects = 1 [(gogoproto.nullable) = false];
+}
+
 message Subject {
     optional int64 id = 1 [(gogoproto.moretags) = "db:\"id\"", (gogoproto.nullable) = false];
     optional int64 university_id = 2 [(gogoproto.moretags) = "db:\"university_id\"", (gogoproto.nullable) = false];

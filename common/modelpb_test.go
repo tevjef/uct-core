@@ -10,6 +10,8 @@ It is generated from these files:
 
 It has these top-level messages:
 	University
+	Universities
+	Subjects
 	Subject
 	Course
 	Section
@@ -129,6 +131,210 @@ func BenchmarkUniversityProtoUnmarshal(b *testing.B) {
 		datas[i] = data
 	}
 	msg := &University{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestUniversitiesProto(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, false)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Universities{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	littlefuzz := make([]byte, len(data))
+	copy(littlefuzz, data)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+	if len(littlefuzz) > 0 {
+		fuzzamount := 100
+		for i := 0; i < fuzzamount; i++ {
+			littlefuzz[popr.Intn(len(littlefuzz))] = byte(popr.Intn(256))
+			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
+		}
+		// shouldn't panic
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
+	}
+}
+
+func TestUniversitiesMarshalTo(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, false)
+	size := p.Size()
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	_, err := p.MarshalTo(data)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Universities{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func BenchmarkUniversitiesProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Universities, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedUniversities(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		data, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(data)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkUniversitiesProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		data, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedUniversities(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = data
+	}
+	msg := &Universities{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestSubjectsProto(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, false)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Subjects{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	littlefuzz := make([]byte, len(data))
+	copy(littlefuzz, data)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+	if len(littlefuzz) > 0 {
+		fuzzamount := 100
+		for i := 0; i < fuzzamount; i++ {
+			littlefuzz[popr.Intn(len(littlefuzz))] = byte(popr.Intn(256))
+			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
+		}
+		// shouldn't panic
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
+	}
+}
+
+func TestSubjectsMarshalTo(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, false)
+	size := p.Size()
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	_, err := p.MarshalTo(data)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Subjects{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func BenchmarkSubjectsProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Subjects, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedSubjects(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		data, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(data)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkSubjectsProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		data, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedSubjects(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = data
+	}
+	msg := &Subjects{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -1078,6 +1284,48 @@ func TestUniversityJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
+func TestUniversitiesJSON(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, true)
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
+	jsondata, err := marshaler.MarshalToString(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Universities{}
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
+	}
+}
+func TestSubjectsJSON(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, true)
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
+	jsondata, err := marshaler.MarshalToString(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &Subjects{}
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
+	}
+}
 func TestSubjectJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
@@ -1290,6 +1538,74 @@ func TestUniversityProtoCompactText(t *testing.T) {
 	p := NewPopulatedUniversity(popr, true)
 	data := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &University{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestUniversitiesProtoText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, true)
+	data := github_com_gogo_protobuf_proto.MarshalTextString(p)
+	msg := &Universities{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestUniversitiesProtoCompactText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, true)
+	data := github_com_gogo_protobuf_proto.CompactTextString(p)
+	msg := &Universities{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestSubjectsProtoText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, true)
+	data := github_com_gogo_protobuf_proto.MarshalTextString(p)
+	msg := &Subjects{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(data, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestSubjectsProtoCompactText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, true)
+	data := github_com_gogo_protobuf_proto.CompactTextString(p)
+	msg := &Subjects{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(data, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1622,6 +1938,36 @@ func TestUniversityVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
+func TestUniversitiesVerboseEqual(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedUniversities(popr, false)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Universities{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestSubjectsVerboseEqual(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedSubjects(popr, false)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Subjects{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
 func TestSubjectVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedSubject(popr, false)
@@ -1760,6 +2106,32 @@ func TestSemesterVerboseEqual(t *testing.T) {
 func TestUniversityGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedUniversity(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestUniversitiesGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedUniversities(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestSubjectsGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedSubjects(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -1915,6 +2287,78 @@ func BenchmarkUniversitySize(b *testing.B) {
 	pops := make([]*University, 1000)
 	for i := 0; i < 1000; i++ {
 		pops[i] = NewPopulatedUniversity(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].Size()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestUniversitiesSize(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedUniversities(popr, true)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	size := p.Size()
+	if len(data) != size {
+		t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(data))
+	}
+	if size2 != size {
+		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
+	}
+	size3 := github_com_gogo_protobuf_proto.Size(p)
+	if size3 != size {
+		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
+	}
+}
+
+func BenchmarkUniversitiesSize(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Universities, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedUniversities(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].Size()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestSubjectsSize(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedSubjects(popr, true)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	data, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	size := p.Size()
+	if len(data) != size {
+		t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(data))
+	}
+	if size2 != size {
+		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
+	}
+	size3 := github_com_gogo_protobuf_proto.Size(p)
+	if size3 != size {
+		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
+	}
+}
+
+func BenchmarkSubjectsSize(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Subjects, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedSubjects(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -2250,6 +2694,24 @@ func BenchmarkSemesterSize(b *testing.B) {
 func TestUniversityStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedUniversity(popr, false)
+	s1 := p.String()
+	s2 := fmt.Sprintf("%v", p)
+	if s1 != s2 {
+		t.Fatalf("String want %v got %v", s1, s2)
+	}
+}
+func TestUniversitiesStringer(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedUniversities(popr, false)
+	s1 := p.String()
+	s2 := fmt.Sprintf("%v", p)
+	if s1 != s2 {
+		t.Fatalf("String want %v got %v", s1, s2)
+	}
+}
+func TestSubjectsStringer(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedSubjects(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {

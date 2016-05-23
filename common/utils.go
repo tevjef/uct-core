@@ -3,10 +3,14 @@ package common
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gogo/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/pquerna/ffjson/ffjson"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -237,4 +241,35 @@ func InitTnfluxServer() client.Client {
 	})
 	CheckError(err)
 	return influxClient
+}
+
+func MarshalMessage(format string, m University) *bytes.Reader {
+	var out []byte
+	var err error
+	if format == "json" {
+		out, err = json.MarshalIndent(m, "", "   ")
+		if err != nil {
+			log.Fatalln("Failed to encode message:", err)
+		}
+	} else if format == "protobuf" {
+		out, err = proto.Marshal(&m)
+		if err != nil {
+			log.Fatalln("Failed to encode message:", err)
+		}
+	}
+	return bytes.NewReader(out)
+}
+
+func UnmarshallMessage(format string, r io.Reader, m *University) {
+	if format == "json" {
+		dec := ffjson.NewDecoder()
+		if err := dec.DecodeReader(r, *m); err != nil {
+			log.Fatalln("Failed to unmarshal message:", err)
+		}
+	} else if format == "protobuf" {
+		data, err := ioutil.ReadAll(r)
+		if err = proto.Unmarshal(data, &*m); err != nil {
+			log.Fatalln("Failed to unmarshal message:", err)
+		}
+	}
 }
