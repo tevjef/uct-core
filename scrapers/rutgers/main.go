@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"log"
@@ -53,24 +52,7 @@ func main() {
 	} else {
 		log.Fatalln("Invalid campus code:", campus)
 	}
-
-	if *format == "json" {
-		out, err := json.MarshalIndent(school, "", "   ")
-		if err != nil {
-			log.Fatalln("Failed to encode university:", err)
-		}
-		if _, err := os.Stdout.Write(out); err != nil {
-			log.Fatalln("Failed to write university:", err)
-		}
-	} else if *format == "protobuf" {
-		out, err := proto.Marshal(&school)
-		if err != nil {
-			log.Fatalln("Failed to encode university:", err)
-		}
-		if _, err := os.Stdout.Write(out); err != nil {
-			log.Fatalln("Failed to write university:", err)
-		}
-	}
+	io.Copy(os.Stdout, uct.MarshalMessage(*format, school))
 }
 
 func getCampus(campus string) uct.University {

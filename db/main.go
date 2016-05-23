@@ -6,9 +6,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"io/ioutil"
 	"log"
 	_ "net/http/pprof"
 	"os"
@@ -49,33 +47,10 @@ func main() {
 
 	var university uct.University
 	newUniversity := new(uct.University)
-	if *format == "json" {
-		dec := ffjson.NewDecoder()
-		if err := dec.DecodeReader(input, newUniversity); err != nil {
-			log.Fatalln("Failed to parse university:", err)
-		}
-	} else if *format == "protobuf" {
-		data, err := ioutil.ReadAll(input)
-		if err = proto.Unmarshal(data, newUniversity); err != nil {
-			log.Fatalln("Failed to parse university:", err)
-		}
-	}
-
+	uct.UnmarshallMessage(*format, input, newUniversity)
 	oldUniversity := new(uct.University)
-	if *oldFile != nil {
-		old := bufio.NewReader(*oldFile)
-		if *format == "json" {
-			dec := ffjson.NewDecoder()
-			if err := dec.DecodeReader(old, oldUniversity); err != nil {
-				log.Fatalln("Failed to unmarshal old university:", err)
-			}
-		} else if *format == "protobuf" {
-			data, err := ioutil.ReadAll(old)
-			if err = proto.Unmarshal(data, oldUniversity); err != nil {
-				log.Fatalln("Failed to unmarshal old university:", err)
-			}
-		}
-	}
+	old := bufio.NewReader(*oldFile)
+	uct.UnmarshallMessage(*format, old, oldUniversity)
 
 	// If an old version was supplied diff the old and new to create a new university
 	if oldUniversity != nil {

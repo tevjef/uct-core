@@ -41,6 +41,10 @@ func main() {
 	r.GET("/subject", subjectHandler)
 	r.GET("/course", courseHandler)
 	r.GET("/section", sectionHandler)
+
+	r.GET("/v2/university", universityV2Handler)
+	r.GET("/v2/subject", subjectV2Handler)
+
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
 
@@ -74,7 +78,31 @@ func universityHandler(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, SelectUniversities(deep))
 	}
+}
 
+func universityV2Handler(c *gin.Context) {
+	dirtyDeep := c.DefaultQuery("deep", "true")
+	dirtyId := c.DefaultQuery("id", "0")
+
+	var deep bool
+	var id int64
+	var err error
+
+	if deep, err = strconv.ParseBool(dirtyDeep); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: deep=%s", dirtyDeep)
+	}
+
+	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
+	}
+
+	if id != 0 {
+		c.JSON(http.StatusOK, SelectUniversity(id, deep))
+	} else {
+		c.JSON(http.StatusOK, SelectUniversities(deep))
+	}
 }
 
 func subjectHandler(c *gin.Context) {
@@ -205,7 +233,26 @@ func SelectUniversity(university_id int64, deep bool) (university uct.University
 	}
 
 	s := []uct.Semester{}
-	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", university_id); err != nil {
+	if err := database.Select(&s, "", university_id); err != nil {
+		uct.CheckError(err)
+	}
+	university.AvailableSemesters = s
+
+	if deep && &university != nil {
+		deepSelectUniversities(&university)
+	}
+	return
+}
+
+func SelectProtoUniversity(university_id int64, deep bool) (university uct.University) {
+	key := "university"
+	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
+	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
+		uct.CheckError(err)
+	}
+
+	s := []uct.Semester{}
+	if err := database.Select(&s, "", university_id); err != nil {
 		uct.CheckError(err)
 	}
 	university.AvailableSemesters = s
@@ -218,7 +265,7 @@ func SelectUniversity(university_id int64, deep bool) (university uct.University
 
 func SelectUniversities(deep bool) (universities []uct.University) {
 	key := "universities"
-	query := `SELECT * FROM university ORDER BY name`
+	query := `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university ORDER BY name`
 	if err := Select(GetCachedStmt(key, query), &universities); err != nil {
 		uct.CheckError(err)
 	}

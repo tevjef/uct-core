@@ -2,10 +2,8 @@ package main
 
 import (
 	"bufio"
-	"github.com/gogo/protobuf/proto"
-	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	uct "uct/common"
@@ -37,47 +35,17 @@ func main() {
 
 	var oldUniversity uct.University
 
-	if *format == "json" {
-		dec := ffjson.NewDecoder()
-		if err := dec.DecodeReader(firstFile, &oldUniversity); err != nil {
-			log.Fatalln("Failed to unmarshal first university:", err)
-		}
-	} else if *format == "protobuf" {
-		data, err := ioutil.ReadAll(firstFile)
-		if err = proto.Unmarshal(data, &oldUniversity); err != nil {
-			log.Fatalln("Failed to unmarshal first university:", err)
-		}
-	}
+	uct.UnmarshallMessage(*format, firstFile, &oldUniversity)
 
 	var newUniversity uct.University
 
-	if *format == "json" {
-		dec := ffjson.NewDecoder()
-		if err := dec.DecodeReader(secondFile, &newUniversity); err != nil {
-			log.Fatalln("Failed to unmarshal second university", err)
-		}
-	} else if *format == "protobuf" {
-		data, err := ioutil.ReadAll(secondFile)
-		if err = proto.Unmarshal(data, &newUniversity); err != nil {
-			log.Fatalln("Failed to unmarshal second university:", err)
-		}
-	}
+	uct.UnmarshallMessage(*format, secondFile, &newUniversity)
 
 	filteredUniversity := uct.DiffAndFilter(oldUniversity, newUniversity)
 
-	if *format == "json" {
-		enc := ffjson.NewEncoder(os.Stdout)
-		err := enc.Encode(filteredUniversity)
-		uct.CheckError(err)
-	} else if *format == "protobuf" {
-		out, err := proto.Marshal(&filteredUniversity)
-		if err != nil {
-			log.Fatalln("Failed to encode university:", err)
-		}
-		if _, err := os.Stdout.Write(out); err != nil {
-			log.Fatalln("Failed to write university:", err)
-		}
-	}
+	buf := uct.MarshalMessage(*format, filteredUniversity)
+
+	io.Copy(os.Stdout, buf)
 }
 
 func Log(v ...interface{}) {
