@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -16,7 +16,6 @@ import (
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
-
 )
 
 type App struct {
@@ -26,8 +25,8 @@ type App struct {
 var (
 	app        = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
-	oldFile       = app.Flag("diff", "file to read university data from.").Short('d').File()
-	file       = app.Flag("input", "file to read university data from.").Short('i').File()
+	oldFile    = app.Flag("diff", "file to read university data from.").Short('d').File()
+	newFile    = app.Flag("input", "file to read university data from.").Short('i').File()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
 	server     = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.DB_DEBUG_SERVER).TCP()
 )
@@ -42,14 +41,14 @@ func main() {
 	go uct.StartPprof(*server)
 
 	var input *bufio.Reader
-	if *file != nil {
-		input = bufio.NewReader(*file)
+	if *newFile != nil {
+		input = bufio.NewReader(*newFile)
 	} else {
 		input = bufio.NewReader(os.Stdin)
 	}
 
 	var university uct.University
-	var newUniversity *uct.University
+	newUniversity := new(uct.University)
 	if *format == "json" {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(input, newUniversity); err != nil {
@@ -62,7 +61,7 @@ func main() {
 		}
 	}
 
-	var oldUniversity *uct.University
+	oldUniversity := new(uct.University)
 	if *oldFile != nil {
 		old := bufio.NewReader(*oldFile)
 		if *format == "json" {
@@ -78,6 +77,7 @@ func main() {
 		}
 	}
 
+	// If an old version was supplied diff the old and new to create a new university
 	if oldUniversity != nil {
 		university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
 	} else {
@@ -98,13 +98,28 @@ func main() {
 	app.insertUniversity(university)
 	endAudit <- true
 
-	app.insertSerializedUniversity(*newUniversity)
+	app.updateSerial(*newUniversity)
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
 		pprof.StopCPUProfile()
 	}()
 
+}
+
+func (app App) updateSerial(uni uct.University) {
+	for subjectIndex := range uni.Subjects {
+		subject := uni.Subjects[subjectIndex]
+
+		data, err := proto.Marshal(&subject)
+		uct.CheckError(err)
+
+		arg := map[string]interface{}{
+			"hash": subject.Hash,
+			"data": data,
+		}
+		app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+	}
 }
 
 func (app App) insertUniversity(uni uct.University) {
@@ -561,7 +576,8 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 		MetaSectionUpdateQuery,
 		MetaSectionExistQuery,
 		MetaMeetingInsertQuery,
-		MetaMeetingUpdateQuery}
+		MetaMeetingUpdateQuery,
+		SerialSubjectUpdateQuery}
 
 	for _, query := range queries {
 		preparedStmts[query] = dbHandler.prepare(query)
@@ -685,6 +701,8 @@ var (
 	MetaMeetingUpdateQuery = `UPDATE metadata SET (title, content) = (:title, :content)
 					   WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title
 		               RETURNING metadata.id`
+
+	SerialSubjectUpdateQuery = `UPDATE subject SET (data) = (:data) WHERE hash = :hash`
 )
 
 type ChannelSubjects struct {

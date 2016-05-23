@@ -697,7 +697,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					newSections := newCourses[c].Sections
 					var filteredSections []Section
 					for e := range newSections {
-						Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
+						//Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
 						if e >= len(oldSections) {
 							filteredSections = newSections
 							break

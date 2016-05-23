@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS public.registration
   id SERIAL,
   university_id BIGINT,
   period period,
-  period_date DATE,
+  period_date BIGINT,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT registration__pk PRIMARY KEY (id),
@@ -400,7 +400,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  NEW.topic_name = NEW.id || '_' || NEW.topic_name;
+  NEW.topic_name = NEW.topic_name || '_' || NEW.id;
 
   RETURN NEW;
 END;
@@ -413,7 +413,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  NEW.topic_name = NEW.id || '_' || NEW.topic_name || '_' || NEW.season::text || NEW.year ;
+  NEW.topic_name = NEW.topic_name || '_' || NEW.season::text || NEW.year || '_' || NEW.id;
 
   RETURN NEW;
 END;
@@ -426,7 +426,7 @@ BEGIN
   --
   -- Set the correct topic name for this row
   --
-  NEW.topic_name = NEW.id || '_' || NEW.topic_name;
+  NEW.topic_name = NEW.topic_name || '_' || NEW.id;
 
   RETURN NEW;
 END;
@@ -561,3 +561,26 @@ WHEN (OLD.status <> NEW.status)
 EXECUTE PROCEDURE public.notify_status_change();
 
 COMMIT;
+
+CREATE extension pg_stat_statements;
+/*
+
+UPDATE section SET now = 1, status = 'Open' WHERE status = 'Closed' AND id < 3000;
+UPDATE section SET now = 1, status = 'Closed' WHERE status = 'Open' AND id < 3000;
+
+SELECT count(*), section.status, subject.season, subject.year, university.topic_name university, subject.topic_name subject, course.topic_name course
+FROM section
+  JOIN course ON section.course_id = course.id
+  JOIN subject ON course.subject_id = subject.id
+  JOIN university ON subject.university_id = university.id
+GROUP BY subject.season, subject.year, university, subject, section.status, course
+ORDER BY subject, university, season, year;
+
+SELECT * FROM section;
+
+*/
+/*
+
+SELECT * FROM metadata WHERE course_id = '19501';
+
+SELECT * FROM section WHERE call_number = '90030'*/
