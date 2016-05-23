@@ -133,7 +133,7 @@ func (s Subject) hash(uni University) string {
 	/*	if len(h) >= 64 {
 		return h[:64]
 	}*/
-	return h[:]
+	return h
 }
 
 func (c Course) hash(uni University, sub Subject) string {
@@ -150,7 +150,7 @@ func (c Course) hash(uni University, sub Subject) string {
 	/*	if len(h) >= 64 {
 		return h[:64]
 	}*/
-	return h[:]
+	return h
 }
 
 func (u *University) Validate() {
@@ -215,14 +215,21 @@ func (u *University) Validate() {
 		u.TopicName = u.TopicName[:limit]
 	}
 
+	// TODO move to pointers
+	var newSub []Subject
 	for s := range u.Subjects {
 		sub := u.Subjects[s]
 		sub.Hash = sub.hash(*u)
+		var newCou []Course
 		for c := range sub.Courses {
 			course := sub.Courses[c]
 			course.Hash = course.hash(*u, sub)
+			newCou = append(newCou, course)
 		}
+		sub.Courses = newCou
+		newSub = append(newSub, sub)
 	}
+	u.Subjects = newSub
 }
 
 func (sub *Subject) Validate() {

@@ -53,7 +53,7 @@ func main() {
 	uct.UnmarshallMessage(*format, old, oldUniversity)
 
 	// If an old version was supplied diff the old and new to create a new university
-	if oldUniversity != nil {
+	if *oldFile != nil {
 		university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
 	} else {
 		university = *newUniversity
