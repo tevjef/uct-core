@@ -14,11 +14,17 @@ import (
 	"strings"
 	"time"
 	uct "uct/common"
+	"github.com/pquerna/ffjson/ffjson"
+	"github.com/gogo/protobuf/proto"
 )
 
 var (
 	database      *sqlx.DB
 	preparedStmts = make(map[string]*sqlx.Stmt)
+    jsonContentType = []string{"application/json; charset=utf-8"}
+	protobufContentType = []string{"application/octet-stream"}
+
+
 )
 
 var (
@@ -37,13 +43,20 @@ func main() {
 	database = uct.InitDB(uct.GetUniversityDB())
 
 	r := gin.Default()
-	r.GET("/university", universityHandler)
-	r.GET("/subject", subjectHandler)
-	r.GET("/course", courseHandler)
-	r.GET("/section", sectionHandler)
+	v1 := r.Group("/v1")
+	v1.Use(jsonWriter())
+	v2 := r.Group("/v2")
+	v2.Use(protobufWriter())
 
-	r.GET("/v2/university", universityV2Handler)
-	r.GET("/v2/subject", subjectV2Handler)
+	v1.GET("/university", universityHandler)
+	v1.GET("/subject", subjectHandler)
+	v1.GET("/course", courseHandler)
+	v1.GET("/section", sectionHandler)
+
+	v2.GET("/university", universityHandler)
+	v2.GET("/subject", subjectHandler)
+	v2.GET("/course", courseHandler)
+	v2.GET("/section", sectionHandler)
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
@@ -54,7 +67,8 @@ Add to middleware
 if s := c.Request.Header.Get("Accept"); s == "" || s != "application/json" {
 c.Error(errors.New("Missing header, Accept: application/json"))
 c.String(http.StatusBadRequest, "Missing header, Accept: application/json")
-}*/
+*/
+
 func universityHandler(c *gin.Context) {
 	dirtyDeep := c.DefaultQuery("deep", "true")
 	dirtyId := c.DefaultQuery("id", "0")
@@ -74,34 +88,17 @@ func universityHandler(c *gin.Context) {
 	}
 
 	if id != 0 {
-		c.JSON(http.StatusOK, SelectUniversity(id, deep))
+		u := SelectUniversity(id, deep)
+		b, err := proto.Marshal(&u)
+		uct.CheckError(err)
+		c.Set("protobuf", b)
+		c.Set("object", u)
 	} else {
-		c.JSON(http.StatusOK, SelectUniversities(deep))
-	}
-}
-
-func universityV2Handler(c *gin.Context) {
-	dirtyDeep := c.DefaultQuery("deep", "true")
-	dirtyId := c.DefaultQuery("id", "0")
-
-	var deep bool
-	var id int64
-	var err error
-
-	if deep, err = strconv.ParseBool(dirtyDeep); err != nil {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: deep=%s", dirtyDeep)
-	}
-
-	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
-	}
-
-	if id != 0 {
-		c.JSON(http.StatusOK, SelectUniversity(id, deep))
-	} else {
-		c.JSON(http.StatusOK, SelectUniversities(deep))
+		u := uct.Universities{Universities:SelectUniversities(deep)}
+		b, err := proto.Marshal(&u)
+		uct.CheckError(err)
+		c.Set("protobuf", b)
+		c.Set("object", u)
 	}
 }
 
@@ -152,9 +149,13 @@ func subjectHandler(c *gin.Context) {
 	}
 
 	if id != 0 {
-		c.JSON(http.StatusOK, SelectSubject(id, deep))
+		sub := SelectProtoSubject(id, deep)
+		c.Set("protobuf", sub)
 	} else {
-		c.JSON(http.StatusOK, SelectSubjects(universityId, season, year, deep))
+		s := uct.Subjects{Subjects:SelectSubjects(universityId, season, year, deep)}
+		b, err := proto.Marshal(&s)
+		uct.CheckError(err)
+		c.Set("protobuf", b)
 	}
 }
 
@@ -225,41 +226,53 @@ func sectionHandler(c *gin.Context) {
 	}
 }
 
+func protobufWriter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		value, _ := c.Get("protobuf")
+		b, ok := value.([]byte)
+		if !ok {
+			log.Fatal("Can't retrieve response data")
+		}
+		writeProtobuf(c.Writer, b)
+	}
+}
+
+func jsonWriter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		value, _ := c.Get("object")
+		err := ffjson.NewEncoder(c.Writer).Encode(value)
+		uct.CheckError(err)
+	}
+}
+
+func writeProtobuf(w gin.ResponseWriter, b []byte) {
+	header := w.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = protobufContentType
+	}
+	w.Write(b)
+}
+
+func writeJson(w gin.ResponseWriter, b []byte) {
+	header := w.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = jsonContentType
+	}
+	w.Write(b)
+}
+
 func SelectUniversity(university_id int64, deep bool) (university uct.University) {
 	key := "university"
 	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
 	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
 		uct.CheckError(err)
 	}
-
-	s := []uct.Semester{}
-	if err := database.Select(&s, "", university_id); err != nil {
-		uct.CheckError(err)
-	}
+	s := GetAvailableSemesters(university.Id)
 	university.AvailableSemesters = s
+	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 
-	if deep && &university != nil {
-		deepSelectUniversities(&university)
-	}
-	return
-}
-
-func SelectProtoUniversity(university_id int64, deep bool) (university uct.University) {
-	key := "university"
-	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
-	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
-		uct.CheckError(err)
-	}
-
-	s := []uct.Semester{}
-	if err := database.Select(&s, "", university_id); err != nil {
-		uct.CheckError(err)
-	}
-	university.AvailableSemesters = s
-
-	if deep && &university != nil {
-		deepSelectUniversities(&university)
-	}
 	return
 }
 
@@ -271,31 +284,41 @@ func SelectUniversities(deep bool) (universities []uct.University) {
 	}
 
 	for i, _ := range universities {
-		s := []uct.Semester{}
-		if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", universities[i].Id); err != nil {
-			uct.CheckError(err)
-		}
+		s := GetAvailableSemesters(universities[i].Id)
 		universities[i].AvailableSemesters = s
-	}
+		universities[i].Metadata = SelectMetadata(universities[i].Id, 0, 0, 0, 0)
 
-	if deep {
-		for i, _ := range universities {
-			deepSelectUniversities(&universities[i])
-		}
 	}
 	return
 }
 
+func GetAvailableSemesters(uid int64) (semesters []uct.Semester) {
+	type semester struct {
+		Season string `db:"season"`
+		Year int32 `db:"year"`
+	}
+	s := []semester{}
+	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", uid); err != nil {
+		uct.CheckError(err)
+	}
+	for i := range s {
+		semesters = append(semesters, uct.Semester{Year:s[i].Year, Season:uct.Season(uct.Season_value[s[i].Season])})
+	}
+	return
+}
+
+/*
 func deepSelectUniversities(university *uct.University) {
 	// Broken until times are fixed
 	//university.Registrations = SelectRegistrations(university.Id)
 	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 }
+*/
 
 func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
 	defer uct.TimeTrack(time.Now(), "SelectSubject deep:"+fmt.Sprint(deep))
 	key := "subject"
-	query := `SELECT * FROM subject WHERE id = $1 ORDER BY number`
+	query := `SELECT id, name, number, season, year, hash, topic_name FROM subject WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &subject, subject_id); err != nil {
 		uct.CheckError(err)
 	}
@@ -305,10 +328,24 @@ func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
 	return
 }
 
+func SelectProtoSubject(subject_id int64, deep bool) []byte {
+	defer uct.TimeTrack(time.Now(), "SelectProtoSubject deep:"+fmt.Sprint(deep))
+	type Data struct {
+		Data []byte `db:"protobuf"`
+	}
+	d := Data{}
+	key := "subject"
+	query := `SELECT data FROM subject WHERE id = $1 ORDER BY number`
+	if err := Get(GetCachedStmt(key, query), &d, subject_id); err != nil {
+		uct.CheckError(err)
+	}
+	return d.Data
+}
+
 func SelectSubjects(university_id int64, season uct.Season, year string, deep bool) (subjects []uct.Subject) {
 	defer uct.TimeTrack(time.Now(), "SelectSubjects deep:"+fmt.Sprint(deep))
 	key := "subjects"
-	query := `SELECT * FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
+	query := `SELECT id, name, number, season, year, hash, topic_name FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
 	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
 		uct.CheckError(err)
 	}
@@ -466,23 +503,23 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 
 	if universityId != 0 {
 		key := "university_metatdata"
-		query = `SELECT * FROM metadata WHERE university_id = $1`
+		query = `SELECT title, content FROM metadata WHERE university_id = $1`
 		err = Select(GetCachedStmt(key, query), &metadata, universityId)
 	} else if subjectId != 0 {
 		key := "subject_metatdata"
-		query = `SELECT * FROM metadata WHERE subject_id = $1`
+		query = `SELECT title, content FROM metadata WHERE subject_id = $1`
 		err = Select(GetCachedStmt(key, query), &metadata, subjectId)
 	} else if courseId != 0 {
 		key := "course_metatdata"
-		query = `SELECT * FROM metadata WHERE course_id = $1`
+		query = `SELECT title, content FROM metadata WHERE course_id = $1`
 		err = Select(GetCachedStmt(key, query), &metadata, courseId)
 	} else if sectionId != 0 {
 		key := "section_metatdata"
-		query = `SELECT * FROM metadata WHERE section_id = $1`
+		query = `SELECT title, content FROM metadata WHERE section_id = $1`
 		err = Select(GetCachedStmt(key, query), &metadata, sectionId)
 	} else if meetingId != 0 {
 		key := "meeting_metatdata"
-		query = `SELECT * FROM metadata WHERE meeting_id = $1`
+		query = `SELECT title, content FROM metadata WHERE meeting_id = $1`
 		err = Select(GetCachedStmt(key, query), &metadata, meetingId)
 	} else {
 		log.Panic("No valid metadata id was passed")
