@@ -293,6 +293,8 @@ func SelectUniversities(deep bool) (universities []uct.University) {
 }
 
 func GetAvailableSemesters(uid int64) (semesters []uct.Semester) {
+	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters: ")
+
 	type semester struct {
 		Season string `db:"season"`
 		Year int32 `db:"year"`
