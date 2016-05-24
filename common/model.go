@@ -659,16 +659,6 @@ func (a SubjectByName) Less(i, j int) bool {
 }
 
 func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
-	if UniEqual(&uni, uni2) {
-		uni2.MainColor = ""
-		uni2.AccentColor = ""
-		uni2.HomePage = ""
-		uni2.RegistrationPage = ""
-		uni2.AvailableSemesters = []Semester{}
-		uni2.Registrations = []Registration{}
-		uni2.Metadata = []Metadata{}
-	}
-
 	filteredUniversity = uni2
 	oldSubjects := uni.Subjects
 	newSubjects := uni2.Subjects
