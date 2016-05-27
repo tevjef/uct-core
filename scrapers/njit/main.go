@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/boltdb/bolt"
 	"github.com/pquerna/ffjson/ffjson"
 	"io/ioutil"
+	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"regexp"
 	"strconv"
@@ -14,11 +17,7 @@ import (
 	"sync"
 	"time"
 	uct "uct/common"
-	_ "net/http/pprof"
-	"log"
-	"github.com/boltdb/bolt"
 )
-
 
 var boltDb *bolt.DB
 
@@ -177,19 +176,14 @@ func getUniversity() (university uct.University) {
 							StartTime: meeting.StartTime,
 							EndTime:   meeting.EndTime,
 						}
-
-						newMeeting.Validate()
 						newSection.Meetings = append(newSection.Meetings, newMeeting)
 					}
 
-					newSection.Validate()
 					newCourse.Sections = append(newCourse.Sections, newSection)
 
 				}
-				newCourse.Validate()
 				newSubject.Courses = append(newSubject.Courses, newCourse)
 			}
-			newSubject.Validate()
 			university.Subjects = append(university.Subjects, newSubject)
 		}
 	}
@@ -318,7 +312,7 @@ func extractCourseDescription(selection *goquery.Selection) string {
 	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(result))
 
 	desc := trim(doc.Text())
-	if desc !=  "" {
+	if desc != "" {
 		putDesc(url, "-1")
 	}
 	return desc
@@ -342,7 +336,7 @@ func cacheContainDesc(url string) (exists bool) {
 	err := boltDb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("MyBucket"))
 		v := b.Get([]byte(url))
-		if (string(v) != "") {
+		if string(v) != "" {
 			exists = true
 		}
 		return nil

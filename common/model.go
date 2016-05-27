@@ -99,10 +99,10 @@ func (s Period) String() string {
 }
 
 const (
-	FALL Season = iota
-	SPRING
-	SUMMER
-	WINTER
+	FALL   = "fall"
+	SPRING = "spring"
+	SUMMER = "summer"
+	WINTER = "fall"
 )
 
 const (
@@ -207,32 +207,16 @@ func (u *University) Validate() {
 	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
 	u.TopicName = regex.ReplaceAllString(u.Name, ".")
-	regex, err = regexp.Compile("[^A-Za-z.]")
+	regex, err = regexp.Compile("[^A-Za-z0-9]+")
 	CheckError(err)
-	u.TopicName = trim(regex.ReplaceAllString(u.TopicName, ""))
+	u.TopicName = trim(regex.ReplaceAllString(u.TopicName, "."))
 	limit := 25
 	if len(u.TopicName) >= limit {
 		u.TopicName = u.TopicName[:limit]
 	}
-
-	// TODO move to pointers
-	var newSub []Subject
-	for s := range u.Subjects {
-		sub := u.Subjects[s]
-		sub.Hash = sub.hash(*u)
-		var newCou []Course
-		for c := range sub.Courses {
-			course := sub.Courses[c]
-			course.Hash = course.hash(*u, sub)
-			newCou = append(newCou, course)
-		}
-		sub.Courses = newCou
-		newSub = append(newSub, sub)
-	}
-	u.Subjects = newSub
 }
 
-func (sub *Subject) Validate() {
+func (sub *Subject) Validate(uni *University) {
 	// Name
 	if sub.Name == "" {
 		log.Panic("Subject name == is empty")
@@ -260,14 +244,17 @@ func (sub *Subject) Validate() {
 	// TopicName
 	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
-	sub.TopicName = regex.ReplaceAllString(sub.Name, ".")
-	regex, err = regexp.Compile("[^A-Za-z.]")
+	sub.TopicName = sub.Name + " " + sub.Season + " " + sub.Year
+	sub.TopicName = regex.ReplaceAllString(sub.TopicName, ".")
+	regex, err = regexp.Compile("[^A-Za-z0-9]+")
 	CheckError(err)
 	sub.TopicName = trim(regex.ReplaceAllString(sub.TopicName, "."))
+
+	sub.TopicName = uni.TopicName + "__" + sub.TopicName
 	sort.Sort(courseSorter{sub.Courses})
 }
 
-func (course *Course) Validate() {
+func (course *Course) Validate(subject *Subject) {
 	// Name
 	if course.Name == "" {
 		log.Panic("Course name == is empty", course)
@@ -275,7 +262,6 @@ func (course *Course) Validate() {
 
 	course.Name = strings.Title(strings.ToLower(course.Name))
 	course.Name = strings.Replace(course.Name, "_", " ", -1)
-	course.Name = strings.Replace(course.Name, ".", " ", -1)
 	course.Name = strings.Replace(course.Name, "~", " ", -1)
 	course.Name = strings.Replace(course.Name, "%", " ", -1)
 
@@ -300,14 +286,16 @@ func (course *Course) Validate() {
 	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
 	course.TopicName = regex.ReplaceAllString(course.Name, ".")
-	regex, err = regexp.Compile("[^A-Za-z.]")
+	regex, err = regexp.Compile("[^A-Za-z.0-9]+")
 	CheckError(err)
 	course.TopicName = trim(regex.ReplaceAllString(course.TopicName, "."))
 
+	course.TopicName = subject.TopicName + "__" + course.TopicName
 	sort.Stable(sectionSorter{course.Sections})
 }
 
-func (section *Section) Validate() {
+// Validate within the context for these enclosing objects
+func (section *Section) Validate(course *Course) {
 	// Number
 	if section.Number == "" {
 		log.Panic("Number == is empty")
@@ -340,20 +328,31 @@ func (section *Section) Validate() {
 		log.Panic("Credits == is empty")
 	}
 
+	section.TopicName = section.Number + "_" + section.CallNumber
+	section.TopicName = course.TopicName + "__" + section.TopicName
 	//sort.Stable(meetingSorter{section.Meetings})
 	sort.Stable(instructorSorter{section.Instructors})
 
 }
 
 func (meeting *Meeting) Validate() {
-
-	if meeting.StartTime == "" {
-		meeting.StartTime = "00:00 AM"
-		meeting.EndTime = "00:00 AM"
+	if meeting.StartTime != nil {
+		a := TrimAll(*meeting.StartTime)
+		if a == "" {
+			meeting.StartTime = nil
+		} else {
+			meeting.StartTime = &a
+		}
 	}
 
-	/*meeting.StartTime.String = TrimAll(meeting.StartTime.String)
-	meeting.EndTime.String = TrimAll(meeting.EndTime.String)*/
+	if meeting.EndTime != nil {
+		b := TrimAll(*meeting.EndTime)
+		if b == "" {
+			meeting.EndTime = nil
+		} else {
+			meeting.EndTime = &b
+		}
+	}
 }
 
 func (instructor *Instructor) Validate() {
@@ -414,19 +413,19 @@ func (r Registration) dayOfYear() int {
 func (r Registration) season() string {
 	switch r.Period {
 	case SEM_FALL.String():
-		return FALL.String()
+		return FALL
 	case SEM_SPRING.String():
-		return SPRING.String()
+		return SPRING
 	case SEM_SUMMER.String():
-		return SUMMER.String()
+		return SUMMER
 	case SEM_WINTER.String():
-		return WINTER.String()
+		return WINTER
 	default:
-		return SUMMER.String()
+		return SUMMER
 	}
 }
 
-func ResolveSemesters(t time.Time, registration []Registration) ResolvedSemester {
+func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemester {
 	month := t.Month()
 	day := t.Day()
 	year := t.Year()
@@ -523,20 +522,8 @@ func (meeting Meeting) dayRank() int {
 	return 8
 }
 
-func (meeting Meeting) hash() string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString(meeting.StartTime)
-	buffer.WriteString(meeting.EndTime)
-	for i := range meeting.Metadata {
-		buffer.WriteString(meeting.Metadata[i].Title)
-		buffer.WriteString(meeting.Metadata[i].Content)
-	}
-	return buffer.String()
-}
-
 type courseSorter struct {
-	courses []Course
+	courses []*Course
 }
 
 func (a courseSorter) Len() int {
@@ -554,7 +541,7 @@ func (a courseSorter) Less(i, j int) bool {
 }
 
 type sectionSorter struct {
-	sections []Section
+	sections []*Section
 }
 
 func (a sectionSorter) Len() int {
@@ -570,7 +557,7 @@ func (a sectionSorter) Less(i, j int) bool {
 }
 
 type instructorSorter struct {
-	instructors []Instructor
+	instructors []*Instructor
 }
 
 func (a instructorSorter) Len() int {
@@ -662,7 +649,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	filteredUniversity = uni2
 	oldSubjects := uni.Subjects
 	newSubjects := uni2.Subjects
-	var filteredSubjects []Subject
+	var filteredSubjects []*Subject
 	// For each newer subject
 
 	for s := range newSubjects {
@@ -677,7 +664,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			Log("Subject differs!")
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
-			var filteredCourses []Course
+			var filteredCourses []*Course
 			for c := range newCourses {
 				Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
 				if oldCourses[c].Number != newCourses[c].Number {
@@ -692,7 +679,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					Log("Course differs!")
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
-					var filteredSections []Section
+					var filteredSections []*Section
 					for e := range newSections {
 						//Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
 						if e >= len(oldSections) {
@@ -714,83 +701,4 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	}
 	filteredUniversity.Subjects = filteredSubjects
 	return
-}
-
-func UniEqual(this *University, that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*University)
-	if !ok {
-		that2, ok := that.(University)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Id != that1.Id {
-		return false
-	}
-	if this.Name != that1.Name {
-		return false
-	}
-	if this.Abbr != that1.Abbr {
-		return false
-	}
-	if this.HomePage != that1.HomePage {
-		return false
-	}
-	if this.RegistrationPage != that1.RegistrationPage {
-		return false
-	}
-	if this.MainColor != that1.MainColor {
-		return false
-	}
-	if this.AccentColor != that1.AccentColor {
-		return false
-	}
-	if this.TopicName != that1.TopicName {
-		return false
-	}
-	if len(this.AvailableSemesters) != len(that1.AvailableSemesters) {
-		return false
-	}
-	for i := range this.AvailableSemesters {
-		if !this.AvailableSemesters[i].Equal(&that1.AvailableSemesters[i]) {
-			return false
-		}
-	}
-	if len(this.Registrations) != len(that1.Registrations) {
-		return false
-	}
-	for i := range this.Registrations {
-		if !this.Registrations[i].Equal(&that1.Registrations[i]) {
-			return false
-		}
-	}
-	if len(this.Metadata) != len(that1.Metadata) {
-		return false
-	}
-	for i := range this.Metadata {
-		if !this.Metadata[i].Equal(&that1.Metadata[i]) {
-			return false
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
 }

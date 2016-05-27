@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
@@ -10,7 +11,6 @@ import (
 	"log"
 	_ "net/http/pprof"
 	"os"
-	"reflect"
 	"runtime/pprof"
 	"time"
 	uct "uct/common"
@@ -68,12 +68,12 @@ func main() {
 	// Start logging with influx
 	go audit()
 
+	app.updateSerial(*newUniversity)
 	// Was originally designed to insert an array of universities.
 	startAudit <- true
-	app.insertUniversity(university)
+	app.insertUniversity(&university)
 	endAudit <- true
 
-	app.updateSerial(*newUniversity)
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
@@ -86,18 +86,41 @@ func (app App) updateSerial(uni uct.University) {
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
-		data, err := proto.Marshal(&subject)
+		data, err := proto.Marshal(subject)
 		uct.CheckError(err)
 
 		arg := map[string]interface{}{
-			"hash": subject.Hash,
-			"data": data,
+			"university_name": subject.UniversityName,
+			"name":            subject.Name,
+			"number":          subject.Number,
+			"year":            subject.Year,
+			"season":          subject.Season,
+			"data":            data,
 		}
 		app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+
+		for courseIndex := range subject.Courses {
+			course := subject.Courses[courseIndex]
+
+			data, err := proto.Marshal(course)
+			uct.CheckError(err)
+
+			arg := map[string]interface{}{
+				"university_name": subject.UniversityName,
+				"subject_year":    course.SubjectYear,
+				"subject_season":  course.SubjectSeason,
+				"subject_name":    course.SubjectName,
+				"subject_number":  course.SubjectNumber,
+				"data":            data,
+				"name":            course.Name,
+				"number":          course.Number,
+			}
+			app.dbHandler.update(SerialCourseUpdateQuery, arg)
+		}
 	}
 }
 
-func (app App) insertUniversity(uni uct.University) {
+func (app App) insertUniversity(uni *uct.University) {
 	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
@@ -127,7 +150,7 @@ func (app App) insertUniversity(uni uct.University) {
 				instructors := section.Instructors
 				for instructorIndex := range instructors {
 					instructor := instructors[instructorIndex]
-
+					instructor.Index = int32(instructorIndex)
 					instructor.SectionId = sectionId
 					app.insertInstructor(instructor)
 				}
@@ -200,7 +223,7 @@ func (app App) insertUniversity(uni uct.University) {
 	}
 }
 
-func (app App) insertSubject(sub uct.Subject) (subject_id int64) {
+func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
 	//sub.VetAndBuild()
 	if !*fullUpsert {
 
@@ -221,7 +244,7 @@ func (app App) insertSubject(sub uct.Subject) (subject_id int64) {
 	return subject_id
 }
 
-func (app App) insertCourse(course uct.Course) (course_id int64) {
+func (app App) insertCourse(course *uct.Course) (course_id int64) {
 	if !*fullUpsert {
 
 		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
@@ -233,12 +256,12 @@ func (app App) insertCourse(course uct.Course) (course_id int64) {
 	return course_id
 }
 
-func (app App) insertSection(section uct.Section) (section_id int64) {
+func (app App) insertSection(section *uct.Section) (section_id int64) {
 	section_id = app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 	return section_id
 }
 
-func (app App) insertMeeting(meeting uct.Meeting) (meeting_id int64) {
+func (app App) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
 	if !*fullUpsert {
 		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
 			return
@@ -248,30 +271,30 @@ func (app App) insertMeeting(meeting uct.Meeting) (meeting_id int64) {
 	return meeting_id
 }
 
-func (app App) insertInstructor(instructor uct.Instructor) (instructor_id int64) {
+func (app App) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
 	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
 		return
 	}
 
-	instructor_id = app.dbHandler.insert(InstructorInsertQuery, instructor)
+	instructor_id = app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 
 	return instructor_id
 }
 
-func (app App) insertBook(book uct.Book) (book_id int64) {
+func (app App) insertBook(book *uct.Book) (book_id int64) {
 	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return book_id
 }
 
-func (app App) insertRegistration(registration uct.Registration) int64 {
+func (app App) insertRegistration(registration *uct.Registration) int64 {
 	var registration_id int64
 	registration_id = app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 
 	return registration_id
 }
 
-func (app App) insertMetadata(metadata uct.Metadata) (metadata_id int64) {
+func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 	var insertQuery string
 	var updateQuery string
 
@@ -339,13 +362,13 @@ type DatabaseHandlerImpl struct {
 
 func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
 	insertionsCh <- 1
-	typeName := reflect.TypeOf(data).Name()
+	typeName := fmt.Sprintf("%T", data)
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
-		log.Panicln(err, typeName)
+		panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 	} else {
 		for rows.Next() {
 			if err = rows.Scan(&id); err != nil {
-				log.Panicln(err, typeName)
+				panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 			}
 			rows.Close()
 			uct.Log("Insert: ", typeName, " ", id)
@@ -355,15 +378,15 @@ func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id 
 }
 
 func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
+	typeName := fmt.Sprintf("%T", data)
 	updatesCh <- 1
-	typeName := reflect.TypeOf(data).Name()
 
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
-		log.Panicln(err, typeName)
+		panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 	} else {
 		for rows.Next() {
 			if err = rows.Scan(&id); err != nil {
-				log.Panicln(err, typeName)
+				panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 			}
 			rows.Close()
 			uct.Log("Update: ", typeName, " ", id)
@@ -404,6 +427,7 @@ func GetCachedStmt(key string) (stmt *sqlx.NamedStmt) {
 
 func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 	if named, err := dbHandler.Database.PrepareNamed(query); err != nil {
+		uct.Log(query)
 		uct.CheckError(err)
 		return nil
 	} else {
@@ -532,6 +556,7 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 		MeetingInsertQuery,
 		MeetingExistQuery,
 		InstructorExistQuery,
+		InstructorUpdateQuery,
 		InstructorInsertQuery,
 		BookUpdateQuery,
 		BookInsertQuery,
@@ -552,7 +577,8 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 		MetaSectionExistQuery,
 		MetaMeetingInsertQuery,
 		MetaMeetingUpdateQuery,
-		SerialSubjectUpdateQuery}
+		SerialSubjectUpdateQuery,
+		SerialCourseUpdateQuery}
 
 	for _, query := range queries {
 		preparedStmts[query] = dbHandler.prepare(query)
@@ -568,24 +594,46 @@ var (
 	                WHERE name = :name
 	                RETURNING university.id`
 
-	SubjectExistQuery = `SELECT id FROM course
-						WHERE hash = :hash`
-	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, hash, topic_name)
-                   	VALUES  (:university_id, :name, :number, :season, :year, :hash, :topic_name)
-                   	RETURNING subject.id`
-	SubjectUpdateQuery = `UPDATE subject SET (name, season, year, topic_name) = (:name, :season, :year, :topic_name)
-					WHERE hash = :hash
+	SubjectExistQuery = `SELECT subject.* FROM subject JOIN university ON university.name = :university_name
+						WHERE subject.name = :name AND subject.number = :number AND subject.year = :year AND subject.season = :season`
+
+	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name)
+                   	VALUES  (:university_id, :name, :number, :season, :year, :topic_name)
                    	RETURNING subject.id`
 
-	CourseExistQuery = `SELECT id FROM course
-						WHERE hash = :hash`
+	SubjectUpdateQuery = `UPDATE subject SET (topic_name) = (:topic_name)
+						FROM university
+						WHERE subject.university_id = university.id
+							AND university.name = :university_name
+							AND subject.name = :name
+							AND subject.number = :number
+							AND subject.year = :year
+							AND subject.season = :season
+						RETURNING subject.id`
 
-	CourseUpdateQuery = `UPDATE course SET (name, synopsis, topic_name) = (:name, :synopsis, :topic_name)
-					WHERE hash = :hash
-                    RETURNING course.id`
+	CourseExistQuery = `SELECT course.id FROM course
+					JOIN subject ON subject.id = course.subject_id
+					JOIN university ON university.id = subject.university_id
+						WHERE course.name = :name
+						AND course.number = :number
+						AND subject.year = :subject_year
+						AND subject.season = :subject_season
+						AND university.name = :university_name`
 
-	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, hash, topic_name)
-                    VALUES  (:subject_id, :name, :number, :synopsis, :hash, :topic_name)
+	CourseUpdateQuery = `UPDATE course SET (synopsis, topic_name) = (:synopsis, :topic_name) FROM subject JOIN university
+						ON university.id = subject.university_id
+							WHERE subject.id = course.subject_id
+							AND course.name = :name
+							AND course.number = :number
+							AND subject.year = :subject_year
+							AND subject.season = :subject_season
+							AND subject.name = :subject_name
+							AND subject.number = :subject_number
+							AND university.name = :university_name
+                    	RETURNING course.id`
+
+	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, topic_name)
+                    VALUES  (:subject_id, :name, :number, :synopsis, :topic_name)
                     RETURNING course.id`
 
 	SectionInsertQuery = `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name)
@@ -593,25 +641,39 @@ var (
                     RETURNING section.id`
 
 	SectionUpdateQuery = `UPDATE section SET (max, now, status, credits, topic_name) = (:max, :now, :status, :credits, :topic_name)
-					WHERE course_id = :course_id AND call_number = :call_number AND number = :number
-                    RETURNING section.id`
+					FROM course
+  							JOIN subject ON course.subject_id = subject.id
+  							JOIN university ON subject.university_id = university.id
+  							WHERE section.course_id = course.id
+  								AND course.name = :course_name
+								AND course.number = :course_number
+								AND subject.year = :subject_year
+								AND subject.season = :subject_season
+								AND subject.name = :subject_name
+								AND subject.number = :subject_number
+								AND university.name = :university_name
+								AND section.number = :number
+								AND section.call_number = :call_number RETURNING section.id`
 
 	MeetingExistQuery = `SELECT id FROM meeting
 						WHERE section_id = :section_id AND index = :index`
 
-	MeetingUpdateQuery = `UPDATE meeting SET (room, day, start_time, end_time) = (:room, :day, :start_time, :end_time)
+	MeetingUpdateQuery = `UPDATE meeting SET (room, day, start_time, end_time, class_type) = (:room, :day, :start_time, :end_time, :class_type)
 					WHERE section_id = :section_id AND index = :index
                     RETURNING meeting.id`
 
-	MeetingInsertQuery = `INSERT INTO meeting (section_id, room, day, start_time, end_time, index)
-                    VALUES  (:section_id, :room, :day, :start_time, :end_time, :index)
+	MeetingInsertQuery = `INSERT INTO meeting (section_id, room, day, start_time, end_time, class_type, index)
+                    VALUES  (:section_id, :room, :day, :start_time, :end_time, :class_type, :index)
                     RETURNING meeting.id`
 
 	InstructorExistQuery = `SELECT id FROM instructor
-				WHERE section_id = :section_id AND name = :name`
+				WHERE section_id = :section_id AND index = :index`
 
-	InstructorInsertQuery = `INSERT INTO instructor (section_id, name)
-				VALUES  (:section_id, :name)
+	InstructorUpdateQuery = `UPDATE instructor SET name = :name WHERE section_id = :section_id AND index = :index
+				RETURNING instructor.id`
+
+	InstructorInsertQuery = `INSERT INTO instructor (section_id, name, index)
+				VALUES  (:section_id, :name, :index)
 				RETURNING instructor.id`
 
 	BookUpdateQuery = `UPDATE book SET (title, url) = (:title, :url)
@@ -677,7 +739,26 @@ var (
 					   WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title
 		               RETURNING metadata.id`
 
-	SerialSubjectUpdateQuery = `UPDATE subject SET (data) = (:data) WHERE hash = :hash`
+	SerialSubjectUpdateQuery = `UPDATE subject SET data = :data FROM university
+						WHERE subject.university_id = university.id
+							AND university.name = :university_name
+							AND subject.name = :name
+							AND subject.number = :number
+							AND subject.year = :year
+							AND subject.season = :season
+						RETURNING subject.id`
+
+	SerialCourseUpdateQuery = `UPDATE course SET data = :data FROM subject JOIN university
+						ON university.id = subject.university_id
+							WHERE subject.id = course.subject_id
+							AND course.name = :name
+							AND course.number = :number
+							AND subject.year = :subject_year
+							AND subject.season = :subject_season
+							AND subject.name = :subject_name
+							AND subject.number = :subject_number
+							AND university.name = :university_name
+                    	RETURNING course.id`
 )
 
 type ChannelSubjects struct {

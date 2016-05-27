@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gogo/protobuf/proto"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/http"
@@ -14,17 +16,13 @@ import (
 	"strings"
 	"time"
 	uct "uct/common"
-	"github.com/pquerna/ffjson/ffjson"
-	"github.com/gogo/protobuf/proto"
 )
 
 var (
-	database      *sqlx.DB
-	preparedStmts = make(map[string]*sqlx.Stmt)
-    jsonContentType = []string{"application/json; charset=utf-8"}
-	protobufContentType = []string{"application/octet-stream"}
-
-
+	database            *sqlx.DB
+	preparedStmts       = make(map[string]*sqlx.Stmt)
+	jsonContentType     = []string{"application/json; charset=utf-8"}
+	protobufContentType = "application/x-protobuf; charset=utf-8"
 )
 
 var (
@@ -94,7 +92,7 @@ func universityHandler(c *gin.Context) {
 		c.Set("protobuf", b)
 		c.Set("object", u)
 	} else {
-		u := uct.Universities{Universities:SelectUniversities(deep)}
+		u := uct.Universities{Universities: SelectUniversities(deep)}
 		b, err := proto.Marshal(&u)
 		uct.CheckError(err)
 		c.Set("protobuf", b)
@@ -105,7 +103,7 @@ func universityHandler(c *gin.Context) {
 func subjectHandler(c *gin.Context) {
 	dirtyDeep := c.DefaultQuery("deep", "false")
 	dirtyUniversityId := c.Query("university_id")
-	dirtyId := c.DefaultQuery("id", "0")
+	dirtyId := c.DefaultQuery("", "0")
 	dirtySeason := c.Query("season")
 	dirtyYear := c.Query("year")
 
@@ -122,25 +120,25 @@ func subjectHandler(c *gin.Context) {
 		return
 	}
 
-	if universityId, err = strconv.ParseInt(dirtyUniversityId, 10, 64); err != nil {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: university_id=%s", dirtyUniversityId)
-		return
-	}
-
 	if id, err = strconv.ParseInt(dirtyId, 10, 64); err != nil {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: id=%s", dirtyId)
 		return
 	}
 
-	if season, err = ParseSeason(dirtySeason); err != nil {
+	if universityId, err = strconv.ParseInt(dirtyUniversityId, 10, 64); err != nil && id == 0 {
+		c.Error(err)
+		c.String(http.StatusBadRequest, "Could not parse parameter: university_id=%s", dirtyUniversityId)
+		return
+	}
+
+	if season, err = ParseSeason(dirtySeason); err != nil && id == 0 {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: season=%s", dirtySeason)
 		return
 	}
 
-	if _, err := strconv.ParseInt(dirtyYear, 10, 64); err != nil {
+	if _, err := strconv.ParseInt(dirtyYear, 10, 64); err != nil && id == 0 {
 		c.Error(err)
 		c.String(http.StatusBadRequest, "Could not parse parameter: year=%s", dirtyYear)
 		return
@@ -149,13 +147,15 @@ func subjectHandler(c *gin.Context) {
 	}
 
 	if id != 0 {
-		sub := SelectProtoSubject(id, deep)
-		c.Set("protobuf", sub)
+		sub, b := SelectSubject(id, deep)
+		c.Set("protobuf", b)
+		c.Set("object", sub)
 	} else {
-		s := uct.Subjects{Subjects:SelectSubjects(universityId, season, year, deep)}
+		s := uct.Subjects{Subjects: SelectSubjects(universityId, season, year, deep)}
 		b, err := proto.Marshal(&s)
 		uct.CheckError(err)
 		c.Set("protobuf", b)
+		c.Set("object", s)
 	}
 }
 
@@ -185,9 +185,9 @@ func courseHandler(c *gin.Context) {
 	}
 
 	if id != 0 {
-		c.JSON(http.StatusOK, SelectCourse(id, deep))
+		SelectCourse(id, deep)
 	} else {
-		c.JSON(http.StatusOK, SelectCourses(subjectId, deep))
+		SelectCourses(subjectId, deep)
 	}
 }
 
@@ -234,7 +234,10 @@ func protobufWriter() gin.HandlerFunc {
 		if !ok {
 			log.Fatal("Can't retrieve response data")
 		}
-		writeProtobuf(c.Writer, b)
+
+		c.Header("Content-Length", strconv.Itoa(len(b)))
+		c.Header("Content-Type", protobufContentType)
+		c.Writer.Write(b)
 	}
 }
 
@@ -245,14 +248,6 @@ func jsonWriter() gin.HandlerFunc {
 		err := ffjson.NewEncoder(c.Writer).Encode(value)
 		uct.CheckError(err)
 	}
-}
-
-func writeProtobuf(w gin.ResponseWriter, b []byte) {
-	header := w.Header()
-	if val := header["Content-Type"]; len(val) == 0 {
-		header["Content-Type"] = protobufContentType
-	}
-	w.Write(b)
 }
 
 func writeJson(w gin.ResponseWriter, b []byte) {
@@ -297,14 +292,14 @@ func GetAvailableSemesters(uid int64) (semesters []uct.Semester) {
 
 	type semester struct {
 		Season string `db:"season"`
-		Year int32 `db:"year"`
+		Year   int32  `db:"year"`
 	}
 	s := []semester{}
 	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", uid); err != nil {
 		uct.CheckError(err)
 	}
 	for i := range s {
-		semesters = append(semesters, uct.Semester{Year:s[i].Year, Season:uct.Season(uct.Season_value[s[i].Season])})
+		semesters = append(semesters, uct.Semester{Year: s[i].Year, Season: s[i].Season})
 	}
 	return
 }
@@ -317,7 +312,7 @@ func deepSelectUniversities(university *uct.University) {
 }
 */
 
-func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
+/*func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
 	defer uct.TimeTrack(time.Now(), "SelectSubject deep:"+fmt.Sprint(deep))
 	key := "subject"
 	query := `SELECT id, name, number, season, year, hash, topic_name FROM subject WHERE id = $1 ORDER BY number`
@@ -328,20 +323,25 @@ func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
 		deepSelectSubject(&subject)
 	}
 	return
+}*/
+
+type Data struct {
+	Data []byte `db:"data"`
 }
 
-func SelectProtoSubject(subject_id int64, deep bool) []byte {
-	defer uct.TimeTrack(time.Now(), "SelectProtoSubject deep:"+fmt.Sprint(deep))
-	type Data struct {
-		Data []byte `db:"protobuf"`
-	}
+func SelectSubject(subject_id int64) (subject uct.Subject, b []byte) {
+	defer uct.TimeTrack(time.Now(), "SelectProtoSubject")
 	d := Data{}
 	key := "subject"
 	query := `SELECT data FROM subject WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &d, subject_id); err != nil {
 		uct.CheckError(err)
 	}
-	return d.Data
+
+	b = d.Data
+	err := proto.Unmarshal(d.Data, &subject)
+	uct.CheckError(err)
+	return
 }
 
 func SelectSubjects(university_id int64, season uct.Season, year string, deep bool) (subjects []uct.Subject) {
@@ -364,15 +364,13 @@ func deepSelectSubject(subject *uct.Subject) {
 	subject.Metadata = SelectMetadata(0, subject.Id, 0, 0, 0)
 }
 
-func SelectCourse(course_id int64, deep bool) (course uct.Course) {
-	defer uct.TimeTrack(time.Now(), "SelectCourse deep:"+fmt.Sprint(deep))
+func SelectCourse(course_id int64) (course uct.Course, b []byte) {
+	defer uct.TimeTrack(time.Now(), "SelectCourse")
+	d := Data{}
 	key := "course"
-	query := `SELECT * FROM course WHERE id = $1 ORDER BY number`
+	query := `SELECT data FROM course WHERE id = $1 ORDER BY number`
 	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
 		uct.CheckError(err)
-	}
-	if deep && &course != nil {
-		deepSelectCourse(&course)
 	}
 	return
 }

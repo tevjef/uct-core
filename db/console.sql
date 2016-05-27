@@ -60,13 +60,14 @@ CREATE TABLE IF NOT EXISTS public.subject
   number text NOT NULL,
   season season NOT NULL,
   year text NOT NULL,
-  hash TEXT NOT NULL,
   topic_name text,
+  data BYTEA,
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   CONSTRAINT subject__pk PRIMARY KEY (id),
   CONSTRAINT subject_university__fk FOREIGN KEY (university_id) REFERENCES public.university (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT unique_subject_hash UNIQUE (hash)
+  CONSTRAINT unique_subject_name UNIQUE (university_id, name, number, year, season)
+
 )WITH (OIDS = FALSE);
 
 ALTER TABLE public.subject OWNER TO postgres;
@@ -76,14 +77,12 @@ COMMENT ON COLUMN public.subject.name IS 'The name of the subject';
 COMMENT ON COLUMN public.subject.number IS 'The number of the subject.';
 COMMENT ON COLUMN public.subject.season IS 'The season for which this subject is offered';
 COMMENT ON COLUMN public.subject.year IS 'The year this subject is currently offered. Subjects are not guaranteed to be offered every year.';
-COMMENT ON COLUMN public.subject.hash IS 'A unique hash of the row.';
 COMMENT ON COLUMN public.subject.topic_name IS 'The topic name of this subject. Used to build topic url';
 COMMENT ON COLUMN public.subject.updated_at IS 'Time this row was updated';
 COMMENT ON TABLE public.subject  IS 'Contains the subject offered from a particular university';
 /*
 COMMENT ON CONSTRAINT subject_university__fk ON public.subject IS 'Foreign key for university';
 */
-
 
 CREATE TABLE IF NOT EXISTS public.course
 (
@@ -92,13 +91,13 @@ CREATE TABLE IF NOT EXISTS public.course
   name TEXT NOT NULL,
   number TEXT NOT NULL,
   synopsis TEXT,
-  hash TEXT NOT NULL,
   topic_name TEXT NOT NULL,
+  data BYTEA,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT course__pk PRIMARY KEY (id),
   CONSTRAINT course_subject__fk FOREIGN KEY (subject_id) REFERENCES public.subject (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT unique_course_hash UNIQUE (hash)
+  CONSTRAINT unique_course_name UNIQUE (subject_id, name, number)
 
 )WITH (OIDS = FALSE);
 
@@ -108,7 +107,6 @@ COMMENT ON COLUMN public.course.subject_id IS 'The subject this course belongs t
 COMMENT ON COLUMN public.course.name IS 'The name of the course';
 COMMENT ON COLUMN public.course.number IS 'The number of course';
 COMMENT ON COLUMN public.course.synopsis IS 'Courses typically have a description of what why be offered.';
-COMMENT ON COLUMN public.subject.hash IS 'A unique hash of this row.';
 COMMENT ON COLUMN public.course.topic_name IS 'The topic name of this course. Used to build topic url';
 COMMENT ON COLUMN public.course.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.course.updated_at IS 'Time this row was updated';
@@ -154,6 +152,7 @@ CREATE TABLE IF NOT EXISTS public.meeting
   day TEXT,
   start_time TIME,
   end_time TIME,
+  class_type TEXT,
   index INTEGER,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
@@ -170,6 +169,7 @@ COMMENT ON COLUMN public.meeting.room IS 'This may include the full name, e.g Ce
 COMMENT ON COLUMN public.meeting.day IS 'The day this meeting is on';
 COMMENT ON COLUMN public.meeting.start_time IS 'The start time for this meeting. The scraper should extract values of this format. hh:mm(AM|PM)';
 COMMENT ON COLUMN public.meeting.end_time IS 'The end time for this meeting. The scraper should extract values of this format. hh:mm(AM|PM)';
+COMMENT ON COLUMN public.meeting.class_type IS 'E,g Lecture, Recitation';
 COMMENT ON COLUMN public.meeting.index IS 'The position of this meeting';
 COMMENT ON COLUMN public.meeting.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.meeting.updated_at IS 'Time this row was updated';
@@ -180,6 +180,7 @@ CREATE TABLE IF NOT EXISTS public.instructor
   id SERIAL,
   section_id BIGINT,
   name TEXT,
+  index INTEGER,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT instructor__pk PRIMARY KEY (id),
@@ -192,6 +193,7 @@ ALTER TABLE public.instructor OWNER TO postgres;
 
 COMMENT ON COLUMN public.instructor.section_id IS 'The section this instructor belongs to.';
 COMMENT ON COLUMN public.instructor.name IS 'The name of instructor';
+COMMENT ON COLUMN public.instructor.index IS 'The index of the instructor';
 COMMENT ON COLUMN public.instructor.created_at IS 'Time this row was inserted';
 COMMENT ON COLUMN public.instructor.updated_at IS 'Time this row was updated';
 
@@ -392,102 +394,6 @@ FOR EACH ROW
 WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE PROCEDURE update_row_time_stamp();
 
-
-
-CREATE OR REPLACE FUNCTION set_university_topic_name()
-  RETURNS TRIGGER AS $$
-BEGIN
-  --
-  -- Set the correct topic name for this row
-  --
-  NEW.topic_name = NEW.topic_name || '_' || NEW.id;
-
-  RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION set_subject_topic_name()
-  RETURNS TRIGGER AS $$
-BEGIN
-  --
-  -- Set the correct topic name for this row
-  --
-  NEW.topic_name = NEW.topic_name || '_' || NEW.season::text || NEW.year || '_' || NEW.id;
-
-  RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION set_course_topic_name()
-  RETURNS TRIGGER AS $$
-BEGIN
-  --
-  -- Set the correct topic name for this row
-  --
-  NEW.topic_name = NEW.topic_name || '_' || NEW.id;
-
-  RETURN NEW;
-END;
-$$
-
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION set_section_topic_name()
-  RETURNS TRIGGER AS $$
-DECLARE
-  _university_topic_name TEXT;
-  _subject_topic_name TEXT;
-  _course_topic_name TEXT;
-
-BEGIN
-  --
-  -- Set the correct topic name for this row
-  --
-  SELECT
-    university.topic_name,
-    subject.topic_name,
-    course.topic_name
-  INTO
-    _university_topic_name,
-    _subject_topic_name,
-    _course_topic_name
-  FROM course
-    JOIN subject ON subject.id = course.subject_id
-    JOIN university ON university.id = subject.university_id
-  WHERE course.id = NEW.course_id;
-
-  NEW.topic_name = _university_topic_name || '__' ||
-                   _subject_topic_name || '__' ||
-                   _course_topic_name || '__' ||
-                   NEW.id::text;
-  RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE TRIGGER insert_university_topic_name
-BEFORE INSERT OR UPDATE ON public.university
-FOR EACH ROW
-EXECUTE PROCEDURE set_university_topic_name();
-
-CREATE TRIGGER insert_subject_topic_name
-BEFORE INSERT OR UPDATE ON public.subject
-FOR EACH ROW
-EXECUTE PROCEDURE set_subject_topic_name();
-
-CREATE TRIGGER insert_course_topic_name
-BEFORE INSERT OR UPDATE ON public.course
-FOR EACH ROW
-EXECUTE PROCEDURE set_course_topic_name();
-
-CREATE TRIGGER insert_section_topic_name
-BEFORE INSERT OR UPDATE ON public.section
-FOR EACH ROW
-EXECUTE PROCEDURE set_section_topic_name();
-
-
 CREATE OR REPLACE FUNCTION public.notify_status_change()
   RETURNS trigger AS
 $BODY$
@@ -563,7 +469,20 @@ EXECUTE PROCEDURE public.notify_status_change();
 COMMIT;
 
 CREATE extension pg_stat_statements;
+
 /*
+WITH available AS (
+SELECT university_id, season, year FROM subject WHERE university_id IN(SELECT id FROM university) GROUP BY season, year, university_id),
+  universities AS (
+    SELECT * FROM university
+)
+
+SELECT ARRAY (SELECT university_id, season, year FROM subject WHERE university_id IN(SELECT id FROM university) GROUP BY season, year, university_id)
+
+
+SELECT season, year FROM subject WHERE id IN(SELECT id FROM university) GROUP BY season, year;
+SELECT * FROM university;
+
 
 UPDATE section SET now = 1, status = 'Open' WHERE status = 'Closed' AND id < 3000;
 UPDATE section SET now = 1, status = 'Closed' WHERE status = 'Open' AND id < 3000;
@@ -578,9 +497,7 @@ ORDER BY subject, university, season, year;
 
 SELECT * FROM section;
 
-*/
-/*
-
 SELECT * FROM metadata WHERE course_id = '19501';
 
-SELECT * FROM section WHERE call_number = '90030'*/
+SELECT * FROM section WHERE call_number = '90030'*//*
+

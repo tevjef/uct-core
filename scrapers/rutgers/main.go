@@ -66,58 +66,58 @@ func getCampus(campus string) uct.University {
 		AccentColor:      "607D8B",
 		HomePage:         "http://newbrunswick.rutgers.edu/",
 		RegistrationPage: "https://sims.rutgers.edu/webreg/",
-		Registrations: []uct.Registration{
-			uct.Registration{
+		Registrations: []*uct.Registration{
+			&uct.Registration{
 				Period:     uct.SEM_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.SEM_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.SEM_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.SEM_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.START_FALL.String(),
 				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.START_SPRING.String(),
 				PeriodDate: time.Date(2000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.START_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.START_WINTER.String(),
 				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.END_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.END_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.END_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.August, 15, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			uct.Registration{
+			&uct.Registration{
 				Period:     uct.END_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 		},
-		Metadata: []uct.Metadata{
-			uct.Metadata{
+		Metadata: []*uct.Metadata{
+			&uct.Metadata{
 				Title: "About", Content: `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
 				versity" title="Rutgers University">Rutgers University</a>, the others being in <a href="/wiki/Rutgers%
 				E2%80%93Camden" title="Rutgers–Camden" class="mw-redirect">Camden</a> and <a href="/wiki/Rutgers%E2%80%
@@ -172,20 +172,20 @@ func getCampus(campus string) uct.University {
 		}
 		wg.Wait()
 		for _, subject := range subjects {
-			newSubject := uct.Subject{
+			newSubject := &uct.Subject{
 				Name:   subject.Name,
 				Number: subject.Number,
-				Season: subject.Season.String(),
+				Season: subject.Season,
 				Year:   strconv.Itoa(subject.Year)}
 			for _, course := range subject.Courses {
-				newCourse := uct.Course{
+				newCourse := &uct.Course{
 					Name:     course.ExpandedTitle,
 					Number:   course.CourseNumber,
 					Synopsis: course.synopsis(),
 					Metadata: course.metadata()}
 
 				for _, section := range course.Sections {
-					newSection := uct.Section{
+					newSection := &uct.Section{
 						Number:     section.Number,
 						CallNumber: section.Index,
 						Status:     section.status(),
@@ -194,32 +194,28 @@ func getCampus(campus string) uct.University {
 						Metadata:   section.metadata()}
 
 					for _, instructor := range section.Instructor {
-						newInstructor := uct.Instructor{Name: instructor.Name}
+						newInstructor := &uct.Instructor{Name: instructor.Name}
 
-						newInstructor.Validate()
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 					}
 
 					for _, meeting := range section.MeetingTimes {
-						newMeeting := uct.Meeting{
+						newMeeting := &uct.Meeting{
 							Room:      meeting.room(),
 							Day:       meeting.dayPointer(),
-							StartTime: meeting.StartTime,
-							EndTime:   meeting.EndTime,
+							StartTime: meeting.PStartTime,
+							EndTime:   meeting.PEndTime,
+							ClassType: meeting.classType(),
 							Metadata:  meeting.metadata()}
 
-						newMeeting.Validate()
 						newSection.Meetings = append(newSection.Meetings, newMeeting)
 					}
 
-					newSection.Validate()
 					newCourse.Sections = append(newCourse.Sections, newSection)
 
 				}
-				newCourse.Validate()
 				newSubject.Courses = append(newSubject.Courses, newCourse)
 			}
-			newSubject.Validate()
 			university.Subjects = append(university.Subjects, newSubject)
 		}
 	}
@@ -228,8 +224,8 @@ func getCampus(campus string) uct.University {
 		university.Name = "Rutgers University–Newark"
 		university.Abbr = "RU-NK"
 		university.HomePage = "http://www.newark.rutgers.edu/"
-		university.Metadata = []uct.Metadata{
-			uct.Metadata{
+		university.Metadata = []*uct.Metadata{
+			&uct.Metadata{
 				Title: "About", Content: `<p><b>Rutgers–Newark</b> is one of three regional campuses of <a href="/wiki/R
 				utgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/Public_universit
 				y" title="Public university">public</a> research university of the <a href="/wiki/U.S._state" title="U.S
@@ -263,8 +259,8 @@ func getCampus(campus string) uct.University {
 		university.Name = "Rutgers University–Camden"
 		university.Abbr = "RU-CAM"
 		university.HomePage = "http://www.camden.rutgers.edu/"
-		university.Metadata = []uct.Metadata{
-			uct.Metadata{
+		university.Metadata = []*uct.Metadata{
+			&uct.Metadata{
 				Title: "About", Content: `<p><b>Rutgers University–Camden</b> is one of three regional campuses of <a
 				href="/wiki/Rutgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/N
 				ew_Jersey" title="New Jersey">New Jersey</a>'s <a href="/wiki/Public_university" title="Public universit
@@ -281,7 +277,6 @@ func getCampus(campus string) uct.University {
 			},
 		}
 	}
-	university.Validate()
 	return university
 }
 
@@ -400,13 +395,23 @@ func (section *RSection) clean() {
 }
 
 func (meeting *RMeetingTime) clean() {
-	meeting.StartTime = uct.TrimAll(meeting.StartTime)
-	meeting.EndTime = uct.TrimAll(meeting.EndTime)
+	meeting.StartTime = strings.TrimSpace(uct.TrimAll(meeting.StartTime))
+	meeting.EndTime = strings.TrimSpace(uct.TrimAll(meeting.EndTime))
 
 	meeting.MeetingDay = meeting.day()
 	meeting.StartTime = meeting.getMeetingHourBegin()
 	meeting.EndTime = meeting.getMeetingHourEnd()
 
+	if meeting.StartTime != "" {
+		meeting.PStartTime = &meeting.StartTime
+	} else {
+		meeting.PStartTime = nil
+	}
+	if meeting.EndTime != "" {
+		meeting.PEndTime = &meeting.EndTime
+	} else {
+		meeting.PEndTime = nil
+	}
 }
 
 func (section *RSection) status() string {
@@ -417,14 +422,14 @@ func (section *RSection) status() string {
 	}
 }
 
-func (section RSection) instructor() (instructors []uct.Instructor) {
+func (section RSection) instructor() (instructors []*uct.Instructor) {
 	for _, instructor := range section.Instructor {
-		instructors = append(instructors, uct.Instructor{Name: instructor.Name})
+		instructors = append(instructors, &uct.Instructor{Name: instructor.Name})
 	}
 	return
 }
 
-func (section RSection) metadata() (metadata []uct.Metadata) {
+func (section RSection) metadata() (metadata []*uct.Metadata) {
 
 	if len(section.CrossListedSections) > 0 {
 		str := ""
@@ -432,7 +437,7 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
 		}
 		if len(str) != 5 {
-			metadata = append(metadata, uct.Metadata{
+			metadata = append(metadata, &uct.Metadata{
 				Title:   "Cross-listed Sections",
 				Content: str,
 			})
@@ -447,7 +452,7 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 			str += (comment.Description + ", ")
 		}
 		str = str[:len(str)-2]
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Comments",
 			Content: str,
 		})
@@ -477,7 +482,7 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 
 		openTo := buffer.String()
 		if len(openTo) > len("Majors: ") {
-			metadata = append(metadata, uct.Metadata{
+			metadata = append(metadata, &uct.Metadata{
 				Title:   "Open To",
 				Content: openTo,
 			})
@@ -485,42 +490,42 @@ func (section RSection) metadata() (metadata []uct.Metadata) {
 	}
 
 	if len(section.SectionNotes) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Section Notes",
 			Content: section.SectionNotes,
 		})
 	}
 
 	if len(section.SynopsisUrl) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Synopsis Url",
 			Content: section.SynopsisUrl,
 		})
 	}
 
 	if len(section.ExamCode) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Exam Code",
 			Content: section.ExamCode,
 		})
 	}
 
 	if len(section.SpecialPermissionAddCodeDescription) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Special Permission",
 			Content: "Code: " + section.SpecialPermissionAddCode + "\n" + section.SpecialPermissionAddCodeDescription,
 		})
 	}
 
 	if len(section.Subtitle) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Subtitle",
 			Content: section.Subtitle,
 		})
 	}
 
 	if len(section.CampusCode) > 0 {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Campus Code",
 			Content: section.CampusCode,
 		})
@@ -695,13 +700,7 @@ func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
 	return time.Unix(0, 0)
 }
 
-func (meeting RMeetingTime) metadata() (metadata []uct.Metadata) {
-	if meeting.MeetingModeCode != "" {
-		metadata = append(metadata, uct.Metadata{
-			Title:   "Type",
-			Content: meeting.classType(),
-		})
-	}
+func (meeting RMeetingTime) metadata() (metadata []*uct.Metadata) {
 
 	return
 }
@@ -714,22 +713,22 @@ func (course RCourse) synopsis() *string {
 	}
 }
 
-func (course RCourse) metadata() (metadata []uct.Metadata) {
+func (course RCourse) metadata() (metadata []*uct.Metadata) {
 
 	if course.SubjectNotes != "" {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Subject Notes",
 			Content: course.SubjectNotes,
 		})
 	}
 	if course.PreReqNotes != "" {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Prequisites",
 			Content: course.PreReqNotes,
 		})
 	}
 	if course.SynopsisURL != "" {
-		metadata = append(metadata, uct.Metadata{
+		metadata = append(metadata, &uct.Metadata{
 			Title:   "Synopsis Url",
 			Content: course.SynopsisURL,
 		})
@@ -782,7 +781,7 @@ type (
 		Name    string    `json:"description,omitempty"`
 		Number  string    `json:"code,omitempty"`
 		Courses []RCourse `json:"courses,omitempty"`
-		Season  uct.Season
+		Season  string
 		Year    int
 	}
 
@@ -860,17 +859,19 @@ type (
 	}
 
 	RMeetingTime struct {
-		CampusLocation  string `json:"campusLocation"`
-		BaClassHours    string `json:"baClassHours"`
-		RoomNumber      string `json:"roomNumber"`
-		PmCode          string `json:"pmCode"`
-		CampusAbbrev    string `json:"campusAbbrev"`
-		CampusName      string `json:"campusName"`
-		MeetingDay      string `json:"meetingDay"`
-		BuildingCode    string `json:"buildingCode"`
-		StartTime       string `json:"startTime"`
-		EndTime         string `json:"endTime"`
-		MeetingModeDesc string `json:"meetingModeDesc"`
-		MeetingModeCode string `json:"meetingModeCode"`
+		CampusLocation  string  `json:"campusLocation"`
+		BaClassHours    string  `json:"baClassHours"`
+		RoomNumber      string  `json:"roomNumber"`
+		PmCode          string  `json:"pmCode"`
+		CampusAbbrev    string  `json:"campusAbbrev"`
+		CampusName      string  `json:"campusName"`
+		MeetingDay      string  `json:"meetingDay"`
+		BuildingCode    string  `json:"buildingCode"`
+		StartTime       string  `json:"startTime"`
+		EndTime         string  `json:"endTime"`
+		PStartTime      *string `json:"-"`
+		PEndTime        *string `json:"-"`
+		MeetingModeDesc string  `json:"meetingModeDesc"`
+		MeetingModeCode string  `json:"meetingModeCode"`
 	}
 )

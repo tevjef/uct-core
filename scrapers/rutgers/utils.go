@@ -96,19 +96,26 @@ func (meeting RMeetingTime) dayPointer() *string {
 	}
 }
 
-func (meeting RMeetingTime) classType() string {
+func (meeting RMeetingTime) classType() *string {
+	mtype := ""
 	if meeting.isLab() {
-		return "Lab"
+		mtype = "Lab"
 	} else if meeting.isStudio() {
-		return "Studio"
+		mtype = "Studio"
 	} else if meeting.isByArrangement() {
-		return "Hours By Arrangement"
+		mtype = "Hours By Arrangement"
 	} else if meeting.isLecture() {
-		return "Lecture"
+		mtype = "Lecture"
 	} else if meeting.isRecitation() {
-		return "Recitation"
+		mtype = "Recitation"
+	} else {
+		mtype = meeting.MeetingModeDesc
 	}
-	return meeting.MeetingModeDesc
+	if mtype == "" {
+		return nil
+	} else {
+		return &mtype
+	}
 }
 
 func IsAfter(t1, t2 string) bool {

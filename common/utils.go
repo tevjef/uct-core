@@ -263,7 +263,7 @@ func MarshalMessage(format string, m University) *bytes.Reader {
 func UnmarshallMessage(format string, r io.Reader, m *University) {
 	if format == "json" {
 		dec := ffjson.NewDecoder()
-		if err := dec.DecodeReader(r, *m); err != nil {
+		if err := dec.DecodeReader(r, &*m); err != nil {
 			log.Fatalln("Failed to unmarshal message:", err)
 		}
 	} else if format == "protobuf" {
