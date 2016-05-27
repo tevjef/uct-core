@@ -20,7 +20,7 @@ import (
 
 var (
 	database            *sqlx.DB
-	preparedStmts       = make(map[string]*sqlx.Stmt)
+	preparedStmts       = make(map[string]*sqlx.NamedStmt)
 	jsonContentType     = []string{"application/json; charset=utf-8"}
 	protobufContentType = "application/x-protobuf; charset=utf-8"
 )
@@ -86,7 +86,7 @@ func universityHandler(c *gin.Context) {
 	}
 
 	if id != 0 {
-		u := SelectUniversity(id, deep)
+		u := SelectUniversityQuery(id, deep)
 		b, err := proto.Marshal(&u)
 		uct.CheckError(err)
 		c.Set("protobuf", b)
@@ -258,13 +258,18 @@ func writeJson(w gin.ResponseWriter, b []byte) {
 	w.Write(b)
 }
 
-func SelectUniversity(university_id int64, deep bool) (university uct.University) {
-	key := "university"
-	query := `SELECT * FROM university WHERE id = $1 ORDER BY name`
-	if err := Get(GetCachedStmt(key, query), &university, university_id); err != nil {
+var (
+	SelectUniversityQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university WHERE name = :university_name ORDER BY name`
+	ListUniversitiesQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university ORDER BY name`
+	GetAvailableSemestersQuery = `SELECT season, year FROM subject WHERE university.name = :university_name GROUP BY season, year`
+)
+
+func SelectUniversity(universityName string, deep bool) (university uct.University) {
+	uct.Unique{UniversityName: universityName}
+	if err := Get(SelectUniversityQuery, &university, uct.Unique{UniversityName: universityName}); err != nil {
 		uct.CheckError(err)
 	}
-	s := GetAvailableSemesters(university.Id)
+	s := GetAvailableSemesters(universityName)
 	university.AvailableSemesters = s
 	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 
@@ -272,45 +277,26 @@ func SelectUniversity(university_id int64, deep bool) (university uct.University
 }
 
 func SelectUniversities(deep bool) (universities []uct.University) {
-	key := "universities"
-	query := `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university ORDER BY name`
-	if err := Select(GetCachedStmt(key, query), &universities); err != nil {
+	if err := Select(ListUniversitiesQuery, &universities, uct.Unique{}); err != nil {
 		uct.CheckError(err)
 	}
 
 	for i, _ := range universities {
-		s := GetAvailableSemesters(universities[i].Id)
+		s := GetAvailableSemesters(universities[i].Name)
 		universities[i].AvailableSemesters = s
 		universities[i].Metadata = SelectMetadata(universities[i].Id, 0, 0, 0, 0)
-
 	}
 	return
 }
 
-func GetAvailableSemesters(uid int64) (semesters []uct.Semester) {
+func GetAvailableSemesters(universityName string) (semesters []uct.Semester) {
 	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters: ")
-
-	type semester struct {
-		Season string `db:"season"`
-		Year   int32  `db:"year"`
-	}
-	s := []semester{}
-	if err := database.Select(&s, "SELECT season, year FROM subject WHERE university_id = $1 GROUP BY season, year", uid); err != nil {
+	s := []uct.Semester{}
+	if err := Select(GetAvailableSemestersQuery, &s, uct.Unique{UniversityName: universityName}); err != nil {
 		uct.CheckError(err)
 	}
-	for i := range s {
-		semesters = append(semesters, uct.Semester{Year: s[i].Year, Season: s[i].Season})
-	}
 	return
 }
-
-/*
-func deepSelectUniversities(university *uct.University) {
-	// Broken until times are fixed
-	//university.Registrations = SelectRegistrations(university.Id)
-	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
-}
-*/
 
 /*func SelectSubject(subject_id int64, deep bool) (subject uct.Subject) {
 	defer uct.TimeTrack(time.Now(), "SelectSubject deep:"+fmt.Sprint(deep))
@@ -329,49 +315,68 @@ type Data struct {
 	Data []byte `db:"data"`
 }
 
-func SelectSubject(subject_id int64) (subject uct.Subject, b []byte) {
+var (
+	SelectProtoSubjectQuery = `SELECT data FROM subject JOIN university ON university.id = subject.university_id
+									AND university.name = :university_name
+									AND season = :subject_season
+									AND year =:subject_year
+									AND subject.name = :subject_name
+									AND subject.number = :subject_number`
+
+	ListSubjectQuery = `SELECT subject.id, subject.name, subject.number, subject.season, subject.year, subject.topic_name
+								FROM subject JOIN university ON university.id = subject.university_id
+									AND university.name = :university_name
+									AND season = :subject_season
+									AND year =:subject_year`
+)
+
+func SelectSubject(universityName, season, year, name, number string) (subject uct.Subject, b []byte) {
 	defer uct.TimeTrack(time.Now(), "SelectProtoSubject")
+	m := map[string]interface{}{"university_name": universityName, "subject_season": season, "subject_year": year, "subject_name": name,
+		"subject_number": number,
+	}
 	d := Data{}
-	key := "subject"
-	query := `SELECT data FROM subject WHERE id = $1 ORDER BY number`
-	if err := Get(GetCachedStmt(key, query), &d, subject_id); err != nil {
+	if err := Get(SelectProtoSubjectQuery, &d, m); err != nil {
 		uct.CheckError(err)
 	}
-
 	b = d.Data
 	err := proto.Unmarshal(d.Data, &subject)
 	uct.CheckError(err)
 	return
 }
 
-func SelectSubjects(university_id int64, season uct.Season, year string, deep bool) (subjects []uct.Subject) {
-	defer uct.TimeTrack(time.Now(), "SelectSubjects deep:"+fmt.Sprint(deep))
-	key := "subjects"
-	query := `SELECT id, name, number, season, year, hash, topic_name FROM subject WHERE university_id = $1 AND season = $2 AND year = $3 ORDER BY number`
-	if err := Select(GetCachedStmt(key, query), &subjects, university_id, season.String(), year); err != nil {
+func SelectSubjects(universityName, season, year string) (subjects []uct.Subject) {
+	defer uct.TimeTrack(time.Now(), "SelectSubjects ")
+	m := map[string]interface{}{"university_name": universityName, "subject_season": season, "subject_year": year}
+	if err := Select(ListSubjectQuery, &subjects, m); err != nil {
 		uct.CheckError(err)
-	}
-	if deep {
-		for i := range subjects {
-			deepSelectSubject(&subjects[i])
-		}
 	}
 	return
 }
 
-func deepSelectSubject(subject *uct.Subject) {
-	subject.Courses = SelectCourses(subject.Id, true)
-	subject.Metadata = SelectMetadata(0, subject.Id, 0, 0, 0)
-}
+var (
+	SelectCourseQuery = `SELECT data FROM course JOIN subject ON subejct.id = course.subject_id
+							JOIN university ON university.id = subject.university_id
+							WHERE university.name = :university_name
+							AND subject.season = :subject_season
+							AND subject.year = :subject_year
+							AND subject.name = :subject_name
+							AND subject.number = :subject_number
+							AND course.name = :course_name
+							AND course.number = :course_number`
+)
 
-func SelectCourse(course_id int64) (course uct.Course, b []byte) {
+func SelectCourse(universityName, season, year, subjectName, subjectNumber, courseName, courseNumber string) (course uct.Course, b []byte) {
 	defer uct.TimeTrack(time.Now(), "SelectCourse")
 	d := Data{}
-	key := "course"
-	query := `SELECT data FROM course WHERE id = $1 ORDER BY number`
-	if err := Get(GetCachedStmt(key, query), &course, course_id); err != nil {
+	m := map[string]interface{}{"university_name": universityName, "subject_season": season, "subject_year": year,
+		"subject_name": subjectName, "subject_number": subjectNumber, "course_name":courseName, "course_number":courseNumber}
+	if err := Get(SelectCourseQuery, &d, m); err != nil {
 		uct.CheckError(err)
 	}
+	b = d.Data
+	err := proto.Unmarshal(b, &course)
+	uct.CheckError(err)
 	return
 }
 
@@ -485,16 +490,6 @@ func SelectBooks(sectionId int64) (books []uct.Book) {
 	return
 }
 
-func SelectRegistrations(universityId int64) (registrations []uct.Registration) {
-	key := "registration"
-	query := `SELECT * FROM registration WHERE university_id = $1`
-	if err := Select(GetCachedStmt(key, query), &registrations, universityId); err != nil {
-		uct.CheckError(err)
-	}
-	uct.LogVerbose(registrations)
-	return
-}
-
 func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []uct.Metadata) {
 	defer uct.TimeTrack(time.Now(), "SelectMetadata")
 
@@ -528,37 +523,37 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 	return
 }
 
-func Select(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
-	if err := named.Select(data, args...); err != nil {
+func Select(query string, dest interface{}, args interface{}) error {
+	if err := GetCachedStmt(query).Select(dest, args); err != nil {
 		return err
 	}
 	return nil
 }
 
-func Get(named *sqlx.Stmt, data interface{}, args ...interface{}) error {
-	if err := named.Get(data, args...); err != nil {
+func Get(query string, dest interface{}, args interface{}) error {
+	if err := GetCachedStmt(query).Get(dest, args); err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetCachedStmt(key, query string) *sqlx.Stmt {
-	if stmt := preparedStmts[key]; stmt == nil {
-		preparedStmts[key] = Prepare(query)
+func GetCachedStmt(query string) *sqlx.NamedStmt {
+	if stmt := preparedStmts[query]; stmt == nil {
+		preparedStmts[query] = Prepare(query)
 	}
-	return preparedStmts[key]
+	return preparedStmts[query]
 }
 
-func Prepare(query string) *sqlx.Stmt {
-	if named, err := database.Preparex(query); err != nil {
-		uct.CheckError(err)
+func Prepare(query string) *sqlx.NamedStmt {
+	if named, err := database.PrepareNamed(query); err != nil {
+		panic(fmt.Errorf("Error %s Query: %s", query, err))
 		return nil
 	} else {
 		return named
 	}
 }
 
-func ParseSeason(s string) (season uct.Season, err error) {
+func ParseSeason(s string) (season string, err error) {
 	switch strings.ToLower(s) {
 	case "winter", "w":
 		return uct.WINTER, err

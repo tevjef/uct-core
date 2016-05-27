@@ -31,12 +31,27 @@ message University {
     repeated Metadata metadata = 12;
 }
 
+message Response {
+    optional Universities universities = 1;
+    optional Subjects subjects = 2;
+    optional Courses courses = 3;
+    optional Sections sections = 4;
+}
+
 message Universities {
     repeated University universities = 1;
 }
 
 message Subjects {
     repeated Subject subjects = 1;
+}
+
+message Courses {
+    repeated Course courses = 1;
+}
+
+message Sections {
+    repeated Sectons section = 1;
 }
 
 message Subject {
@@ -127,8 +142,8 @@ message Registration {
 }
 
 message Semester {
-    optional int32 year = 1 [(gogoproto.nullable) = false];
-    optional string season = 2 [(gogoproto.nullable) = false];
+    optional int32 year = 1 [(gogoproto.moretags) = "db:\"year\"", (gogoproto.nullable) = false];
+    optional string season = 2 [(gogoproto.moretags) = "db:\"season\"", (gogoproto.nullable) = false];
 }
 
 message Unique {
