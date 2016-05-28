@@ -320,13 +320,13 @@ func getCourses(subject, campus string, semester uct.Semester) (courses []RCours
 		uct.Log(err)
 	}
 
-	sort.Sort(courseSorter{courses})
 	for i, _ := range courses {
 		courses[i].clean()
 		for j, _ := range courses[i].Sections {
 			courses[i].Sections[j].clean()
 		}
 	}
+	sort.Sort(courseSorter{courses})
 
 	courses = FilterCourses(courses, func(course RCourse) bool {
 		return len(course.Sections) > 0
