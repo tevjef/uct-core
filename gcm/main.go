@@ -167,7 +167,7 @@ func sendNotification(message uct.GCMMessage) (err error) {
 }
 
 func influxLog() {
-	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+	_, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     uct.INFLUX_HOST,
 		Username: uct.INFLUX_USER,
 		Password: uct.INFLUX_PASS,
@@ -215,8 +215,9 @@ func influxLog() {
 				bp.AddPoint(point)
 				fmt.Println("InfluxDB log: ", tags, fields)
 			}()
-		case <-time.NewTicker(time.Minute).C:
-			/*	err := influxClient.Write(bp)
+			/*case <-time.NewTicker(time.Minute).C:
+
+			err := influxClient.Write(bp)
 				uct.CheckError(err)
 				bp, err = client.NewBatchPoints(client.BatchPointsConfig{
 					Database:  "universityct",
