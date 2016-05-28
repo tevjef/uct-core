@@ -48,9 +48,18 @@ func main() {
 	var university uct.University
 	newUniversity := new(uct.University)
 	uct.UnmarshallMessage(*format, input, newUniversity)
+
+	// Make sure the data received is primed for the database
+	uct.ValidateAll(newUniversity)
+
 	oldUniversity := new(uct.University)
 	old := bufio.NewReader(*oldFile)
 	uct.UnmarshallMessage(*format, old, oldUniversity)
+
+	// If an old version was supplied, prepare it for the database
+	if *oldFile != nil {
+		uct.ValidateAll(oldUniversity)
+	}
 
 	// If an old version was supplied diff the old and new to create a new university
 	if *oldFile != nil {
@@ -93,7 +102,6 @@ func (app App) updateSerial(uni uct.University) {
 			"topic_name": subject.TopicName,
 			"data":       data,
 		}
-		log.Println(arg["topic_name"])
 		app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 
 		for courseIndex := range subject.Courses {

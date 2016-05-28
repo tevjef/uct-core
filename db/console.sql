@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS public.university
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   CONSTRAINT university__pk PRIMARY KEY (id),
-  CONSTRAINT unique_university_name UNIQUE (name)
+  CONSTRAINT unique_university_name UNIQUE (name),
+  CONSTRAINT unique_university_topic_name UNIQUE (topic_name)
+
 )WITH (OIDS = FALSE);
 
 ALTER TABLE public.university OWNER TO postgres;
@@ -66,7 +68,8 @@ CREATE TABLE IF NOT EXISTS public.subject
   updated_at timestamp without time zone,
   CONSTRAINT subject__pk PRIMARY KEY (id),
   CONSTRAINT subject_university__fk FOREIGN KEY (university_id) REFERENCES public.university (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT unique_subject_name UNIQUE (university_id, name, number, year, season)
+  CONSTRAINT unique_subject_name_number_year_season UNIQUE (university_id, name, number, year, season),
+  CONSTRAINT unique_subject_topic_name UNIQUE (topic_name)
 
 )WITH (OIDS = FALSE);
 
@@ -97,7 +100,8 @@ CREATE TABLE IF NOT EXISTS public.course
   updated_at TIMESTAMP,
   CONSTRAINT course__pk PRIMARY KEY (id),
   CONSTRAINT course_subject__fk FOREIGN KEY (subject_id) REFERENCES public.subject (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT unique_course_name UNIQUE (subject_id, name, number)
+  CONSTRAINT unique_course_name_number UNIQUE (subject_id, name, number),
+  CONSTRAINT unique_course_topic_name UNIQUE (topic_name)
 
 )WITH (OIDS = FALSE);
 
@@ -126,7 +130,8 @@ CREATE TABLE IF NOT EXISTS public.section
   updated_at TIMESTAMP,
   CONSTRAINT section__pk PRIMARY KEY (id),
   CONSTRAINT section_course_id__fk FOREIGN KEY (course_id) REFERENCES public.course (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT unique_section_course_id__number__call_number UNIQUE (course_id, number, call_number)
+  CONSTRAINT unique_number_call_number UNIQUE (course_id, number, call_number),
+  CONSTRAINT unique_section_topic_name UNIQUE (topic_name)
 
 )WITH (OIDS = FALSE);
 
