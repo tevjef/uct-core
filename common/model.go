@@ -244,7 +244,7 @@ func (sub *Subject) Validate(uni *University) {
 	// TopicName
 	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
-	sub.TopicName = sub.Name + " " + sub.Season + " " + sub.Year
+	sub.TopicName = sub.Number + " " + sub.Name + " " + sub.Season + " " + sub.Year
 	sub.TopicName = regex.ReplaceAllString(sub.TopicName, ".")
 	regex, err = regexp.Compile("[^A-Za-z0-9]+")
 	CheckError(err)
@@ -285,8 +285,9 @@ func (course *Course) Validate(subject *Subject) {
 	// TopicName
 	regex, err := regexp.Compile("\\s+")
 	CheckError(err)
-	course.TopicName = regex.ReplaceAllString(course.Name, ".")
-	regex, err = regexp.Compile("[^A-Za-z.0-9]+")
+	course.TopicName = course.Number + " " + course.Name
+	course.TopicName = regex.ReplaceAllString(course.TopicName, ".")
+	regex, err = regexp.Compile("[^A-Za-z0-9]+")
 	CheckError(err)
 	course.TopicName = trim(regex.ReplaceAllString(course.TopicName, "."))
 

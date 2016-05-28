@@ -34,7 +34,7 @@ func main() {
 	var university uct.University
 	uct.UnmarshallMessage(*format, input, &university)
 
-	clean(&university)
+	Validate(&university)
 
 	if *out != "" {
 		output := uct.MarshalMessage(*out, university)
@@ -76,8 +76,30 @@ func pad(str string, num int) (out string) {
 	return
 }
 
-func clean(uni *uct.University) {
+func CleanStruct(data interface{}) {
+	switch v := data.(type) {
+	case uct.Subject:
+		CleanSubject(&v)
+	case uct.Course:
+		CleanCourse(&v)
+	case uct.Section:
+		CleanSection(&v)
+	}
+}
 
+func CleanSubject(subject *uct.Subject) {
+	subject.Unique = nil
+}
+
+func CleanCourse(course *uct.Course) {
+	course.Unique = nil
+}
+
+func CleanSection(section *uct.Section) {
+	section.Unique = nil
+}
+
+func Validate(uni *uct.University) {
 	uni.Validate()
 	CheckUniqueSubject(uni.Subjects)
 	for subjectIndex := range uni.Subjects {
