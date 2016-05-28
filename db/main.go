@@ -77,12 +77,12 @@ func main() {
 	// Start logging with influx
 	go audit()
 
-	app.updateSerial(*newUniversity)
 	// Was originally designed to insert an array of universities.
 	startAudit <- true
 	app.insertUniversity(&university)
 	endAudit <- true
 
+	app.updateSerial(*newUniversity)
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
@@ -487,12 +487,11 @@ func (stats AuditStats) audit() {
 }
 
 func audit() {
-	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+	influxClient, _ := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     uct.INFLUX_HOST,
 		Username: uct.INFLUX_USER,
 		Password: uct.INFLUX_PASS,
 	})
-	uct.CheckError(err)
 
 	var university string
 	var insertions int

@@ -71,7 +71,7 @@ func waitForNotification(l *pq.Listener) {
 					err := json.Unmarshal([]byte(notification.Extra), &pgNotification)
 					uct.CheckError(err)
 					// Log notification
-					messageLog <- pgNotification
+					//messageLog <- pgNotification
 					// Process and send notification, free workRoutine when done.
 					recvNotification(pgNotification, sem)
 				}()
