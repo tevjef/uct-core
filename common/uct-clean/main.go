@@ -76,29 +76,6 @@ func pad(str string, num int) (out string) {
 	return
 }
 
-func CleanStruct(data interface{}) {
-	switch v := data.(type) {
-	case uct.Subject:
-		CleanSubject(&v)
-	case uct.Course:
-		CleanCourse(&v)
-	case uct.Section:
-		CleanSection(&v)
-	}
-}
-
-func CleanSubject(subject *uct.Subject) {
-	subject.Unique = nil
-}
-
-func CleanCourse(course *uct.Course) {
-	course.Unique = nil
-}
-
-func CleanSection(section *uct.Section) {
-	section.Unique = nil
-}
-
 func Validate(uni *uct.University) {
 	uni.Validate()
 	CheckUniqueSubject(uni.Subjects)
@@ -106,45 +83,16 @@ func Validate(uni *uct.University) {
 		subject := uni.Subjects[subjectIndex]
 		subject.Validate(uni)
 
-		// Old
-		subject.UniversityName = uni.Name
-
-		// New
-		subject.SubjectName = subject.Name
-		subject.SubjectNumber = subject.Number
-		subject.SubjectSeason = subject.Season
-		subject.SubjectYear = subject.Year
-
 		courses := subject.Courses
 		CheckUniqueCourse(subject, courses)
 		for courseIndex := range courses {
 			course := courses[courseIndex]
 			course.Validate(subject)
 
-			// Old
-			course.UniversityName = uni.Name
-			course.SubjectName = subject.Name
-			course.SubjectNumber = subject.Number
-			course.SubjectSeason = subject.Season
-			course.SubjectYear = subject.Year
-
-			// New
-			course.CourseName = course.Name
-			course.CourseNumber = course.Number
-
 			sections := course.Sections
 			for sectionIndex := range sections {
 				section := sections[sectionIndex]
 				section.Validate(course)
-
-				// Old
-				section.UniversityName = course.UniversityName
-				section.SubjectName = course.SubjectName
-				section.SubjectNumber = course.SubjectNumber
-				section.SubjectSeason = course.SubjectSeason
-				section.SubjectYear = course.SubjectYear
-				section.CourseName = course.CourseName
-				section.CourseNumber = course.CourseNumber
 
 				//[]Instructors
 				instructors := section.Instructors

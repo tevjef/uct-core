@@ -90,13 +90,10 @@ func (app App) updateSerial(uni uct.University) {
 		uct.CheckError(err)
 
 		arg := map[string]interface{}{
-			"university_name": subject.UniversityName,
-			"name":            subject.Name,
-			"number":          subject.Number,
-			"year":            subject.Year,
-			"season":          subject.Season,
-			"data":            data,
+			"topic_name": subject.TopicName,
+			"data":       data,
 		}
+		log.Println(arg["topic_name"])
 		app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 
 		for courseIndex := range subject.Courses {
@@ -106,14 +103,8 @@ func (app App) updateSerial(uni uct.University) {
 			uct.CheckError(err)
 
 			arg := map[string]interface{}{
-				"university_name": subject.UniversityName,
-				"subject_year":    course.SubjectYear,
-				"subject_season":  course.SubjectSeason,
-				"subject_name":    course.SubjectName,
-				"subject_number":  course.SubjectNumber,
-				"data":            data,
-				"name":            course.Name,
-				"number":          course.Number,
+				"data":       data,
+				"topic_name": course.TopicName,
 			}
 			app.dbHandler.update(SerialCourseUpdateQuery, arg)
 		}
@@ -594,69 +585,25 @@ var (
 	                WHERE name = :name
 	                RETURNING university.id`
 
-	SubjectExistQuery = `SELECT subject.* FROM subject JOIN university ON university.name = :university_name
-						WHERE subject.name = :name AND subject.number = :number AND subject.year = :year AND subject.season = :season`
+	SubjectExistQuery = `SELECT subject.id FROM subject WHERE topic_name = :topic_name`
 
 	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name)
                    	VALUES  (:university_id, :name, :number, :season, :year, :topic_name)
                    	RETURNING subject.id`
 
-	SubjectUpdateQuery = `UPDATE subject SET (topic_name) = (:topic_name)
-						FROM university
-						WHERE subject.university_id = university.id
-							AND university.name = :university_name
-							AND subject.name = :name
-							AND subject.number = :number
-							AND subject.year = :year
-							AND subject.season = :season
-						RETURNING subject.id`
+	SubjectUpdateQuery = SubjectExistQuery
 
-	CourseExistQuery = `SELECT course.id FROM course
-					JOIN subject ON subject.id = course.subject_id
-					JOIN university ON university.id = subject.university_id
-						WHERE course.name = :name
-						AND course.number = :number
-						AND subject.year = :subject_year
-						AND subject.season = :subject_season
-						AND university.name = :university_name`
-
-	CourseUpdateQuery = `UPDATE course SET (synopsis, topic_name) = (:synopsis, :topic_name) FROM subject JOIN university
-						ON university.id = subject.university_id
-							WHERE subject.id = course.subject_id
-							AND course.name = :name
-							AND course.number = :number
-							AND subject.year = :subject_year
-							AND subject.season = :subject_season
-							AND subject.name = :subject_name
-							AND subject.number = :subject_number
-							AND university.name = :university_name
-                    	RETURNING course.id`
-
-	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, topic_name)
-                    VALUES  (:subject_id, :name, :number, :synopsis, :topic_name)
-                    RETURNING course.id`
+	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, topic_name) VALUES  (:subject_id, :name, :number, :synopsis, :topic_name) RETURNING course.id`
+	CourseExistQuery  = `SELECT course.id FROM course WHERE topic_name = :topic_name`
+	CourseUpdateQuery = `UPDATE course SET (synopsis) = (:synopsis) WHERE topic_name = :topic_name RETURNING course.id`
 
 	SectionInsertQuery = `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name)
                     VALUES  (:course_id, :number, :call_number, :max, :now, :status, :credits, :topic_name)
                     RETURNING section.id`
 
-	SectionUpdateQuery = `UPDATE section SET (max, now, status, credits, topic_name) = (:max, :now, :status, :credits, :topic_name)
-					FROM course
-  							JOIN subject ON course.subject_id = subject.id
-  							JOIN university ON subject.university_id = university.id
-  							WHERE section.course_id = course.id
-  								AND course.name = :course_name
-								AND course.number = :course_number
-								AND subject.year = :subject_year
-								AND subject.season = :subject_season
-								AND subject.name = :subject_name
-								AND subject.number = :subject_number
-								AND university.name = :university_name
-								AND section.number = :number
-								AND section.call_number = :call_number RETURNING section.id`
+	SectionUpdateQuery = `UPDATE section SET (max, now, status, credits) = (:max, :now, :status, :credits) WHERE topic_name = :topic_name RETURNING section.id`
 
-	MeetingExistQuery = `SELECT id FROM meeting
-						WHERE section_id = :section_id AND index = :index`
+	MeetingExistQuery = `SELECT id FROM meeting WHERE section_id = :section_id AND index = :index`
 
 	MeetingUpdateQuery = `UPDATE meeting SET (room, day, start_time, end_time, class_type) = (:room, :day, :start_time, :end_time, :class_type)
 					WHERE section_id = :section_id AND index = :index
@@ -739,26 +686,8 @@ var (
 					   WHERE metadata.meeting_id = :meeting_id AND metadata.title = :title
 		               RETURNING metadata.id`
 
-	SerialSubjectUpdateQuery = `UPDATE subject SET data = :data FROM university
-						WHERE subject.university_id = university.id
-							AND university.name = :university_name
-							AND subject.name = :name
-							AND subject.number = :number
-							AND subject.year = :year
-							AND subject.season = :season
-						RETURNING subject.id`
-
-	SerialCourseUpdateQuery = `UPDATE course SET data = :data FROM subject JOIN university
-						ON university.id = subject.university_id
-							WHERE subject.id = course.subject_id
-							AND course.name = :name
-							AND course.number = :number
-							AND subject.year = :subject_year
-							AND subject.season = :subject_season
-							AND subject.name = :subject_name
-							AND subject.number = :subject_number
-							AND university.name = :university_name
-                    	RETURNING course.id`
+	SerialSubjectUpdateQuery = `UPDATE subject SET data = :data WHERE topic_name = :topic_name RETURNING subject.id`
+	SerialCourseUpdateQuery  = `UPDATE course SET data = :data WHERE topic_name = :topic_name RETURNING course.id`
 )
 
 type ChannelSubjects struct {

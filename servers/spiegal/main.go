@@ -131,7 +131,7 @@ func courseHandler(c *gin.Context) {
 		c.Set("protobuf", b)
 		c.Set("object", course)
 	} else {
-		courses := uct.Courses{Courses:SelectCourses(subjectTopicName)}
+		courses := uct.Courses{Courses: SelectCourses(subjectTopicName)}
 		b, err := proto.Marshal(&courses)
 		uct.CheckError(err)
 		c.Set("protobuf", b)
@@ -195,11 +195,13 @@ func writeJsonHeaders(w gin.ResponseWriter) {
 
 var ()
 
-func SelectUniversity(universityName string) (university uct.University) {
-	if err := Get(SelectUniversityQuery, &university, uct.Unique{UniversityName: universityName}); err != nil {
+func SelectUniversity(topicName string) (university uct.University) {
+	defer uct.TimeTrack(time.Now(), "SelectUniversity: ")
+	m := map[string]interface{}{"topic_name": topicName}
+	if err := Get(SelectUniversityQuery, &university, m); err != nil {
 		uct.CheckError(err)
 	}
-	s := GetAvailableSemesters(universityName)
+	s := GetAvailableSemesters(topicName)
 	university.AvailableSemesters = s
 	university.Metadata = SelectMetadata(university.Id, 0, 0, 0, 0)
 
@@ -207,7 +209,7 @@ func SelectUniversity(universityName string) (university uct.University) {
 }
 
 func SelectUniversities() (universities []*uct.University) {
-	if err := Select(ListUniversitiesQuery, &universities, uct.Unique{}); err != nil {
+	if err := Select(ListUniversitiesQuery, &universities, nil); err != nil {
 		uct.CheckError(err)
 	}
 
@@ -219,10 +221,11 @@ func SelectUniversities() (universities []*uct.University) {
 	return
 }
 
-func GetAvailableSemesters(universityName string) (semesters []*uct.Semester) {
+func GetAvailableSemesters(topicName string) (semesters []*uct.Semester) {
 	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters: ")
 	s := []uct.Semester{}
-	if err := Select(GetAvailableSemestersQuery, &s, uct.Unique{UniversityName: universityName}); err != nil {
+	m := map[string]interface{}{"topic_name": topicName}
+	if err := Select(GetAvailableSemestersQuery, &s, m); err != nil {
 		uct.CheckError(err)
 	}
 	return
@@ -428,7 +431,7 @@ var (
 	SelectUniversityQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university WHERE topic_name = :topic_name ORDER BY name`
 	ListUniversitiesQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university ORDER BY name`
 	GetAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
-									WHERE university.name = :university_name GROUP BY season, year`
+									WHERE university.topic_name = :topic_name GROUP BY season, year`
 
 	SelectProtoSubjectQuery = `SELECT data FROM subject WHERE topic_name = :topic_name`
 
