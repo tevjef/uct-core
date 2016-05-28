@@ -391,7 +391,7 @@ func (section *RSection) clean() {
 		section.MeetingTimes[i].clean()
 	}
 
-	sort.Stable(MeetingByClass(section.MeetingTimes))
+	sort.Sort(MeetingByClass(section.MeetingTimes))
 }
 
 func (meeting *RMeetingTime) clean() {
@@ -403,12 +403,14 @@ func (meeting *RMeetingTime) clean() {
 	meeting.EndTime = meeting.getMeetingHourEnd()
 
 	if meeting.StartTime != "" {
-		meeting.PStartTime = &meeting.StartTime
+		t := meeting.StartTime
+		meeting.PStartTime = &t
 	} else {
 		meeting.PStartTime = nil
 	}
 	if meeting.EndTime != "" {
-		meeting.PEndTime = &meeting.EndTime
+		t := meeting.EndTime
+		meeting.PEndTime = &t
 	} else {
 		meeting.PEndTime = nil
 	}
@@ -506,7 +508,7 @@ func (section RSection) metadata() (metadata []*uct.Metadata) {
 	if len(section.ExamCode) > 0 {
 		metadata = append(metadata, &uct.Metadata{
 			Title:   "Exam Code",
-			Content: section.ExamCode,
+			Content: getExamCode(section.ExamCode),
 		})
 	}
 
@@ -585,25 +587,37 @@ func (meeting MeetingByClass) Swap(i, j int) {
 }
 
 func (meeting MeetingByClass) Less(i, j int) bool {
-	if meeting[i].dayRank() == meeting[j].dayRank() {
-		if meeting[i].classRank() == meeting[j].classRank() {
-			return IsAfter(meeting[i].StartTime, meeting[j].StartTime)
-		}
-		return meeting[i].classRank() < meeting[j].classRank()
+	if meeting[i].isByArrangement() {
+		return false
 	}
-	return meeting[i].dayRank() < meeting[j].dayRank()
+	if meeting[j].isByArrangement() {
+		return true
+	}
+	if meeting[i].isRecitation() {
+		return false
+	}
+	if meeting[j].isRecitation() {
+		return true
+	}
+	day1 := meeting[i].dayRank()
+	day2 := meeting[j].dayRank()
+
+	if day1 <= day2 {
+		return true
+	}
+	return false
 }
 
 func (meeting RMeetingTime) classRank() int {
 	if meeting.isLecture() {
 		return 1
-	} else if meeting.isRecitation() {
-		return 2
-	} else if meeting.isByArrangement() {
-		return 3
-	} else if meeting.isLab() {
-		return 4
 	} else if meeting.isStudio() {
+		return 2
+	} else if meeting.isRecitation() {
+		return 3
+	} else if meeting.isByArrangement() {
+		return 4
+	} else if meeting.isLab() {
 		return 5
 	}
 	return 99

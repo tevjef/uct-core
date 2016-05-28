@@ -69,7 +69,15 @@ const (
 
 func TestResolveSemesters(t *testing.T) {
 
-	semesters := ResolveSemesters(time.Date(2015, time.December, 24, 0, 0, 0, 0, time.UTC), rutgers)
+	semesters := ResolveSemesters(time.Now(), rutgers)
+	assert.Equal(t, 2016, int(semesters.Last.Year))
+	assert.Equal(t, SPRING, semesters.Last.Season)
+	assert.Equal(t, 2016, int(semesters.Current.Year))
+	assert.Equal(t, SUMMER, semesters.Current.Season)
+	assert.Equal(t, 2016, int(semesters.Next.Year))
+	assert.Equal(t, FALL, semesters.Next.Season)
+
+	semesters = ResolveSemesters(time.Date(2015, time.December, 24, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2015, int(semesters.Last.Year))
 	assert.Equal(t, WINTER, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))

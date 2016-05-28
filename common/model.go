@@ -102,7 +102,7 @@ const (
 	FALL   = "fall"
 	SPRING = "spring"
 	SUMMER = "summer"
-	WINTER = "fall"
+	WINTER = "winter"
 )
 
 const (
@@ -654,12 +654,12 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	// For each newer subject
 
 	for s := range newSubjects {
-		Log(fmt.Sprintf("%s Subject index: %d \t %s | %s %s\n", oldSubjects[s].Season, s, oldSubjects[s].Name, newSubjects[s].Name, oldSubjects[s].Number == newSubjects[s].Number))
 		// If current index is out of range of the old subjects[] break and add every subject
 		if s >= len(oldSubjects) {
 			filteredSubjects = newSubjects
 			break
 		}
+		Log(fmt.Sprintf("%s Subject index: %d \t %s | %s %s\n", oldSubjects[s].Season, s, oldSubjects[s].Name, newSubjects[s].Name, oldSubjects[s].Number == newSubjects[s].Number))
 		// If newSubject != oldSubject, log why, then drill deeper to filter out ones tht haven't changed
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
 			Log("Subject differs!")
@@ -667,14 +667,13 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
 			for c := range newCourses {
-				Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
-				if oldCourses[c].Number != newCourses[c].Number {
-					fmt.Printf("%s %s", oldCourses[c].Name, newCourses[c].Name)
-				}
-
 				if c >= len(oldCourses) {
 					filteredCourses = newCourses
 					break
+				}
+				Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
+				if oldCourses[c].Number != newCourses[c].Number {
+					fmt.Printf("%s %s", oldCourses[c].Name, newCourses[c].Name)
 				}
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
 					Log("Course differs!")
@@ -688,7 +687,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							break
 						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							Log("Section: ", err)
+							Log("Section: ", newSections[e].CallNumber, " | ", oldSections[e].CallNumber, err)
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}

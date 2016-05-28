@@ -145,3 +145,16 @@ func IsAfter(t1, t2 string) bool {
 	}
 	return t1[:2] < t2[:2]
 }
+
+func getExamCode(code string) string {
+	switch code {
+	case "A":
+		return "By Arrangement"
+	case "O":
+		return "No Exam"
+	case "S":
+		return "Single Day starting 6:00pm or later and Saturday Courses"
+	default:
+		return "Group Exam"
+	}
+}
