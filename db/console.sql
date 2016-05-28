@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS public.instructor
   updated_at TIMESTAMP,
   CONSTRAINT instructor__pk PRIMARY KEY (id),
   CONSTRAINT instructor_section_id__fk FOREIGN KEY (section_id) REFERENCES public.section (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT unique_instructor_name__section_id UNIQUE (name, section_id)
+  CONSTRAINT unique_instructor_index UNIQUE (section_id, index)
 
 )WITH (OIDS = FALSE);
 
@@ -412,7 +412,7 @@ DECLARE
   _temp jsonb;
 BEGIN
 
-  SELECT university.*
+  SELECT university.id, university.name, abbr, main_color, abbr, home_page, registration_page, university.topic_name
   INTO _university
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -420,7 +420,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT subject.*
+  SELECT subject.id, subject.university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name
   INTO _subject
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -428,7 +428,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT course.*
+  SELECT course.id, course.subject_id, course.number, course.name, course.synopsis, course.topic_name
   INTO _course
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -474,35 +474,3 @@ EXECUTE PROCEDURE public.notify_status_change();
 COMMIT;
 
 CREATE extension pg_stat_statements;
-
-/*
-WITH available AS (
-SELECT university_id, season, year FROM subject WHERE university_id IN(SELECT id FROM university) GROUP BY season, year, university_id),
-  universities AS (
-    SELECT * FROM university
-)
-
-SELECT ARRAY (SELECT university_id, season, year FROM subject WHERE university_id IN(SELECT id FROM university) GROUP BY season, year, university_id)
-
-
-SELECT season, year FROM subject WHERE id IN(SELECT id FROM university) GROUP BY season, year;
-SELECT * FROM university;
-
-
-UPDATE section SET now = 1, status = 'Open' WHERE status = 'Closed' AND id < 3000;
-UPDATE section SET now = 1, status = 'Closed' WHERE status = 'Open' AND id < 3000;
-
-SELECT count(*), section.status, subject.season, subject.year, university.topic_name university, subject.topic_name subject, course.topic_name course
-FROM section
-  JOIN course ON section.course_id = course.id
-  JOIN subject ON course.subject_id = subject.id
-  JOIN university ON subject.university_id = university.id
-GROUP BY subject.season, subject.year, university, subject, section.status, course
-ORDER BY subject, university, season, year;
-
-SELECT * FROM section;
-
-SELECT * FROM metadata WHERE course_id = '19501';
-
-SELECT * FROM section WHERE call_number = '90030'*//*
-
