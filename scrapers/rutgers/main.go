@@ -162,11 +162,14 @@ func getCampus(campus string) uct.University {
 		for i, _ := range subjects {
 			wg.Add(1)
 			go func(sub *RSubject) {
+				defer func() {
+					wg.Done()
+				}()
 				courses := getCourses(sub.Number, campus, ThisSemester)
 				for j, _ := range courses {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
-				wg.Done()
+
 			}(&subjects[i])
 
 		}
@@ -306,18 +309,20 @@ func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
 
 func getCourses(subject, campus string, semester uct.Semester) (courses []RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
-	uct.Log("GET  ", url)
-	resp, err := http.Get(url)
-	if err != nil {
-		uct.Log(err)
-		return
-	}
 
-	dec := json.NewDecoder(resp.Body)
-	defer resp.Body.Close()
-	if err := dec.Decode(&courses); err == io.EOF {
-	} else if err != nil {
-		uct.Log(err)
+	for i := 0; i < 3; i++ {
+		uct.Log("GET  ", url)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Printf("Retrying %s after error: %s\n", i, err)
+			continue
+		}
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(&courses); err != nil && err != io.EOF {
+			log.Printf("Retrying %s after error: %s\n", i, err)
+			continue
+		}
+		break
 	}
 
 	for i, _ := range courses {
