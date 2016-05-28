@@ -216,13 +216,13 @@ func influxLog() {
 				fmt.Println("InfluxDB log: ", tags, fields)
 			}()
 		case <-time.NewTicker(time.Minute).C:
-			err := influxClient.Write(bp)
-			uct.CheckError(err)
-			bp, err = client.NewBatchPoints(client.BatchPointsConfig{
-				Database:  "universityct",
-				Precision: "s",
-			})
-			uct.CheckError(err)
+			/*	err := influxClient.Write(bp)
+				uct.CheckError(err)
+				bp, err = client.NewBatchPoints(client.BatchPointsConfig{
+					Database:  "universityct",
+					Precision: "s",
+				})
+				uct.CheckError(err)*/
 		}
 	}
 }
