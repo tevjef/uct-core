@@ -543,7 +543,7 @@ func audit() {
 				upserts, existential, subjectCount,
 				courseCount, sectionCount, meetingCount, metadataCount}
 			insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount = 0, 0, 0, 0, 0, 0, 0, 0, 0
-
+			stats.audit()
 			stats.Log()
 		}
 	}

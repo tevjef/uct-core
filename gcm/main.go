@@ -71,7 +71,7 @@ func waitForNotification(l *pq.Listener) {
 					err := json.Unmarshal([]byte(notification.Extra), &pgNotification)
 					uct.CheckError(err)
 					// Log notification
-					//messageLog <- pgNotification
+					messageLog <- pgNotification
 					// Process and send notification, free workRoutine when done.
 					recvNotification(pgNotification, sem)
 				}()
@@ -167,7 +167,7 @@ func sendNotification(message uct.GCMMessage) (err error) {
 }
 
 func influxLog() {
-	_, err := client.NewHTTPClient(client.HTTPConfig{
+	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     uct.INFLUX_HOST,
 		Username: uct.INFLUX_USER,
 		Password: uct.INFLUX_PASS,
@@ -215,15 +215,15 @@ func influxLog() {
 				bp.AddPoint(point)
 				fmt.Println("InfluxDB log: ", tags, fields)
 			}()
-			/*case <-time.NewTicker(time.Minute).C:
+		case <-time.NewTicker(time.Minute).C:
 
 			err := influxClient.Write(bp)
-				uct.CheckError(err)
-				bp, err = client.NewBatchPoints(client.BatchPointsConfig{
-					Database:  "universityct",
-					Precision: "s",
-				})
-				uct.CheckError(err)*/
+			uct.CheckError(err)
+			bp, err = client.NewBatchPoints(client.BatchPointsConfig{
+				Database:  "universityct",
+				Precision: "s",
+			})
+			uct.CheckError(err)
 		}
 	}
 }
