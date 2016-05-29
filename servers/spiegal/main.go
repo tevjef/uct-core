@@ -40,6 +40,8 @@ func main() {
 
 	database = uct.InitDB(uct.GetUniversityDB())
 
+	database.SetMaxOpenConns(30)
+
 	PrepareAllStmts()
 
 	r := gin.Default()
@@ -209,7 +211,8 @@ func SelectUniversity(topicName string) (university uct.University) {
 }
 
 func SelectUniversities() (universities []*uct.University) {
-	if err := Select(ListUniversitiesQuery, &universities, nil); err != nil {
+	m := map[string]interface{}{}
+	if err := Select(ListUniversitiesQuery, &universities, m); err != nil {
 		uct.CheckError(err)
 	}
 
@@ -341,17 +344,24 @@ func SelectBooks(sectionId int64) (books []*uct.Book) {
 
 func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*uct.Metadata) {
 	defer uct.TimeTrack(time.Now(), "SelectMetadata")
+	m := map[string]interface{}{
+		"university_id": universityId,
+		"subject_id":    subjectId,
+		"course_id":     courseId,
+		"section_id":    sectionId,
+		"meeting_id":    meetingId,
+	}
 	var err error
 	if universityId != 0 {
-		err = Select(UniversityMetadataQuery, &metadata, universityId)
+		err = Select(UniversityMetadataQuery, &metadata, m)
 	} else if subjectId != 0 {
-		err = Select(SubjectMetadataQuery, &metadata, subjectId)
+		err = Select(SubjectMetadataQuery, &metadata, m)
 	} else if courseId != 0 {
-		err = Select(CourseMetadataQuery, &metadata, courseId)
+		err = Select(CourseMetadataQuery, &metadata, m)
 	} else if sectionId != 0 {
-		err = Select(SectionMetadataQuery, &metadata, sectionId)
+		err = Select(SectionMetadataQuery, &metadata, m)
 	} else if meetingId != 0 {
-		err = Select(MeetingMetadataQuery, &metadata, meetingId)
+		err = Select(MeetingMetadataQuery, &metadata, m)
 	}
 	uct.CheckError(err)
 	return
