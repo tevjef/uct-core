@@ -629,7 +629,7 @@ func (meeting MeetingByClass) Less(i, j int) bool {
 	if day1 <= day2 {
 		return true
 	}
-	return false
+	return IsAfter(meeting[i].StartTime, meeting[j].StartTime)
 }
 
 func (meeting RMeetingTime) classRank() int {
