@@ -330,6 +330,8 @@ func getCourses(subject, campus string, semester uct.Semester) (courses []RCours
 		for j, _ := range courses[i].Sections {
 			courses[i].Sections[j].clean()
 		}
+
+		sort.Sort(sectionSorter{courses[i].Sections})
 	}
 	sort.Sort(courseSorter{courses})
 
@@ -541,6 +543,22 @@ func (section RSection) metadata() (metadata []*uct.Metadata) {
 	return
 }
 
+type sectionSorter struct {
+	sections []RSection
+}
+
+func (a sectionSorter) Len() int {
+	return len(a.sections)
+}
+
+func (a sectionSorter) Swap(i, j int) {
+	a.sections[i], a.sections[j] = a.sections[j], a.sections[i]
+}
+
+func (a sectionSorter) Less(i, j int) bool {
+	return a.sections[i].Index < a.sections[j].Index
+}
+
 type courseSorter struct {
 	courses []RCourse
 }
@@ -559,12 +577,13 @@ func (a courseSorter) Less(i, j int) bool {
 	var hash = func(s []RSection) string {
 		var buffer bytes.Buffer
 		for i := range s {
+			buffer.WriteString(s[i].Index)
 			buffer.WriteString(s[i].SectionNotes)
 			buffer.WriteString(s[i].Subtitle)
 		}
 		return buffer.String()
 	}
-	return (c1.Title + c1.CourseNumber + strconv.Itoa(int(c1.Credits)) + strconv.Itoa(len(c1.Sections)) + hash(c1.Sections)) < (c2.Title + c2.CourseNumber + strconv.Itoa(int(c2.Credits)) + strconv.Itoa(len(c2.Sections)) + hash(c2.Sections))
+	return (c1.Title + c1.CourseNumber + hash(c1.Sections) + strconv.Itoa(int(c1.Credits))) < (c2.Title + c2.CourseNumber + hash(c2.Sections) + strconv.Itoa(int(c2.Credits)))
 }
 
 type commentSorter struct {
