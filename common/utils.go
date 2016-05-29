@@ -149,7 +149,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.Printf("%s took %s", name, elapsed)
+	log.Printf("%s took %s\n", name, elapsed)
 }
 
 // stack returns a nicely formated stack frame, skipping skip frames
