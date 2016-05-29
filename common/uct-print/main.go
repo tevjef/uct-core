@@ -32,15 +32,24 @@ func main() {
 	}
 
 	var university uct.University
+
+	uct.UnmarshallMessage(*format, input, &university)
+
 	if *format == "json" {
-		io.Copy(os.Stderr, input)
+		if *out != "" {
+			io.Copy(os.Stdout, input)
+		}
 	} else if *format == "protobuf" {
-		uct.UnmarshallMessage(*format, input, &university)
-		log.Println(proto.MarshalTextString(&university))
+		if *out != "" {
+			log.Println(proto.MarshalTextString(&university))
+		}
 	}
 
 	if *out != "" {
 		output := uct.MarshalMessage(*out, university)
+		io.Copy(os.Stdout, output)
+	} else {
+		output := uct.MarshalMessage(*format, university)
 		io.Copy(os.Stdout, output)
 	}
 }

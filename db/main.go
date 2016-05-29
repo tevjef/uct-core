@@ -383,12 +383,17 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
 		panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 	} else {
+		count := 0
 		for rows.Next() {
+			count++
 			if err = rows.Scan(&id); err != nil {
 				panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
 			}
 			rows.Close()
 			uct.Log("Update: ", typeName, " ", id)
+		}
+		if count > 1 {
+			panic(fmt.Errorf("type: %s query: %s data %s err: %s %d", typeName, query, data, "Multiple rows updated at once", count))
 		}
 	}
 
@@ -405,15 +410,22 @@ func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, dat
 }
 
 func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
+	typeName := fmt.Sprintf("%T", data)
 	existentialCh <- 1
 
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
 		log.Panicln(err)
 	} else {
+		count := 0
 		for rows.Next() {
+			count++
 			if err = rows.Scan(&id); err != nil {
 				log.Panicln(err)
 			}
+			uct.Log("Exists: ", typeName, " ", id)
+		}
+		if count > 1 {
+			panic(fmt.Errorf("type: %s query: %s data %s err: %s %d", typeName, query, data, "Multiple rows updated at once", count))
 		}
 	}
 
@@ -442,7 +454,7 @@ func (stats AuditStats) Log() {
 	uct.Log("Subjects: ", stats.subjectCount)
 	uct.Log("Courses: ", stats.courseCount)
 	uct.Log("Sections: ", stats.sectionCount)
-	uct.Log("Meetings: ", stats.metadataCount)
+	uct.Log("Meetings: ", stats.meetingCount)
 	uct.Log("Metadata: ", stats.metadataCount)
 }
 

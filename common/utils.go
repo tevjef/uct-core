@@ -294,7 +294,7 @@ func CheckUniqueCourse(subject *Subject, courses []*Course) {
 		key := course.Name + course.Number
 		m[key]++
 		if m[key] > 1 {
-			Log("subject", subject.Name, subject.Season)
+			Log("Subject ", subject.Name, " in ", subject.Season)
 			Log("Duplicate course found: ", key, " c:", m[key])
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
 		}

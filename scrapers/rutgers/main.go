@@ -354,17 +354,17 @@ func getRutgersSemester(semester uct.Semester) string {
 }
 
 func (course *RCourse) clean() {
-	// Open Sections
-	num := 0
-	for _, val := range course.Sections {
-		if !(val.Printed == "Y") && val.OpenStatus {
-			num++
-		}
-	}
-	course.OpenSections = course.OpenSections - num
-
 	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
 		return section.Printed == "Y"
+	})
+
+	m := map[string]int{}
+
+	// Filter duplicate sections, yes it happens e.g Fall 2016 NB Biochem Engin SR DESIGN I PROJECTS
+	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
+		key := section.Index + section.Number
+		m[key]++
+		return m[key] <= 1
 	})
 
 	course.ExpandedTitle = uct.TrimAll(course.ExpandedTitle)
