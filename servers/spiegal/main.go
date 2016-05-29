@@ -10,7 +10,6 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -50,108 +49,80 @@ func main() {
 	v2 := r.Group("/v2")
 	v2.Use(protobufWriter())
 
-	v1.GET("/university", universityHandler)
-	v1.GET("/subject", subjectHandler)
-	v1.GET("/course", courseHandler)
-	v1.GET("/section", sectionHandler)
+	v1.GET("/university/:topic", universityHandler)
+	v1.GET("/subject/:topic/:season/:year", subjectHandler)
+	v1.GET("/course/:topic", courseHandler)
+	v1.GET("/section/:topic", sectionHandler)
+	v1.GET("/universities", universitiesHandler)
+	v1.GET("/subjects/:university", subjectsHandler)
+	v1.GET("/courses/:subject", coursesHandler)
 
 	v2.GET("/university", universityHandler)
 	v2.GET("/subject", subjectHandler)
 	v2.GET("/course", courseHandler)
 	v2.GET("/section", sectionHandler)
+	v2.GET("/universities", universitiesHandler)
+	v2.GET("/subjects/:university", subjectsHandler)
+	v2.GET("/courses/:subject", coursesHandler)
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
 
 func universityHandler(c *gin.Context) {
-	topicName := c.DefaultQuery("university_topic_name", "")
+	topicName := c.Param("topic")
+	u := SelectUniversity(topicName)
+	b, err := proto.Marshal(&u)
+	uct.CheckError(err)
+	c.Set("protobuf", b)
+	c.Set("object", u)
+}
 
-	if topicName != "" {
-		u := SelectUniversity(topicName)
-		b, err := proto.Marshal(&u)
-		uct.CheckError(err)
-		c.Set("protobuf", b)
-		c.Set("object", u)
-	} else {
-		u := uct.Universities{Universities: SelectUniversities()}
-		b, err := proto.Marshal(&u)
-		uct.CheckError(err)
-		c.Set("protobuf", b)
-		c.Set("object", u)
-	}
+func universitiesHandler(c *gin.Context) {
+	u := uct.Universities{Universities: SelectUniversities()}
+	b, err := proto.Marshal(&u)
+	uct.CheckError(err)
+	c.Set("protobuf", b)
+	c.Set("object", u)
 }
 
 func subjectHandler(c *gin.Context) {
-	season := c.Query("season")
-	year := c.Query("year")
-	uniTopicName := c.Query("university_topic_name")
-	subjectTopicName := c.Query("subject_topic_name")
+	subjectTopicName := c.Param("topic")
+	sub, b := SelectSubject(subjectTopicName)
+	c.Set("protobuf", b)
+	c.Set("object", sub)
+}
 
-	if _, err := strconv.ParseInt(year, 10, 64); err != nil {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Could not parse parameter: year=%s", year)
-		return
-	}
+func subjectsHandler(c *gin.Context) {
+	season := c.Param("season")
+	year := c.Param("year")
+	uniTopicName := c.Param("topic")
 
-	if season == "" {
-		c.String(http.StatusBadRequest, "Must provide the season parameter")
-		return
-	}
-
-	if uniTopicName == "" {
-		c.String(http.StatusBadRequest, "Must provide a university_topic_name parameter")
-		return
-	}
-
-	if subjectTopicName != "" {
-		sub, b := SelectSubject(subjectTopicName)
-		c.Set("protobuf", b)
-		c.Set("object", sub)
-	} else {
-		s := uct.Subjects{Subjects: SelectSubjects(uniTopicName, season, year)}
-		b, err := proto.Marshal(&s)
-		uct.CheckError(err)
-		c.Set("protobuf", b)
-		c.Set("object", s)
-	}
+	s := uct.Subjects{Subjects: SelectSubjects(uniTopicName, season, year)}
+	b, err := proto.Marshal(&s)
+	uct.CheckError(err)
+	c.Set("protobuf", b)
+	c.Set("object", s)
 }
 
 func courseHandler(c *gin.Context) {
-	subjectTopicName := c.Query("subject_topic_name")
-	courseTopicName := c.Query("course_topic_name")
+	courseTopicName := c.Param("topic")
 
-	var err error
+	course, b := SelectCourse(courseTopicName)
+	c.Set("protobuf", b)
+	c.Set("object", course)
+}
 
-	if subjectTopicName == "" {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Must provide the subject_topic_name parameter")
-		return
-	}
-
-	if courseTopicName != "" {
-		course, b := SelectCourse(courseTopicName)
-		c.Set("protobuf", b)
-		c.Set("object", course)
-	} else {
-		courses := uct.Courses{Courses: SelectCourses(subjectTopicName)}
-		b, err := proto.Marshal(&courses)
-		uct.CheckError(err)
-		c.Set("protobuf", b)
-		c.Set("object", courses)
-	}
+func coursesHandler(c *gin.Context) {
+	subjectTopicName := c.Param("topic")
+	courses := uct.Courses{Courses: SelectCourses(subjectTopicName)}
+	b, err := proto.Marshal(&courses)
+	uct.CheckError(err)
+	c.Set("protobuf", b)
+	c.Set("object", courses)
 }
 
 func sectionHandler(c *gin.Context) {
-	sectionTopicName := c.Query("section_topic_name")
-
-	var err error
-
-	if sectionTopicName == "" {
-		c.Error(err)
-		c.String(http.StatusBadRequest, "Must provide the section_topic_name parameter")
-		return
-	}
-
+	sectionTopicName := c.Query("topic")
 	s := SelectSection(sectionTopicName)
 	b, err := proto.Marshal(&s)
 	uct.CheckError(err)
