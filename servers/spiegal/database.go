@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"github.com/jmoiron/sqlx"
 	"time"
 	uct "uct/common"

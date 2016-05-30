@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/gogo/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/pquerna/ffjson/ffjson"
@@ -23,81 +21,12 @@ import (
 	"time"
 )
 
-const (
-	Empty         = ""
-	IndexNotFound = -1
-)
-
 var trim = strings.TrimSpace
-
-func substringAfter(str, separator string) string {
-	if isEmpty(str) {
-		return str
-	}
-	pos := strings.Index(str, separator)
-	if pos == IndexNotFound {
-		return Empty
-	}
-	return str[pos+len(separator):]
-}
-
-func substringAfterLast(str, separator string) string {
-	if isEmpty(str) {
-		return str
-	}
-	if isEmpty(separator) {
-		return Empty
-	}
-	pos := strings.LastIndex(str, separator)
-	if pos == IndexNotFound || pos == len(str)-len(separator) {
-		return Empty
-	}
-	return str[pos+len(separator):]
-}
-
-func substringBefore(str, separator string) string {
-	if isEmpty(str) {
-		return str
-	}
-	pos := strings.Index(str, separator)
-	if pos == IndexNotFound {
-		return str
-	}
-	return str[:pos]
-}
-
-func substringBeforeLast(str, separator string) string {
-	if isEmpty(str) || isEmpty(separator) {
-		return str
-	}
-	pos := strings.LastIndex(str, separator)
-	if pos == IndexNotFound {
-		return Empty
-	}
-	return str[:pos]
-}
 
 func CheckError(err error) {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func isEmpty(str string) bool {
-	return len(str) == 0
-}
-
-//ToNullString invalidates a sql.NullString if empty, validates if not empty
-func ToNullString(s string) sql.NullString {
-	return sql.NullString{String: s, Valid: s != ""}
-}
-
-func ToNullFloat64(f float64) sql.NullFloat64 {
-	return sql.NullFloat64{Float64: f, Valid: f != 0}
-}
-
-func ToNullBool(b bool) sql.NullBool {
-	return sql.NullBool{Bool: b, Valid: true}
 }
 
 func ToNullInt64(i int64) sql.NullInt64 {
@@ -119,12 +48,6 @@ func ToFloat64(str string) float64 {
 
 func FloatToString(format string, num float64) string {
 	return fmt.Sprintf(format, num)
-}
-
-func getDummyDoc(filename string) *goquery.Document {
-	file, _ := ioutil.ReadFile(filename)
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(file))
-	return doc
 }
 
 func Log(v ...interface{}) {
@@ -252,7 +175,7 @@ func MarshalMessage(format string, m University) *bytes.Reader {
 			log.Fatalln("Failed to encode message:", err)
 		}
 	} else if format == "protobuf" {
-		out, err = proto.Marshal(&m)
+		out, err = m.Marshal()
 		if err != nil {
 			log.Fatalln("Failed to encode message:", err)
 		}
@@ -260,7 +183,7 @@ func MarshalMessage(format string, m University) *bytes.Reader {
 	return bytes.NewReader(out)
 }
 
-func UnmarshallMessage(format string, r io.Reader, m *University) {
+func UnmarshallMessage(format string, r io.Reader, m *University) error {
 	if format == "json" {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(r, &*m); err != nil {
@@ -268,13 +191,14 @@ func UnmarshallMessage(format string, r io.Reader, m *University) {
 		}
 	} else if format == "protobuf" {
 		data, err := ioutil.ReadAll(r)
-		if err = proto.Unmarshal(data, &*m); err != nil {
+		if err = m.Unmarshal(data); err != nil {
 			log.Fatalln("Failed to unmarshal message:", err)
 		}
 	}
 	if m.Equal(University{}) {
-		log.Fatalln("Failed to unmarshal message:", "empty data")
+		return fmt.Errorf("%s Reason %s", "Failed to unmarshal message:", "empty data")
 	}
+	return nil
 }
 
 func CheckUniqueSubject(subjects []*Subject) {
@@ -326,6 +250,7 @@ func ValidateAll(uni *University) {
 				instructors := section.Instructors
 				for instructorIndex := range instructors {
 					instructor := instructors[instructorIndex]
+					instructor.Index = int32(instructorIndex)
 					instructor.Validate()
 				}
 
@@ -333,6 +258,7 @@ func ValidateAll(uni *University) {
 				meetings := section.Meetings
 				for meetingIndex := range meetings {
 					meeting := meetings[meetingIndex]
+					meeting.Index = int32(meetingIndex)
 					meeting.Validate()
 
 					// Meeting []Metadata

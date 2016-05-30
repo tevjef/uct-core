@@ -19,6 +19,23 @@ type App struct {
 	dbHandler DatabaseHandler
 }
 
+type Serial struct {
+	TopicName string `db:"topic_name"`
+	Data      []byte `db:"data"`
+}
+
+type SerialSubject struct {
+	Serial
+}
+
+type SerialCourse struct {
+	Serial
+}
+
+type SerialSection struct {
+	Serial
+}
+
 var (
 	app        = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
@@ -53,8 +70,8 @@ func main() {
 
 	oldUniversity := new(uct.University)
 	old := bufio.NewReader(*oldFile)
-	uct.UnmarshallMessage(*format, old, oldUniversity)
-
+	err := uct.UnmarshallMessage(*format, old, oldUniversity)
+	log.Println(err)
 	// If an old version was supplied, prepare it for the database
 	if *oldFile != nil {
 		uct.ValidateAll(oldUniversity)
@@ -75,13 +92,13 @@ func main() {
 
 	// Start logging with influx
 	go audit()
+	app.updateSerial(*newUniversity)
 
 	// Was originally designed to insert an array of universities.
 	startAudit <- university.TopicName
 	app.insertUniversity(&university)
 	endAudit <- true
 
-	app.updateSerial(*newUniversity)
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
@@ -90,30 +107,43 @@ func main() {
 
 }
 
+func (app App) updateSerialSubject(subject *uct.Subject) {
+	data, err := subject.Marshal()
+	uct.CheckError(err)
+	arg := SerialSubject{Serial{TopicName: subject.TopicName, Data: data}}
+	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+}
+
+func (app App) updateSerialCourse(course *uct.Course) {
+	data, err := course.Marshal()
+	uct.CheckError(err)
+	arg := SerialCourse{Serial{TopicName: course.TopicName, Data: data}}
+	app.dbHandler.update(SerialCourseUpdateQuery, arg)
+}
+
+func (app App) updateSerialSection(section *uct.Section) {
+	data, err := section.Marshal()
+	uct.CheckError(err)
+	arg := SerialSection{Serial{TopicName: section.TopicName, Data: data}}
+	app.dbHandler.update(SerialSectionUpdateQuery, arg)
+}
+
 func (app App) updateSerial(uni uct.University) {
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
-		data, err := subject.Marshal()
-		uct.CheckError(err)
-
-		arg := map[string]interface{}{
-			"topic_name": subject.TopicName,
-			"data":       data,
-		}
-		app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+		app.updateSerialSubject(subject)
 
 		for courseIndex := range subject.Courses {
 			course := subject.Courses[courseIndex]
 
-			data, err := course.Marshal()
-			uct.CheckError(err)
+			app.updateSerialCourse(course)
 
-			arg := map[string]interface{}{
-				"data":       data,
-				"topic_name": course.TopicName,
+			for sectionIndex := range course.Sections {
+				section := course.Sections[sectionIndex]
+
+				app.updateSerialSection(section)
 			}
-			app.dbHandler.update(SerialCourseUpdateQuery, arg)
 		}
 	}
 }
@@ -603,7 +633,8 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 		MetaMeetingInsertQuery,
 		MetaMeetingUpdateQuery,
 		SerialSubjectUpdateQuery,
-		SerialCourseUpdateQuery}
+		SerialCourseUpdateQuery,
+		SerialSectionUpdateQuery}
 
 	for _, query := range queries {
 		preparedStmts[query] = dbHandler.prepare(query)
@@ -722,6 +753,7 @@ var (
 
 	SerialSubjectUpdateQuery = `UPDATE subject SET data = :data WHERE topic_name = :topic_name RETURNING subject.id`
 	SerialCourseUpdateQuery  = `UPDATE course SET data = :data WHERE topic_name = :topic_name RETURNING course.id`
+	SerialSectionUpdateQuery = `UPDATE section SET data = :data WHERE topic_name = :topic_name RETURNING section.id`
 )
 
 type ChannelSubjects struct {

@@ -533,13 +533,6 @@ func (section RSection) metadata() (metadata []*uct.Metadata) {
 		})
 	}
 
-	if len(section.CampusCode) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Campus Code",
-			Content: section.CampusCode,
-		})
-	}
-
 	return
 }
 

@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS public.section
   credits NUMERIC,
   topic_name TEXT,
   topic_id text,
+  data BYTEA,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT section__pk PRIMARY KEY (id),
