@@ -53,7 +53,10 @@ func main() {
 	}
 
 	go uct.StartPprof(*server)
+	// Start logging with influx
+	go audit()
 
+	startAudit <- true
 	var input *bufio.Reader
 	if *newFile != nil {
 		input = bufio.NewReader(*newFile)
@@ -90,11 +93,8 @@ func main() {
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
 
-	// Start logging with influx
-	go audit()
-
 	// Was originally designed to insert an array of universities.
-	startAudit <- university.TopicName
+
 	app.insertUniversity(&university)
 	app.updateSerial(*newUniversity)
 	endAudit <- true
@@ -172,6 +172,8 @@ func (app App) insertUniversity(uni *uct.University) {
 
 				section.CourseId = courseId
 				sectionId := app.insertSection(section)
+				// Make section data available as soon as possible
+				app.updateSerialSection(section)
 
 				//[]Instructors
 				instructors := section.Instructors
@@ -539,9 +541,10 @@ func audit() {
 	var startTime time.Time
 	for {
 		select {
-		case s := <-startAudit:
-			university = s
+		case <-startAudit:
 			startTime = time.Now()
+		case s := <-uniName:
+			university = s
 		case t1 := <-insertionsCh:
 			insertions += t1
 		case t2 := <-updatesCh:
@@ -775,6 +778,7 @@ var (
 	meetingCountCh  = make(chan int)
 	metadataCountCh = make(chan int)
 	endAudit        = make(chan bool)
-	startAudit      = make(chan string)
+	startAudit      = make(chan bool)
+	uniName         = make(chan string)
 	pointTime       = time.Now()
 )
