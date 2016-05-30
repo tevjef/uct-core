@@ -15,7 +15,7 @@ import (
 	uct "uct/common"
 )
 
-type app struct {
+type App struct {
 	dbHandler DatabaseHandler
 }
 
@@ -88,7 +88,7 @@ func main() {
 
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
-	app := app{dbHandler: dbHandler}
+	app := App{dbHandler: dbHandler}
 
 	// Start logging with influx
 	go audit()
@@ -106,7 +106,7 @@ func main() {
 
 }
 
-func (app app) updateSerial(uni uct.University) {
+func (app App) updateSerial(uni uct.University) {
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
@@ -126,28 +126,28 @@ func (app app) updateSerial(uni uct.University) {
 	}
 }
 
-func (app app) updateSerialSubject(subject *uct.Subject) {
+func (app App) updateSerialSubject(subject *uct.Subject) {
 	data, err := subject.Marshal()
 	uct.CheckError(err)
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
 	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 }
 
-func (app app) updateSerialCourse(course *uct.Course) {
+func (app App) updateSerialCourse(course *uct.Course) {
 	data, err := course.Marshal()
 	uct.CheckError(err)
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
 	app.dbHandler.update(SerialCourseUpdateQuery, arg)
 }
 
-func (app app) updateSerialSection(section *uct.Section) {
+func (app App) updateSerialSection(section *uct.Section) {
 	data, err := section.Marshal()
 	uct.CheckError(err)
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
 	app.dbHandler.update(SerialSectionUpdateQuery, arg)
 }
 
-func (app app) insertUniversity(uni *uct.University) {
+func (app App) insertUniversity(uni *uct.University) {
 	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
@@ -248,7 +248,7 @@ func (app app) insertUniversity(uni *uct.University) {
 	}
 }
 
-func (app app) insertSubject(sub *uct.Subject) (subject_id int64) {
+func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
 	//sub.VetAndBuild()
 	if !*fullUpsert {
 
@@ -269,7 +269,7 @@ func (app app) insertSubject(sub *uct.Subject) (subject_id int64) {
 	return subject_id
 }
 
-func (app app) insertCourse(course *uct.Course) (course_id int64) {
+func (app App) insertCourse(course *uct.Course) (course_id int64) {
 	if !*fullUpsert {
 
 		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
@@ -281,11 +281,11 @@ func (app app) insertCourse(course *uct.Course) (course_id int64) {
 	return course_id
 }
 
-func (app app) insertSection(section *uct.Section) (section_id int64) {
+func (app App) insertSection(section *uct.Section) (section_id int64) {
 	return app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 }
 
-func (app app) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
+func (app App) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
 	if !*fullUpsert {
 		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
 			return
@@ -294,24 +294,24 @@ func (app app) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
 	return app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 }
 
-func (app app) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
+func (app App) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
 	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
 		return
 	}
 	return app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 }
 
-func (app app) insertBook(book *uct.Book) (book_id int64) {
+func (app App) insertBook(book *uct.Book) (book_id int64) {
 	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return book_id
 }
 
-func (app app) insertRegistration(registration *uct.Registration) int64 {
+func (app App) insertRegistration(registration *uct.Registration) int64 {
 	return app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 }
 
-func (app app) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
+func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 	var insertQuery string
 	var updateQuery string
 
