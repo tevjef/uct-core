@@ -78,7 +78,7 @@ func main() {
 	go audit()
 
 	// Was originally designed to insert an array of universities.
-	startAudit <- true
+	startAudit <- university.TopicName
 	app.insertUniversity(&university)
 	endAudit <- true
 
@@ -149,7 +149,6 @@ func (app App) insertUniversity(uni *uct.University) {
 				instructors := section.Instructors
 				for instructorIndex := range instructors {
 					instructor := instructors[instructorIndex]
-					instructor.Index = int32(instructorIndex)
 					instructor.SectionId = sectionId
 					app.insertInstructor(instructor)
 				}
@@ -161,7 +160,6 @@ func (app App) insertUniversity(uni *uct.University) {
 					meeting := meetings[meetingIndex]
 
 					meeting.SectionId = sectionId
-					meeting.Index = int32(meetingIndex)
 					meetingId := app.insertMeeting(meeting)
 
 					// Meeting []Metadata
@@ -459,6 +457,12 @@ func (stats AuditStats) Log() {
 }
 
 func (stats AuditStats) audit() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from influx error", r, string(uct.Stack(3)))
+		}
+	}()
+
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  "universityct",
 		Precision: "s",
@@ -518,7 +522,8 @@ func audit() {
 	var startTime time.Time
 	for {
 		select {
-		case <-startAudit:
+		case s := <-startAudit:
+			university = s
 			startTime = time.Now()
 		case t1 := <-insertionsCh:
 			insertions += t1
@@ -539,9 +544,20 @@ func audit() {
 		case t9 := <-metadataCountCh:
 			metadataCount += t9
 		case <-endAudit:
-			stats := AuditStats{influxClient, university, time.Since(startTime), insertions, updates,
-				upserts, existential, subjectCount,
-				courseCount, sectionCount, meetingCount, metadataCount}
+			stats := AuditStats{
+				influxClient:  influxClient,
+				uniName:       university,
+				elapsed:       time.Since(startTime),
+				insertions:    insertions,
+				updates:       updates,
+				upserts:       upserts,
+				existential:   existential,
+				subjectCount:  subjectCount,
+				courseCount:   courseCount,
+				sectionCount:  sectionCount,
+				meetingCount:  meetingCount,
+				metadataCount: metadataCount}
+
 			insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount = 0, 0, 0, 0, 0, 0, 0, 0, 0
 			stats.audit()
 			stats.Log()
@@ -740,6 +756,6 @@ var (
 	meetingCountCh  = make(chan int)
 	metadataCountCh = make(chan int)
 	endAudit        = make(chan bool)
-	startAudit      = make(chan bool)
+	startAudit      = make(chan string)
 	pointTime       = time.Now()
 )
