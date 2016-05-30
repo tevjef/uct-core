@@ -37,11 +37,13 @@ CREATE TABLE IF NOT EXISTS public.university
   main_color text NOT NULL,
   accent_color text NOT NULL,
   topic_name text,
+  topic_id text,
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   CONSTRAINT university__pk PRIMARY KEY (id),
   CONSTRAINT unique_university_name UNIQUE (name),
-  CONSTRAINT unique_university_topic_name UNIQUE (topic_name)
+  CONSTRAINT unique_university_topic_name UNIQUE (topic_name),
+  CONSTRAINT unique_university_topic_id UNIQUE (topic_id)
 
 )WITH (OIDS = FALSE);
 
@@ -63,13 +65,15 @@ CREATE TABLE IF NOT EXISTS public.subject
   season season NOT NULL,
   year text NOT NULL,
   topic_name text,
+  topic_id text,
   data BYTEA,
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   CONSTRAINT subject__pk PRIMARY KEY (id),
   CONSTRAINT subject_university__fk FOREIGN KEY (university_id) REFERENCES public.university (id) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT unique_subject_name_number_year_season UNIQUE (university_id, name, number, year, season),
-  CONSTRAINT unique_subject_topic_name UNIQUE (topic_name)
+  CONSTRAINT unique_subject_topic_name UNIQUE (topic_name),
+  CONSTRAINT unique_subject_topic_id UNIQUE (topic_id)
 
 )WITH (OIDS = FALSE);
 
@@ -95,13 +99,15 @@ CREATE TABLE IF NOT EXISTS public.course
   number TEXT NOT NULL,
   synopsis TEXT,
   topic_name TEXT NOT NULL,
+  topic_id text,
   data BYTEA,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT course__pk PRIMARY KEY (id),
   CONSTRAINT course_subject__fk FOREIGN KEY (subject_id) REFERENCES public.subject (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT unique_course_name_number UNIQUE (subject_id, name, number),
-  CONSTRAINT unique_course_topic_name UNIQUE (topic_name)
+  CONSTRAINT unique_course_topic_name UNIQUE (topic_name),
+  CONSTRAINT unique_course_topic_id UNIQUE (topic_id)
 
 )WITH (OIDS = FALSE);
 
@@ -126,12 +132,14 @@ CREATE TABLE IF NOT EXISTS public.section
   status status NOT NULL,
   credits NUMERIC,
   topic_name TEXT,
+  topic_id text,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT section__pk PRIMARY KEY (id),
   CONSTRAINT section_course_id__fk FOREIGN KEY (course_id) REFERENCES public.course (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT unique_number_call_number UNIQUE (course_id, number, call_number),
-  CONSTRAINT unique_section_topic_name UNIQUE (topic_name)
+  CONSTRAINT unique_section_topic_name UNIQUE (topic_name),
+  CONSTRAINT unique_section_topic_id UNIQUE (topic_id)
 
 )WITH (OIDS = FALSE);
 
