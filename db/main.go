@@ -517,7 +517,6 @@ func (stats AuditStats) audit() {
 
 	err = stats.influxClient.Write(bp)
 	uct.CheckError(err)
-	log.WithFields(log.Fields{"tag": tags, "fields": fields}).Info("Influx log")
 }
 
 func audit() {

@@ -209,7 +209,6 @@ func influxLog() {
 				)
 				uct.CheckError(err)
 				bp.AddPoint(point)
-				log.WithFields(log.Fields{"tag": tags, "fields": fields}).Info("Influx log")
 			}()
 		case <-time.NewTicker(time.Minute).C:
 
