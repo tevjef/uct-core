@@ -612,8 +612,8 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 }
 
 var (
-	UniversityInsertQuery = `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name)
-                    VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
+	UniversityInsertQuery = `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id)
+                    VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name, :topic_id)
                     RETURNING university.id`
 	UniversityUpdateQuery = `UPDATE university SET (abbr, home_page, registration_page, main_color, accent_color, topic_name) =
 	                (:abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
@@ -622,18 +622,18 @@ var (
 
 	SubjectExistQuery = `SELECT subject.id FROM subject WHERE topic_name = :topic_name`
 
-	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name)
-                   	VALUES  (:university_id, :name, :number, :season, :year, :topic_name)
+	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name, topic_id)
+                   	VALUES  (:university_id, :name, :number, :season, :year, :topic_name, :topic_id)
                    	RETURNING subject.id`
 
 	SubjectUpdateQuery = SubjectExistQuery
 
-	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, topic_name) VALUES  (:subject_id, :name, :number, :synopsis, :topic_name) RETURNING course.id`
+	CourseInsertQuery = `INSERT INTO course (subject_id, name, number, synopsis, topic_name, topic_id) VALUES  (:subject_id, :name, :number, :synopsis, :topic_name, :topic_id) RETURNING course.id`
 	CourseExistQuery  = `SELECT course.id FROM course WHERE topic_name = :topic_name`
 	CourseUpdateQuery = `UPDATE course SET (synopsis) = (:synopsis) WHERE topic_name = :topic_name RETURNING course.id`
 
-	SectionInsertQuery = `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name)
-                    VALUES  (:course_id, :number, :call_number, :max, :now, :status, :credits, :topic_name)
+	SectionInsertQuery = `INSERT INTO section (course_id, number, call_number, max, now, status, credits, topic_name, topic_id)
+                    VALUES (:course_id, :number, :call_number, :max, :now, :status, :credits, :topic_name, :topic_id)
                     RETURNING section.id`
 
 	SectionUpdateQuery = `UPDATE section SET (max, now, status, credits) = (:max, :now, :status, :credits) WHERE topic_name = :topic_name RETURNING section.id`

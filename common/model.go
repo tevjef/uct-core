@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -136,11 +137,10 @@ func toTopicName(str string) string {
 	return str
 }
 
-func toTopicId(str string) uint64 {
-	str = toTopicName(str)
+func toTopicId(str string) string {
 	h := fnv.New64a()
 	h.Write([]byte(str))
-	return h.Sum64()
+	return strconv.FormatUint(h.Sum64(), 10)
 }
 
 func toTitle(str string) string {
@@ -209,6 +209,8 @@ func (u *University) Validate() {
 	}
 
 	u.TopicName = toTopicName(u.Name)
+	u.TopicId = toTopicId(u.TopicName)
+
 }
 
 func (sub *Subject) Validate(uni *University) {
@@ -225,6 +227,7 @@ func (sub *Subject) Validate(uni *University) {
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
 	sub.TopicName = toTopicName(sub.TopicName)
+	sub.TopicId = toTopicId(sub.TopicName)
 	sort.Sort(courseSorter{sub.Courses})
 }
 
@@ -256,7 +259,7 @@ func (course *Course) Validate(subject *Subject) {
 	course.TopicName = course.Number + "." + course.Name
 	course.TopicName = subject.TopicName + "." + course.TopicName
 	course.TopicName = toTopicName(course.TopicName)
-
+	course.TopicId = toTopicId(course.TopicName)
 	sort.Stable(sectionSorter{course.Sections})
 }
 
@@ -294,9 +297,9 @@ func (section *Section) Validate(course *Course) {
 		log.Panic("Credits == is empty")
 	}
 
-	section.TopicName = section.Number + "." + section.CallNumber
+	section.TopicName = course.TopicName + "." + section.Number + "." + section.CallNumber
 	section.TopicName = toTopicName(section.TopicName)
-
+	section.TopicId = toTopicId(section.TopicName)
 	//sort.Stable(meetingSorter{section.Meetings})
 	sort.Stable(instructorSorter{section.Instructors})
 
