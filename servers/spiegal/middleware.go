@@ -49,13 +49,14 @@ func jsonWriter() gin.HandlerFunc {
 func errorWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		debug := c.DefaultQuery("debug", "false")
-		debugBool, _ := strconv.ParseBool(debug)
-		if debugBool {
-			c.String(500, "%s", c.Errors.String())
-		} else {
-			c.String(500, "%s ", "500: Internal server error")
+		if len(c.Errors) != 0 {
+			debug := c.DefaultQuery("debug", "false")
+			debugBool, _ := strconv.ParseBool(debug)
+			if debugBool {
+				c.String(500, "%s", c.Errors.String())
+			} else {
+				c.String(500, "%s ", "500 internal server error")
+			}
 		}
-
 	}
 }
