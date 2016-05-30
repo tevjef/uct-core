@@ -32,11 +32,28 @@ message University {
     repeated Metadata metadata = 13;
 }
 
+
 message Response {
+    optional Meta meta = 1;
+    optional Data data = 2;
+}
+
+message Meta {
+    optional string error_type = 1;
+    optional string error_message = 2;
+    optional int32 code = 3;
+}
+
+message Data {
     optional Universities universities = 1;
     optional Subjects subjects = 2;
     optional Courses courses = 3;
     optional Sections sections = 4;
+    optional University university = 5;
+    optional Subject subject = 6;
+    optional Course course = 7;
+    optional Section section = 8;
+
 }
 
 message Universities {
