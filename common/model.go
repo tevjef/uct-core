@@ -1,10 +1,9 @@
 package common
 
 import (
-	"bytes"
-	"crypto/sha1"
 	"fmt"
 	"golang.org/x/exp/utf8string"
+	"hash/fnv"
 	"log"
 	"net/url"
 	"regexp"
@@ -121,36 +120,46 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
-func (s Subject) hash(uni University) string {
-	var buffer bytes.Buffer
-	buffer.WriteString(uni.Name)
-	buffer.WriteString(s.Name)
-	buffer.WriteString(s.Number)
-	buffer.WriteString(s.Season)
-	buffer.WriteString(s.Year)
+func toTopicName(str string) string {
+	regex, err := regexp.Compile("[^A-Za-z0-9-_.~% ]+")
+	CheckError(err)
+	str = trim(regex.ReplaceAllString(str, ""))
 
-	h := fmt.Sprintf("%x", sha1.Sum([]byte(buffer.String())))
-	/*	if len(h) >= 64 {
-		return h[:64]
-	}*/
-	return h
+	regex, err = regexp.Compile("\\s+")
+	CheckError(err)
+	str = regex.ReplaceAllString(str, ".")
+
+	regex, err = regexp.Compile("[.]+")
+	CheckError(err)
+	str = regex.ReplaceAllString(str, ".")
+
+	return str
 }
 
-func (c Course) hash(uni University, sub Subject) string {
-	var buffer bytes.Buffer
-	for _, section := range c.Sections {
-		buffer.WriteString(uni.Name)
-		buffer.WriteString(sub.Name)
-		buffer.WriteString(section.CallNumber)
-		buffer.WriteString(section.Number)
+func toTopicId(str string) uint64 {
+	str = toTopicName(str)
+	h := fnv.New64a()
+	h.Write([]byte(str))
+	return h.Sum64()
+}
+
+func toTitle(str string) string {
+	str = strings.Title(strings.ToLower(str))
+
+	for i := len(str) - 1; i != 0; i-- {
+		if strings.LastIndex(str, "i") == i {
+			str = swapChar(str, "I", i)
+		} else {
+			break
+		}
 	}
-	buffer.WriteString(c.Name)
-	buffer.WriteString(c.Number)
-	h := fmt.Sprintf("%x", sha1.Sum([]byte(buffer.String())))
-	/*	if len(h) >= 64 {
-		return h[:64]
-	}*/
-	return h
+	return str
+}
+
+func swapChar(s, char string, index int) string {
+	left := s[:index]
+	right := s[index+1:]
+	return left + char + right
 }
 
 func (u *University) Validate() {
@@ -158,10 +167,6 @@ func (u *University) Validate() {
 	if u.Name == "" {
 		log.Panic("University name == is empty")
 	}
-	u.Name = strings.Replace(u.Name, "_", " ", -1)
-	u.Name = strings.Replace(u.Name, ".", " ", -1)
-	u.Name = strings.Replace(u.Name, "~", " ", -1)
-	u.Name = strings.Replace(u.Name, "%", " ", -1)
 
 	// Abbr
 	if u.Abbr == "" {
@@ -203,17 +208,7 @@ func (u *University) Validate() {
 		log.Panic("Registration != 12 ")
 	}
 
-	// TopicName
-	regex, err := regexp.Compile("\\s+")
-	CheckError(err)
-	u.TopicName = regex.ReplaceAllString(u.Name, ".")
-	regex, err = regexp.Compile("[^A-Za-z0-9]+")
-	CheckError(err)
-	u.TopicName = trim(regex.ReplaceAllString(u.TopicName, "."))
-	limit := 25
-	if len(u.TopicName) >= limit {
-		u.TopicName = u.TopicName[:limit]
-	}
+	u.TopicName = toTopicName(u.Name)
 }
 
 func (sub *Subject) Validate(uni *University) {
@@ -221,35 +216,15 @@ func (sub *Subject) Validate(uni *University) {
 	if sub.Name == "" {
 		log.Panic("Subject name == is empty")
 	}
-	sub.Name = strings.Title(strings.ToLower(sub.Name))
-	sub.Name = strings.Replace(sub.Name, "_", " ", -1)
-	sub.Name = strings.Replace(sub.Name, "~", " ", -1)
-	sub.Name = strings.Replace(sub.Name, "%", " ", -1)
-
-	// Abbr
-	/*if sub.Number == "" {
-		regex, err := regexp.Compile("[^A-Z]")
-		CheckError(err)
-		sub.Number = trim(regex.ReplaceAllString(sub.Name, ""))
-	}*/
-	if len(sub.Number) > 3 {
-		sub.Number = sub.Number[:3]
-	}
+	sub.Name = toTitle(sub.Name)
 
 	if len(sub.Courses) == 0 {
 		Log("No courses in subject", sub)
 	}
 
 	// TopicName
-	regex, err := regexp.Compile("\\s+")
-	CheckError(err)
-	sub.TopicName = sub.Number + " " + sub.Name + " " + sub.Season + " " + sub.Year
-	sub.TopicName = regex.ReplaceAllString(sub.TopicName, ".")
-	regex, err = regexp.Compile("[.]+")
-	CheckError(err)
-	sub.TopicName = trim(regex.ReplaceAllString(sub.TopicName, "."))
-
-	sub.TopicName = uni.TopicName + "__" + sub.TopicName
+	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
+	sub.TopicName = toTopicName(sub.TopicName)
 	sort.Sort(courseSorter{sub.Courses})
 }
 
@@ -259,12 +234,9 @@ func (course *Course) Validate(subject *Subject) {
 		log.Panic("Course name == is empty", course)
 	}
 
-	course.Name = strings.Title(strings.ToLower(course.Name))
-	course.Name = strings.Replace(course.Name, "_", " ", -1)
-	course.Name = strings.Replace(course.Name, "~", " ", -1)
-	course.Name = strings.Replace(course.Name, "%", " ", -1)
-
 	course.Name = TrimAll(course.Name)
+	course.Name = toTitle(course.Name)
+
 	// Number
 	if course.Number == "" {
 		log.Panic("Number == is empty")
@@ -278,19 +250,13 @@ func (course *Course) Validate(subject *Subject) {
 		course.Synopsis = &temp
 		temp = utf8string.NewString(*course.Synopsis).String()
 		course.Synopsis = &temp
-
 	}
 
 	// TopicName
-	regex, err := regexp.Compile("\\s+")
-	CheckError(err)
-	course.TopicName = course.Number + " " + course.Name
-	course.TopicName = regex.ReplaceAllString(course.TopicName, ".")
-	regex, err = regexp.Compile("[.]+")
-	CheckError(err)
-	course.TopicName = trim(regex.ReplaceAllString(course.TopicName, "."))
+	course.TopicName = course.Number + "." + course.Name
+	course.TopicName = subject.TopicName + "." + course.TopicName
+	course.TopicName = toTopicName(course.TopicName)
 
-	course.TopicName = subject.TopicName + "__" + course.TopicName
 	sort.Stable(sectionSorter{course.Sections})
 }
 
@@ -328,8 +294,9 @@ func (section *Section) Validate(course *Course) {
 		log.Panic("Credits == is empty")
 	}
 
-	section.TopicName = section.Number + "_" + section.CallNumber
-	section.TopicName = course.TopicName + "__" + section.TopicName
+	section.TopicName = section.Number + "." + section.CallNumber
+	section.TopicName = toTopicName(section.TopicName)
+
 	//sort.Stable(meetingSorter{section.Meetings})
 	sort.Stable(instructorSorter{section.Instructors})
 

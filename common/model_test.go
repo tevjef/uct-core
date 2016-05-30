@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"sort"
@@ -8,52 +9,52 @@ import (
 	"time"
 )
 
-var rutgers = []Registration{
-	Registration{
+var rutgers = []*Registration{
+	&Registration{
 		Period:     SEM_FALL.String(),
 		PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     SEM_SPRING.String(),
 		PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     SEM_SUMMER.String(),
 		PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     SEM_WINTER.String(),
 		PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     START_FALL.String(),
 		PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     START_SPRING.String(),
 		PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     START_SUMMER.String(),
 		PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     START_WINTER.String(),
 		PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     END_FALL.String(),
 		PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     END_SPRING.String(),
 		PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     END_SUMMER.String(),
 		PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	Registration{
+	&Registration{
 		Period:     END_WINTER.String(),
 		PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 	}}
@@ -202,23 +203,70 @@ func TestMeetingSorter(t *testing.T) {
 		log.Printf("%s != %s", meetings[0].Day, &m)
 		t.Fail()
 	}
-	/*for i := range meetings {
-		switch i {
-		case 0:
-			if meetings[0].Day != &m {
-				log.Printf("%s != %s", meetings[0].Day,&m)
-				t.Fail()
-			}
-		case 1:
-			if meetings[1].Day != &tu {
-				log.Printf("%s != %s", meetings[1].Day,&tu)
-				t.Fail()
-			}
-		case 2:
-			if meetings[2].Day != &w {
-				log.Printf("%s != %s", meetings[2].Day,&w)
-				t.Fail()
-			}
-		}
-	}*/
+}
+
+func TestToTitle(t *testing.T) {
+	str := "ART APPRECIATION VIIIII"
+	expect := "Art Appreciation VIIIII"
+
+	result := toTitle(str)
+	assert.Equal(t, expect, result)
+
+	str = "ART APPRECIATION V"
+	expect = "Art Appreciation V"
+
+	result = toTitle(str)
+	assert.Equal(t, expect, result)
+
+	str = "ART APPRECIATION VI"
+	expect = "Art Appreciation VI"
+
+	result = toTitle(str)
+	assert.Equal(t, expect, result)
+
+	str = "ART APPRECIATION II"
+	expect = "Art Appreciation II"
+
+	result = toTitle(str)
+	assert.Equal(t, expect, result)
+
+	str = "ART APPRECIATION I"
+	expect = "Art Appreciation I"
+
+	result = toTitle(str)
+	assert.Equal(t, expect, result)
+
+}
+
+func TestSwapChar(t *testing.T) {
+	str := "ART APPRECIATION VII"
+	expect := "ART aPPERCIATION VII"
+
+	result := swapChar(str, "a", 4)
+	assert.Equal(t, expect, result)
+
+	expect = "ART APPRECIATION VIi"
+
+	result = swapChar(str, "i", len(str)-1)
+	assert.Equal(t, expect, result)
+
+	expect = "aRT APPRECIATION VII"
+
+	result = swapChar(str, "a", 0)
+	assert.Equal(t, expect, result)
+}
+
+func TestTopicName(t *testing.T) {
+	str := "Rutgers University–New Brunswick"
+	str = toTopicName(str)
+	fmt.Printf("\n%s\n", str)
+	str = toTopicName(str)
+	fmt.Printf("\n%s\n", str)
+
+	str = "AFRICAN, M. EAST. & S. ASIAN LANG & LIT $ __ "
+	str = toTopicName(str)
+	fmt.Printf("\n%s\n", str)
+	str = toTopicName(str)
+	fmt.Printf("\n%s\n", str)
+
 }
