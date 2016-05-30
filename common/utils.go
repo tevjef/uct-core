@@ -272,6 +272,9 @@ func UnmarshallMessage(format string, r io.Reader, m *University) {
 			log.Fatalln("Failed to unmarshal message:", err)
 		}
 	}
+	if m.Equal(University{}) {
+		log.Fatalln("Failed to unmarshal message:", "empty data")
+	}
 }
 
 func CheckUniqueSubject(subjects []*Subject) {

@@ -13,7 +13,7 @@ var (
 	app    = kingpin.New("print", "An application to print and translate json and protobuf")
 	format = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
 	out    = app.Flag("output", "output format").Short('o').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").String()
-	file   = app.Arg("input", "file to print").File()
+	file   = app.Arg("input", "file to clean").File()
 )
 
 func main() {
