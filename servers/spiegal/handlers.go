@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gogo/protobuf/proto"
 	uct "uct/common"
 )
 
@@ -12,7 +11,7 @@ func universityHandler(c *gin.Context) {
 
 		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	} else {
-		if b, err := proto.Marshal(&u); err != nil {
+		if b, err := u.Marshal(); err != nil {
 
 			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 		} else {
@@ -28,7 +27,7 @@ func universitiesHandler(c *gin.Context) {
 		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	} else {
 		universities := uct.Universities{Universities: universityList}
-		if b, err := proto.Marshal(&universities); err != nil {
+		if b, err := universities.Marshal(); err != nil {
 
 			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 		} else {
@@ -60,7 +59,7 @@ func subjectsHandler(c *gin.Context) {
 		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	} else {
 		s := uct.Subjects{Subjects: subjects}
-		if b, err := proto.Marshal(&s); err != nil {
+		if b, err := s.Marshal(); err != nil {
 			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 		} else {
 			c.Set("protobuf", b)
@@ -88,7 +87,7 @@ func coursesHandler(c *gin.Context) {
 		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	} else {
 		courses := uct.Courses{Courses: courseList}
-		if b, err := proto.Marshal(&courses); err != nil {
+		if b, err := courses.Marshal(); err != nil {
 			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 		} else {
 			c.Set("protobuf", b)
@@ -103,7 +102,7 @@ func sectionHandler(c *gin.Context) {
 	if s, err := SelectSection(sectionTopicName); err != nil {
 		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	} else {
-		if b, err := proto.Marshal(&s); err != nil {
+		if b, err := s.Marshal(); err != nil {
 			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 		} else {
 			c.Set("protobuf", b)

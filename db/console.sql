@@ -420,7 +420,7 @@ DECLARE
   _temp jsonb;
 BEGIN
 
-  SELECT university.id, university.name, abbr, main_color, abbr, home_page, registration_page, university.topic_name
+  SELECT university.id, university.name, abbr, main_color, abbr, home_page, registration_page, university.topic_name, university.topic_id
   INTO _university
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -428,7 +428,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT subject.id, subject.university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name
+  SELECT subject.id, subject.university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name, subject.topic_id
   INTO _subject
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -436,7 +436,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT course.id, course.subject_id, course.number, course.name, course.synopsis, course.topic_name
+  SELECT course.id, course.subject_id, course.number, course.name, course.synopsis, course.topic_name,course.topic_id
   INTO _course
   FROM university
     JOIN subject ON university.id = subject.university_id
@@ -444,7 +444,7 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
-  SELECT section.id, section.course_id, section.number, section.call_number, section.now, section.max, section.status, section.credits::TEXT, section.topic_name, subject.created_at, section.updated_at
+  SELECT section.id, section.course_id, section.number, section.call_number, section.now, section.max, section.status, section.credits::TEXT, section.topic_name,section.topic_id, subject.created_at, section.updated_at
   INTO _section
   FROM university
     JOIN subject ON university.id = subject.university_id

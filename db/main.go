@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -95,7 +94,7 @@ func (app App) updateSerial(uni uct.University) {
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
-		data, err := proto.Marshal(subject)
+		data, err := subject.Marshal()
 		uct.CheckError(err)
 
 		arg := map[string]interface{}{
@@ -107,7 +106,7 @@ func (app App) updateSerial(uni uct.University) {
 		for courseIndex := range subject.Courses {
 			course := subject.Courses[courseIndex]
 
-			data, err := proto.Marshal(course)
+			data, err := course.Marshal()
 			uct.CheckError(err)
 
 			arg := map[string]interface{}{

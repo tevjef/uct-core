@@ -13,6 +13,10 @@ var (
 	preparedStmts = make(map[string]*sqlx.NamedStmt)
 )
 
+type Data struct {
+	Data []byte `db:"data"`
+}
+
 func SelectUniversity(topicName string) (university uct.University, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectUniversity:")
 	m := map[string]interface{}{"topic_name": topicName}
@@ -57,10 +61,6 @@ func GetAvailableSemesters(topicName string) (semesters []*uct.Semester, err err
 	return
 }
 
-type Data struct {
-	Data []byte `db:"data"`
-}
-
 func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectProtoSubject:")
 	m := map[string]interface{}{"topic_name": subjectTopicName}
@@ -69,7 +69,7 @@ func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err 
 		return
 	}
 	b = d.Data
-	err = proto.Unmarshal(d.Data, &subject)
+	err = subject.Unmarshal(d.Data)
 	return
 }
 
@@ -88,7 +88,7 @@ func SelectCourse(courseTopicName string) (course uct.Course, b []byte, err erro
 		return
 	}
 	b = d.Data
-	err = proto.Unmarshal(b, &course)
+	err = course.Unmarshal(b)
 	return
 }
 
@@ -103,7 +103,7 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 
 	for i := range d {
 		c := uct.Course{}
-		if err = proto.Unmarshal(d[i].Data, &c); err != nil {
+		if err = c.Unmarshal(d[i].Data); err != nil {
 			return
 		}
 		courses = append(courses, &c)
