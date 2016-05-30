@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"log"
 	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
@@ -15,25 +15,25 @@ import (
 	uct "uct/common"
 )
 
-type App struct {
+type app struct {
 	dbHandler DatabaseHandler
 }
 
-type Serial struct {
+type serial struct {
 	TopicName string `db:"topic_name"`
 	Data      []byte `db:"data"`
 }
 
-type SerialSubject struct {
-	Serial
+type serialSubject struct {
+	serial
 }
 
-type SerialCourse struct {
-	Serial
+type serialCourse struct {
+	serial
 }
 
-type SerialSection struct {
-	Serial
+type serialSection struct {
+	serial
 }
 
 var (
@@ -69,36 +69,35 @@ func main() {
 	uct.ValidateAll(newUniversity)
 
 	oldUniversity := new(uct.University)
-	old := bufio.NewReader(*oldFile)
-	err := uct.UnmarshallMessage(*format, old, oldUniversity)
-	log.Println(err)
-	// If an old version was supplied, prepare it for the database
-	if *oldFile != nil {
-		uct.ValidateAll(oldUniversity)
-	}
 
 	// If an old version was supplied diff the old and new to create a new university
 	if *oldFile != nil {
+		old := bufio.NewReader(*oldFile)
+		if err := uct.UnmarshallMessage(*format, old, oldUniversity); err != nil {
+			log.Debug(err)
+		}
+		uct.ValidateAll(oldUniversity)
 		university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
 	} else {
 		university = *newUniversity
 	}
 
 	// Initialize database connection
-	database := uct.InitDB(uct.GetUniversityDB())
+	database, err := uct.InitDB(uct.GetUniversityDB())
+	uct.CheckError(err)
+
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
-	app := App{dbHandler: dbHandler}
+	app := app{dbHandler: dbHandler}
 
 	// Start logging with influx
 	go audit()
-	app.updateSerial(*newUniversity)
 
 	// Was originally designed to insert an array of universities.
 	startAudit <- university.TopicName
 	app.insertUniversity(&university)
+	app.updateSerial(*newUniversity)
 	endAudit <- true
-
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
@@ -107,28 +106,7 @@ func main() {
 
 }
 
-func (app App) updateSerialSubject(subject *uct.Subject) {
-	data, err := subject.Marshal()
-	uct.CheckError(err)
-	arg := SerialSubject{Serial{TopicName: subject.TopicName, Data: data}}
-	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
-}
-
-func (app App) updateSerialCourse(course *uct.Course) {
-	data, err := course.Marshal()
-	uct.CheckError(err)
-	arg := SerialCourse{Serial{TopicName: course.TopicName, Data: data}}
-	app.dbHandler.update(SerialCourseUpdateQuery, arg)
-}
-
-func (app App) updateSerialSection(section *uct.Section) {
-	data, err := section.Marshal()
-	uct.CheckError(err)
-	arg := SerialSection{Serial{TopicName: section.TopicName, Data: data}}
-	app.dbHandler.update(SerialSectionUpdateQuery, arg)
-}
-
-func (app App) updateSerial(uni uct.University) {
+func (app app) updateSerial(uni uct.University) {
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
@@ -148,7 +126,28 @@ func (app App) updateSerial(uni uct.University) {
 	}
 }
 
-func (app App) insertUniversity(uni *uct.University) {
+func (app app) updateSerialSubject(subject *uct.Subject) {
+	data, err := subject.Marshal()
+	uct.CheckError(err)
+	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
+	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+}
+
+func (app app) updateSerialCourse(course *uct.Course) {
+	data, err := course.Marshal()
+	uct.CheckError(err)
+	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
+	app.dbHandler.update(SerialCourseUpdateQuery, arg)
+}
+
+func (app app) updateSerialSection(section *uct.Section) {
+	data, err := section.Marshal()
+	uct.CheckError(err)
+	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
+	app.dbHandler.update(SerialSectionUpdateQuery, arg)
+}
+
+func (app app) insertUniversity(uni *uct.University) {
 	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
@@ -249,7 +248,7 @@ func (app App) insertUniversity(uni *uct.University) {
 	}
 }
 
-func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
+func (app app) insertSubject(sub *uct.Subject) (subject_id int64) {
 	//sub.VetAndBuild()
 	if !*fullUpsert {
 
@@ -270,7 +269,7 @@ func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
 	return subject_id
 }
 
-func (app App) insertCourse(course *uct.Course) (course_id int64) {
+func (app app) insertCourse(course *uct.Course) (course_id int64) {
 	if !*fullUpsert {
 
 		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
@@ -282,45 +281,37 @@ func (app App) insertCourse(course *uct.Course) (course_id int64) {
 	return course_id
 }
 
-func (app App) insertSection(section *uct.Section) (section_id int64) {
-	section_id = app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
-	return section_id
+func (app app) insertSection(section *uct.Section) (section_id int64) {
+	return app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 }
 
-func (app App) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
+func (app app) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
 	if !*fullUpsert {
 		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
 			return
 		}
 	}
-	meeting_id = app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
-	return meeting_id
+	return app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 }
 
-func (app App) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
+func (app app) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
 	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
 		return
 	}
-
-	instructor_id = app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
-
-	return instructor_id
+	return app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 }
 
-func (app App) insertBook(book *uct.Book) (book_id int64) {
+func (app app) insertBook(book *uct.Book) (book_id int64) {
 	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return book_id
 }
 
-func (app App) insertRegistration(registration *uct.Registration) int64 {
-	var registration_id int64
-	registration_id = app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
-
-	return registration_id
+func (app app) insertRegistration(registration *uct.Registration) int64 {
+	return app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 }
 
-func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
+func (app app) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 	var insertQuery string
 	var updateQuery string
 
@@ -369,10 +360,7 @@ func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 		updateQuery = MetaMeetingUpdateQuery
 		insertQuery = MetaMeetingInsertQuery
 	}
-
-	metadata_id = app.dbHandler.upsert(insertQuery, updateQuery, metadata)
-
-	return metadata_id
+	return app.dbHandler.upsert(insertQuery, updateQuery, metadata)
 }
 
 type DatabaseHandler interface {
@@ -390,14 +378,14 @@ func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id 
 	insertionsCh <- 1
 	typeName := fmt.Sprintf("%T", data)
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
-		panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
+		log.WithFields(log.Fields{"db_op": "Insert", "type": typeName, "data": data}).Panic(err)
 	} else {
 		for rows.Next() {
 			if err = rows.Scan(&id); err != nil {
-				panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
+				log.WithFields(log.Fields{"db_op": "Insert", "type": typeName, "data": data}).Panic(err)
 			}
 			rows.Close()
-			uct.Log("Insert: ", typeName, " ", id)
+			log.WithFields(log.Fields{"db_op": "Insert", "type": typeName, "id": id}).Info()
 		}
 	}
 	return id
@@ -408,19 +396,19 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 	updatesCh <- 1
 
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
-		panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
+		log.WithFields(log.Fields{"db_op": "Update", "type": typeName, "data": data}).Panic(err)
 	} else {
 		count := 0
 		for rows.Next() {
 			count++
 			if err = rows.Scan(&id); err != nil {
-				panic(fmt.Errorf("type: %s query: %s data %s err: %s", typeName, query, data, err))
+				log.WithFields(log.Fields{"db_op": "Update", "type": typeName, "data": data}).Panic(err)
 			}
 			rows.Close()
-			uct.Log("Update: ", typeName, " ", id)
+			log.WithFields(log.Fields{"db_op": "Update", "type": typeName, "id": id}).Info()
 		}
 		if count > 1 {
-			panic(fmt.Errorf("type: %s query: %s data %s err: %s %d", typeName, query, data, "Multiple rows updated at once", count))
+			log.WithFields(log.Fields{"db_op": "Update", "type": typeName, "data": data}).Panic("Multiple rows updated at once")
 		}
 	}
 
@@ -441,18 +429,18 @@ func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id 
 	existentialCh <- 1
 
 	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
-		log.Panicln(err)
+		log.WithFields(log.Fields{"db_op": "Exists", "type": typeName, "data": data}).Panic(err)
 	} else {
 		count := 0
 		for rows.Next() {
 			count++
 			if err = rows.Scan(&id); err != nil {
-				log.Panicln(err)
+				log.WithFields(log.Fields{"db_op": "Exists", "type": typeName, "data": data}).Panic(err)
 			}
-			uct.Log("Exists: ", typeName, " ", id)
+			log.WithFields(log.Fields{"db_op": "Exists", "type": typeName, "id": id}).Info()
 		}
 		if count > 1 {
-			panic(fmt.Errorf("type: %s query: %s data %s err: %s %d", typeName, query, data, "Multiple rows updated at once", count))
+			log.WithFields(log.Fields{"db_op": "Exists", "type": typeName, "data": data}).Panic("Multple rows exists")
 		}
 	}
 
@@ -465,7 +453,7 @@ func GetCachedStmt(key string) (stmt *sqlx.NamedStmt) {
 
 func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 	if named, err := dbHandler.Database.PrepareNamed(query); err != nil {
-		uct.Log(query)
+		log.Debugln(query)
 		uct.CheckError(err)
 		return nil
 	} else {
@@ -474,21 +462,23 @@ func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 }
 
 func (stats AuditStats) Log() {
-	uct.Log("Insertions: ", stats.insertions)
-	uct.Log("Updates: ", stats.updates)
-	uct.Log("Upserts: ", stats.upserts)
-	uct.Log("Existential: ", stats.existential)
-	uct.Log("Subjects: ", stats.subjectCount)
-	uct.Log("Courses: ", stats.courseCount)
-	uct.Log("Sections: ", stats.sectionCount)
-	uct.Log("Meetings: ", stats.meetingCount)
-	uct.Log("Metadata: ", stats.metadataCount)
+	log.WithFields(log.Fields{
+		"Insertions":  stats.insertions,
+		"Updates":     stats.updates,
+		"Upserts":     stats.upserts,
+		"Existential": stats.existential,
+		"Subjects":    stats.subjectCount,
+		"Courses":     stats.courseCount,
+		"Sections":    stats.sectionCount,
+		"Meetings":    stats.meetingCount,
+		"Metadata":    stats.metadataCount,
+	}).Info("DB operations complete")
 }
 
 func (stats AuditStats) audit() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Println("Recovered from influx error", r, string(uct.Stack(3)))
+			log.Println("Recovered from influx error", r)
 		}
 	}()
 
@@ -527,8 +517,7 @@ func (stats AuditStats) audit() {
 
 	err = stats.influxClient.Write(bp)
 	uct.CheckError(err)
-
-	log.Println("InfluxDB logging: ", tags, fields)
+	log.WithFields(log.Fields{"tag": tags, "fields": fields}).Info("Influx log")
 }
 
 func audit() {

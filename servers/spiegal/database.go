@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"time"
 	uct "uct/common"
@@ -17,7 +18,7 @@ type Data struct {
 }
 
 func SelectUniversity(topicName string) (university uct.University, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectUniversity:")
+	defer uct.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
 	if err = Get(SelectUniversityQuery, &university, m); err != nil {
 		return
@@ -54,14 +55,14 @@ func SelectUniversities() (universities []*uct.University, err error) {
 }
 
 func GetAvailableSemesters(topicName string) (semesters []*uct.Semester, err error) {
-	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters:")
+	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(GetAvailableSemestersQuery, &semesters, m)
 	return
 }
 
 func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectProtoSubject:")
+	defer uct.TimeTrack(time.Now(), "SelectProtoSubject")
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := Data{}
 	if err = Get(SelectProtoSubjectQuery, &d, m); err != nil {
@@ -73,7 +74,7 @@ func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err 
 }
 
 func SelectSubjects(uniTopicName, season, year string) (subjects []*uct.Subject, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectSubjects:")
+	defer uct.TimeTrack(time.Now(), "SelectSubjects")
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ListSubjectQuery, &subjects, m)
 	return
@@ -92,10 +93,11 @@ func SelectCourse(courseTopicName string) (course uct.Course, b []byte, err erro
 }
 
 func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectCourses:")
+	defer uct.TimeTrack(time.Now(), "SelectCourses")
 	d := []Data{}
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 
+	log.WithFields(log.Fields{"query": ListCoursesQuery, "args": m}).Debug()
 	if err = Select(ListCoursesQuery, &d, m); err != nil {
 		return
 	}
@@ -112,7 +114,7 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 }
 
 func SelectSection(sectionTopicName string) (section uct.Section, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectSection:")
+	defer uct.TimeTrack(time.Now(), "SelectSection")
 
 	m := map[string]interface{}{"topic_name": sectionTopicName}
 
@@ -206,7 +208,7 @@ func GetCachedStmt(query string) *sqlx.NamedStmt {
 
 func Prepare(query string) *sqlx.NamedStmt {
 	if named, err := database.PrepareNamed(query); err != nil {
-		panic(fmt.Errorf("Error: %s Query: %s", query, err))
+		log.Panicln(fmt.Errorf("Error: %s Query: %s", query, err))
 		return nil
 	} else {
 		return named

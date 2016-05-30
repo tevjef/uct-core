@@ -5,15 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/pquerna/ffjson/ffjson"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
-	"os"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -22,6 +21,10 @@ import (
 )
 
 var trim = strings.TrimSpace
+
+func init() {
+	log.SetLevel(log.DebugLevel)
+}
 
 func CheckError(err error) {
 	if err != nil {
@@ -51,12 +54,11 @@ func FloatToString(format string, num float64) string {
 }
 
 func Log(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	log.Printf("%s[%s] %s\n", os.Args[0], strconv.Itoa(os.Getpid()), s)
+	log.Debugln(v...)
 }
 
 func LogVerbose(v interface{}) {
-	log.Printf("%s[%s] %#v\n", os.Args[0], strconv.Itoa(os.Getpid()), v)
+	log.Debugln(v)
 }
 
 func TrimAll(str string) string {
@@ -72,7 +74,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.Printf("%s took %s\n", name, elapsed)
+	log.WithFields(log.Fields{"name": name, "elapsed": elapsed}).Info("Latency")
 }
 
 // stack returns a nicely formated stack frame, skipping skip frames
@@ -144,26 +146,28 @@ func function(pc uintptr) []byte {
 }
 
 func StartPprof(host *net.TCPAddr) {
-	log.Println("**Starting debug server on...", (*host).String())
-	log.Println(http.ListenAndServe((*host).String(), nil))
+	log.Debug("**Starting debug server on...", (*host).String())
+	log.Debug(http.ListenAndServe((*host).String(), nil))
 }
 
-func InitDB(connection string) *sqlx.DB {
-	database, err := sqlx.Open("postgres", connection)
+func InitDB(connection string) (database *sqlx.DB, err error) {
+	database, err = sqlx.Open("postgres", connection)
 	if err != nil {
-		log.Fatalln(err)
+		err = fmt.Errorf("Failed to open postgres databse connection. %s", err)
 	}
-	return database
+	return
 }
 
-func InitTnfluxServer() client.Client {
-	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+func InitTnfluxServer() (influxClient client.Client, err error) {
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
 		Addr:     INFLUX_HOST,
 		Username: INFLUX_USER,
 		Password: INFLUX_PASS,
 	})
-	CheckError(err)
-	return influxClient
+	if err != nil {
+		err = fmt.Errorf("Failed to open influx databse connection. %s", err)
+	}
+	return
 }
 
 func MarshalMessage(format string, m University) *bytes.Reader {
@@ -208,7 +212,7 @@ func CheckUniqueSubject(subjects []*Subject) {
 		key := subject.Season + subject.Year + subject.Name
 		m[key]++
 		if m[key] > 1 {
-			Log("Duplicate subject found:", key, " c:", m[key])
+			log.WithFields(log.Fields{"key": key, "count": m[key]}).Info("Duplicate subject")
 			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
 		}
 	}
@@ -221,8 +225,11 @@ func CheckUniqueCourse(subject *Subject, courses []*Course) {
 		key := course.Name + course.Number
 		m[key]++
 		if m[key] > 1 {
-			Log("Subject ", subject.Name, " in ", subject.Season)
-			Log("Duplicate course found: ", key, " c:", m[key])
+			log.WithFields(log.Fields{"subject": subject.Name,
+				"season": subject.Season,
+				"year":   subject.Year,
+				"key":    key,
+				"count":  m[key]}).Info("Duplicate course")
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
 		}
 	}

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -285,18 +285,23 @@ func getCampus(campus string) uct.University {
 
 func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
-	uct.Log("GET  ", url)
-	resp, err := http.Get(url)
-	if err != nil {
-		uct.Log(err)
-		return
-	}
 
-	dec := json.NewDecoder(resp.Body)
-	defer resp.Body.Close()
-	if err := dec.Decode(&subjects); err == io.EOF {
-	} else if err != nil {
-		log.Fatal(err)
+	for i := 0; i < 3; i++ {
+		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Errorln(err)
+			continue
+		}
+
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(&subjects); err != nil && err != io.EOF {
+			log.Errorln(err)
+			resp.Body.Close()
+			continue
+		}
+		resp.Body.Close()
+		break
 	}
 
 	for i, _ := range subjects {
@@ -309,19 +314,21 @@ func getSubjects(semester uct.Semester, campus string) (subjects []RSubject) {
 
 func getCourses(subject, campus string, semester uct.Semester) (courses []RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
-
 	for i := 0; i < 3; i++ {
-		uct.Log("GET  ", url)
+		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("Retrying %s after error: %s\n", i, err)
+			log.Errorf("Retrying %s after error: %s\n", i, err)
 			continue
 		}
 		dec := json.NewDecoder(resp.Body)
 		if err := dec.Decode(&courses); err != nil && err != io.EOF {
-			log.Printf("Retrying %s after error: %s\n", i, err)
+			resp.Body.Close()
+			log.Errorf("Retrying %s after error: %s\n", i, err)
 			continue
 		}
+		resp.Body.Close()
 		break
 	}
 

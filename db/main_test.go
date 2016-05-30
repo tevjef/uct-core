@@ -21,7 +21,7 @@ func setup() {
 }
 
 var university uct.University
-var testApp App
+var testApp app
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 
 	go audit()
 
-	testApp = App{dbHandler: MockDatabaseHandler{}}
+	testApp = app{dbHandler: MockDatabaseHandler{}}
 
 	os.Exit(m.Run())
 }

@@ -1,10 +1,9 @@
 package common
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"golang.org/x/exp/utf8string"
 	"hash/fnv"
-	"log"
 	"net/url"
 	"regexp"
 	"sort"
@@ -220,15 +219,16 @@ func (sub *Subject) Validate(uni *University) {
 	}
 	sub.Name = toTitle(sub.Name)
 
-	if len(sub.Courses) == 0 {
-		Log("No courses in subject", sub)
-	}
-
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
 	sub.TopicName = toTopicName(sub.TopicName)
 	sub.TopicId = toTopicId(sub.TopicName)
-	sort.Sort(courseSorter{sub.Courses})
+
+	if len(sub.Courses) == 0 {
+		log.WithField("subject", sub.TopicName).Errorln("No course in subject")
+	} else {
+		sort.Sort(courseSorter{sub.Courses})
+	}
 }
 
 func (course *Course) Validate(subject *Subject) {
@@ -260,7 +260,11 @@ func (course *Course) Validate(subject *Subject) {
 	course.TopicName = subject.TopicName + "." + course.TopicName
 	course.TopicName = toTopicName(course.TopicName)
 	course.TopicId = toTopicId(course.TopicName)
-	sort.Stable(sectionSorter{course.Sections})
+	if len(course.Sections) == 0 {
+		log.WithField("course", course.TopicName).Errorln("No section in course")
+	} else {
+		sort.Stable(sectionSorter{course.Sections})
+	}
 }
 
 // Validate within the context for these enclosing objects
@@ -436,21 +440,21 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 			winter.Year = winter.Year - 1
 			fall.Year = fall.Year - 1
 		}
-		//Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
+		Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
 		return ResolvedSemester{
 			Last:    winter,
 			Current: spring,
 			Next:    summer}
 
 	} else if yearDay >= startFallReg.dayOfYear() && yearDay < endSummerReg.dayOfYear() {
-		//Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
+		Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    spring,
 			Current: summer,
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
-		//Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
+		Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    summer,
 			Current: fall,
@@ -458,7 +462,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 		}
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
-		//Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
+		Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
 		return ResolvedSemester{
 			Last:    fall,
 			Current: winter,
@@ -628,10 +632,16 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			filteredSubjects = newSubjects
 			break
 		}
-		Log(fmt.Sprintf("%s Subject index: %d \t %s | %s %s\n", oldSubjects[s].Season, s, oldSubjects[s].Name, newSubjects[s].Name, oldSubjects[s].Number == newSubjects[s].Number))
-		// If newSubject != oldSubject, log why, then drill deeper to filter out ones tht haven't changed
+		log.WithFields(log.Fields{
+			"index":       s,
+			"old_subject": oldSubjects[s].Name,
+			"old_season":  oldSubjects[s].Season,
+			"new_subject": newSubjects[s].Name,
+			"new_season":  newSubjects[s].Season,
+			"same":        oldSubjects[s].Number == newSubjects[s].Number,
+		}).Debug()
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
-			Log("Subject differs!")
+			log.Errorln("Subject differs")
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -640,23 +650,29 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					filteredCourses = newCourses
 					break
 				}
-				Log(fmt.Sprintf("Course index: %d \t %s | %s %s\n", c, oldCourses[c].Name, newCourses[c].Name, oldCourses[c].Number == newCourses[c].Number))
-				if oldCourses[c].Number != newCourses[c].Number {
-					fmt.Printf("%s %s", oldCourses[c].Name, newCourses[c].Name)
-				}
+				log.WithFields(log.Fields{
+					"index":      c,
+					"old_course": oldCourses[c].Name,
+					"old_number": oldCourses[c].Number,
+					"new_course": newCourses[c].Name,
+					"new_number": oldCourses[c].Number,
+					"same":       oldCourses[c].Number == newCourses[c].Number,
+				}).Debug()
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
-					Log("Course differs!")
+					log.Errorln("Course differs")
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					var filteredSections []*Section
 					for e := range newSections {
-						//Log(fmt.Sprintf("Section index: %d \t %s | %s %s\n", e, oldSections[e].Number, newSections[e].Number, oldSections[e].Number == newSections[e].Number))
 						if e >= len(oldSections) {
 							filteredSections = newSections
 							break
 						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							Log("Section: ", newSections[e].CallNumber, " | ", oldSections[e].CallNumber, err)
+							log.WithFields(log.Fields{
+								"old_call_number": oldSections[e].CallNumber,
+								"new_call_number": newSections[e].CallNumber,
+							}).Debug()
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}

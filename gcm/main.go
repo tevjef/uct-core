@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -26,10 +26,9 @@ var (
 const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 
 var (
-	app     = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	debug   = app.Flag("debug", "enable debug mode").Short('d').Bool()
-	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
-	verbose = app.Flag("verbose", "verbose log of object representations.").Short('v').Bool()
+	app    = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
+	debug  = app.Flag("debug", "enable debug mode").Short('d').Bool()
+	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
 )
 
 func main() {
@@ -52,7 +51,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Start monitoring PostgreSQL...")
+	log.Infoln("Start monitoring PostgreSQL...")
 	for {
 		waitForNotification(listener)
 	}
@@ -82,7 +81,7 @@ func waitForNotification(l *pq.Listener) {
 			}
 		// Received no notification from the database for 90 seconds.
 		case <-time.After(1 * time.Minute):
-			fmt.Println("Received no events 1 minute, checking connection")
+			log.Infoln("Received no events 1 minute, checking connection")
 			go func() {
 				l.Ping()
 			}()
@@ -98,10 +97,10 @@ func recvNotification(pgNotification uct.PostgresNotify, sem chan int) {
 		for i, retries := 0, 10; i < retries; i++ {
 			time.Sleep(time.Duration(i*2) * time.Second)
 			if i > 0 {
-				log.Println("Retrying...", i)
+				log.Infoln("Retrying...", i)
 			}
 			if err := sendGcmNotification(pgNotification); err != nil && i == retries-1 {
-				log.Println("ERROR:", err, string(uct.Stack(3)))
+				log.Errorln(err, string(uct.Stack(3)))
 			} else if err == nil {
 				break
 			}
@@ -130,8 +129,6 @@ func sendNotification(message uct.GCMMessage) (err error) {
 	if messageBytes, err = ffjson.Marshal(message); err != nil {
 		return
 	}
-	LogVerbose(string(messageBytes))
-
 	// New request to GCM
 	var req *http.Request
 	if req, err = http.NewRequest("POST", GCM_SEND, bytes.NewReader(messageBytes)); err != nil {
@@ -142,7 +139,7 @@ func sendNotification(message uct.GCMMessage) (err error) {
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "key="+uct.GCM_API_KEY)
 
-	fmt.Println("GCM Sending notification: to", message.To)
+	log.WithFields(log.Fields{"to": message.To, "dry_run": message.DryRun}).Info("GCM Request")
 
 	// Send request to GCM
 	var response *http.Response
@@ -157,12 +154,11 @@ func sendNotification(message uct.GCMMessage) (err error) {
 		return
 	}
 
+	log.WithFields(log.Fields{"response": gcmResponse, "status": response.StatusCode}).Info("GCM Response")
 	// Print GCM errors, but don't panic
 	if gcmResponse.Error != "" {
-		log.Println(gcmResponse.Error)
+		return fmt.Errorf(gcmResponse.Error)
 	}
-
-	fmt.Println("GCM Response: ", gcmResponse, " Status: ", response.StatusCode)
 	return
 }
 
@@ -213,7 +209,7 @@ func influxLog() {
 				)
 				uct.CheckError(err)
 				bp.AddPoint(point)
-				fmt.Println("InfluxDB log: ", tags, fields)
+				log.WithFields(log.Fields{"tag": tags, "fields": fields}).Info("Influx log")
 			}()
 		case <-time.NewTicker(time.Minute).C:
 
@@ -225,11 +221,5 @@ func influxLog() {
 			})
 			uct.CheckError(err)
 		}
-	}
-}
-
-func LogVerbose(v interface{}) {
-	if *verbose {
-		uct.LogVerbose(v)
 	}
 }

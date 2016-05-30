@@ -38,8 +38,12 @@ func main() {
 
 	go uct.StartPprof(*server)
 
-	database = uct.InitDB(uct.GetUniversityDB())
-	influxClient = uct.InitTnfluxServer()
+	var err error
+	database, err = uct.InitDB(uct.GetUniversityDB())
+	uct.CheckError(err)
+
+	influxClient, err = uct.InitTnfluxServer()
+	uct.CheckError(err)
 
 	sections := getSectionStatus()
 
@@ -85,7 +89,7 @@ func main() {
 		}()
 	}
 
-	err := influxClient.Write(bp)
+	err = influxClient.Write(bp)
 	uct.CheckError(err)
 }
 

@@ -34,3 +34,4 @@ import:
 - package: gopkg.in/alecthomas/kingpin.v2
   subpackages:
   - gopkg.in\alecthomas\kingpin.v2
+- package: github.com/tevjef/gin

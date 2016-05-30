@@ -47,9 +47,3 @@ func main() {
 
 	io.Copy(os.Stdout, buf)
 }
-
-func Log(v ...interface{}) {
-	if *verbose {
-		uct.Log(v)
-	}
-}
