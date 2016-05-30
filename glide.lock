@@ -1,5 +1,5 @@
-hash: d852fc0259ff5b91d4791b71f3b6ba5d60972f30e96400b6d317ab3abdc9cae4
-updated: 2016-05-30T10:19:17.3391981-04:00
+hash: d7daa988671f0c83a52ae5504e41e2f237d7dc33a932caaaf8a9766205c66b31
+updated: 2016-05-30T17:41:08.2882873-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -32,6 +32,10 @@ imports:
   version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - github.com\golang\protobuf\proto
+- name: github.com/google/go-gcm
+  version: 1708036c4639349562068ad2d4df2364cd0a1004
+  subpackages:
+  - github.com\google\go-gcm
 - name: github.com/influxdata/influxdb
   version: dd58101061a964bf36ff8222172399f255e52340
   subpackages:
@@ -43,6 +47,10 @@ imports:
   subpackages:
   - github.com\jmoiron\sqlx
   - github.com\jmoiron\sqlx\reflectx
+- name: github.com/jpillora/backoff
+  version: 0496a6c14df020789376f4d4a261273d5ddb36ec
+  subpackages:
+  - github.com\jpillora\backoff
 - name: github.com/lib/pq
   version: ee1442bda7bd1b6a84e913bdb421cb1874ec629d
   subpackages:
@@ -52,6 +60,14 @@ imports:
   version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
   subpackages:
   - github.com\manucorporat\sse
+- name: github.com/mattn/go-xmpp
+  version: aeb80ddc4dc7a688339c4cb746e8a0d79f9a3812
+  subpackages:
+  - github.com\mattn\go-xmpp
+- name: github.com/pborman/uuid
+  version: c55201b036063326c5b1b89ccfe45a184973d073
+  subpackages:
+  - github.com\pborman\uuid
 - name: github.com/pquerna/ffjson
   version: fa49a9f5832ba121db144795c147fe8449124aeb
   subpackages:
@@ -70,6 +86,8 @@ imports:
   version: 6e4daaaacffdf1632ee663d6d7d4fcc389bc1269
   subpackages:
   - github.com\tevjef\gin
+- name: github.com/tevjef/go-gcm
+  version: 9195be04c34ea15caf9ad2e85c228de00532a8c1
 - name: golang.org/x/exp
   version: 0dc1be49343a5449f98e0d6d15e33008e154701b
   subpackages:

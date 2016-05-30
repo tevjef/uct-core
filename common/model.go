@@ -672,7 +672,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber,
 								"new_call_number": newSections[e].CallNumber,
-							}).Debug()
+							}).Errorln()
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}

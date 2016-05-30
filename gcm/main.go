@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
+	"github.com/tevjef/go-gcm"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"time"
@@ -17,13 +16,9 @@ import (
 )
 
 var (
-	httpClient   = http.DefaultClient
-	connectInfo  = uct.GetUniversityDB()
-	workRoutines = 500
+	workRoutines = 100
 	messageLog   = make(chan uct.PostgresNotify)
 )
-
-const GCM_SEND = "https://gcm-http.googleapis.com/gcm/send"
 
 var (
 	app    = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
@@ -33,14 +28,15 @@ var (
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.DebugLevel)
 	// Start profiling
 	go uct.StartPprof(*server)
 	// Start influx logging
 	go influxLog()
 
 	// Open connection to postgresql
-	listener := pq.NewListener(connectInfo, 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(uct.GetUniversityDB(), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -91,16 +87,15 @@ func waitForNotification(l *pq.Listener) {
 }
 
 func recvNotification(pgNotification uct.PostgresNotify, sem chan int) {
+	log.WithFields(log.Fields{"status": pgNotification.Status, "topic": pgNotification.Payload}).Info("PostgresNotify")
+
 	go func() {
-		defer uct.TimeTrack(time.Now(), "Send notification")
+		defer uct.TimeTrack(time.Now(), "SendNotification")
 		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid. 10 retries is quite generous.
 		for i, retries := 0, 10; i < retries; i++ {
 			time.Sleep(time.Duration(i*2) * time.Second)
-			if i > 0 {
-				log.Infoln("Retrying...", i)
-			}
-			if err := sendGcmNotification(pgNotification); err != nil && i == retries-1 {
-				log.Errorln(err, string(uct.Stack(3)))
+			if err := sendGcmNotification(pgNotification); err != nil {
+				log.Errorln("Retrying", i, err)
 			} else if err == nil {
 				break
 			}
@@ -115,49 +110,24 @@ func sendGcmNotification(pgNotification uct.PostgresNotify) (err error) {
 		return
 	}
 
-	// Construct GCM message
-	gcmMessage := uct.GCMMessage{
+	message := gcm.HttpMessage{
 		To:     "/topics/" + pgNotification.Payload,
-		Data:   uct.Data{Message: string(uniBytes)},
+		Data:   map[string]interface{}{"message": string(uniBytes)},
 		DryRun: *debug,
 	}
-	return sendNotification(gcmMessage)
+	return sendNotification(message)
 }
 
-func sendNotification(message uct.GCMMessage) (err error) {
-	var messageBytes []byte
-	if messageBytes, err = ffjson.Marshal(message); err != nil {
+func sendNotification(message gcm.HttpMessage) (err error) {
+	var httpResponse *gcm.HttpResponse
+
+	if httpResponse, err = gcm.SendHttp(uct.GCM_API_KEY, message); err != nil {
 		return
 	}
-	// New request to GCM
-	var req *http.Request
-	if req, err = http.NewRequest("POST", GCM_SEND, bytes.NewReader(messageBytes)); err != nil {
-		return
-	}
-
-	// Add request authorization headers so that GCM knows who this is.
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "key="+uct.GCM_API_KEY)
-
-	log.WithFields(log.Fields{"to": message.To, "dry_run": message.DryRun}).Info("GCM Request")
-
-	// Send request to GCM
-	var response *http.Response
-	if response, err = httpClient.Do(req); err != nil {
-		return
-	}
-	defer response.Body.Close()
-
-	// Read response from GCM
-	var gcmResponse uct.GCMResponse
-	if err = json.NewDecoder(response.Body).Decode(&gcmResponse); err != nil {
-		return
-	}
-
-	log.WithFields(log.Fields{"response": gcmResponse, "status": response.StatusCode}).Info("GCM Response")
+	log.WithFields(log.Fields{"topic": message.To, "dry_run": message.DryRun, "gcm_message_id": httpResponse.MessageId}).Infoln("GCMResponse")
 	// Print GCM errors, but don't panic
-	if gcmResponse.Error != "" {
-		return fmt.Errorf(gcmResponse.Error)
+	if httpResponse.Error != "" {
+		return fmt.Errorf(httpResponse.Error)
 	}
 	return
 }
@@ -181,7 +151,7 @@ func influxLog() {
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						log.Println("Recovered from influx error", r, string(uct.Stack(3)))
+						log.Println("Recovered from influx error", r)
 					}
 				}()
 				subject := message.University.Subjects[0]
