@@ -209,7 +209,6 @@ func (u *University) Validate() {
 
 	u.TopicName = toTopicName(u.Name)
 	u.TopicId = toTopicId(u.TopicName)
-
 }
 
 func (sub *Subject) Validate(uni *University) {

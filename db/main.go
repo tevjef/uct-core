@@ -10,7 +10,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
 	"os"
-	"runtime/pprof"
 	"time"
 	uct "uct/common"
 )
@@ -53,10 +52,7 @@ func main() {
 	}
 
 	go uct.StartPprof(*server)
-	// Start logging with influx
-	go audit()
 
-	startAudit <- true
 	var input *bufio.Reader
 	if *newFile != nil {
 		input = bufio.NewReader(*newFile)
@@ -93,15 +89,16 @@ func main() {
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
 
-	// Was originally designed to insert an array of universities.
+	// Start logging with influx
+	go audit(university.TopicName)
 
 	app.insertUniversity(&university)
 	app.updateSerial(*newUniversity)
+
 	endAudit <- true
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
-		pprof.StopCPUProfile()
 	}()
 
 }
@@ -521,14 +518,13 @@ func (stats AuditStats) audit() {
 	uct.CheckError(err)
 }
 
-func audit() {
+func audit(university string) {
 	influxClient, _ := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     uct.INFLUX_HOST,
 		Username: uct.INFLUX_USER,
 		Password: uct.INFLUX_PASS,
 	})
 
-	var university string
 	var insertions int
 	var updates int
 	var upserts int
@@ -538,13 +534,8 @@ func audit() {
 	var sectionCount int
 	var meetingCount int
 	var metadataCount int
-	var startTime time.Time
 	for {
 		select {
-		case <-startAudit:
-			startTime = time.Now()
-		case s := <-uniName:
-			university = s
 		case t1 := <-insertionsCh:
 			insertions += t1
 		case t2 := <-updatesCh:
@@ -567,7 +558,7 @@ func audit() {
 			stats := AuditStats{
 				influxClient:  influxClient,
 				uniName:       university,
-				elapsed:       time.Since(startTime),
+				elapsed:       time.Since(pointTime),
 				insertions:    insertions,
 				updates:       updates,
 				upserts:       upserts,
@@ -636,8 +627,8 @@ var (
 	UniversityInsertQuery = `INSERT INTO university (name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id)
                     VALUES (:name, :abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name, :topic_id)
                     RETURNING university.id`
-	UniversityUpdateQuery = `UPDATE university SET (abbr, home_page, registration_page, main_color, accent_color, topic_name) =
-	                (:abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name)
+	UniversityUpdateQuery = `UPDATE university SET (abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id) =
+	                (:abbr, :home_page, :registration_page, :main_color, :accent_color, :topic_name, :topic_id)
 	                WHERE name = :name
 	                RETURNING university.id`
 
@@ -778,7 +769,5 @@ var (
 	meetingCountCh  = make(chan int)
 	metadataCountCh = make(chan int)
 	endAudit        = make(chan bool)
-	startAudit      = make(chan bool)
-	uniName         = make(chan string)
 	pointTime       = time.Now()
 )
