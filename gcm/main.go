@@ -91,44 +91,47 @@ func recvNotification(pgNotification uct.PostgresNotify, sem chan int) {
 
 	go func() {
 		defer uct.TimeTrack(time.Now(), "SendNotification")
-		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid. 10 retries is quite generous.
-		for i, retries := 0, 10; i < retries; i++ {
-			time.Sleep(time.Duration(i*2) * time.Second)
-			if err := sendGcmNotification(pgNotification); err != nil {
-				log.Errorln("Retrying", i, err)
-			} else if err == nil {
-				break
+
+		// Encode the message to send to GCM
+		if uniBytes, err := ffjson.Marshal(pgNotification.University); err != nil {
+			// Fatal if message from the database is malformed
+			log.Fatalln(err)
+		} else {
+			to := pgNotification.Payload
+			message := string(uniBytes)
+
+			// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid
+			for i, retries := 0, 3; i < retries; i++ {
+				time.Sleep(time.Duration(i*2) * time.Second)
+				if err := sendGcmNotification(to, message); err != nil {
+					log.Errorln("Retrying", i, err)
+				} else {
+					break
+				}
 			}
 		}
 		<-sem
 	}()
 }
 
-func sendGcmNotification(pgNotification uct.PostgresNotify) (err error) {
-	var uniBytes []byte
-	if uniBytes, err = ffjson.Marshal(pgNotification.University); err != nil {
-		return
-	}
-
-	message := gcm.HttpMessage{
-		To:     "/topics/" + pgNotification.Payload,
-		Data:   map[string]interface{}{"message": string(uniBytes)},
+func sendGcmNotification(to, message string) (err error) {
+	httpMessage := gcm.HttpMessage{
+		To:     "/topics/" + to,
+		Data:   map[string]interface{}{"message": message},
 		DryRun: *debug,
 	}
-	return sendNotification(message)
-}
 
-func sendNotification(message gcm.HttpMessage) (err error) {
 	var httpResponse *gcm.HttpResponse
-
-	if httpResponse, err = gcm.SendHttp(uct.GCM_API_KEY, message); err != nil {
+	if httpResponse, err = gcm.SendHttp(uct.GCM_API_KEY, httpMessage); err != nil {
 		return
 	}
-	log.WithFields(log.Fields{"topic": message.To, "dry_run": message.DryRun, "gcm_message_id": httpResponse.MessageId}).Infoln("GCMResponse")
+
+	log.WithFields(log.Fields{"topic": httpMessage.To, "message_id": httpResponse.MessageId}).Infoln("GCMResponse")
 	// Print GCM errors, but don't panic
 	if httpResponse.Error != "" {
 		return fmt.Errorf(httpResponse.Error)
 	}
+
 	return
 }
 
