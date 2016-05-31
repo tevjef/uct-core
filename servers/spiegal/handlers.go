@@ -1,53 +1,60 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/tevjef/gin"
 	uct "uct/common"
 )
 
-func universityHandler(c *gin.Context) {
-	topicName := c.Param("topic")
-	if u, err := SelectUniversity(topicName); err != nil {
-
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+func resolveErr(err error, c *gin.Context) {
+	if err == sql.ErrNoRows {
+		c.Set("meta", errResNotFound(c.Request.RequestURI))
 	} else {
-		if b, err := u.Marshal(); err != nil {
-
-			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
-		} else {
-			c.Set("protobuf", b)
-			c.Set("object", u)
-		}
+		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	}
 }
 
-func universitiesHandler(c *gin.Context) {
-	if universityList, err := SelectUniversities(); err != nil {
-
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+func universityHandler(c *gin.Context) {
+	topicName := c.Param("topic")
+	if u, err := SelectUniversity(topicName); err != nil {
+		resolveErr(err, c)
 	} else {
-		universities := uct.Universities{Universities: universityList}
-		if b, err := universities.Marshal(); err != nil {
-
-			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
-		} else {
-			c.Set("protobuf", b)
-			c.Set("object", universities)
+		response := uct.Response{
+			Data: &uct.Data{University: &u},
 		}
+		c.Set("response", response)
+	}
+}
+
+func errResNotFound(str string) uct.Meta {
+	code := int32(404)
+	message := "Resource: " + str
+	errtype := "Not Found"
+	return uct.Meta{Code: &code, ErrorMessage: &message, ErrorType: &errtype}
+}
+
+func universitiesHandler(c *gin.Context) {
+	if universities, err := SelectUniversities(); err != nil {
+		resolveErr(err, c)
+	} else {
+		response := uct.Response{
+			Data: &uct.Data{Universities: universities},
+		}
+		c.Set("response", response)
 	}
 }
 
 func subjectHandler(c *gin.Context) {
 	subjectTopicName := c.Param("topic")
 
-	if sub, b, err := SelectSubject(subjectTopicName); err != nil {
-
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+	if sub, _, err := SelectSubject(subjectTopicName); err != nil {
+		resolveErr(err, c)
 	} else {
-		c.Set("protobuf", b)
-		c.Set("object", sub)
+		response := uct.Response{
+			Data: &uct.Data{Subject: &sub},
+		}
+		c.Set("response", response)
 	}
-
 }
 
 func subjectsHandler(c *gin.Context) {
@@ -56,57 +63,48 @@ func subjectsHandler(c *gin.Context) {
 	uniTopicName := c.Param("topic")
 
 	if subjects, err := SelectSubjects(uniTopicName, season, year); err != nil {
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+		resolveErr(err, c)
 	} else {
-		s := uct.Subjects{Subjects: subjects}
-		if b, err := s.Marshal(); err != nil {
-			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
-		} else {
-			c.Set("protobuf", b)
-			c.Set("object", s)
+		response := uct.Response{
+			Data: &uct.Data{Subjects: subjects},
 		}
+		c.Set("response", response)
 	}
-
 }
 
 func courseHandler(c *gin.Context) {
 	courseTopicName := c.Param("topic")
-
-	if course, b, err := SelectCourse(courseTopicName); err != nil {
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+	if course, _, err := SelectCourse(courseTopicName); err != nil {
+		resolveErr(err, c)
 	} else {
-		c.Set("protobuf", b)
-		c.Set("object", course)
+		response := uct.Response{
+			Data: &uct.Data{Course: &course},
+		}
+		c.Set("response", response)
 	}
 
 }
 
 func coursesHandler(c *gin.Context) {
 	subjectTopicName := c.Param("topic")
-	if courseList, err := SelectCourses(subjectTopicName); err != nil {
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+	if courses, err := SelectCourses(subjectTopicName); err != nil {
+		resolveErr(err, c)
 	} else {
-		courses := uct.Courses{Courses: courseList}
-		if b, err := courses.Marshal(); err != nil {
-			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
-		} else {
-			c.Set("protobuf", b)
-			c.Set("object", courses)
+		response := uct.Response{
+			Data: &uct.Data{Courses: courses},
 		}
+		c.Set("response", response)
 	}
-
 }
 
 func sectionHandler(c *gin.Context) {
 	sectionTopicName := c.Param("topic")
 	if s, err := SelectSection(sectionTopicName); err != nil {
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+		resolveErr(err, c)
 	} else {
-		if b, err := s.Marshal(); err != nil {
-			c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
-		} else {
-			c.Set("protobuf", b)
-			c.Set("object", s)
+		response := uct.Response{
+			Data: &uct.Data{Section: &s},
 		}
+		c.Set("response", response)
 	}
 }

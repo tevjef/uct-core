@@ -11,10 +11,8 @@
 	It has these top-level messages:
 		University
 		Response
-		Universities
-		Subjects
-		Courses
-		Sections
+		Meta
+		Data
 		Subject
 		Course
 		Section
@@ -163,103 +161,127 @@ func (m *University) GetMetadata() []*Metadata {
 }
 
 type Response struct {
-	Universities     *Universities `protobuf:"bytes,1,opt,name=universities" json:"universities,omitempty"`
-	Subjects         *Subjects     `protobuf:"bytes,2,opt,name=subjects" json:"subjects,omitempty"`
-	Courses          *Courses      `protobuf:"bytes,3,opt,name=courses" json:"courses,omitempty"`
-	Sections         *Sections     `protobuf:"bytes,4,opt,name=sections" json:"sections,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
+	Meta             *Meta  `protobuf:"bytes,1,opt,name=meta" json:"meta,omitempty"`
+	Data             *Data  `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
 }
 
 func (m *Response) Reset()                    { *m = Response{} }
 func (*Response) ProtoMessage()               {}
 func (*Response) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{1} }
 
-func (m *Response) GetUniversities() *Universities {
+func (m *Response) GetMeta() *Meta {
+	if m != nil {
+		return m.Meta
+	}
+	return nil
+}
+
+func (m *Response) GetData() *Data {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type Meta struct {
+	ErrorType        *string `protobuf:"bytes,1,opt,name=error_type,json=errorType" json:"error_type,omitempty"`
+	ErrorMessage     *string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage" json:"error_message,omitempty"`
+	Code             *int32  `protobuf:"varint,3,opt,name=code" json:"code,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Meta) Reset()                    { *m = Meta{} }
+func (*Meta) ProtoMessage()               {}
+func (*Meta) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{2} }
+
+func (m *Meta) GetErrorType() string {
+	if m != nil && m.ErrorType != nil {
+		return *m.ErrorType
+	}
+	return ""
+}
+
+func (m *Meta) GetErrorMessage() string {
+	if m != nil && m.ErrorMessage != nil {
+		return *m.ErrorMessage
+	}
+	return ""
+}
+
+func (m *Meta) GetCode() int32 {
+	if m != nil && m.Code != nil {
+		return *m.Code
+	}
+	return 0
+}
+
+type Data struct {
+	Universities     []*University `protobuf:"bytes,1,rep,name=universities" json:"universities,omitempty"`
+	Subjects         []*Subject    `protobuf:"bytes,2,rep,name=subjects" json:"subjects,omitempty"`
+	Courses          []*Course     `protobuf:"bytes,3,rep,name=courses" json:"courses,omitempty"`
+	Sections         []*Section    `protobuf:"bytes,4,rep,name=sections" json:"sections,omitempty"`
+	University       *University   `protobuf:"bytes,5,opt,name=university" json:"university,omitempty"`
+	Subject          *Subject      `protobuf:"bytes,6,opt,name=subject" json:"subject,omitempty"`
+	Course           *Course       `protobuf:"bytes,7,opt,name=course" json:"course,omitempty"`
+	Section          *Section      `protobuf:"bytes,8,opt,name=section" json:"section,omitempty"`
+	XXX_unrecognized []byte        `json:"-"`
+}
+
+func (m *Data) Reset()                    { *m = Data{} }
+func (*Data) ProtoMessage()               {}
+func (*Data) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{3} }
+
+func (m *Data) GetUniversities() []*University {
 	if m != nil {
 		return m.Universities
 	}
 	return nil
 }
 
-func (m *Response) GetSubjects() *Subjects {
+func (m *Data) GetSubjects() []*Subject {
 	if m != nil {
 		return m.Subjects
 	}
 	return nil
 }
 
-func (m *Response) GetCourses() *Courses {
+func (m *Data) GetCourses() []*Course {
 	if m != nil {
 		return m.Courses
 	}
 	return nil
 }
 
-func (m *Response) GetSections() *Sections {
+func (m *Data) GetSections() []*Section {
 	if m != nil {
 		return m.Sections
 	}
 	return nil
 }
 
-type Universities struct {
-	Universities     []*University `protobuf:"bytes,1,rep,name=universities" json:"universities,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
-}
-
-func (m *Universities) Reset()                    { *m = Universities{} }
-func (*Universities) ProtoMessage()               {}
-func (*Universities) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{2} }
-
-func (m *Universities) GetUniversities() []*University {
+func (m *Data) GetUniversity() *University {
 	if m != nil {
-		return m.Universities
+		return m.University
 	}
 	return nil
 }
 
-type Subjects struct {
-	Subjects         []*Subject `protobuf:"bytes,1,rep,name=subjects" json:"subjects,omitempty"`
-	XXX_unrecognized []byte     `json:"-"`
-}
-
-func (m *Subjects) Reset()                    { *m = Subjects{} }
-func (*Subjects) ProtoMessage()               {}
-func (*Subjects) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{3} }
-
-func (m *Subjects) GetSubjects() []*Subject {
+func (m *Data) GetSubject() *Subject {
 	if m != nil {
-		return m.Subjects
+		return m.Subject
 	}
 	return nil
 }
 
-type Courses struct {
-	Courses          []*Course `protobuf:"bytes,1,rep,name=courses" json:"courses,omitempty"`
-	XXX_unrecognized []byte    `json:"-"`
-}
-
-func (m *Courses) Reset()                    { *m = Courses{} }
-func (*Courses) ProtoMessage()               {}
-func (*Courses) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{4} }
-
-func (m *Courses) GetCourses() []*Course {
+func (m *Data) GetCourse() *Course {
 	if m != nil {
-		return m.Courses
+		return m.Course
 	}
 	return nil
 }
 
-type Sections struct {
-	Section          []*Section `protobuf:"bytes,1,rep,name=section" json:"section,omitempty"`
-	XXX_unrecognized []byte     `json:"-"`
-}
-
-func (m *Sections) Reset()                    { *m = Sections{} }
-func (*Sections) ProtoMessage()               {}
-func (*Sections) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{5} }
-
-func (m *Sections) GetSection() []*Section {
+func (m *Data) GetSection() *Section {
 	if m != nil {
 		return m.Section
 	}
@@ -282,7 +304,7 @@ type Subject struct {
 
 func (m *Subject) Reset()                    { *m = Subject{} }
 func (*Subject) ProtoMessage()               {}
-func (*Subject) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{6} }
+func (*Subject) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{4} }
 
 func (m *Subject) GetId() int64 {
 	if m != nil {
@@ -369,7 +391,7 @@ type Course struct {
 
 func (m *Course) Reset()                    { *m = Course{} }
 func (*Course) ProtoMessage()               {}
-func (*Course) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{7} }
+func (*Course) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{5} }
 
 func (m *Course) GetId() int64 {
 	if m != nil {
@@ -454,7 +476,7 @@ type Section struct {
 
 func (m *Section) Reset()                    { *m = Section{} }
 func (*Section) ProtoMessage()               {}
-func (*Section) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{8} }
+func (*Section) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{6} }
 
 func (m *Section) GetId() int64 {
 	if m != nil {
@@ -569,7 +591,7 @@ type Meeting struct {
 
 func (m *Meeting) Reset()                    { *m = Meeting{} }
 func (*Meeting) ProtoMessage()               {}
-func (*Meeting) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{9} }
+func (*Meeting) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{7} }
 
 func (m *Meeting) GetId() int64 {
 	if m != nil {
@@ -644,7 +666,7 @@ type Instructor struct {
 
 func (m *Instructor) Reset()                    { *m = Instructor{} }
 func (*Instructor) ProtoMessage()               {}
-func (*Instructor) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{10} }
+func (*Instructor) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{8} }
 
 func (m *Instructor) GetId() int64 {
 	if m != nil {
@@ -684,7 +706,7 @@ type Book struct {
 
 func (m *Book) Reset()                    { *m = Book{} }
 func (*Book) ProtoMessage()               {}
-func (*Book) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{11} }
+func (*Book) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{9} }
 
 func (m *Book) GetId() int64 {
 	if m != nil {
@@ -728,7 +750,7 @@ type Metadata struct {
 
 func (m *Metadata) Reset()                    { *m = Metadata{} }
 func (*Metadata) ProtoMessage()               {}
-func (*Metadata) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{12} }
+func (*Metadata) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{10} }
 
 func (m *Metadata) GetId() int64 {
 	if m != nil {
@@ -796,7 +818,7 @@ type Registration struct {
 
 func (m *Registration) Reset()                    { *m = Registration{} }
 func (*Registration) ProtoMessage()               {}
-func (*Registration) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{13} }
+func (*Registration) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{11} }
 
 func (m *Registration) GetId() int64 {
 	if m != nil {
@@ -834,7 +856,7 @@ type Semester struct {
 
 func (m *Semester) Reset()                    { *m = Semester{} }
 func (*Semester) ProtoMessage()               {}
-func (*Semester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{14} }
+func (*Semester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{12} }
 
 func (m *Semester) GetYear() int32 {
 	if m != nil {
@@ -853,10 +875,8 @@ func (m *Semester) GetSeason() string {
 func init() {
 	proto.RegisterType((*University)(nil), "common.University")
 	proto.RegisterType((*Response)(nil), "common.Response")
-	proto.RegisterType((*Universities)(nil), "common.Universities")
-	proto.RegisterType((*Subjects)(nil), "common.Subjects")
-	proto.RegisterType((*Courses)(nil), "common.Courses")
-	proto.RegisterType((*Sections)(nil), "common.Sections")
+	proto.RegisterType((*Meta)(nil), "common.Meta")
+	proto.RegisterType((*Data)(nil), "common.Data")
 	proto.RegisterType((*Subject)(nil), "common.Subject")
 	proto.RegisterType((*Course)(nil), "common.Course")
 	proto.RegisterType((*Section)(nil), "common.Section")
@@ -1070,17 +1090,11 @@ func (this *Response) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Response but is not nil && this == nil")
 	}
-	if !this.Universities.Equal(that1.Universities) {
-		return fmt.Errorf("Universities this(%v) Not Equal that(%v)", this.Universities, that1.Universities)
+	if !this.Meta.Equal(that1.Meta) {
+		return fmt.Errorf("Meta this(%v) Not Equal that(%v)", this.Meta, that1.Meta)
 	}
-	if !this.Subjects.Equal(that1.Subjects) {
-		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", this.Subjects, that1.Subjects)
-	}
-	if !this.Courses.Equal(that1.Courses) {
-		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", this.Courses, that1.Courses)
-	}
-	if !this.Sections.Equal(that1.Sections) {
-		return fmt.Errorf("Sections this(%v) Not Equal that(%v)", this.Sections, that1.Sections)
+	if !this.Data.Equal(that1.Data) {
+		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
@@ -1112,16 +1126,10 @@ func (this *Response) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Universities.Equal(that1.Universities) {
+	if !this.Meta.Equal(that1.Meta) {
 		return false
 	}
-	if !this.Subjects.Equal(that1.Subjects) {
-		return false
-	}
-	if !this.Courses.Equal(that1.Courses) {
-		return false
-	}
-	if !this.Sections.Equal(that1.Sections) {
+	if !this.Data.Equal(that1.Data) {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -1129,7 +1137,7 @@ func (this *Response) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *Universities) VerboseEqual(that interface{}) error {
+func (this *Meta) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -1137,22 +1145,136 @@ func (this *Universities) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*Universities)
+	that1, ok := that.(*Meta)
 	if !ok {
-		that2, ok := that.(Universities)
+		that2, ok := that.(Meta)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *Universities")
+			return fmt.Errorf("that is not of type *Meta")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *Universities but is nil && this != nil")
+		return fmt.Errorf("that is type *Meta but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Universities but is not nil && this == nil")
+		return fmt.Errorf("that is type *Meta but is not nil && this == nil")
+	}
+	if this.ErrorType != nil && that1.ErrorType != nil {
+		if *this.ErrorType != *that1.ErrorType {
+			return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", *this.ErrorType, *that1.ErrorType)
+		}
+	} else if this.ErrorType != nil {
+		return fmt.Errorf("this.ErrorType == nil && that.ErrorType != nil")
+	} else if that1.ErrorType != nil {
+		return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", this.ErrorType, that1.ErrorType)
+	}
+	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
+		if *this.ErrorMessage != *that1.ErrorMessage {
+			return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", *this.ErrorMessage, *that1.ErrorMessage)
+		}
+	} else if this.ErrorMessage != nil {
+		return fmt.Errorf("this.ErrorMessage == nil && that.ErrorMessage != nil")
+	} else if that1.ErrorMessage != nil {
+		return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", this.ErrorMessage, that1.ErrorMessage)
+	}
+	if this.Code != nil && that1.Code != nil {
+		if *this.Code != *that1.Code {
+			return fmt.Errorf("Code this(%v) Not Equal that(%v)", *this.Code, *that1.Code)
+		}
+	} else if this.Code != nil {
+		return fmt.Errorf("this.Code == nil && that.Code != nil")
+	} else if that1.Code != nil {
+		return fmt.Errorf("Code this(%v) Not Equal that(%v)", this.Code, that1.Code)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Meta) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Meta)
+	if !ok {
+		that2, ok := that.(Meta)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.ErrorType != nil && that1.ErrorType != nil {
+		if *this.ErrorType != *that1.ErrorType {
+			return false
+		}
+	} else if this.ErrorType != nil {
+		return false
+	} else if that1.ErrorType != nil {
+		return false
+	}
+	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
+		if *this.ErrorMessage != *that1.ErrorMessage {
+			return false
+		}
+	} else if this.ErrorMessage != nil {
+		return false
+	} else if that1.ErrorMessage != nil {
+		return false
+	}
+	if this.Code != nil && that1.Code != nil {
+		if *this.Code != *that1.Code {
+			return false
+		}
+	} else if this.Code != nil {
+		return false
+	} else if that1.Code != nil {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Data) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Data)
+	if !ok {
+		that2, ok := that.(Data)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Data")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Data but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Data but is not nil && this == nil")
 	}
 	if len(this.Universities) != len(that1.Universities) {
 		return fmt.Errorf("Universities this(%v) Not Equal that(%v)", len(this.Universities), len(that1.Universities))
@@ -1162,12 +1284,48 @@ func (this *Universities) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Universities this[%v](%v) Not Equal that[%v](%v)", i, this.Universities[i], i, that1.Universities[i])
 		}
 	}
+	if len(this.Subjects) != len(that1.Subjects) {
+		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
+	}
+	for i := range this.Subjects {
+		if !this.Subjects[i].Equal(that1.Subjects[i]) {
+			return fmt.Errorf("Subjects this[%v](%v) Not Equal that[%v](%v)", i, this.Subjects[i], i, that1.Subjects[i])
+		}
+	}
+	if len(this.Courses) != len(that1.Courses) {
+		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", len(this.Courses), len(that1.Courses))
+	}
+	for i := range this.Courses {
+		if !this.Courses[i].Equal(that1.Courses[i]) {
+			return fmt.Errorf("Courses this[%v](%v) Not Equal that[%v](%v)", i, this.Courses[i], i, that1.Courses[i])
+		}
+	}
+	if len(this.Sections) != len(that1.Sections) {
+		return fmt.Errorf("Sections this(%v) Not Equal that(%v)", len(this.Sections), len(that1.Sections))
+	}
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(that1.Sections[i]) {
+			return fmt.Errorf("Sections this[%v](%v) Not Equal that[%v](%v)", i, this.Sections[i], i, that1.Sections[i])
+		}
+	}
+	if !this.University.Equal(that1.University) {
+		return fmt.Errorf("University this(%v) Not Equal that(%v)", this.University, that1.University)
+	}
+	if !this.Subject.Equal(that1.Subject) {
+		return fmt.Errorf("Subject this(%v) Not Equal that(%v)", this.Subject, that1.Subject)
+	}
+	if !this.Course.Equal(that1.Course) {
+		return fmt.Errorf("Course this(%v) Not Equal that(%v)", this.Course, that1.Course)
+	}
+	if !this.Section.Equal(that1.Section) {
+		return fmt.Errorf("Section this(%v) Not Equal that(%v)", this.Section, that1.Section)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
-func (this *Universities) Equal(that interface{}) bool {
+func (this *Data) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -1175,9 +1333,9 @@ func (this *Universities) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*Universities)
+	that1, ok := that.(*Data)
 	if !ok {
-		that2, ok := that.(Universities)
+		that2, ok := that.(Data)
 		if ok {
 			that1 = &that2
 		} else {
@@ -1200,74 +1358,6 @@ func (this *Universities) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *Subjects) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Subjects)
-	if !ok {
-		that2, ok := that.(Subjects)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Subjects")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Subjects but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Subjects but is not nil && this == nil")
-	}
-	if len(this.Subjects) != len(that1.Subjects) {
-		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
-	}
-	for i := range this.Subjects {
-		if !this.Subjects[i].Equal(that1.Subjects[i]) {
-			return fmt.Errorf("Subjects this[%v](%v) Not Equal that[%v](%v)", i, this.Subjects[i], i, that1.Subjects[i])
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Subjects) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Subjects)
-	if !ok {
-		that2, ok := that.(Subjects)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
 	if len(this.Subjects) != len(that1.Subjects) {
 		return false
 	}
@@ -1275,74 +1365,6 @@ func (this *Subjects) Equal(that interface{}) bool {
 		if !this.Subjects[i].Equal(that1.Subjects[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *Courses) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Courses)
-	if !ok {
-		that2, ok := that.(Courses)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Courses")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Courses but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Courses but is not nil && this == nil")
-	}
-	if len(this.Courses) != len(that1.Courses) {
-		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", len(this.Courses), len(that1.Courses))
-	}
-	for i := range this.Courses {
-		if !this.Courses[i].Equal(that1.Courses[i]) {
-			return fmt.Errorf("Courses this[%v](%v) Not Equal that[%v](%v)", i, this.Courses[i], i, that1.Courses[i])
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Courses) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Courses)
-	if !ok {
-		that2, ok := that.(Courses)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
 	}
 	if len(this.Courses) != len(that1.Courses) {
 		return false
@@ -1352,81 +1374,25 @@ func (this *Courses) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+	if len(this.Sections) != len(that1.Sections) {
 		return false
 	}
-	return true
-}
-func (this *Sections) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Sections)
-	if !ok {
-		that2, ok := that.(Sections)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Sections")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Sections but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Sections but is not nil && this == nil")
-	}
-	if len(this.Section) != len(that1.Section) {
-		return fmt.Errorf("Section this(%v) Not Equal that(%v)", len(this.Section), len(that1.Section))
-	}
-	for i := range this.Section {
-		if !this.Section[i].Equal(that1.Section[i]) {
-			return fmt.Errorf("Section this[%v](%v) Not Equal that[%v](%v)", i, this.Section[i], i, that1.Section[i])
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Sections) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Sections)
-	if !ok {
-		that2, ok := that.(Sections)
-		if ok {
-			that1 = &that2
-		} else {
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(that1.Sections[i]) {
 			return false
 		}
 	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
+	if !this.University.Equal(that1.University) {
 		return false
 	}
-	if len(this.Section) != len(that1.Section) {
+	if !this.Subject.Equal(that1.Subject) {
 		return false
 	}
-	for i := range this.Section {
-		if !this.Section[i].Equal(that1.Section[i]) {
-			return false
-		}
+	if !this.Course.Equal(that1.Course) {
+		return false
+	}
+	if !this.Section.Equal(that1.Section) {
+		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -2616,8 +2582,47 @@ func (this *Response) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 8)
+	s := make([]string, 0, 6)
 	s = append(s, "&common.Response{")
+	if this.Meta != nil {
+		s = append(s, "Meta: "+fmt.Sprintf("%#v", this.Meta)+",\n")
+	}
+	if this.Data != nil {
+		s = append(s, "Data: "+fmt.Sprintf("%#v", this.Data)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Meta) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&common.Meta{")
+	if this.ErrorType != nil {
+		s = append(s, "ErrorType: "+valueToGoStringModel(this.ErrorType, "string")+",\n")
+	}
+	if this.ErrorMessage != nil {
+		s = append(s, "ErrorMessage: "+valueToGoStringModel(this.ErrorMessage, "string")+",\n")
+	}
+	if this.Code != nil {
+		s = append(s, "Code: "+valueToGoStringModel(this.Code, "int32")+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Data) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&common.Data{")
 	if this.Universities != nil {
 		s = append(s, "Universities: "+fmt.Sprintf("%#v", this.Universities)+",\n")
 	}
@@ -2630,63 +2635,15 @@ func (this *Response) GoString() string {
 	if this.Sections != nil {
 		s = append(s, "Sections: "+fmt.Sprintf("%#v", this.Sections)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	if this.University != nil {
+		s = append(s, "University: "+fmt.Sprintf("%#v", this.University)+",\n")
 	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Universities) GoString() string {
-	if this == nil {
-		return "nil"
+	if this.Subject != nil {
+		s = append(s, "Subject: "+fmt.Sprintf("%#v", this.Subject)+",\n")
 	}
-	s := make([]string, 0, 5)
-	s = append(s, "&common.Universities{")
-	if this.Universities != nil {
-		s = append(s, "Universities: "+fmt.Sprintf("%#v", this.Universities)+",\n")
+	if this.Course != nil {
+		s = append(s, "Course: "+fmt.Sprintf("%#v", this.Course)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Subjects) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&common.Subjects{")
-	if this.Subjects != nil {
-		s = append(s, "Subjects: "+fmt.Sprintf("%#v", this.Subjects)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Courses) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&common.Courses{")
-	if this.Courses != nil {
-		s = append(s, "Courses: "+fmt.Sprintf("%#v", this.Courses)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Sections) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&common.Sections{")
 	if this.Section != nil {
 		s = append(s, "Section: "+fmt.Sprintf("%#v", this.Section)+",\n")
 	}
@@ -3052,45 +3009,25 @@ func (m *Response) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Universities != nil {
+	if m.Meta != nil {
 		data[i] = 0xa
 		i++
-		i = encodeVarintModel(data, i, uint64(m.Universities.Size()))
-		n1, err := m.Universities.MarshalTo(data[i:])
+		i = encodeVarintModel(data, i, uint64(m.Meta.Size()))
+		n1, err := m.Meta.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n1
 	}
-	if m.Subjects != nil {
+	if m.Data != nil {
 		data[i] = 0x12
 		i++
-		i = encodeVarintModel(data, i, uint64(m.Subjects.Size()))
-		n2, err := m.Subjects.MarshalTo(data[i:])
+		i = encodeVarintModel(data, i, uint64(m.Data.Size()))
+		n2, err := m.Data.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n2
-	}
-	if m.Courses != nil {
-		data[i] = 0x1a
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Courses.Size()))
-		n3, err := m.Courses.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
-	}
-	if m.Sections != nil {
-		data[i] = 0x22
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Sections.Size()))
-		n4, err := m.Sections.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n4
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -3098,7 +3035,7 @@ func (m *Response) MarshalTo(data []byte) (int, error) {
 	return i, nil
 }
 
-func (m *Universities) Marshal() (data []byte, err error) {
+func (m *Meta) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
 	n, err := m.MarshalTo(data)
@@ -3108,7 +3045,45 @@ func (m *Universities) Marshal() (data []byte, err error) {
 	return data[:n], nil
 }
 
-func (m *Universities) MarshalTo(data []byte) (int, error) {
+func (m *Meta) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ErrorType != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintModel(data, i, uint64(len(*m.ErrorType)))
+		i += copy(data[i:], *m.ErrorType)
+	}
+	if m.ErrorMessage != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintModel(data, i, uint64(len(*m.ErrorMessage)))
+		i += copy(data[i:], *m.ErrorMessage)
+	}
+	if m.Code != nil {
+		data[i] = 0x18
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.Code))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Data) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Data) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3125,30 +3100,9 @@ func (m *Universities) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Subjects) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Subjects) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
 	if len(m.Subjects) > 0 {
 		for _, msg := range m.Subjects {
-			data[i] = 0xa
+			data[i] = 0x12
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -3158,30 +3112,9 @@ func (m *Subjects) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Courses) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Courses) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
 	if len(m.Courses) > 0 {
 		for _, msg := range m.Courses {
-			data[i] = 0xa
+			data[i] = 0x1a
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -3191,30 +3124,9 @@ func (m *Courses) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Sections) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Sections) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Section) > 0 {
-		for _, msg := range m.Section {
-			data[i] = 0xa
+	if len(m.Sections) > 0 {
+		for _, msg := range m.Sections {
+			data[i] = 0x22
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -3223,6 +3135,46 @@ func (m *Sections) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
+	}
+	if m.University != nil {
+		data[i] = 0x2a
+		i++
+		i = encodeVarintModel(data, i, uint64(m.University.Size()))
+		n3, err := m.University.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n3
+	}
+	if m.Subject != nil {
+		data[i] = 0x32
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Subject.Size()))
+		n4, err := m.Subject.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n4
+	}
+	if m.Course != nil {
+		data[i] = 0x3a
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Course.Size()))
+		n5, err := m.Course.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n5
+	}
+	if m.Section != nil {
+		data[i] = 0x42
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Section.Size()))
+		n6, err := m.Section.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n6
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -3821,79 +3773,84 @@ func NewPopulatedUniversity(r randyModel, easy bool) *University {
 func NewPopulatedResponse(r randyModel, easy bool) *Response {
 	this := &Response{}
 	if r.Intn(10) != 0 {
-		this.Universities = NewPopulatedUniversities(r, easy)
+		this.Meta = NewPopulatedMeta(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		this.Subjects = NewPopulatedSubjects(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Courses = NewPopulatedCourses(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Sections = NewPopulatedSections(r, easy)
+		this.Data = NewPopulatedData(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 5)
+		this.XXX_unrecognized = randUnrecognizedModel(r, 3)
 	}
 	return this
 }
 
-func NewPopulatedUniversities(r randyModel, easy bool) *Universities {
-	this := &Universities{}
+func NewPopulatedMeta(r randyModel, easy bool) *Meta {
+	this := &Meta{}
 	if r.Intn(10) != 0 {
-		v5 := r.Intn(5)
-		this.Universities = make([]*University, v5)
-		for i := 0; i < v5; i++ {
+		v5 := randStringModel(r)
+		this.ErrorType = &v5
+	}
+	if r.Intn(10) != 0 {
+		v6 := randStringModel(r)
+		this.ErrorMessage = &v6
+	}
+	if r.Intn(10) != 0 {
+		v7 := int32(r.Int31())
+		if r.Intn(2) == 0 {
+			v7 *= -1
+		}
+		this.Code = &v7
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 4)
+	}
+	return this
+}
+
+func NewPopulatedData(r randyModel, easy bool) *Data {
+	this := &Data{}
+	if r.Intn(10) != 0 {
+		v8 := r.Intn(5)
+		this.Universities = make([]*University, v8)
+		for i := 0; i < v8; i++ {
 			this.Universities[i] = NewPopulatedUniversity(r, easy)
 		}
 	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedSubjects(r randyModel, easy bool) *Subjects {
-	this := &Subjects{}
 	if r.Intn(10) != 0 {
-		v6 := r.Intn(5)
-		this.Subjects = make([]*Subject, v6)
-		for i := 0; i < v6; i++ {
+		v9 := r.Intn(5)
+		this.Subjects = make([]*Subject, v9)
+		for i := 0; i < v9; i++ {
 			this.Subjects[i] = NewPopulatedSubject(r, easy)
 		}
 	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedCourses(r randyModel, easy bool) *Courses {
-	this := &Courses{}
 	if r.Intn(10) != 0 {
-		v7 := r.Intn(5)
-		this.Courses = make([]*Course, v7)
-		for i := 0; i < v7; i++ {
+		v10 := r.Intn(5)
+		this.Courses = make([]*Course, v10)
+		for i := 0; i < v10; i++ {
 			this.Courses[i] = NewPopulatedCourse(r, easy)
 		}
 	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedSections(r randyModel, easy bool) *Sections {
-	this := &Sections{}
 	if r.Intn(10) != 0 {
-		v8 := r.Intn(5)
-		this.Section = make([]*Section, v8)
-		for i := 0; i < v8; i++ {
-			this.Section[i] = NewPopulatedSection(r, easy)
+		v11 := r.Intn(5)
+		this.Sections = make([]*Section, v11)
+		for i := 0; i < v11; i++ {
+			this.Sections[i] = NewPopulatedSection(r, easy)
 		}
 	}
+	if r.Intn(10) != 0 {
+		this.University = NewPopulatedUniversity(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Subject = NewPopulatedSubject(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Course = NewPopulatedCourse(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Section = NewPopulatedSection(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 2)
+		this.XXX_unrecognized = randUnrecognizedModel(r, 9)
 	}
 	return this
 }
@@ -3915,16 +3872,16 @@ func NewPopulatedSubject(r randyModel, easy bool) *Subject {
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v9 := r.Intn(5)
-		this.Courses = make([]*Course, v9)
-		for i := 0; i < v9; i++ {
+		v12 := r.Intn(5)
+		this.Courses = make([]*Course, v12)
+		for i := 0; i < v12; i++ {
 			this.Courses[i] = NewPopulatedCourse(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v10 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v10)
-		for i := 0; i < v10; i++ {
+		v13 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v13)
+		for i := 0; i < v13; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -3947,22 +3904,22 @@ func NewPopulatedCourse(r randyModel, easy bool) *Course {
 	this.Name = randStringModel(r)
 	this.Number = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v11 := randStringModel(r)
-		this.Synopsis = &v11
+		v14 := randStringModel(r)
+		this.Synopsis = &v14
 	}
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v12 := r.Intn(5)
-		this.Sections = make([]*Section, v12)
-		for i := 0; i < v12; i++ {
+		v15 := r.Intn(5)
+		this.Sections = make([]*Section, v15)
+		for i := 0; i < v15; i++ {
 			this.Sections[i] = NewPopulatedSection(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v13 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v13)
-		for i := 0; i < v13; i++ {
+		v16 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v16)
+		for i := 0; i < v16; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -3997,30 +3954,30 @@ func NewPopulatedSection(r randyModel, easy bool) *Section {
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(5)
-		this.Meetings = make([]*Meeting, v14)
-		for i := 0; i < v14; i++ {
+		v17 := r.Intn(5)
+		this.Meetings = make([]*Meeting, v17)
+		for i := 0; i < v17; i++ {
 			this.Meetings[i] = NewPopulatedMeeting(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v15 := r.Intn(5)
-		this.Instructors = make([]*Instructor, v15)
-		for i := 0; i < v15; i++ {
+		v18 := r.Intn(5)
+		this.Instructors = make([]*Instructor, v18)
+		for i := 0; i < v18; i++ {
 			this.Instructors[i] = NewPopulatedInstructor(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v16 := r.Intn(5)
-		this.Books = make([]*Book, v16)
-		for i := 0; i < v16; i++ {
+		v19 := r.Intn(5)
+		this.Books = make([]*Book, v19)
+		for i := 0; i < v19; i++ {
 			this.Books[i] = NewPopulatedBook(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v17 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v17)
-		for i := 0; i < v17; i++ {
+		v20 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v20)
+		for i := 0; i < v20; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -4041,33 +3998,33 @@ func NewPopulatedMeeting(r randyModel, easy bool) *Meeting {
 		this.SectionId *= -1
 	}
 	if r.Intn(10) != 0 {
-		v18 := randStringModel(r)
-		this.Room = &v18
-	}
-	if r.Intn(10) != 0 {
-		v19 := randStringModel(r)
-		this.Day = &v19
-	}
-	if r.Intn(10) != 0 {
-		v20 := randStringModel(r)
-		this.StartTime = &v20
-	}
-	if r.Intn(10) != 0 {
 		v21 := randStringModel(r)
-		this.EndTime = &v21
+		this.Room = &v21
 	}
 	if r.Intn(10) != 0 {
 		v22 := randStringModel(r)
-		this.ClassType = &v22
+		this.Day = &v22
+	}
+	if r.Intn(10) != 0 {
+		v23 := randStringModel(r)
+		this.StartTime = &v23
+	}
+	if r.Intn(10) != 0 {
+		v24 := randStringModel(r)
+		this.EndTime = &v24
+	}
+	if r.Intn(10) != 0 {
+		v25 := randStringModel(r)
+		this.ClassType = &v25
 	}
 	this.Index = int32(r.Int31())
 	if r.Intn(2) == 0 {
 		this.Index *= -1
 	}
 	if r.Intn(10) != 0 {
-		v23 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v23)
-		for i := 0; i < v23; i++ {
+		v26 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v26)
+		for i := 0; i < v26; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -4123,39 +4080,39 @@ func NewPopulatedMetadata(r randyModel, easy bool) *Metadata {
 		this.Id *= -1
 	}
 	if r.Intn(10) != 0 {
-		v24 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v24 *= -1
-		}
-		this.UniversityId = &v24
-	}
-	if r.Intn(10) != 0 {
-		v25 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v25 *= -1
-		}
-		this.SubjectId = &v25
-	}
-	if r.Intn(10) != 0 {
-		v26 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v26 *= -1
-		}
-		this.CourseId = &v26
-	}
-	if r.Intn(10) != 0 {
 		v27 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v27 *= -1
 		}
-		this.SectionId = &v27
+		this.UniversityId = &v27
 	}
 	if r.Intn(10) != 0 {
 		v28 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v28 *= -1
 		}
-		this.MeetingId = &v28
+		this.SubjectId = &v28
+	}
+	if r.Intn(10) != 0 {
+		v29 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v29 *= -1
+		}
+		this.CourseId = &v29
+	}
+	if r.Intn(10) != 0 {
+		v30 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v30 *= -1
+		}
+		this.SectionId = &v30
+	}
+	if r.Intn(10) != 0 {
+		v31 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v31 *= -1
+		}
+		this.MeetingId = &v31
 	}
 	this.Title = randStringModel(r)
 	this.Content = randStringModel(r)
@@ -4218,9 +4175,9 @@ func randUTF8RuneModel(r randyModel) rune {
 	return rune(ru + 61)
 }
 func randStringModel(r randyModel) string {
-	v29 := r.Intn(100)
-	tmps := make([]rune, v29)
-	for i := 0; i < v29; i++ {
+	v32 := r.Intn(100)
+	tmps := make([]rune, v32)
+	for i := 0; i < v32; i++ {
 		tmps[i] = randUTF8RuneModel(r)
 	}
 	return string(tmps)
@@ -4242,11 +4199,11 @@ func randFieldModel(data []byte, r randyModel, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateModel(data, uint64(key))
-		v30 := r.Int63()
+		v33 := r.Int63()
 		if r.Intn(2) == 0 {
-			v30 *= -1
+			v33 *= -1
 		}
-		data = encodeVarintPopulateModel(data, uint64(v30))
+		data = encodeVarintPopulateModel(data, uint64(v33))
 	case 1:
 		data = encodeVarintPopulateModel(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -4324,20 +4281,12 @@ func (m *University) Size() (n int) {
 func (m *Response) Size() (n int) {
 	var l int
 	_ = l
-	if m.Universities != nil {
-		l = m.Universities.Size()
+	if m.Meta != nil {
+		l = m.Meta.Size()
 		n += 1 + l + sovModel(uint64(l))
 	}
-	if m.Subjects != nil {
-		l = m.Subjects.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Courses != nil {
-		l = m.Courses.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Sections != nil {
-		l = m.Sections.Size()
+	if m.Data != nil {
+		l = m.Data.Size()
 		n += 1 + l + sovModel(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -4346,7 +4295,27 @@ func (m *Response) Size() (n int) {
 	return n
 }
 
-func (m *Universities) Size() (n int) {
+func (m *Meta) Size() (n int) {
+	var l int
+	_ = l
+	if m.ErrorType != nil {
+		l = len(*m.ErrorType)
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.ErrorMessage != nil {
+		l = len(*m.ErrorMessage)
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Code != nil {
+		n += 1 + sovModel(uint64(*m.Code))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Data) Size() (n int) {
 	var l int
 	_ = l
 	if len(m.Universities) > 0 {
@@ -4355,50 +4324,39 @@ func (m *Universities) Size() (n int) {
 			n += 1 + l + sovModel(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Subjects) Size() (n int) {
-	var l int
-	_ = l
 	if len(m.Subjects) > 0 {
 		for _, e := range m.Subjects {
 			l = e.Size()
 			n += 1 + l + sovModel(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Courses) Size() (n int) {
-	var l int
-	_ = l
 	if len(m.Courses) > 0 {
 		for _, e := range m.Courses {
 			l = e.Size()
 			n += 1 + l + sovModel(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Sections) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.Section) > 0 {
-		for _, e := range m.Section {
+	if len(m.Sections) > 0 {
+		for _, e := range m.Sections {
 			l = e.Size()
 			n += 1 + l + sovModel(uint64(l))
 		}
+	}
+	if m.University != nil {
+		l = m.University.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Subject != nil {
+		l = m.Subject.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Course != nil {
+		l = m.Course.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Section != nil {
+		l = m.Section.Size()
+		n += 1 + l + sovModel(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -4688,53 +4646,38 @@ func (this *Response) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Response{`,
-		`Universities:` + strings.Replace(fmt.Sprintf("%v", this.Universities), "Universities", "Universities", 1) + `,`,
-		`Subjects:` + strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subjects", "Subjects", 1) + `,`,
-		`Courses:` + strings.Replace(fmt.Sprintf("%v", this.Courses), "Courses", "Courses", 1) + `,`,
-		`Sections:` + strings.Replace(fmt.Sprintf("%v", this.Sections), "Sections", "Sections", 1) + `,`,
+		`Meta:` + strings.Replace(fmt.Sprintf("%v", this.Meta), "Meta", "Meta", 1) + `,`,
+		`Data:` + strings.Replace(fmt.Sprintf("%v", this.Data), "Data", "Data", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *Universities) String() string {
+func (this *Meta) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&Universities{`,
+	s := strings.Join([]string{`&Meta{`,
+		`ErrorType:` + valueToStringModel(this.ErrorType) + `,`,
+		`ErrorMessage:` + valueToStringModel(this.ErrorMessage) + `,`,
+		`Code:` + valueToStringModel(this.Code) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Data) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Data{`,
 		`Universities:` + strings.Replace(fmt.Sprintf("%v", this.Universities), "University", "University", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Subjects) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Subjects{`,
 		`Subjects:` + strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subject", "Subject", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Courses) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Courses{`,
 		`Courses:` + strings.Replace(fmt.Sprintf("%v", this.Courses), "Course", "Course", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Sections) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Sections{`,
+		`Sections:` + strings.Replace(fmt.Sprintf("%v", this.Sections), "Section", "Section", 1) + `,`,
+		`University:` + strings.Replace(fmt.Sprintf("%v", this.University), "University", "University", 1) + `,`,
+		`Subject:` + strings.Replace(fmt.Sprintf("%v", this.Subject), "Subject", "Subject", 1) + `,`,
+		`Course:` + strings.Replace(fmt.Sprintf("%v", this.Course), "Course", "Course", 1) + `,`,
 		`Section:` + strings.Replace(fmt.Sprintf("%v", this.Section), "Section", "Section", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -5360,7 +5303,7 @@ func (m *Response) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Universities", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Meta", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5384,16 +5327,16 @@ func (m *Response) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Universities == nil {
-				m.Universities = &Universities{}
+			if m.Meta == nil {
+				m.Meta = &Meta{}
 			}
-			if err := m.Universities.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.Meta.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Subjects", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5417,76 +5360,10 @@ func (m *Response) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Subjects == nil {
-				m.Subjects = &Subjects{}
+			if m.Data == nil {
+				m.Data = &Data{}
 			}
-			if err := m.Subjects.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Courses", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Courses == nil {
-				m.Courses = &Courses{}
-			}
-			if err := m.Courses.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sections", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Sections == nil {
-				m.Sections = &Sections{}
-			}
-			if err := m.Sections.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.Data.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -5512,7 +5389,7 @@ func (m *Response) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *Universities) Unmarshal(data []byte) error {
+func (m *Meta) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
@@ -5535,10 +5412,141 @@ func (m *Universities) Unmarshal(data []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Universities: wiretype end group for non-group")
+			return fmt.Errorf("proto: Meta: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Universities: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Meta: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorType", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.ErrorType = &s
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.ErrorMessage = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Code = &v
+		default:
+			iNdEx = preIndex
+			skippy, err := skipModel(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthModel
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Data) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowModel
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Data: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Data: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -5572,58 +5580,7 @@ func (m *Universities) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthModel
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Subjects) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Subjects: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Subjects: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subjects", wireType)
 			}
@@ -5654,58 +5611,7 @@ func (m *Subjects) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthModel
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Courses) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Courses: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Courses: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Courses", wireType)
 			}
@@ -5736,58 +5642,137 @@ func (m *Courses) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sections", wireType)
 			}
-			if skippy < 0 {
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
 				return ErrInvalidLengthModel
 			}
-			if (iNdEx + skippy) > l {
+			postIndex := iNdEx + msglen
+			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Sections) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
+			m.Sections = append(m.Sections, &Section{})
+			if err := m.Sections[len(m.Sections)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			if iNdEx >= l {
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field University", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
+			if m.University == nil {
+				m.University = &University{}
 			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Sections: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Sections: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+			if err := m.University.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Subject", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Subject == nil {
+				m.Subject = &Subject{}
+			}
+			if err := m.Subject.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Course", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Course == nil {
+				m.Course = &Course{}
+			}
+			if err := m.Course.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Section", wireType)
 			}
@@ -5813,8 +5798,10 @@ func (m *Sections) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Section = append(m.Section, &Section{})
-			if err := m.Section[len(m.Section)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if m.Section == nil {
+				m.Section = &Section{}
+			}
+			if err := m.Section.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -8030,89 +8017,92 @@ var (
 )
 
 var fileDescriptorModel = []byte{
-	// 1330 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x58, 0xbd, 0x6f, 0x1c, 0x45,
-	0x14, 0xcf, 0x79, 0xef, 0xf3, 0xdd, 0xf9, 0x6b, 0x6d, 0xe2, 0x83, 0x20, 0x3b, 0xac, 0x40, 0x32,
-	0x0a, 0x36, 0x28, 0x31, 0x38, 0x04, 0x0a, 0xb8, 0x44, 0x48, 0x16, 0x22, 0x42, 0x43, 0xd2, 0x50,
-	0x70, 0xda, 0xbb, 0x1d, 0x99, 0x85, 0xdb, 0xdd, 0xd3, 0xee, 0x5c, 0xf0, 0x75, 0xfc, 0x13, 0x94,
-	0xf4, 0x34, 0x54, 0x14, 0xa1, 0xa4, 0x41, 0x8a, 0x44, 0x43, 0x49, 0x65, 0x92, 0x94, 0x54, 0x88,
-	0x8a, 0x92, 0xf7, 0xe6, 0x63, 0x3f, 0xee, 0x0e, 0xdf, 0xc5, 0x52, 0x5c, 0x8c, 0x6f, 0xe6, 0xbd,
-	0xdf, 0x9b, 0x37, 0xef, 0x63, 0xde, 0x9b, 0x35, 0xd8, 0xfd, 0x28, 0x08, 0xa2, 0xf0, 0xcd, 0x20,
-	0xf2, 0xf8, 0x60, 0x7f, 0x18, 0x47, 0x22, 0xb2, 0xab, 0x8a, 0xf6, 0x12, 0x1c, 0x47, 0xc7, 0x91,
-	0xa2, 0x39, 0x0f, 0x2b, 0x00, 0xf7, 0x43, 0xff, 0x01, 0x8f, 0x13, 0x5f, 0x8c, 0xed, 0x1d, 0x58,
-	0xf2, 0xbd, 0x76, 0xe9, 0x6a, 0x69, 0xd7, 0xea, 0xac, 0x3e, 0x3a, 0xdd, 0xb9, 0xf4, 0xcf, 0xe9,
-	0x4e, 0xcd, 0xeb, 0xdd, 0x72, 0x7c, 0xcf, 0x61, 0xc8, 0xb2, 0x5f, 0x83, 0x72, 0xe8, 0x06, 0xbc,
-	0xbd, 0x84, 0x90, 0x46, 0x67, 0x5d, 0x43, 0x1a, 0x04, 0x21, 0xba, 0xc3, 0x24, 0x9b, 0x60, 0x6e,
-	0xaf, 0x17, 0xb7, 0xad, 0x69, 0x18, 0xd1, 0x11, 0x46, 0x3f, 0xf6, 0x0d, 0x68, 0x7c, 0x19, 0x05,
-	0xbc, 0x3b, 0x74, 0x8f, 0x79, 0xbb, 0x2c, 0xb1, 0x97, 0x35, 0x76, 0x85, 0xb0, 0x29, 0xd3, 0x61,
-	0x75, 0x9a, 0x7f, 0x8a, 0x53, 0xfb, 0x63, 0x58, 0x8f, 0xf9, 0xb1, 0x9f, 0x88, 0xd8, 0x15, 0x7e,
-	0x14, 0x2a, 0xe1, 0x8a, 0x14, 0xde, 0xd6, 0xc2, 0x97, 0x49, 0x78, 0x0a, 0xe4, 0xb0, 0xb5, 0x3c,
-	0x4d, 0x6e, 0xf6, 0x0e, 0x40, 0xe0, 0xfa, 0x61, 0xb7, 0x1f, 0x0d, 0xa2, 0xb8, 0x5d, 0x95, 0xbb,
-	0x6c, 0xe9, 0x5d, 0x56, 0x69, 0x97, 0x8c, 0xeb, 0xb0, 0x06, 0x2d, 0x6e, 0xd3, 0xdc, 0x7e, 0x1f,
-	0x5a, 0x6e, 0xbf, 0xcf, 0x43, 0xa1, 0x25, 0x6b, 0x52, 0xf2, 0x45, 0x2d, 0xb9, 0x2e, 0x0d, 0xcd,
-	0xf1, 0x1d, 0xd6, 0x54, 0x4b, 0x25, 0x8d, 0x5a, 0x45, 0x34, 0xf4, 0xfb, 0x5d, 0xe9, 0xcb, 0xfa,
-	0xb4, 0xd6, 0x8c, 0x8b, 0x5a, 0xe5, 0xe2, 0x2e, 0xb9, 0xf5, 0x2d, 0xa8, 0x2b, 0x0e, 0x06, 0xa9,
-	0x21, 0xa5, 0x5e, 0xd0, 0x52, 0xcb, 0x99, 0x14, 0x85, 0xaa, 0x26, 0xa7, 0x47, 0x9e, 0x7d, 0x0d,
-	0xea, 0xc9, 0xa8, 0xf7, 0x15, 0xef, 0x8b, 0xa4, 0x0d, 0x57, 0xad, 0xdd, 0xe6, 0xf5, 0xd5, 0x7d,
-	0x95, 0x06, 0xfb, 0x9f, 0x29, 0x3a, 0x4b, 0x01, 0xf6, 0x87, 0xb0, 0xe1, 0x3e, 0x70, 0xfd, 0x81,
-	0xdb, 0x1b, 0xf0, 0x6e, 0xc2, 0x03, 0x9e, 0x08, 0xcc, 0x8b, 0x76, 0x53, 0xca, 0xad, 0xa5, 0x72,
-	0x9a, 0xc1, 0xec, 0x14, 0x6c, 0x48, 0x89, 0x7d, 0x0b, 0x96, 0xf3, 0x3e, 0x4e, 0xda, 0x2d, 0x29,
-	0xbc, 0x69, 0x84, 0x59, 0x8e, 0xc9, 0x8a, 0x50, 0xfb, 0x0d, 0xa8, 0x07, 0x5c, 0xb8, 0x9e, 0x2b,
-	0xdc, 0xf6, 0x72, 0x51, 0xe7, 0x27, 0x9a, 0xce, 0x52, 0x84, 0xf3, 0x5b, 0x09, 0xea, 0x8c, 0x27,
-	0x43, 0x94, 0xe4, 0xf6, 0x4d, 0x68, 0x8d, 0x4c, 0x16, 0xfb, 0x3c, 0x91, 0x19, 0x9c, 0xd3, 0x7a,
-	0x3f, 0xc7, 0x63, 0x05, 0x24, 0x29, 0x4d, 0x1d, 0xb4, 0x24, 0xa5, 0xd6, 0x26, 0x1c, 0x94, 0xe4,
-	0x3c, 0xf4, 0x3a, 0xd4, 0xfa, 0xd1, 0x28, 0x4e, 0x50, 0x85, 0x25, 0xc1, 0xa9, 0x37, 0x6f, 0x2b,
-	0x32, 0x33, 0x7c, 0xb9, 0x31, 0xca, 0x48, 0x27, 0x94, 0x27, 0x36, 0xd6, 0x74, 0x96, 0x22, 0x9c,
-	0x8f, 0xa0, 0x95, 0x3f, 0x24, 0x66, 0xc8, 0xa4, 0x41, 0xe4, 0x0f, 0x7b, 0xca, 0xa0, 0x71, 0xd1,
-	0x1c, 0xe7, 0x10, 0xea, 0xe6, 0xd8, 0x85, 0xd8, 0x97, 0xe6, 0xc4, 0xde, 0xb9, 0x01, 0x35, 0x6d,
-	0x82, 0xbd, 0x9b, 0x19, 0xa9, 0xc4, 0x56, 0x8a, 0x46, 0xa6, 0x36, 0x3a, 0x6f, 0xa3, 0x36, 0x6d,
-	0x01, 0xb9, 0x46, 0x5b, 0x33, 0xa5, 0x4c, 0x91, 0x99, 0xe1, 0x3b, 0x7f, 0x5a, 0x50, 0xd3, 0x27,
-	0xb0, 0x5f, 0xcd, 0x55, 0x9c, 0x4d, 0x4a, 0xe6, 0xbf, 0x4e, 0x77, 0x4a, 0x7b, 0x93, 0x65, 0xe7,
-	0x0e, 0x2c, 0xa7, 0x66, 0x8e, 0x29, 0xfb, 0x97, 0xa4, 0xc0, 0x4e, 0x5e, 0xc0, 0x26, 0x81, 0x02,
-	0xca, 0xc9, 0x39, 0x67, 0x7c, 0x94, 0x15, 0x2f, 0xeb, 0xec, 0xe2, 0x75, 0x0d, 0xaa, 0xe1, 0x28,
-	0xe8, 0xf1, 0x58, 0x97, 0xa4, 0x0d, 0x0d, 0x6c, 0x4a, 0xa0, 0xe4, 0x38, 0x4c, 0x43, 0x08, 0x9c,
-	0x70, 0x37, 0x41, 0xab, 0x2b, 0xd3, 0x60, 0xc5, 0x41, 0xb0, 0x9a, 0xd0, 0x01, 0xc6, 0xdc, 0x35,
-	0x75, 0xa6, 0x70, 0x00, 0xa2, 0xe3, 0x01, 0xe8, 0x67, 0xa2, 0x3c, 0xd4, 0xce, 0x55, 0x1e, 0xea,
-	0x0b, 0x95, 0x87, 0x5c, 0xa8, 0x1b, 0x67, 0x86, 0xba, 0x70, 0x39, 0x61, 0xee, 0xe5, 0xfc, 0xc9,
-	0x82, 0xaa, 0xda, 0x61, 0xc1, 0x00, 0xbf, 0x07, 0xa0, 0x53, 0x31, 0x8b, 0xee, 0xcb, 0x79, 0xb4,
-	0xb4, 0x3b, 0x83, 0xa0, 0xdd, 0x7a, 0xf1, 0x9c, 0xe2, 0xba, 0x87, 0x97, 0x67, 0x1c, 0x46, 0xc3,
-	0xc4, 0x4f, 0x74, 0x64, 0xd7, 0x8d, 0x1f, 0x0d, 0x1d, 0x9b, 0x92, 0x99, 0x4e, 0x84, 0xac, 0x7a,
-	0xae, 0x90, 0xd5, 0x16, 0xae, 0xe8, 0xa6, 0xae, 0xd4, 0x67, 0x5f, 0xb4, 0x14, 0x50, 0x88, 0x5a,
-	0x63, 0x6e, 0xd4, 0xbe, 0xab, 0xe0, 0xbd, 0x54, 0xa2, 0x0b, 0x86, 0xed, 0x26, 0x34, 0x54, 0x82,
-	0x64, 0x51, 0xbb, 0x92, 0x07, 0xcb, 0x2e, 0x9e, 0x22, 0xd0, 0x61, 0x6a, 0x2e, 0xcd, 0x30, 0xc1,
-	0xb0, 0xe6, 0x07, 0xe3, 0x5d, 0x68, 0xf6, 0xdd, 0xc1, 0xa0, 0x5b, 0x08, 0x5f, 0x5b, 0x4b, 0xac,
-	0x49, 0x1d, 0x19, 0xdb, 0x61, 0x40, 0xab, 0xbb, 0x4a, 0xd4, 0x01, 0x2b, 0x70, 0x4f, 0x64, 0x08,
-	0xad, 0xce, 0x9a, 0x16, 0xa9, 0xab, 0xce, 0x7e, 0xe2, 0x30, 0x62, 0x12, 0x26, 0x8c, 0xbe, 0x91,
-	0x51, 0x9b, 0xc0, 0x20, 0x19, 0x31, 0xf8, 0x57, 0xde, 0x73, 0xe1, 0x8a, 0x51, 0xa2, 0xc3, 0x54,
-	0xbc, 0xe7, 0x92, 0x43, 0xf7, 0x5c, 0x4e, 0xec, 0x7d, 0xbc, 0x56, 0x31, 0xf7, 0x7c, 0x91, 0xe8,
-	0x7b, 0xb8, 0xa9, 0xd1, 0x2d, 0x79, 0x56, 0xc5, 0xc2, 0x98, 0xea, 0xd9, 0x44, 0xf6, 0x34, 0xce,
-	0x95, 0x3d, 0xb0, 0x68, 0xf6, 0x04, 0x9c, 0x0b, 0x3f, 0x3c, 0x36, 0x7d, 0x7d, 0x35, 0x4b, 0x08,
-	0x49, 0x67, 0x29, 0xc0, 0x3e, 0x80, 0xa6, 0x1f, 0x62, 0x7f, 0x1e, 0xf5, 0x45, 0x14, 0x9b, 0x56,
-	0x9e, 0xf6, 0xa0, 0xa3, 0x94, 0xc5, 0xf2, 0x30, 0xf4, 0x66, 0xa5, 0x17, 0x45, 0x5f, 0x27, 0xba,
-	0x87, 0xb7, 0x0c, 0xbe, 0x83, 0x44, 0xa6, 0x58, 0x85, 0xbc, 0x5c, 0x99, 0x9b, 0x97, 0xdf, 0x63,
-	0xbf, 0xd0, 0xa7, 0x7b, 0x86, 0x72, 0xa2, 0x12, 0xf9, 0xcc, 0x72, 0x92, 0x42, 0xa8, 0x9c, 0xa8,
-	0x05, 0xfa, 0xe8, 0x15, 0x28, 0xc7, 0x51, 0x14, 0xe8, 0xc4, 0x5c, 0x36, 0xa5, 0x84, 0x68, 0x58,
-	0x4a, 0xe8, 0xc7, 0xde, 0x06, 0xcb, 0x73, 0xc7, 0x3a, 0x11, 0x5b, 0x26, 0x5b, 0x90, 0x84, 0xd9,
-	0x82, 0x7f, 0xed, 0xeb, 0xa8, 0x5f, 0xb8, 0xb1, 0xe8, 0x0a, 0x3f, 0x30, 0x8f, 0xd3, 0x8d, 0x54,
-	0x6d, 0xca, 0x21, 0xb5, 0xb4, 0xb8, 0x87, 0x73, 0xf2, 0x09, 0x0f, 0x3d, 0x25, 0x51, 0x2d, 0x56,
-	0x1c, 0x43, 0xc7, 0x40, 0xe2, 0x54, 0xa2, 0x51, 0x43, 0x7f, 0xe0, 0x26, 0x49, 0x57, 0x8c, 0x87,
-	0xa6, 0x47, 0xa4, 0x1a, 0x32, 0x0e, 0x6a, 0x90, 0x8b, 0x7b, 0x38, 0xc7, 0x6a, 0x5f, 0xf1, 0x43,
-	0x8f, 0x9f, 0xc8, 0xa4, 0xac, 0x74, 0x6c, 0x9d, 0x2b, 0x20, 0x3d, 0x47, 0x0c, 0x87, 0x29, 0xc0,
-	0x33, 0xd6, 0x8d, 0x5f, 0x4b, 0x00, 0x59, 0x36, 0x5c, 0x44, 0x88, 0x16, 0xac, 0xf8, 0x7b, 0xc6,
-	0xe0, 0xb2, 0x34, 0x78, 0x2b, 0xbf, 0xfd, 0xb4, 0xd5, 0xce, 0xc3, 0x12, 0x94, 0x29, 0x4b, 0x2f,
-	0xc2, 0x02, 0x8c, 0x85, 0xf0, 0xc5, 0xc0, 0x98, 0x50, 0x88, 0x85, 0x64, 0xe0, 0xa9, 0xe4, 0x2f,
-	0x55, 0xa7, 0x51, 0x3c, 0xd0, 0xb9, 0x56, 0xa8, 0x4e, 0x48, 0xc6, 0x7c, 0xa3, 0xbf, 0x3f, 0x5a,
-	0x50, 0x37, 0x81, 0x59, 0xf0, 0xf4, 0x1f, 0xcc, 0x7e, 0x52, 0x5d, 0x59, 0xfc, 0x39, 0x75, 0x58,
-	0xe8, 0xd9, 0x96, 0x14, 0x6f, 0x2f, 0xd2, 0xaf, 0x0f, 0xf2, 0x5d, 0xa3, 0x2c, 0xe5, 0xb6, 0xe6,
-	0x77, 0x8c, 0xc3, 0x82, 0xbb, 0x2b, 0xb3, 0xd4, 0xcd, 0x76, 0x35, 0x0a, 0xea, 0x92, 0x46, 0x82,
-	0xd5, 0x19, 0x82, 0x19, 0x9b, 0x3e, 0xf2, 0xd4, 0x22, 0x1f, 0xa3, 0xda, 0xbc, 0x18, 0x51, 0xc1,
-	0x8f, 0x42, 0x81, 0x1f, 0x78, 0x33, 0x0b, 0xbe, 0x62, 0x51, 0xc1, 0xd7, 0xb3, 0xa7, 0x25, 0x68,
-	0xe5, 0x3f, 0x85, 0x2e, 0xf4, 0x19, 0x8c, 0xad, 0x6c, 0xc8, 0x63, 0x3f, 0xf2, 0x66, 0xb5, 0x5e,
-	0xc5, 0xc1, 0x56, 0xa6, 0x26, 0xd4, 0x7a, 0xd5, 0xac, 0x8b, 0xb9, 0xc5, 0x75, 0xb4, 0x0a, 0xad,
-	0x37, 0xc7, 0xc6, 0xd6, 0xab, 0x56, 0x77, 0x68, 0xf1, 0x05, 0x7d, 0x1d, 0xa8, 0x0f, 0xc3, 0xf4,
-	0xe5, 0x5b, 0x92, 0x17, 0xf1, 0x7f, 0x5f, 0xbe, 0xd9, 0x6b, 0x7a, 0x69, 0xee, 0x6b, 0xba, 0x73,
-	0xf0, 0xc7, 0x93, 0xed, 0x4b, 0x8f, 0x9f, 0x6c, 0x97, 0xfe, 0xc6, 0xf1, 0x2f, 0x8e, 0x6f, 0x9f,
-	0x6e, 0x97, 0x7e, 0xc0, 0xf1, 0x33, 0x8e, 0x5f, 0x70, 0x3c, 0xc2, 0xf1, 0x3b, 0x8e, 0xc7, 0x38,
-	0x3e, 0xd7, 0xff, 0xfd, 0xf8, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xfb, 0x0b, 0xf9, 0x3d, 0x1a, 0x11,
-	0x00, 0x00,
+	// 1384 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x58, 0xbb, 0x93, 0x1b, 0x45,
+	0x13, 0xb7, 0xb4, 0x7a, 0xb6, 0x74, 0xbe, 0xbb, 0xb1, 0x3f, 0x5b, 0x1f, 0x86, 0x3b, 0xb3, 0x3c,
+	0xea, 0x28, 0xe3, 0x83, 0x32, 0x2e, 0x0c, 0x86, 0x00, 0x64, 0x27, 0x2e, 0xca, 0x2e, 0x6a, 0x30,
+	0x09, 0x81, 0x55, 0x2b, 0x69, 0xea, 0x58, 0xd0, 0xee, 0xaa, 0x76, 0x57, 0xc6, 0xca, 0xf8, 0x27,
+	0x08, 0xc9, 0x49, 0x88, 0x08, 0x4c, 0x48, 0x42, 0x95, 0x43, 0x42, 0x22, 0x63, 0x3b, 0x24, 0xa2,
+	0x28, 0x02, 0x42, 0xba, 0x7b, 0x66, 0xf6, 0x21, 0x09, 0x4b, 0x76, 0x15, 0x0e, 0xe6, 0x34, 0xd3,
+	0xfd, 0xeb, 0x99, 0x9e, 0xf9, 0x75, 0xf7, 0xcc, 0x1e, 0x88, 0x51, 0x14, 0x04, 0x51, 0xf8, 0x46,
+	0x10, 0x8d, 0xd5, 0xe4, 0x70, 0x1a, 0x47, 0x69, 0x24, 0x1a, 0x5a, 0xf6, 0x1c, 0x1c, 0x45, 0x47,
+	0x91, 0x96, 0xb9, 0x77, 0xeb, 0x00, 0x9f, 0x86, 0xfe, 0x6d, 0x15, 0x27, 0x7e, 0x3a, 0x17, 0xfb,
+	0x50, 0xf5, 0xc7, 0xbd, 0xca, 0xd9, 0xca, 0x81, 0xd3, 0xdf, 0xbe, 0x77, 0x7f, 0xff, 0xd8, 0x9f,
+	0xf7, 0xf7, 0x9b, 0xe3, 0xe1, 0x65, 0xd7, 0x1f, 0xbb, 0x12, 0x55, 0xe2, 0x15, 0xa8, 0x85, 0x5e,
+	0xa0, 0x7a, 0x55, 0x84, 0xb4, 0xfb, 0xbb, 0x06, 0xd2, 0x26, 0x08, 0xc9, 0x5d, 0xc9, 0x6a, 0x82,
+	0x79, 0xc3, 0x61, 0xdc, 0x73, 0x96, 0x61, 0x24, 0x47, 0x18, 0xfd, 0x88, 0xb7, 0xa0, 0xfd, 0x79,
+	0x14, 0xa8, 0xc1, 0xd4, 0x3b, 0x52, 0xbd, 0x1a, 0x63, 0x4f, 0x19, 0xec, 0x71, 0xc2, 0x66, 0x4a,
+	0x57, 0xb6, 0xa8, 0xff, 0x31, 0x76, 0xc5, 0x47, 0xb0, 0x1b, 0xab, 0x23, 0x3f, 0x49, 0x63, 0x2f,
+	0xf5, 0xa3, 0x50, 0x1b, 0xd7, 0xd9, 0x78, 0xcf, 0x18, 0x9f, 0x22, 0xe3, 0x25, 0x90, 0x2b, 0x77,
+	0x8a, 0x32, 0x9e, 0xec, 0x6d, 0x80, 0xc0, 0xf3, 0xc3, 0xc1, 0x28, 0x9a, 0x44, 0x71, 0xaf, 0xc1,
+	0xb3, 0x9c, 0x36, 0xb3, 0x6c, 0xd3, 0x2c, 0xb9, 0xd6, 0x95, 0x6d, 0x1a, 0x5c, 0xa1, 0xbe, 0x78,
+	0x1f, 0xba, 0xde, 0x68, 0xa4, 0xc2, 0xd4, 0x58, 0x36, 0xd9, 0xf2, 0xff, 0xc6, 0x72, 0x97, 0x37,
+	0x5a, 0xd0, 0xbb, 0xb2, 0xa3, 0x87, 0xda, 0x1a, 0x57, 0x4d, 0xa3, 0xa9, 0x3f, 0x1a, 0xf0, 0x59,
+	0xb6, 0x96, 0x57, 0xcd, 0xb5, 0xb8, 0x2a, 0x0f, 0x6e, 0xd0, 0xb1, 0xbe, 0x09, 0x2d, 0xad, 0x41,
+	0x92, 0xda, 0x6c, 0xf5, 0x3f, 0x63, 0xb5, 0x95, 0x5b, 0x11, 0x55, 0x4d, 0xee, 0x5e, 0x1b, 0x8b,
+	0x73, 0xd0, 0x4a, 0x66, 0xc3, 0x2f, 0xd4, 0x28, 0x4d, 0x7a, 0x70, 0xd6, 0x39, 0xe8, 0x5c, 0xd8,
+	0x3e, 0xd4, 0x61, 0x70, 0xf8, 0x89, 0x96, 0xcb, 0x0c, 0x20, 0x3e, 0x84, 0x13, 0xde, 0x6d, 0xcf,
+	0x9f, 0x78, 0xc3, 0x89, 0x1a, 0x24, 0x2a, 0x50, 0x49, 0x8a, 0x71, 0xd1, 0xeb, 0xb0, 0xdd, 0x4e,
+	0x66, 0x67, 0x14, 0x52, 0x64, 0x60, 0x2b, 0x4a, 0xc4, 0x65, 0xd8, 0x2a, 0x9e, 0x71, 0xd2, 0xeb,
+	0xb2, 0xf1, 0x49, 0x6b, 0x2c, 0x0b, 0x4a, 0x59, 0x86, 0x8a, 0xd7, 0xa1, 0x15, 0xa8, 0xd4, 0x1b,
+	0x7b, 0xa9, 0xd7, 0xdb, 0x2a, 0xaf, 0x79, 0xdd, 0xc8, 0x65, 0x86, 0x70, 0x6f, 0x40, 0x4b, 0xaa,
+	0x64, 0x8a, 0x86, 0x4a, 0x9c, 0x85, 0x1a, 0xc9, 0x39, 0x70, 0x3b, 0x17, 0xba, 0x45, 0x2b, 0xc9,
+	0x1a, 0x42, 0xf0, 0xbc, 0xd5, 0x32, 0xe2, 0x2a, 0xcd, 0xc9, 0x1a, 0xf7, 0x16, 0xd4, 0x08, 0x2f,
+	0x5e, 0x00, 0x50, 0x71, 0x1c, 0xc5, 0x83, 0x74, 0x3e, 0x55, 0x3c, 0x63, 0x5b, 0xb6, 0x59, 0x72,
+	0x13, 0x05, 0xe2, 0x25, 0xd8, 0xd2, 0x6a, 0xdc, 0x71, 0x42, 0x91, 0xc7, 0x99, 0x20, 0xbb, 0x2c,
+	0xbc, 0xae, 0x65, 0x42, 0x40, 0x6d, 0x84, 0x89, 0xc7, 0xe1, 0x5f, 0x97, 0xdc, 0x77, 0xff, 0xaa,
+	0x42, 0x8d, 0x96, 0x43, 0xf2, 0xbb, 0x33, 0x9b, 0x71, 0xbe, 0x4a, 0x70, 0x09, 0xda, 0xaa, 0xb0,
+	0x2e, 0xe5, 0xd9, 0x28, 0x4b, 0xb8, 0x12, 0x95, 0xd5, 0x75, 0x54, 0x1e, 0x40, 0x73, 0x14, 0xcd,
+	0xe2, 0x04, 0xe7, 0x77, 0x18, 0x7b, 0xdc, 0x62, 0xaf, 0xb0, 0x58, 0x5a, 0x35, 0x4f, 0x8b, 0x26,
+	0x4c, 0x56, 0x6d, 0x61, 0x5a, 0x2d, 0x97, 0x19, 0x40, 0x5c, 0x00, 0xc8, 0x7c, 0x9a, 0x73, 0xd2,
+	0xad, 0xf6, 0xbc, 0x80, 0x12, 0xaf, 0x41, 0xd3, 0xb8, 0xc5, 0xf9, 0xb5, 0xc2, 0x6d, 0xab, 0x17,
+	0xaf, 0x42, 0x43, 0xbb, 0xc5, 0xf9, 0xb4, 0xec, 0xb4, 0xd1, 0xf2, 0x94, 0xda, 0x25, 0x4e, 0x9e,
+	0x15, 0x2e, 0x5b, 0xbd, 0xfb, 0x9b, 0x03, 0x4d, 0xb3, 0x8e, 0x78, 0xb9, 0x50, 0xdd, 0x4e, 0x52,
+	0xe2, 0xfc, 0x7e, 0x7f, 0xbf, 0x72, 0x7e, 0xb1, 0xc4, 0x5d, 0x85, 0xad, 0xdc, 0x7b, 0xca, 0xb4,
+	0x2a, 0x1b, 0xec, 0x17, 0x0d, 0x04, 0x19, 0x94, 0x50, 0x6e, 0x81, 0xad, 0xf9, 0xb5, 0xbc, 0x50,
+	0x3a, 0x8f, 0x2f, 0x94, 0xe7, 0xa0, 0x11, 0xce, 0x82, 0xa1, 0x8a, 0x4d, 0xf9, 0x3b, 0x61, 0x80,
+	0x1d, 0x06, 0xb2, 0xc6, 0x95, 0x06, 0x42, 0xe0, 0x44, 0x79, 0x09, 0xee, 0xba, 0xbe, 0x0c, 0xd6,
+	0x1a, 0x04, 0xeb, 0x0e, 0x39, 0x30, 0x57, 0x9e, 0xad, 0x69, 0x25, 0x07, 0x48, 0x8e, 0x0e, 0xd0,
+	0xcf, 0x42, 0x29, 0x6a, 0x3e, 0x55, 0x29, 0x6a, 0x6d, 0x54, 0x8a, 0x0a, 0x21, 0xd9, 0x7e, 0x7c,
+	0x48, 0x16, 0x0b, 0x01, 0xac, 0x2d, 0x04, 0x3f, 0x38, 0xd0, 0xd0, 0x33, 0x6c, 0x48, 0xf0, 0x7b,
+	0x00, 0x26, 0xe0, 0x72, 0x76, 0x9f, 0x2f, 0xa2, 0x79, 0xdf, 0x39, 0x04, 0xf7, 0x6d, 0x06, 0xff,
+	0x11, 0xaf, 0xe7, 0x31, 0x05, 0xe7, 0x61, 0x34, 0x4d, 0xfc, 0xc4, 0x30, 0xbb, 0x6b, 0xcf, 0xd1,
+	0xca, 0xf1, 0x02, 0xb4, 0xdd, 0x05, 0xca, 0x1a, 0x4f, 0x45, 0x59, 0x73, 0xe3, 0xdb, 0xc3, 0xd6,
+	0x86, 0xd6, 0xba, 0xda, 0x50, 0x64, 0xad, 0xbd, 0x96, 0xb5, 0x6f, 0xea, 0x98, 0x97, 0xda, 0x74,
+	0x43, 0xda, 0xde, 0x81, 0xb6, 0x0e, 0x90, 0x9c, 0xb5, 0x33, 0x45, 0x30, 0xbf, 0x18, 0x32, 0x04,
+	0x1e, 0x98, 0xee, 0xf3, 0x36, 0x2c, 0x19, 0xce, 0x7a, 0x32, 0xde, 0x85, 0xce, 0xc8, 0x9b, 0x4c,
+	0x06, 0x25, 0xfa, 0x7a, 0xc6, 0x62, 0x87, 0xd7, 0xc8, 0xd5, 0xae, 0x04, 0x1a, 0xdd, 0xd0, 0xa6,
+	0x2e, 0x38, 0x81, 0x77, 0x87, 0x29, 0x74, 0xfa, 0x3b, 0xc6, 0xa4, 0xa5, 0x5f, 0x11, 0x77, 0x5c,
+	0x49, 0x4a, 0xc2, 0x84, 0xd1, 0x57, 0xcc, 0xda, 0x02, 0x06, 0xc5, 0x88, 0xc1, 0xbf, 0x9c, 0xe7,
+	0xa9, 0x97, 0xce, 0x12, 0x43, 0x53, 0x39, 0xcf, 0x59, 0x43, 0x79, 0xce, 0x1d, 0x71, 0x88, 0x69,
+	0x15, 0xab, 0xb1, 0x9f, 0x26, 0x26, 0x0f, 0x4f, 0x1a, 0x74, 0x97, 0x7d, 0xd5, 0x2a, 0xe4, 0xd4,
+	0xf4, 0x16, 0xa2, 0xa7, 0xfd, 0x54, 0xd1, 0x03, 0x9b, 0x46, 0x4f, 0xa0, 0x54, 0xea, 0x87, 0x47,
+	0xf6, 0x0d, 0xb1, 0x9d, 0x07, 0x04, 0xcb, 0x65, 0x06, 0x10, 0x17, 0xa1, 0xe3, 0x87, 0xf8, 0x16,
+	0x98, 0x8d, 0xd2, 0x28, 0xb6, 0xcf, 0x86, 0xec, 0x6a, 0xb9, 0x96, 0xa9, 0x64, 0x11, 0x86, 0xa7,
+	0x59, 0x1f, 0x46, 0xd1, 0x97, 0x89, 0x79, 0x2f, 0x64, 0xf7, 0x7a, 0x1f, 0x85, 0x52, 0xab, 0x4a,
+	0x71, 0x79, 0x7c, 0x6d, 0x5c, 0x7e, 0x8b, 0xf7, 0x85, 0xf1, 0xee, 0x09, 0xca, 0x89, 0x0e, 0xe4,
+	0xc7, 0x96, 0x93, 0x0c, 0x42, 0xe5, 0x44, 0x0f, 0xf0, 0x8c, 0x5e, 0x84, 0x5a, 0x1c, 0x45, 0x81,
+	0x09, 0xcc, 0x2d, 0x5b, 0x4a, 0x48, 0x86, 0xa5, 0x84, 0x7e, 0xc4, 0x1e, 0x38, 0x63, 0x6f, 0x6e,
+	0x02, 0xb1, 0x6b, 0xa3, 0x05, 0x45, 0x18, 0x2d, 0xf8, 0x97, 0xee, 0x64, 0x0c, 0x85, 0x38, 0x1d,
+	0xa4, 0x7e, 0x60, 0x1f, 0xc2, 0x27, 0xb2, 0x65, 0x33, 0x0d, 0x2d, 0x4b, 0x83, 0x9b, 0xd8, 0xa7,
+	0x33, 0x51, 0xe1, 0x58, 0x5b, 0x34, 0xca, 0x15, 0xc7, 0xca, 0x91, 0x48, 0xec, 0x32, 0x1a, 0x57,
+	0x18, 0x4d, 0xbc, 0x24, 0xd1, 0x4f, 0xa2, 0x66, 0x79, 0x85, 0x5c, 0x83, 0x2b, 0xf0, 0x80, 0xdf,
+	0x49, 0x07, 0x50, 0xf7, 0xc3, 0xb1, 0xba, 0xc3, 0x41, 0x59, 0xef, 0x0b, 0x13, 0x2b, 0xc0, 0x27,
+	0x47, 0x0a, 0x57, 0x6a, 0xc0, 0x13, 0xd6, 0x8d, 0x9f, 0x2b, 0x00, 0x79, 0x34, 0x3c, 0x0b, 0x8a,
+	0x36, 0xac, 0xf8, 0xe7, 0xed, 0x86, 0x6b, 0xbc, 0xe1, 0xd3, 0xc5, 0xe9, 0x97, 0x77, 0xed, 0xde,
+	0xad, 0x40, 0x8d, 0xa2, 0xf4, 0x59, 0xec, 0x00, 0xb9, 0x48, 0xfd, 0x74, 0x62, 0xb7, 0x50, 0xe2,
+	0x82, 0x15, 0xe8, 0x15, 0xff, 0x52, 0x75, 0x9a, 0xc5, 0x13, 0x13, 0x6b, 0xa5, 0xea, 0x84, 0x62,
+	0x8c, 0x37, 0xfa, 0xfb, 0xbd, 0x03, 0x2d, 0x4b, 0xcc, 0x86, 0xde, 0x7f, 0xb0, 0xfa, 0x49, 0x75,
+	0x66, 0xf3, 0xe7, 0xd4, 0xa5, 0xd2, 0x9d, 0xed, 0xb0, 0x79, 0x6f, 0x93, 0xfb, 0xfa, 0x62, 0xf1,
+	0xd6, 0xa8, 0xb1, 0xdd, 0xe9, 0xf5, 0x37, 0xc6, 0xa5, 0xd2, 0x71, 0xd7, 0x57, 0x2d, 0xb7, 0xfa,
+	0xa8, 0xd1, 0xd0, 0x94, 0x34, 0x32, 0x6c, 0xac, 0x30, 0xcc, 0xd5, 0xf4, 0x41, 0xa9, 0x07, 0x45,
+	0x8e, 0x9a, 0xeb, 0x38, 0xa2, 0x82, 0x1f, 0x85, 0x29, 0x7e, 0x4c, 0xae, 0x2c, 0xf8, 0x5a, 0x45,
+	0x05, 0xdf, 0xf4, 0x1e, 0x55, 0xa0, 0x5b, 0xfc, 0xec, 0x7a, 0xa6, 0xcf, 0x60, 0xbc, 0xca, 0xa6,
+	0x2a, 0xf6, 0xa3, 0xf1, 0xaa, 0xab, 0x57, 0x6b, 0xf0, 0x2a, 0xd3, 0x1d, 0xba, 0x7a, 0x75, 0x6f,
+	0x80, 0xb1, 0xa5, 0x0c, 0x5b, 0xa5, 0xab, 0xb7, 0xa0, 0xc6, 0xab, 0x57, 0x8f, 0xae, 0xd2, 0xe0,
+	0x16, 0xb4, 0xec, 0x47, 0x68, 0xf6, 0xf2, 0xad, 0x70, 0x22, 0xfe, 0xeb, 0xcb, 0x37, 0x7f, 0x4d,
+	0x57, 0xd7, 0xbe, 0xa6, 0xfb, 0x17, 0x7f, 0x7d, 0xb8, 0x77, 0xec, 0xc1, 0xc3, 0xbd, 0xca, 0x1f,
+	0xd8, 0xfe, 0xc6, 0xf6, 0xf5, 0xa3, 0xbd, 0xca, 0x77, 0xd8, 0x7e, 0xc4, 0xf6, 0x13, 0xb6, 0x7b,
+	0xd8, 0x7e, 0xc1, 0xf6, 0x00, 0xdb, 0x67, 0xe6, 0x3f, 0x2d, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff,
+	0x28, 0x52, 0x66, 0x11, 0x86, 0x11, 0x00, 0x00,
 }
