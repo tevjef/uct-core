@@ -126,7 +126,7 @@ func sendGcmNotification(to, message string) (err error) {
 		return
 	}
 
-	log.WithFields(log.Fields{"topic": httpMessage.To, "message_id": httpResponse.MessageId}).Infoln("GCMResponse")
+	log.WithFields(log.Fields{"topic": httpMessage.To, "message_id": httpResponse.MessageId}).Infoln("FCMResponse")
 	// Print GCM errors, but don't panic
 	if httpResponse.Error != "" {
 		return fmt.Errorf(httpResponse.Error)
