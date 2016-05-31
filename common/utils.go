@@ -32,6 +32,12 @@ func CheckError(err error) {
 	}
 }
 
+func LogError(err error) {
+	if err != nil {
+		log.Errorln(err)
+	}
+}
+
 func ToNullInt64(i int64) sql.NullInt64 {
 	return sql.NullInt64{Int64: i, Valid: true}
 }
@@ -74,7 +80,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Info("Latency")
+	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Infoln("Latency")
 }
 
 // stack returns a nicely formated stack frame, skipping skip frames

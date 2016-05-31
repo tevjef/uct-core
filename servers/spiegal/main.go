@@ -30,11 +30,14 @@ func main() {
 	PrepareAllStmts()
 
 	r := gin.Default()
-	r.Use(errorWriter())
+
 	v1 := r.Group("/v1")
 	v1.Use(jsonWriter())
+	v1.Use(errorWriter())
+
 	v2 := r.Group("/v2")
 	v2.Use(protobufWriter())
+	v2.Use(errorWriter())
 
 	v1.GET("/university/:topic", universityHandler)
 	v1.GET("/subject/:topic", subjectHandler)

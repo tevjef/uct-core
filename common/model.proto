@@ -32,7 +32,6 @@ message University {
     repeated Metadata metadata = 13;
 }
 
-
 message Response {
     optional Meta meta = 1;
     optional Data data = 2;
@@ -45,31 +44,15 @@ message Meta {
 }
 
 message Data {
-    optional Universities universities = 1;
-    optional Subjects subjects = 2;
-    optional Courses courses = 3;
-    optional Sections sections = 4;
+    repeated University universities = 1;
+    repeated Subject subjects = 2;
+    repeated Course courses = 3;
+    repeated Section sections = 4;
     optional University university = 5;
     optional Subject subject = 6;
     optional Course course = 7;
     optional Section section = 8;
 
-}
-
-message Universities {
-    repeated University universities = 1;
-}
-
-message Subjects {
-    repeated Subject subjects = 1;
-}
-
-message Courses {
-    repeated Course courses = 1;
-}
-
-message Sections {
-    repeated Section section = 1;
 }
 
 message Subject {
