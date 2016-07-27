@@ -1,14 +1,14 @@
 package main
 
 import (
-	_ "github.com/lib/pq"
-	"github.com/tevjef/gin"
 	"github.com/gin-gonic/contrib/cache"
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"strconv"
-	uct "uct/common"
 	"time"
+	uct "uct/common"
 )
 
 var (
@@ -16,6 +16,8 @@ var (
 	port   = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
 	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.SPIEGAL_DEBUG_SERVER).TCP()
 )
+
+const CacheDuration = 10 * time.Second
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -34,9 +36,8 @@ func main() {
 	PrepareAllStmts()
 
 	// Open cache
-	store := cache.NewInMemoryStore(5 * time.Second)
-
-	// Setup error recovery and logging
+	store := cache.NewInMemoryStore(CacheDuration)
+	// recovery and logging
 	r := gin.Default()
 
 	// Json
@@ -78,18 +79,18 @@ func main() {
 	v3.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
 	v3.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
 	v3.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
-	v3.GET("/subject/:topic", cache.CachePage(store, 5 * time.Second, subjectHandler))
-	v3.GET("/courses/:topic", cache.CachePage(store, 5 * time.Second, coursesHandler))
-	v3.GET("/course/:topic", cache.CachePage(store, 5 * time.Second, courseHandler))
-	v3.GET("/section/:topic", cache.CachePage(store, 5 * time.Second, sectionHandler))
+	v3.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
+	v3.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
+	v3.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
+	v3.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
 
-	v4.GET("/universities", cache.CachePage(store, time.Minute,universitiesHandler))
-	v4.GET("/university/:topic", cache.CachePage(store, time.Minute,universityHandler))
-	v4.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute,subjectsHandler))
-	v4.GET("/subject/:topic", cache.CachePage(store, 5 * time.Second, subjectHandler))
-	v4.GET("/courses/:topic", cache.CachePage(store, 5 * time.Second, coursesHandler))
-	v4.GET("/course/:topic", cache.CachePage(store, 5 * time.Second, courseHandler))
-	v4.GET("/section/:topic", cache.CachePage(store, 5 * time.Second, sectionHandler))
+	v4.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
+	v4.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
+	v4.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
+	v4.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
+	v4.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
+	v4.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
+	v4.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }

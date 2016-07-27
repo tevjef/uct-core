@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"github.com/tevjef/gin"
+	"github.com/gin-gonic/gin"
 	uct "uct/common"
 )
 
@@ -10,7 +10,7 @@ func resolveErr(err error, c *gin.Context) {
 	if err == sql.ErrNoRows {
 		c.Set("meta", errResNotFound(c.Request.RequestURI))
 	} else {
-		c.Error(gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
+		c.Error(&gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	}
 }
 

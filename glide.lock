@@ -1,5 +1,5 @@
-hash: c066c070476b406b276cf044e6004d9052d79531a28cb12c8f547995cfb94f51
-updated: 2016-07-26T23:07:04.5116692-04:00
+hash: 50d928571b227e4489116d27070f1bcce35379e7cae86e45a8e7ffde070eaac2
+updated: 2016-07-27T00:08:54.3995412-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -98,10 +98,6 @@ imports:
   version: 6d9ae300aaf85d6acd2e5424081c7fcddb21dab8
   subpackages:
   - github.com\Sirupsen\logrus
-- name: github.com/tevjef/gin
-  version: 6e4daaaacffdf1632ee663d6d7d4fcc389bc1269
-  subpackages:
-  - github.com\tevjef\gin
 - name: github.com/tevjef/go-gcm
   version: 9195be04c34ea15caf9ad2e85c228de00532a8c1
   subpackages:
