@@ -1,5 +1,5 @@
-hash: d7daa988671f0c83a52ae5504e41e2f237d7dc33a932caaaf8a9766205c66b31
-updated: 2016-05-30T17:41:08.2882873-04:00
+hash: c066c070476b406b276cf044e6004d9052d79531a28cb12c8f547995cfb94f51
+updated: 2016-07-26T23:07:04.5116692-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -18,6 +18,22 @@ imports:
   version: dfb21201d9270c1082d5fb0f07f500311ff72f18
   subpackages:
   - github.com\boltdb\bolt
+- name: github.com/bradfitz/gomemcache
+  version: fb1f79c6b65acda83063cbc69f6bba1522558bfc
+  subpackages:
+  - memcache
+  - github.com\bradfitz\gomemcache\memcache
+- name: github.com/garyburd/redigo
+  version: b8dc90050f24c1a73a52f107f3f575be67b21b7c
+  subpackages:
+  - redis
+  - github.com\garyburd\redigo\redis
+  - github.com\garyburd\redigo\internal
+- name: github.com/gin-gonic/contrib
+  version: 547e518040cfb96576b507d2f26779ab9c6fc829
+  subpackages:
+  - cache
+  - github.com\gin-gonic\contrib\cache
 - name: github.com/gin-gonic/gin
   version: f931d1ea80ae95a6fc739213cdd9399bd2967fb6
   subpackages:
@@ -32,10 +48,6 @@ imports:
   version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - github.com\golang\protobuf\proto
-- name: github.com/google/go-gcm
-  version: 1708036c4639349562068ad2d4df2364cd0a1004
-  subpackages:
-  - github.com\google\go-gcm
 - name: github.com/influxdata/influxdb
   version: dd58101061a964bf36ff8222172399f255e52340
   subpackages:
@@ -78,6 +90,10 @@ imports:
   version: aeecb06b1e04a72e7d3312468c5b92f6bb2f3459
   subpackages:
   - github.com\PuerkitoBio\goquery
+- name: github.com/robfig/go-cache
+  version: 9fc39e0dbf62c034ec4e45e6120fc69433a3ec51
+  subpackages:
+  - github.com\robfig\go-cache
 - name: github.com/Sirupsen/logrus
   version: 6d9ae300aaf85d6acd2e5424081c7fcddb21dab8
   subpackages:
@@ -88,6 +104,8 @@ imports:
   - github.com\tevjef\gin
 - name: github.com/tevjef/go-gcm
   version: 9195be04c34ea15caf9ad2e85c228de00532a8c1
+  subpackages:
+  - github.com\tevjef\go-gcm
 - name: golang.org/x/exp
   version: 0dc1be49343a5449f98e0d6d15e33008e154701b
   subpackages:
@@ -95,12 +113,14 @@ imports:
 - name: golang.org/x/net
   version: f315505cf3349909cdf013ea56690da34e96a451
   subpackages:
+  - html
   - golang.org\x\net\html
   - golang.org\x\net\context
   - golang.org\x\net\html\atom
 - name: golang.org/x/sys
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
+  - unix
   - golang.org\x\sys\unix
 - name: gopkg.in/alecthomas/kingpin.v2
   version: 8cccfa8eb2e3183254457fb1749b2667fbc364c7
