@@ -27,6 +27,15 @@ CREATE TYPE period AS ENUM (
   'end_winter'
 );
 
+/*
+  current_season season NOT NULL,
+  current_year text NOT NULL,
+  last_season season NOT NULL,
+  last_year text NOT NULL,
+  next_season season NOT NULL,
+  next_year text NOT NULL,*/
+CREATE TR
+
 CREATE TABLE IF NOT EXISTS public.university
 (
   id serial,
@@ -55,6 +64,23 @@ COMMENT ON COLUMN public.university.registration_page IS 'The registration page 
 COMMENT ON COLUMN public.university.main_color IS 'ARGB hex of the main color of the university';
 COMMENT ON COLUMN public.university.accent_color IS 'ARGB hex of the accent color of the university';
 COMMENT ON COLUMN public.university.topic_name IS 'The topic name of this university. Used to build topic url';
+
+CREATE TABLE IF NOT EXISTS public.semesters
+(
+  id SERIAL PRIMARY KEY,
+  university_id BIGINT NOT NULL,
+  current_season SEASON NOT NULL,
+  current_year TEXT NOT NULL,
+  last_season SEASON NOT NULL,
+  last_year TEXT NOT NULL,
+  next_season SEASON NOT NULL,
+  next_year TEXT NOT NULL,
+  CONSTRAINT semesters_university_id_fk FOREIGN KEY (university_id) REFERENCES university (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+COMMENT ON COLUMN public.semesters.id IS 'The primary index';
+COMMENT ON COLUMN public.semesters.university_id IS 'The foegin key pointing to the university table';
+COMMENT ON COLUMN public.semesters.current_season IS 'The current semester season';
+COMMENT ON COLUMN public.semesters.current_year IS 'The current semester year';
 
 CREATE TABLE IF NOT EXISTS public.subject
 (
@@ -87,9 +113,7 @@ COMMENT ON COLUMN public.subject.year IS 'The year this subject is currently off
 COMMENT ON COLUMN public.subject.topic_name IS 'The topic name of this subject. Used to build topic url';
 COMMENT ON COLUMN public.subject.updated_at IS 'Time this row was updated';
 COMMENT ON TABLE public.subject  IS 'Contains the subject offered from a particular university';
-/*
-COMMENT ON CONSTRAINT subject_university__fk ON public.subject IS 'Foreign key for university';
-*/
+
 
 CREATE TABLE IF NOT EXISTS public.course
 (

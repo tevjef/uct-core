@@ -248,7 +248,6 @@ func (app App) insertUniversity(uni *uct.University) {
 }
 
 func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
-	//sub.VetAndBuild()
 	if !*fullUpsert {
 
 		if subject_id = app.dbHandler.exists(SubjectExistQuery, sub); subject_id != 0 {
@@ -632,6 +631,7 @@ var (
 	                WHERE name = :name
 	                RETURNING university.id`
 
+	SemestersInsert = `SELECT semester.`
 	SubjectExistQuery = `SELECT subject.id FROM subject WHERE topic_name = :topic_name`
 
 	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name, topic_id)

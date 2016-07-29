@@ -17,19 +17,24 @@ type Data struct {
 	Data []byte `db:"data"`
 }
 
+
+func GetSemesters(topicName string, university *uct.University) error {
+	if s, err := SelectAvailableSemesters(topicName); err != nil {
+		return err
+	} else {
+		university.AvailableSemesters = s
+		university.Metadata, err = SelectMetadata(university.Id, 0, 0, 0, 0)
+		return err
+	}
+}
+
 func SelectUniversity(topicName string) (university uct.University, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
 	if err = Get(SelectUniversityQuery, &university, m); err != nil {
 		return
 	}
-	if s, e := GetAvailableSemesters(topicName); e != nil {
-		err = e
-		return
-	} else {
-		university.AvailableSemesters = s
-		university.Metadata, err = SelectMetadata(university.Id, 0, 0, 0, 0)
-	}
+	err = GetSemesters(topicName, &university)
 	return
 }
 
@@ -39,22 +44,13 @@ func SelectUniversities() (universities []*uct.University, err error) {
 		return
 	}
 
-	for i, _ := range universities {
-		if s, e := GetAvailableSemesters(universities[i].TopicName); e != nil {
-			err = e
-			return
-		} else {
-			universities[i].AvailableSemesters = s
-			if universities[i].Metadata, err = SelectMetadata(universities[i].Id, 0, 0, 0, 0); err != nil {
-				return
-			}
-		}
-
+	for i := range universities {
+		err = GetSemesters(universities[i].TopicName, universities[i])
 	}
 	return
 }
 
-func GetAvailableSemesters(topicName string) (semesters []*uct.Semester, err error) {
+func SelectAvailableSemesters(topicName string) (semesters []*uct.Semester, err error) {
 	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(GetAvailableSemestersQuery, &semesters, m)
@@ -241,14 +237,14 @@ func PrepareAllStmts() {
 }
 
 var (
-	SelectUniversityQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university WHERE topic_name = :topic_name ORDER BY name`
-	ListUniversitiesQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name FROM university ORDER BY name`
+	SelectUniversityQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
+	ListUniversitiesQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
 	GetAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
 									WHERE university.topic_name = :topic_name GROUP BY season, year`
 
 	SelectProtoSubjectQuery = `SELECT data FROM subject WHERE topic_name = :topic_name`
 
-	ListSubjectQuery = `SELECT subject.id, university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name FROM subject JOIN university ON university.id = subject.university_id
+	ListSubjectQuery = `SELECT subject.id, university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name, subject.topic_id FROM subject JOIN university ON university.id = subject.university_id
 									AND university.topic_name = :topic_name
 									AND season = :subject_season
 									AND year = :subject_year ORDER BY subject.id`
