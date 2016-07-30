@@ -13,11 +13,11 @@ go install uct/scrapers/rutgers
 echo "Installing njit scraper ..."
 go install uct/scrapers/njit
 
-echo "Installing spiegal ..."
-go install uct/servers/spiegal
+echo "Installing spike ..."
+go install uct/servers/spike
 
-echo "**Restarting spiegal ..."
-sudo sv restart spiegal
+echo "**Restarting spike ..."
+sudo sv restart spike
 
 echo "Installing db ..."
 go install uct/db

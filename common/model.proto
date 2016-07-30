@@ -138,9 +138,8 @@ message Response {
 }
 
 message Meta {
-    optional string error_type = 1;
-    optional string error_message = 2;
-    optional int32 code = 3;
+    optional int32 code = 1;
+    optional string message = 2;
 }
 
 message Data {

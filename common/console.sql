@@ -306,6 +306,26 @@ COMMENT ON COLUMN public.semester.university_id IS 'The foreign key pointing to 
 COMMENT ON COLUMN public.semester.current_season IS 'The current semester season';
 COMMENT ON COLUMN public.semester.current_year IS 'The current semester year';
 
+CREATE TABLE public.notification
+(
+  id SERIAL,
+  university JSONB NOT NULL,
+  topic_name TEXT NOT NULL,
+  status status NOT NULL,
+  ack_at TIMESTAMP,
+  message_id BIGINT,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  CONSTRAINT notification__pk PRIMARY KEY (id)
+);
+COMMENT ON COLUMN public.notification.id IS 'Primary key of this table';
+COMMENT ON COLUMN public.notification.topic_name IS 'The topic name of the section';
+COMMENT ON COLUMN public.notification.status IS 'Status change';
+COMMENT ON COLUMN public.notification.created_at IS 'Time this row was inserted';
+COMMENT ON COLUMN public.notification.updated_at IS 'Time this row was updated';
+COMMENT ON TABLE public.notification IS 'Holds notifications sent to messaging';
+
+
 CREATE OR REPLACE FUNCTION update_row_time_stamp() RETURNS TRIGGER AS $$
 BEGIN
   --
@@ -379,6 +399,11 @@ BEFORE INSERT ON public.semester
 FOR EACH ROW
 EXECUTE PROCEDURE update_row_time_stamp();
 
+CREATE TRIGGER insert_notification_time_stamps
+BEFORE INSERT ON public.notification
+FOR EACH ROW
+EXECUTE PROCEDURE update_row_time_stamp();
+
 --
 -- Add updated at timestamp to table column
 --
@@ -443,11 +468,18 @@ FOR EACH ROW
 WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE PROCEDURE update_row_time_stamp();
 
+CREATE TRIGGER update_notification_time_stamps
+BEFORE UPDATE ON public.notification
+FOR EACH ROW
+WHEN (OLD.* IS DISTINCT FROM NEW.*)
+EXECUTE PROCEDURE update_row_time_stamp();
+
 CREATE OR REPLACE FUNCTION public.notify_status_change()
   RETURNS trigger AS
 $BODY$
 DECLARE
-  _notification json;
+  _notification_json json;
+  _notification_id integer;
 
   _university record;
   _subject record;
@@ -488,20 +520,25 @@ BEGIN
     JOIN section ON course.id = section.course_id
   WHERE section.id = NEW.id;
 
+  -- Build university tree
   _temp = jsonb_set(to_json(_course)::jsonb, '{sections}', json_build_array(to_json(_section))::jsonb);
   _temp = jsonb_set(to_json(_subject)::jsonb, '{courses}', json_build_array(_temp)::jsonb);
   _temp = jsonb_set(to_json(_university)::jsonb, '{subjects}', json_build_array(_temp)::jsonb);
+  _temp = jsonb_strip_nulls(_temp);
 
-  _notification = json_build_object(
+  -- Log notification and provide an id to acknowledge the notification
+  INSERT INTO public.notification (university, topic_name, status) VALUES (_temp, NEW.topic_name, NEW.status) RETURNING public.notification.id INTO _notification_id;
+
+  -- Build notification
+  _notification_json = json_build_object(
+      'notification_id', _notification_id,
       'topic_name', NEW.topic_name,
       'status', NEW.status,
-      'max', NEW.max,
-      'now', NEW.now,
-      'university', jsonb_strip_nulls(_temp));
+      'university', _temp);
 
 
   -- Execute pg_notify(channel, notification)
-  PERFORM pg_notify('status_events',_notification::text);
+  PERFORM pg_notify('status_events',_notification_json::text);
 
   RETURN NULL;
 END;

@@ -25,6 +25,7 @@ import:
   subpackages:
   - ffjson
 - package: github.com/tevjef/go-gcm
+  version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
 - package: golang.org/x/exp
   subpackages:
   - utf8string

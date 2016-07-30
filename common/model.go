@@ -22,11 +22,10 @@ type (
 	Status int
 
 	PostgresNotify struct {
-		Payload    string     `json:"topic_name,omitempty"`
-		Status     string     `json:"status,omitempty"`
-		Max        float64    `json:"max,omitempty"`
-		Now        float64    `json:"now,omitempty"`
-		University University `json:"university,omitempty"`
+		NotificationId int64      `json:"notification_id,omitempty"`
+		TopicName      string     `json:"topic_name,omitempty"`
+		Status         string     `json:"status,omitempty"`
+		University     University `json:"university,omitempty"`
 	}
 
 	DBResolvedSemester struct {
