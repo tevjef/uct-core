@@ -10,9 +10,6 @@
 
 	It has these top-level messages:
 		University
-		Response
-		Meta
-		Data
 		Subject
 		Course
 		Section
@@ -21,7 +18,11 @@
 		Book
 		Metadata
 		Registration
+		ResolvedSemester
 		Semester
+		Response
+		Meta
+		Data
 */
 package common
 
@@ -46,23 +47,26 @@ var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
-const _ = proto.GoGoProtoPackageIsVersion1
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 type University struct {
-	Id                 int64           `protobuf:"varint,1,opt,name=id" json:"id" db:"id"`
-	Name               string          `protobuf:"bytes,2,opt,name=name" json:"name" db:"name"`
-	Abbr               string          `protobuf:"bytes,3,opt,name=abbr" json:"abbr" db:"abbr"`
-	HomePage           string          `protobuf:"bytes,4,opt,name=home_page,json=homePage" json:"home_page" db:"home_page"`
-	RegistrationPage   string          `protobuf:"bytes,5,opt,name=registration_page,json=registrationPage" json:"registration_page" db:"registration_page"`
-	MainColor          string          `protobuf:"bytes,6,opt,name=main_color,json=mainColor" json:"main_color" db:"main_color"`
-	AccentColor        string          `protobuf:"bytes,7,opt,name=accent_color,json=accentColor" json:"accent_color" db:"accent_color"`
-	TopicName          string          `protobuf:"bytes,8,opt,name=topic_name,json=topicName" json:"topic_name" db:"topic_name"`
-	TopicId            string          `protobuf:"bytes,9,opt,name=topic_id,json=topicId" json:"topic_id" db:"topic_id"`
-	Subjects           []*Subject      `protobuf:"bytes,10,rep,name=subjects" json:"subjects,omitempty"`
-	AvailableSemesters []*Semester     `protobuf:"bytes,11,rep,name=available_semesters,json=availableSemesters" json:"available_semesters,omitempty"`
-	Registrations      []*Registration `protobuf:"bytes,12,rep,name=registrations" json:"registrations,omitempty"`
-	Metadata           []*Metadata     `protobuf:"bytes,13,rep,name=metadata" json:"metadata,omitempty"`
-	XXX_unrecognized   []byte          `json:"-"`
+	Id                 int64             `protobuf:"varint,1,opt,name=id" json:"id" db:"id"`
+	Name               string            `protobuf:"bytes,2,opt,name=name" json:"name" db:"name"`
+	Abbr               string            `protobuf:"bytes,3,opt,name=abbr" json:"abbr" db:"abbr"`
+	HomePage           string            `protobuf:"bytes,4,opt,name=home_page,json=homePage" json:"home_page" db:"home_page"`
+	RegistrationPage   string            `protobuf:"bytes,5,opt,name=registration_page,json=registrationPage" json:"registration_page" db:"registration_page"`
+	MainColor          string            `protobuf:"bytes,6,opt,name=main_color,json=mainColor" json:"main_color" db:"main_color"`
+	AccentColor        string            `protobuf:"bytes,7,opt,name=accent_color,json=accentColor" json:"accent_color" db:"accent_color"`
+	TopicName          string            `protobuf:"bytes,8,opt,name=topic_name,json=topicName" json:"topic_name" db:"topic_name"`
+	TopicId            string            `protobuf:"bytes,9,opt,name=topic_id,json=topicId" json:"topic_id" db:"topic_id"`
+	ResolvedSemesters  *ResolvedSemester `protobuf:"bytes,10,opt,name=resolved_semesters,json=resolvedSemesters" json:"resolved_semesters,omitempty"`
+	Subjects           []*Subject        `protobuf:"bytes,11,rep,name=subjects" json:"subjects,omitempty"`
+	AvailableSemesters []*Semester       `protobuf:"bytes,12,rep,name=available_semesters,json=availableSemesters" json:"available_semesters,omitempty"`
+	Registrations      []*Registration   `protobuf:"bytes,13,rep,name=registrations" json:"registrations,omitempty"`
+	Metadata           []*Metadata       `protobuf:"bytes,14,rep,name=metadata" json:"metadata,omitempty"`
+	XXX_unrecognized   []byte            `json:"-"`
 }
 
 func (m *University) Reset()                    { *m = University{} }
@@ -132,6 +136,13 @@ func (m *University) GetTopicId() string {
 	return ""
 }
 
+func (m *University) GetResolvedSemesters() *ResolvedSemester {
+	if m != nil {
+		return m.ResolvedSemesters
+	}
+	return nil
+}
+
 func (m *University) GetSubjects() []*Subject {
 	if m != nil {
 		return m.Subjects
@@ -160,134 +171,6 @@ func (m *University) GetMetadata() []*Metadata {
 	return nil
 }
 
-type Response struct {
-	Meta             *Meta  `protobuf:"bytes,1,opt,name=meta" json:"meta,omitempty"`
-	Data             *Data  `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *Response) Reset()                    { *m = Response{} }
-func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{1} }
-
-func (m *Response) GetMeta() *Meta {
-	if m != nil {
-		return m.Meta
-	}
-	return nil
-}
-
-func (m *Response) GetData() *Data {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
-type Meta struct {
-	ErrorType        *string `protobuf:"bytes,1,opt,name=error_type,json=errorType" json:"error_type,omitempty"`
-	ErrorMessage     *string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage" json:"error_message,omitempty"`
-	Code             *int32  `protobuf:"varint,3,opt,name=code" json:"code,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *Meta) Reset()                    { *m = Meta{} }
-func (*Meta) ProtoMessage()               {}
-func (*Meta) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{2} }
-
-func (m *Meta) GetErrorType() string {
-	if m != nil && m.ErrorType != nil {
-		return *m.ErrorType
-	}
-	return ""
-}
-
-func (m *Meta) GetErrorMessage() string {
-	if m != nil && m.ErrorMessage != nil {
-		return *m.ErrorMessage
-	}
-	return ""
-}
-
-func (m *Meta) GetCode() int32 {
-	if m != nil && m.Code != nil {
-		return *m.Code
-	}
-	return 0
-}
-
-type Data struct {
-	Universities     []*University `protobuf:"bytes,1,rep,name=universities" json:"universities,omitempty"`
-	Subjects         []*Subject    `protobuf:"bytes,2,rep,name=subjects" json:"subjects,omitempty"`
-	Courses          []*Course     `protobuf:"bytes,3,rep,name=courses" json:"courses,omitempty"`
-	Sections         []*Section    `protobuf:"bytes,4,rep,name=sections" json:"sections,omitempty"`
-	University       *University   `protobuf:"bytes,5,opt,name=university" json:"university,omitempty"`
-	Subject          *Subject      `protobuf:"bytes,6,opt,name=subject" json:"subject,omitempty"`
-	Course           *Course       `protobuf:"bytes,7,opt,name=course" json:"course,omitempty"`
-	Section          *Section      `protobuf:"bytes,8,opt,name=section" json:"section,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
-}
-
-func (m *Data) Reset()                    { *m = Data{} }
-func (*Data) ProtoMessage()               {}
-func (*Data) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{3} }
-
-func (m *Data) GetUniversities() []*University {
-	if m != nil {
-		return m.Universities
-	}
-	return nil
-}
-
-func (m *Data) GetSubjects() []*Subject {
-	if m != nil {
-		return m.Subjects
-	}
-	return nil
-}
-
-func (m *Data) GetCourses() []*Course {
-	if m != nil {
-		return m.Courses
-	}
-	return nil
-}
-
-func (m *Data) GetSections() []*Section {
-	if m != nil {
-		return m.Sections
-	}
-	return nil
-}
-
-func (m *Data) GetUniversity() *University {
-	if m != nil {
-		return m.University
-	}
-	return nil
-}
-
-func (m *Data) GetSubject() *Subject {
-	if m != nil {
-		return m.Subject
-	}
-	return nil
-}
-
-func (m *Data) GetCourse() *Course {
-	if m != nil {
-		return m.Course
-	}
-	return nil
-}
-
-func (m *Data) GetSection() *Section {
-	if m != nil {
-		return m.Section
-	}
-	return nil
-}
-
 type Subject struct {
 	Id               int64       `protobuf:"varint,1,opt,name=id" json:"-" db:"id"`
 	UniversityId     int64       `protobuf:"varint,2,opt,name=university_id,json=universityId" json:"-" db:"university_id"`
@@ -304,7 +187,7 @@ type Subject struct {
 
 func (m *Subject) Reset()                    { *m = Subject{} }
 func (*Subject) ProtoMessage()               {}
-func (*Subject) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{4} }
+func (*Subject) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{1} }
 
 func (m *Subject) GetId() int64 {
 	if m != nil {
@@ -391,7 +274,7 @@ type Course struct {
 
 func (m *Course) Reset()                    { *m = Course{} }
 func (*Course) ProtoMessage()               {}
-func (*Course) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{5} }
+func (*Course) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{2} }
 
 func (m *Course) GetId() int64 {
 	if m != nil {
@@ -476,7 +359,7 @@ type Section struct {
 
 func (m *Section) Reset()                    { *m = Section{} }
 func (*Section) ProtoMessage()               {}
-func (*Section) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{6} }
+func (*Section) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{3} }
 
 func (m *Section) GetId() int64 {
 	if m != nil {
@@ -591,7 +474,7 @@ type Meeting struct {
 
 func (m *Meeting) Reset()                    { *m = Meeting{} }
 func (*Meeting) ProtoMessage()               {}
-func (*Meeting) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{7} }
+func (*Meeting) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{4} }
 
 func (m *Meeting) GetId() int64 {
 	if m != nil {
@@ -666,7 +549,7 @@ type Instructor struct {
 
 func (m *Instructor) Reset()                    { *m = Instructor{} }
 func (*Instructor) ProtoMessage()               {}
-func (*Instructor) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{8} }
+func (*Instructor) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{5} }
 
 func (m *Instructor) GetId() int64 {
 	if m != nil {
@@ -706,7 +589,7 @@ type Book struct {
 
 func (m *Book) Reset()                    { *m = Book{} }
 func (*Book) ProtoMessage()               {}
-func (*Book) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{9} }
+func (*Book) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{6} }
 
 func (m *Book) GetId() int64 {
 	if m != nil {
@@ -750,7 +633,7 @@ type Metadata struct {
 
 func (m *Metadata) Reset()                    { *m = Metadata{} }
 func (*Metadata) ProtoMessage()               {}
-func (*Metadata) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{10} }
+func (*Metadata) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{7} }
 
 func (m *Metadata) GetId() int64 {
 	if m != nil {
@@ -818,7 +701,7 @@ type Registration struct {
 
 func (m *Registration) Reset()                    { *m = Registration{} }
 func (*Registration) ProtoMessage()               {}
-func (*Registration) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{11} }
+func (*Registration) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{8} }
 
 func (m *Registration) GetId() int64 {
 	if m != nil {
@@ -848,6 +731,38 @@ func (m *Registration) GetPeriodDate() int64 {
 	return 0
 }
 
+type ResolvedSemester struct {
+	Current          *Semester `protobuf:"bytes,1,opt,name=current" json:"current,omitempty"`
+	Last             *Semester `protobuf:"bytes,2,opt,name=last" json:"last,omitempty"`
+	Next             *Semester `protobuf:"bytes,3,opt,name=next" json:"next,omitempty"`
+	XXX_unrecognized []byte    `json:"-"`
+}
+
+func (m *ResolvedSemester) Reset()                    { *m = ResolvedSemester{} }
+func (*ResolvedSemester) ProtoMessage()               {}
+func (*ResolvedSemester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{9} }
+
+func (m *ResolvedSemester) GetCurrent() *Semester {
+	if m != nil {
+		return m.Current
+	}
+	return nil
+}
+
+func (m *ResolvedSemester) GetLast() *Semester {
+	if m != nil {
+		return m.Last
+	}
+	return nil
+}
+
+func (m *ResolvedSemester) GetNext() *Semester {
+	if m != nil {
+		return m.Next
+	}
+	return nil
+}
+
 type Semester struct {
 	Year             int32  `protobuf:"varint,1,opt,name=year" json:"year" db:"year"`
 	Season           string `protobuf:"bytes,2,opt,name=season" json:"season" db:"season"`
@@ -856,7 +771,7 @@ type Semester struct {
 
 func (m *Semester) Reset()                    { *m = Semester{} }
 func (*Semester) ProtoMessage()               {}
-func (*Semester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{12} }
+func (*Semester) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{10} }
 
 func (m *Semester) GetYear() int32 {
 	if m != nil {
@@ -872,11 +787,136 @@ func (m *Semester) GetSeason() string {
 	return ""
 }
 
+type Response struct {
+	Meta             *Meta  `protobuf:"bytes,1,opt,name=meta" json:"meta,omitempty"`
+	Data             *Data  `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
+}
+
+func (m *Response) Reset()                    { *m = Response{} }
+func (*Response) ProtoMessage()               {}
+func (*Response) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{11} }
+
+func (m *Response) GetMeta() *Meta {
+	if m != nil {
+		return m.Meta
+	}
+	return nil
+}
+
+func (m *Response) GetData() *Data {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type Meta struct {
+	ErrorType        *string `protobuf:"bytes,1,opt,name=error_type,json=errorType" json:"error_type,omitempty"`
+	ErrorMessage     *string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage" json:"error_message,omitempty"`
+	Code             *int32  `protobuf:"varint,3,opt,name=code" json:"code,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Meta) Reset()                    { *m = Meta{} }
+func (*Meta) ProtoMessage()               {}
+func (*Meta) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{12} }
+
+func (m *Meta) GetErrorType() string {
+	if m != nil && m.ErrorType != nil {
+		return *m.ErrorType
+	}
+	return ""
+}
+
+func (m *Meta) GetErrorMessage() string {
+	if m != nil && m.ErrorMessage != nil {
+		return *m.ErrorMessage
+	}
+	return ""
+}
+
+func (m *Meta) GetCode() int32 {
+	if m != nil && m.Code != nil {
+		return *m.Code
+	}
+	return 0
+}
+
+type Data struct {
+	Universities     []*University `protobuf:"bytes,1,rep,name=universities" json:"universities,omitempty"`
+	Subjects         []*Subject    `protobuf:"bytes,2,rep,name=subjects" json:"subjects,omitempty"`
+	Courses          []*Course     `protobuf:"bytes,3,rep,name=courses" json:"courses,omitempty"`
+	Sections         []*Section    `protobuf:"bytes,4,rep,name=sections" json:"sections,omitempty"`
+	University       *University   `protobuf:"bytes,5,opt,name=university" json:"university,omitempty"`
+	Subject          *Subject      `protobuf:"bytes,6,opt,name=subject" json:"subject,omitempty"`
+	Course           *Course       `protobuf:"bytes,7,opt,name=course" json:"course,omitempty"`
+	Section          *Section      `protobuf:"bytes,8,opt,name=section" json:"section,omitempty"`
+	XXX_unrecognized []byte        `json:"-"`
+}
+
+func (m *Data) Reset()                    { *m = Data{} }
+func (*Data) ProtoMessage()               {}
+func (*Data) Descriptor() ([]byte, []int) { return fileDescriptorModel, []int{13} }
+
+func (m *Data) GetUniversities() []*University {
+	if m != nil {
+		return m.Universities
+	}
+	return nil
+}
+
+func (m *Data) GetSubjects() []*Subject {
+	if m != nil {
+		return m.Subjects
+	}
+	return nil
+}
+
+func (m *Data) GetCourses() []*Course {
+	if m != nil {
+		return m.Courses
+	}
+	return nil
+}
+
+func (m *Data) GetSections() []*Section {
+	if m != nil {
+		return m.Sections
+	}
+	return nil
+}
+
+func (m *Data) GetUniversity() *University {
+	if m != nil {
+		return m.University
+	}
+	return nil
+}
+
+func (m *Data) GetSubject() *Subject {
+	if m != nil {
+		return m.Subject
+	}
+	return nil
+}
+
+func (m *Data) GetCourse() *Course {
+	if m != nil {
+		return m.Course
+	}
+	return nil
+}
+
+func (m *Data) GetSection() *Section {
+	if m != nil {
+		return m.Section
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*University)(nil), "common.University")
-	proto.RegisterType((*Response)(nil), "common.Response")
-	proto.RegisterType((*Meta)(nil), "common.Meta")
-	proto.RegisterType((*Data)(nil), "common.Data")
 	proto.RegisterType((*Subject)(nil), "common.Subject")
 	proto.RegisterType((*Course)(nil), "common.Course")
 	proto.RegisterType((*Section)(nil), "common.Section")
@@ -885,7 +925,11 @@ func init() {
 	proto.RegisterType((*Book)(nil), "common.Book")
 	proto.RegisterType((*Metadata)(nil), "common.Metadata")
 	proto.RegisterType((*Registration)(nil), "common.Registration")
+	proto.RegisterType((*ResolvedSemester)(nil), "common.ResolvedSemester")
 	proto.RegisterType((*Semester)(nil), "common.Semester")
+	proto.RegisterType((*Response)(nil), "common.Response")
+	proto.RegisterType((*Meta)(nil), "common.Meta")
+	proto.RegisterType((*Data)(nil), "common.Data")
 }
 func (this *University) VerboseEqual(that interface{}) error {
 	if that == nil {
@@ -938,6 +982,9 @@ func (this *University) VerboseEqual(that interface{}) error {
 	}
 	if this.TopicId != that1.TopicId {
 		return fmt.Errorf("TopicId this(%v) Not Equal that(%v)", this.TopicId, that1.TopicId)
+	}
+	if !this.ResolvedSemesters.Equal(that1.ResolvedSemesters) {
+		return fmt.Errorf("ResolvedSemesters this(%v) Not Equal that(%v)", this.ResolvedSemesters, that1.ResolvedSemesters)
 	}
 	if len(this.Subjects) != len(that1.Subjects) {
 		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
@@ -1028,6 +1075,9 @@ func (this *University) Equal(that interface{}) bool {
 	if this.TopicId != that1.TopicId {
 		return false
 	}
+	if !this.ResolvedSemesters.Equal(that1.ResolvedSemesters) {
+		return false
+	}
 	if len(this.Subjects) != len(that1.Subjects) {
 		return false
 	}
@@ -1059,340 +1109,6 @@ func (this *University) Equal(that interface{}) bool {
 		if !this.Metadata[i].Equal(that1.Metadata[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *Response) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Response)
-	if !ok {
-		that2, ok := that.(Response)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Response")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Response but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Response but is not nil && this == nil")
-	}
-	if !this.Meta.Equal(that1.Meta) {
-		return fmt.Errorf("Meta this(%v) Not Equal that(%v)", this.Meta, that1.Meta)
-	}
-	if !this.Data.Equal(that1.Data) {
-		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Response) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Response)
-	if !ok {
-		that2, ok := that.(Response)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Meta.Equal(that1.Meta) {
-		return false
-	}
-	if !this.Data.Equal(that1.Data) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *Meta) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Meta)
-	if !ok {
-		that2, ok := that.(Meta)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Meta")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Meta but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Meta but is not nil && this == nil")
-	}
-	if this.ErrorType != nil && that1.ErrorType != nil {
-		if *this.ErrorType != *that1.ErrorType {
-			return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", *this.ErrorType, *that1.ErrorType)
-		}
-	} else if this.ErrorType != nil {
-		return fmt.Errorf("this.ErrorType == nil && that.ErrorType != nil")
-	} else if that1.ErrorType != nil {
-		return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", this.ErrorType, that1.ErrorType)
-	}
-	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
-		if *this.ErrorMessage != *that1.ErrorMessage {
-			return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", *this.ErrorMessage, *that1.ErrorMessage)
-		}
-	} else if this.ErrorMessage != nil {
-		return fmt.Errorf("this.ErrorMessage == nil && that.ErrorMessage != nil")
-	} else if that1.ErrorMessage != nil {
-		return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", this.ErrorMessage, that1.ErrorMessage)
-	}
-	if this.Code != nil && that1.Code != nil {
-		if *this.Code != *that1.Code {
-			return fmt.Errorf("Code this(%v) Not Equal that(%v)", *this.Code, *that1.Code)
-		}
-	} else if this.Code != nil {
-		return fmt.Errorf("this.Code == nil && that.Code != nil")
-	} else if that1.Code != nil {
-		return fmt.Errorf("Code this(%v) Not Equal that(%v)", this.Code, that1.Code)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Meta) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Meta)
-	if !ok {
-		that2, ok := that.(Meta)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.ErrorType != nil && that1.ErrorType != nil {
-		if *this.ErrorType != *that1.ErrorType {
-			return false
-		}
-	} else if this.ErrorType != nil {
-		return false
-	} else if that1.ErrorType != nil {
-		return false
-	}
-	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
-		if *this.ErrorMessage != *that1.ErrorMessage {
-			return false
-		}
-	} else if this.ErrorMessage != nil {
-		return false
-	} else if that1.ErrorMessage != nil {
-		return false
-	}
-	if this.Code != nil && that1.Code != nil {
-		if *this.Code != *that1.Code {
-			return false
-		}
-	} else if this.Code != nil {
-		return false
-	} else if that1.Code != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *Data) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Data)
-	if !ok {
-		that2, ok := that.(Data)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Data")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Data but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Data but is not nil && this == nil")
-	}
-	if len(this.Universities) != len(that1.Universities) {
-		return fmt.Errorf("Universities this(%v) Not Equal that(%v)", len(this.Universities), len(that1.Universities))
-	}
-	for i := range this.Universities {
-		if !this.Universities[i].Equal(that1.Universities[i]) {
-			return fmt.Errorf("Universities this[%v](%v) Not Equal that[%v](%v)", i, this.Universities[i], i, that1.Universities[i])
-		}
-	}
-	if len(this.Subjects) != len(that1.Subjects) {
-		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
-	}
-	for i := range this.Subjects {
-		if !this.Subjects[i].Equal(that1.Subjects[i]) {
-			return fmt.Errorf("Subjects this[%v](%v) Not Equal that[%v](%v)", i, this.Subjects[i], i, that1.Subjects[i])
-		}
-	}
-	if len(this.Courses) != len(that1.Courses) {
-		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", len(this.Courses), len(that1.Courses))
-	}
-	for i := range this.Courses {
-		if !this.Courses[i].Equal(that1.Courses[i]) {
-			return fmt.Errorf("Courses this[%v](%v) Not Equal that[%v](%v)", i, this.Courses[i], i, that1.Courses[i])
-		}
-	}
-	if len(this.Sections) != len(that1.Sections) {
-		return fmt.Errorf("Sections this(%v) Not Equal that(%v)", len(this.Sections), len(that1.Sections))
-	}
-	for i := range this.Sections {
-		if !this.Sections[i].Equal(that1.Sections[i]) {
-			return fmt.Errorf("Sections this[%v](%v) Not Equal that[%v](%v)", i, this.Sections[i], i, that1.Sections[i])
-		}
-	}
-	if !this.University.Equal(that1.University) {
-		return fmt.Errorf("University this(%v) Not Equal that(%v)", this.University, that1.University)
-	}
-	if !this.Subject.Equal(that1.Subject) {
-		return fmt.Errorf("Subject this(%v) Not Equal that(%v)", this.Subject, that1.Subject)
-	}
-	if !this.Course.Equal(that1.Course) {
-		return fmt.Errorf("Course this(%v) Not Equal that(%v)", this.Course, that1.Course)
-	}
-	if !this.Section.Equal(that1.Section) {
-		return fmt.Errorf("Section this(%v) Not Equal that(%v)", this.Section, that1.Section)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *Data) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Data)
-	if !ok {
-		that2, ok := that.(Data)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if len(this.Universities) != len(that1.Universities) {
-		return false
-	}
-	for i := range this.Universities {
-		if !this.Universities[i].Equal(that1.Universities[i]) {
-			return false
-		}
-	}
-	if len(this.Subjects) != len(that1.Subjects) {
-		return false
-	}
-	for i := range this.Subjects {
-		if !this.Subjects[i].Equal(that1.Subjects[i]) {
-			return false
-		}
-	}
-	if len(this.Courses) != len(that1.Courses) {
-		return false
-	}
-	for i := range this.Courses {
-		if !this.Courses[i].Equal(that1.Courses[i]) {
-			return false
-		}
-	}
-	if len(this.Sections) != len(that1.Sections) {
-		return false
-	}
-	for i := range this.Sections {
-		if !this.Sections[i].Equal(that1.Sections[i]) {
-			return false
-		}
-	}
-	if !this.University.Equal(that1.University) {
-		return false
-	}
-	if !this.Subject.Equal(that1.Subject) {
-		return false
-	}
-	if !this.Course.Equal(that1.Course) {
-		return false
-	}
-	if !this.Section.Equal(that1.Section) {
-		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -2473,6 +2189,84 @@ func (this *Registration) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *ResolvedSemester) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*ResolvedSemester)
+	if !ok {
+		that2, ok := that.(ResolvedSemester)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResolvedSemester")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *ResolvedSemester but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *ResolvedSemester but is not nil && this == nil")
+	}
+	if !this.Current.Equal(that1.Current) {
+		return fmt.Errorf("Current this(%v) Not Equal that(%v)", this.Current, that1.Current)
+	}
+	if !this.Last.Equal(that1.Last) {
+		return fmt.Errorf("Last this(%v) Not Equal that(%v)", this.Last, that1.Last)
+	}
+	if !this.Next.Equal(that1.Next) {
+		return fmt.Errorf("Next this(%v) Not Equal that(%v)", this.Next, that1.Next)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *ResolvedSemester) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ResolvedSemester)
+	if !ok {
+		that2, ok := that.(ResolvedSemester)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Current.Equal(that1.Current) {
+		return false
+	}
+	if !this.Last.Equal(that1.Last) {
+		return false
+	}
+	if !this.Next.Equal(that1.Next) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
 func (this *Semester) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -2545,11 +2339,345 @@ func (this *Semester) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Response) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Response)
+	if !ok {
+		that2, ok := that.(Response)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Response")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Response but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Response but is not nil && this == nil")
+	}
+	if !this.Meta.Equal(that1.Meta) {
+		return fmt.Errorf("Meta this(%v) Not Equal that(%v)", this.Meta, that1.Meta)
+	}
+	if !this.Data.Equal(that1.Data) {
+		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Response) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Response)
+	if !ok {
+		that2, ok := that.(Response)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Meta.Equal(that1.Meta) {
+		return false
+	}
+	if !this.Data.Equal(that1.Data) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Meta) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Meta)
+	if !ok {
+		that2, ok := that.(Meta)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Meta")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Meta but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Meta but is not nil && this == nil")
+	}
+	if this.ErrorType != nil && that1.ErrorType != nil {
+		if *this.ErrorType != *that1.ErrorType {
+			return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", *this.ErrorType, *that1.ErrorType)
+		}
+	} else if this.ErrorType != nil {
+		return fmt.Errorf("this.ErrorType == nil && that.ErrorType != nil")
+	} else if that1.ErrorType != nil {
+		return fmt.Errorf("ErrorType this(%v) Not Equal that(%v)", this.ErrorType, that1.ErrorType)
+	}
+	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
+		if *this.ErrorMessage != *that1.ErrorMessage {
+			return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", *this.ErrorMessage, *that1.ErrorMessage)
+		}
+	} else if this.ErrorMessage != nil {
+		return fmt.Errorf("this.ErrorMessage == nil && that.ErrorMessage != nil")
+	} else if that1.ErrorMessage != nil {
+		return fmt.Errorf("ErrorMessage this(%v) Not Equal that(%v)", this.ErrorMessage, that1.ErrorMessage)
+	}
+	if this.Code != nil && that1.Code != nil {
+		if *this.Code != *that1.Code {
+			return fmt.Errorf("Code this(%v) Not Equal that(%v)", *this.Code, *that1.Code)
+		}
+	} else if this.Code != nil {
+		return fmt.Errorf("this.Code == nil && that.Code != nil")
+	} else if that1.Code != nil {
+		return fmt.Errorf("Code this(%v) Not Equal that(%v)", this.Code, that1.Code)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Meta) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Meta)
+	if !ok {
+		that2, ok := that.(Meta)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.ErrorType != nil && that1.ErrorType != nil {
+		if *this.ErrorType != *that1.ErrorType {
+			return false
+		}
+	} else if this.ErrorType != nil {
+		return false
+	} else if that1.ErrorType != nil {
+		return false
+	}
+	if this.ErrorMessage != nil && that1.ErrorMessage != nil {
+		if *this.ErrorMessage != *that1.ErrorMessage {
+			return false
+		}
+	} else if this.ErrorMessage != nil {
+		return false
+	} else if that1.ErrorMessage != nil {
+		return false
+	}
+	if this.Code != nil && that1.Code != nil {
+		if *this.Code != *that1.Code {
+			return false
+		}
+	} else if this.Code != nil {
+		return false
+	} else if that1.Code != nil {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Data) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Data)
+	if !ok {
+		that2, ok := that.(Data)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Data")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Data but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Data but is not nil && this == nil")
+	}
+	if len(this.Universities) != len(that1.Universities) {
+		return fmt.Errorf("Universities this(%v) Not Equal that(%v)", len(this.Universities), len(that1.Universities))
+	}
+	for i := range this.Universities {
+		if !this.Universities[i].Equal(that1.Universities[i]) {
+			return fmt.Errorf("Universities this[%v](%v) Not Equal that[%v](%v)", i, this.Universities[i], i, that1.Universities[i])
+		}
+	}
+	if len(this.Subjects) != len(that1.Subjects) {
+		return fmt.Errorf("Subjects this(%v) Not Equal that(%v)", len(this.Subjects), len(that1.Subjects))
+	}
+	for i := range this.Subjects {
+		if !this.Subjects[i].Equal(that1.Subjects[i]) {
+			return fmt.Errorf("Subjects this[%v](%v) Not Equal that[%v](%v)", i, this.Subjects[i], i, that1.Subjects[i])
+		}
+	}
+	if len(this.Courses) != len(that1.Courses) {
+		return fmt.Errorf("Courses this(%v) Not Equal that(%v)", len(this.Courses), len(that1.Courses))
+	}
+	for i := range this.Courses {
+		if !this.Courses[i].Equal(that1.Courses[i]) {
+			return fmt.Errorf("Courses this[%v](%v) Not Equal that[%v](%v)", i, this.Courses[i], i, that1.Courses[i])
+		}
+	}
+	if len(this.Sections) != len(that1.Sections) {
+		return fmt.Errorf("Sections this(%v) Not Equal that(%v)", len(this.Sections), len(that1.Sections))
+	}
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(that1.Sections[i]) {
+			return fmt.Errorf("Sections this[%v](%v) Not Equal that[%v](%v)", i, this.Sections[i], i, that1.Sections[i])
+		}
+	}
+	if !this.University.Equal(that1.University) {
+		return fmt.Errorf("University this(%v) Not Equal that(%v)", this.University, that1.University)
+	}
+	if !this.Subject.Equal(that1.Subject) {
+		return fmt.Errorf("Subject this(%v) Not Equal that(%v)", this.Subject, that1.Subject)
+	}
+	if !this.Course.Equal(that1.Course) {
+		return fmt.Errorf("Course this(%v) Not Equal that(%v)", this.Course, that1.Course)
+	}
+	if !this.Section.Equal(that1.Section) {
+		return fmt.Errorf("Section this(%v) Not Equal that(%v)", this.Section, that1.Section)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Data) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Data)
+	if !ok {
+		that2, ok := that.(Data)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.Universities) != len(that1.Universities) {
+		return false
+	}
+	for i := range this.Universities {
+		if !this.Universities[i].Equal(that1.Universities[i]) {
+			return false
+		}
+	}
+	if len(this.Subjects) != len(that1.Subjects) {
+		return false
+	}
+	for i := range this.Subjects {
+		if !this.Subjects[i].Equal(that1.Subjects[i]) {
+			return false
+		}
+	}
+	if len(this.Courses) != len(that1.Courses) {
+		return false
+	}
+	for i := range this.Courses {
+		if !this.Courses[i].Equal(that1.Courses[i]) {
+			return false
+		}
+	}
+	if len(this.Sections) != len(that1.Sections) {
+		return false
+	}
+	for i := range this.Sections {
+		if !this.Sections[i].Equal(that1.Sections[i]) {
+			return false
+		}
+	}
+	if !this.University.Equal(that1.University) {
+		return false
+	}
+	if !this.Subject.Equal(that1.Subject) {
+		return false
+	}
+	if !this.Course.Equal(that1.Course) {
+		return false
+	}
+	if !this.Section.Equal(that1.Section) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
 func (this *University) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 17)
+	s := make([]string, 0, 18)
 	s = append(s, "&common.University{")
 	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
@@ -2560,6 +2688,9 @@ func (this *University) GoString() string {
 	s = append(s, "AccentColor: "+fmt.Sprintf("%#v", this.AccentColor)+",\n")
 	s = append(s, "TopicName: "+fmt.Sprintf("%#v", this.TopicName)+",\n")
 	s = append(s, "TopicId: "+fmt.Sprintf("%#v", this.TopicId)+",\n")
+	if this.ResolvedSemesters != nil {
+		s = append(s, "ResolvedSemesters: "+fmt.Sprintf("%#v", this.ResolvedSemesters)+",\n")
+	}
 	if this.Subjects != nil {
 		s = append(s, "Subjects: "+fmt.Sprintf("%#v", this.Subjects)+",\n")
 	}
@@ -2571,81 +2702,6 @@ func (this *University) GoString() string {
 	}
 	if this.Metadata != nil {
 		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Response) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&common.Response{")
-	if this.Meta != nil {
-		s = append(s, "Meta: "+fmt.Sprintf("%#v", this.Meta)+",\n")
-	}
-	if this.Data != nil {
-		s = append(s, "Data: "+fmt.Sprintf("%#v", this.Data)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Meta) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 7)
-	s = append(s, "&common.Meta{")
-	if this.ErrorType != nil {
-		s = append(s, "ErrorType: "+valueToGoStringModel(this.ErrorType, "string")+",\n")
-	}
-	if this.ErrorMessage != nil {
-		s = append(s, "ErrorMessage: "+valueToGoStringModel(this.ErrorMessage, "string")+",\n")
-	}
-	if this.Code != nil {
-		s = append(s, "Code: "+valueToGoStringModel(this.Code, "int32")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Data) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 12)
-	s = append(s, "&common.Data{")
-	if this.Universities != nil {
-		s = append(s, "Universities: "+fmt.Sprintf("%#v", this.Universities)+",\n")
-	}
-	if this.Subjects != nil {
-		s = append(s, "Subjects: "+fmt.Sprintf("%#v", this.Subjects)+",\n")
-	}
-	if this.Courses != nil {
-		s = append(s, "Courses: "+fmt.Sprintf("%#v", this.Courses)+",\n")
-	}
-	if this.Sections != nil {
-		s = append(s, "Sections: "+fmt.Sprintf("%#v", this.Sections)+",\n")
-	}
-	if this.University != nil {
-		s = append(s, "University: "+fmt.Sprintf("%#v", this.University)+",\n")
-	}
-	if this.Subject != nil {
-		s = append(s, "Subject: "+fmt.Sprintf("%#v", this.Subject)+",\n")
-	}
-	if this.Course != nil {
-		s = append(s, "Course: "+fmt.Sprintf("%#v", this.Course)+",\n")
-	}
-	if this.Section != nil {
-		s = append(s, "Section: "+fmt.Sprintf("%#v", this.Section)+",\n")
 	}
 	if this.XXX_unrecognized != nil {
 		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
@@ -2851,6 +2907,27 @@ func (this *Registration) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *ResolvedSemester) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&common.ResolvedSemester{")
+	if this.Current != nil {
+		s = append(s, "Current: "+fmt.Sprintf("%#v", this.Current)+",\n")
+	}
+	if this.Last != nil {
+		s = append(s, "Last: "+fmt.Sprintf("%#v", this.Last)+",\n")
+	}
+	if this.Next != nil {
+		s = append(s, "Next: "+fmt.Sprintf("%#v", this.Next)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *Semester) GoString() string {
 	if this == nil {
 		return "nil"
@@ -2865,6 +2942,81 @@ func (this *Semester) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *Response) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&common.Response{")
+	if this.Meta != nil {
+		s = append(s, "Meta: "+fmt.Sprintf("%#v", this.Meta)+",\n")
+	}
+	if this.Data != nil {
+		s = append(s, "Data: "+fmt.Sprintf("%#v", this.Data)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Meta) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&common.Meta{")
+	if this.ErrorType != nil {
+		s = append(s, "ErrorType: "+valueToGoStringModel(this.ErrorType, "string")+",\n")
+	}
+	if this.ErrorMessage != nil {
+		s = append(s, "ErrorMessage: "+valueToGoStringModel(this.ErrorMessage, "string")+",\n")
+	}
+	if this.Code != nil {
+		s = append(s, "Code: "+valueToGoStringModel(this.Code, "int32")+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Data) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&common.Data{")
+	if this.Universities != nil {
+		s = append(s, "Universities: "+fmt.Sprintf("%#v", this.Universities)+",\n")
+	}
+	if this.Subjects != nil {
+		s = append(s, "Subjects: "+fmt.Sprintf("%#v", this.Subjects)+",\n")
+	}
+	if this.Courses != nil {
+		s = append(s, "Courses: "+fmt.Sprintf("%#v", this.Courses)+",\n")
+	}
+	if this.Sections != nil {
+		s = append(s, "Sections: "+fmt.Sprintf("%#v", this.Sections)+",\n")
+	}
+	if this.University != nil {
+		s = append(s, "University: "+fmt.Sprintf("%#v", this.University)+",\n")
+	}
+	if this.Subject != nil {
+		s = append(s, "Subject: "+fmt.Sprintf("%#v", this.Subject)+",\n")
+	}
+	if this.Course != nil {
+		s = append(s, "Course: "+fmt.Sprintf("%#v", this.Course)+",\n")
+	}
+	if this.Section != nil {
+		s = append(s, "Section: "+fmt.Sprintf("%#v", this.Section)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func valueToGoStringModel(v interface{}, typ string) string {
 	rv := reflect.ValueOf(v)
 	if rv.IsNil() {
@@ -2873,11 +3025,12 @@ func valueToGoStringModel(v interface{}, typ string) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringModel(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+func extensionToGoStringModel(m github_com_gogo_protobuf_proto.Message) string {
+	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
 	if e == nil {
 		return "nil"
 	}
-	s := "map[int32]proto.Extension{"
+	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
 	keys := make([]int, 0, len(e))
 	for k := range e {
 		keys = append(keys, int(k))
@@ -2887,7 +3040,7 @@ func extensionToGoStringModel(e map[int32]github_com_gogo_protobuf_proto.Extensi
 	for _, k := range keys {
 		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
 	}
-	s += strings.Join(ss, ",") + "}"
+	s += strings.Join(ss, ",") + "})"
 	return s
 }
 func (m *University) Marshal() (data []byte, err error) {
@@ -2940,9 +3093,19 @@ func (m *University) MarshalTo(data []byte) (int, error) {
 	i++
 	i = encodeVarintModel(data, i, uint64(len(m.TopicId)))
 	i += copy(data[i:], m.TopicId)
+	if m.ResolvedSemesters != nil {
+		data[i] = 0x52
+		i++
+		i = encodeVarintModel(data, i, uint64(m.ResolvedSemesters.Size()))
+		n1, err := m.ResolvedSemesters.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n1
+	}
 	if len(m.Subjects) > 0 {
 		for _, msg := range m.Subjects {
-			data[i] = 0x52
+			data[i] = 0x5a
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -2954,7 +3117,7 @@ func (m *University) MarshalTo(data []byte) (int, error) {
 	}
 	if len(m.AvailableSemesters) > 0 {
 		for _, msg := range m.AvailableSemesters {
-			data[i] = 0x5a
+			data[i] = 0x62
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -2966,7 +3129,7 @@ func (m *University) MarshalTo(data []byte) (int, error) {
 	}
 	if len(m.Registrations) > 0 {
 		for _, msg := range m.Registrations {
-			data[i] = 0x62
+			data[i] = 0x6a
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -2978,7 +3141,7 @@ func (m *University) MarshalTo(data []byte) (int, error) {
 	}
 	if len(m.Metadata) > 0 {
 		for _, msg := range m.Metadata {
-			data[i] = 0x6a
+			data[i] = 0x72
 			i++
 			i = encodeVarintModel(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -2987,194 +3150,6 @@ func (m *University) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Response) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Response) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Meta != nil {
-		data[i] = 0xa
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Meta.Size()))
-		n1, err := m.Meta.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
-	}
-	if m.Data != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Data.Size()))
-		n2, err := m.Data.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Meta) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Meta) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.ErrorType != nil {
-		data[i] = 0xa
-		i++
-		i = encodeVarintModel(data, i, uint64(len(*m.ErrorType)))
-		i += copy(data[i:], *m.ErrorType)
-	}
-	if m.ErrorMessage != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintModel(data, i, uint64(len(*m.ErrorMessage)))
-		i += copy(data[i:], *m.ErrorMessage)
-	}
-	if m.Code != nil {
-		data[i] = 0x18
-		i++
-		i = encodeVarintModel(data, i, uint64(*m.Code))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *Data) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Data) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Universities) > 0 {
-		for _, msg := range m.Universities {
-			data[i] = 0xa
-			i++
-			i = encodeVarintModel(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Subjects) > 0 {
-		for _, msg := range m.Subjects {
-			data[i] = 0x12
-			i++
-			i = encodeVarintModel(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Courses) > 0 {
-		for _, msg := range m.Courses {
-			data[i] = 0x1a
-			i++
-			i = encodeVarintModel(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Sections) > 0 {
-		for _, msg := range m.Sections {
-			data[i] = 0x22
-			i++
-			i = encodeVarintModel(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.University != nil {
-		data[i] = 0x2a
-		i++
-		i = encodeVarintModel(data, i, uint64(m.University.Size()))
-		n3, err := m.University.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
-	}
-	if m.Subject != nil {
-		data[i] = 0x32
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Subject.Size()))
-		n4, err := m.Subject.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n4
-	}
-	if m.Course != nil {
-		data[i] = 0x3a
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Course.Size()))
-		n5, err := m.Course.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n5
-	}
-	if m.Section != nil {
-		data[i] = 0x42
-		i++
-		i = encodeVarintModel(data, i, uint64(m.Section.Size()))
-		n6, err := m.Section.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n6
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -3667,6 +3642,57 @@ func (m *Registration) MarshalTo(data []byte) (int, error) {
 	return i, nil
 }
 
+func (m *ResolvedSemester) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ResolvedSemester) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Current != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Current.Size()))
+		n2, err := m.Current.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	if m.Last != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Last.Size()))
+		n3, err := m.Last.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n3
+	}
+	if m.Next != nil {
+		data[i] = 0x1a
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Next.Size()))
+		n4, err := m.Next.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n4
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
 func (m *Semester) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3689,6 +3715,194 @@ func (m *Semester) MarshalTo(data []byte) (int, error) {
 	i++
 	i = encodeVarintModel(data, i, uint64(len(m.Season)))
 	i += copy(data[i:], m.Season)
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Response) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Response) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Meta != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Meta.Size()))
+		n5, err := m.Meta.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n5
+	}
+	if m.Data != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Data.Size()))
+		n6, err := m.Data.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n6
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Meta) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Meta) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ErrorType != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintModel(data, i, uint64(len(*m.ErrorType)))
+		i += copy(data[i:], *m.ErrorType)
+	}
+	if m.ErrorMessage != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintModel(data, i, uint64(len(*m.ErrorMessage)))
+		i += copy(data[i:], *m.ErrorMessage)
+	}
+	if m.Code != nil {
+		data[i] = 0x18
+		i++
+		i = encodeVarintModel(data, i, uint64(*m.Code))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Data) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Data) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Universities) > 0 {
+		for _, msg := range m.Universities {
+			data[i] = 0xa
+			i++
+			i = encodeVarintModel(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Subjects) > 0 {
+		for _, msg := range m.Subjects {
+			data[i] = 0x12
+			i++
+			i = encodeVarintModel(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Courses) > 0 {
+		for _, msg := range m.Courses {
+			data[i] = 0x1a
+			i++
+			i = encodeVarintModel(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Sections) > 0 {
+		for _, msg := range m.Sections {
+			data[i] = 0x22
+			i++
+			i = encodeVarintModel(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.University != nil {
+		data[i] = 0x2a
+		i++
+		i = encodeVarintModel(data, i, uint64(m.University.Size()))
+		n7, err := m.University.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n7
+	}
+	if m.Subject != nil {
+		data[i] = 0x32
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Subject.Size()))
+		n8, err := m.Subject.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n8
+	}
+	if m.Course != nil {
+		data[i] = 0x3a
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Course.Size()))
+		n9, err := m.Course.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n9
+	}
+	if m.Section != nil {
+		data[i] = 0x42
+		i++
+		i = encodeVarintModel(data, i, uint64(m.Section.Size()))
+		n10, err := m.Section.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -3737,6 +3951,9 @@ func NewPopulatedUniversity(r randyModel, easy bool) *University {
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
+		this.ResolvedSemesters = NewPopulatedResolvedSemester(r, easy)
+	}
+	if r.Intn(10) != 0 {
 		v1 := r.Intn(5)
 		this.Subjects = make([]*Subject, v1)
 		for i := 0; i < v1; i++ {
@@ -3765,92 +3982,7 @@ func NewPopulatedUniversity(r randyModel, easy bool) *University {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 14)
-	}
-	return this
-}
-
-func NewPopulatedResponse(r randyModel, easy bool) *Response {
-	this := &Response{}
-	if r.Intn(10) != 0 {
-		this.Meta = NewPopulatedMeta(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Data = NewPopulatedData(r, easy)
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedMeta(r randyModel, easy bool) *Meta {
-	this := &Meta{}
-	if r.Intn(10) != 0 {
-		v5 := randStringModel(r)
-		this.ErrorType = &v5
-	}
-	if r.Intn(10) != 0 {
-		v6 := randStringModel(r)
-		this.ErrorMessage = &v6
-	}
-	if r.Intn(10) != 0 {
-		v7 := int32(r.Int31())
-		if r.Intn(2) == 0 {
-			v7 *= -1
-		}
-		this.Code = &v7
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 4)
-	}
-	return this
-}
-
-func NewPopulatedData(r randyModel, easy bool) *Data {
-	this := &Data{}
-	if r.Intn(10) != 0 {
-		v8 := r.Intn(5)
-		this.Universities = make([]*University, v8)
-		for i := 0; i < v8; i++ {
-			this.Universities[i] = NewPopulatedUniversity(r, easy)
-		}
-	}
-	if r.Intn(10) != 0 {
-		v9 := r.Intn(5)
-		this.Subjects = make([]*Subject, v9)
-		for i := 0; i < v9; i++ {
-			this.Subjects[i] = NewPopulatedSubject(r, easy)
-		}
-	}
-	if r.Intn(10) != 0 {
-		v10 := r.Intn(5)
-		this.Courses = make([]*Course, v10)
-		for i := 0; i < v10; i++ {
-			this.Courses[i] = NewPopulatedCourse(r, easy)
-		}
-	}
-	if r.Intn(10) != 0 {
-		v11 := r.Intn(5)
-		this.Sections = make([]*Section, v11)
-		for i := 0; i < v11; i++ {
-			this.Sections[i] = NewPopulatedSection(r, easy)
-		}
-	}
-	if r.Intn(10) != 0 {
-		this.University = NewPopulatedUniversity(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Subject = NewPopulatedSubject(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Course = NewPopulatedCourse(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		this.Section = NewPopulatedSection(r, easy)
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedModel(r, 9)
+		this.XXX_unrecognized = randUnrecognizedModel(r, 15)
 	}
 	return this
 }
@@ -3872,16 +4004,16 @@ func NewPopulatedSubject(r randyModel, easy bool) *Subject {
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v12 := r.Intn(5)
-		this.Courses = make([]*Course, v12)
-		for i := 0; i < v12; i++ {
+		v5 := r.Intn(5)
+		this.Courses = make([]*Course, v5)
+		for i := 0; i < v5; i++ {
 			this.Courses[i] = NewPopulatedCourse(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v13 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v13)
-		for i := 0; i < v13; i++ {
+		v6 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v6)
+		for i := 0; i < v6; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -3904,22 +4036,22 @@ func NewPopulatedCourse(r randyModel, easy bool) *Course {
 	this.Name = randStringModel(r)
 	this.Number = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v14 := randStringModel(r)
-		this.Synopsis = &v14
+		v7 := randStringModel(r)
+		this.Synopsis = &v7
 	}
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v15 := r.Intn(5)
-		this.Sections = make([]*Section, v15)
-		for i := 0; i < v15; i++ {
+		v8 := r.Intn(5)
+		this.Sections = make([]*Section, v8)
+		for i := 0; i < v8; i++ {
 			this.Sections[i] = NewPopulatedSection(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v16 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v16)
-		for i := 0; i < v16; i++ {
+		v9 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v9)
+		for i := 0; i < v9; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -3954,30 +4086,30 @@ func NewPopulatedSection(r randyModel, easy bool) *Section {
 	this.TopicName = randStringModel(r)
 	this.TopicId = randStringModel(r)
 	if r.Intn(10) != 0 {
-		v17 := r.Intn(5)
-		this.Meetings = make([]*Meeting, v17)
-		for i := 0; i < v17; i++ {
+		v10 := r.Intn(5)
+		this.Meetings = make([]*Meeting, v10)
+		for i := 0; i < v10; i++ {
 			this.Meetings[i] = NewPopulatedMeeting(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v18 := r.Intn(5)
-		this.Instructors = make([]*Instructor, v18)
-		for i := 0; i < v18; i++ {
+		v11 := r.Intn(5)
+		this.Instructors = make([]*Instructor, v11)
+		for i := 0; i < v11; i++ {
 			this.Instructors[i] = NewPopulatedInstructor(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v19 := r.Intn(5)
-		this.Books = make([]*Book, v19)
-		for i := 0; i < v19; i++ {
+		v12 := r.Intn(5)
+		this.Books = make([]*Book, v12)
+		for i := 0; i < v12; i++ {
 			this.Books[i] = NewPopulatedBook(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v20 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v20)
-		for i := 0; i < v20; i++ {
+		v13 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v13)
+		for i := 0; i < v13; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -3998,33 +4130,33 @@ func NewPopulatedMeeting(r randyModel, easy bool) *Meeting {
 		this.SectionId *= -1
 	}
 	if r.Intn(10) != 0 {
-		v21 := randStringModel(r)
-		this.Room = &v21
+		v14 := randStringModel(r)
+		this.Room = &v14
 	}
 	if r.Intn(10) != 0 {
-		v22 := randStringModel(r)
-		this.Day = &v22
+		v15 := randStringModel(r)
+		this.Day = &v15
 	}
 	if r.Intn(10) != 0 {
-		v23 := randStringModel(r)
-		this.StartTime = &v23
+		v16 := randStringModel(r)
+		this.StartTime = &v16
 	}
 	if r.Intn(10) != 0 {
-		v24 := randStringModel(r)
-		this.EndTime = &v24
+		v17 := randStringModel(r)
+		this.EndTime = &v17
 	}
 	if r.Intn(10) != 0 {
-		v25 := randStringModel(r)
-		this.ClassType = &v25
+		v18 := randStringModel(r)
+		this.ClassType = &v18
 	}
 	this.Index = int32(r.Int31())
 	if r.Intn(2) == 0 {
 		this.Index *= -1
 	}
 	if r.Intn(10) != 0 {
-		v26 := r.Intn(5)
-		this.Metadata = make([]*Metadata, v26)
-		for i := 0; i < v26; i++ {
+		v19 := r.Intn(5)
+		this.Metadata = make([]*Metadata, v19)
+		for i := 0; i < v19; i++ {
 			this.Metadata[i] = NewPopulatedMetadata(r, easy)
 		}
 	}
@@ -4080,39 +4212,39 @@ func NewPopulatedMetadata(r randyModel, easy bool) *Metadata {
 		this.Id *= -1
 	}
 	if r.Intn(10) != 0 {
-		v27 := int64(r.Int63())
+		v20 := int64(r.Int63())
 		if r.Intn(2) == 0 {
-			v27 *= -1
+			v20 *= -1
 		}
-		this.UniversityId = &v27
+		this.UniversityId = &v20
 	}
 	if r.Intn(10) != 0 {
-		v28 := int64(r.Int63())
+		v21 := int64(r.Int63())
 		if r.Intn(2) == 0 {
-			v28 *= -1
+			v21 *= -1
 		}
-		this.SubjectId = &v28
+		this.SubjectId = &v21
 	}
 	if r.Intn(10) != 0 {
-		v29 := int64(r.Int63())
+		v22 := int64(r.Int63())
 		if r.Intn(2) == 0 {
-			v29 *= -1
+			v22 *= -1
 		}
-		this.CourseId = &v29
+		this.CourseId = &v22
 	}
 	if r.Intn(10) != 0 {
-		v30 := int64(r.Int63())
+		v23 := int64(r.Int63())
 		if r.Intn(2) == 0 {
-			v30 *= -1
+			v23 *= -1
 		}
-		this.SectionId = &v30
+		this.SectionId = &v23
 	}
 	if r.Intn(10) != 0 {
-		v31 := int64(r.Int63())
+		v24 := int64(r.Int63())
 		if r.Intn(2) == 0 {
-			v31 *= -1
+			v24 *= -1
 		}
-		this.MeetingId = &v31
+		this.MeetingId = &v24
 	}
 	this.Title = randStringModel(r)
 	this.Content = randStringModel(r)
@@ -4143,6 +4275,23 @@ func NewPopulatedRegistration(r randyModel, easy bool) *Registration {
 	return this
 }
 
+func NewPopulatedResolvedSemester(r randyModel, easy bool) *ResolvedSemester {
+	this := &ResolvedSemester{}
+	if r.Intn(10) != 0 {
+		this.Current = NewPopulatedSemester(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Last = NewPopulatedSemester(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Next = NewPopulatedSemester(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 4)
+	}
+	return this
+}
+
 func NewPopulatedSemester(r randyModel, easy bool) *Semester {
 	this := &Semester{}
 	this.Year = int32(r.Int31())
@@ -4152,6 +4301,91 @@ func NewPopulatedSemester(r randyModel, easy bool) *Semester {
 	this.Season = randStringModel(r)
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedModel(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedResponse(r randyModel, easy bool) *Response {
+	this := &Response{}
+	if r.Intn(10) != 0 {
+		this.Meta = NewPopulatedMeta(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Data = NewPopulatedData(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedMeta(r randyModel, easy bool) *Meta {
+	this := &Meta{}
+	if r.Intn(10) != 0 {
+		v25 := randStringModel(r)
+		this.ErrorType = &v25
+	}
+	if r.Intn(10) != 0 {
+		v26 := randStringModel(r)
+		this.ErrorMessage = &v26
+	}
+	if r.Intn(10) != 0 {
+		v27 := int32(r.Int31())
+		if r.Intn(2) == 0 {
+			v27 *= -1
+		}
+		this.Code = &v27
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 4)
+	}
+	return this
+}
+
+func NewPopulatedData(r randyModel, easy bool) *Data {
+	this := &Data{}
+	if r.Intn(10) != 0 {
+		v28 := r.Intn(5)
+		this.Universities = make([]*University, v28)
+		for i := 0; i < v28; i++ {
+			this.Universities[i] = NewPopulatedUniversity(r, easy)
+		}
+	}
+	if r.Intn(10) != 0 {
+		v29 := r.Intn(5)
+		this.Subjects = make([]*Subject, v29)
+		for i := 0; i < v29; i++ {
+			this.Subjects[i] = NewPopulatedSubject(r, easy)
+		}
+	}
+	if r.Intn(10) != 0 {
+		v30 := r.Intn(5)
+		this.Courses = make([]*Course, v30)
+		for i := 0; i < v30; i++ {
+			this.Courses[i] = NewPopulatedCourse(r, easy)
+		}
+	}
+	if r.Intn(10) != 0 {
+		v31 := r.Intn(5)
+		this.Sections = make([]*Section, v31)
+		for i := 0; i < v31; i++ {
+			this.Sections[i] = NewPopulatedSection(r, easy)
+		}
+	}
+	if r.Intn(10) != 0 {
+		this.University = NewPopulatedUniversity(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Subject = NewPopulatedSubject(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Course = NewPopulatedCourse(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.Section = NewPopulatedSection(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedModel(r, 9)
 	}
 	return this
 }
@@ -4248,6 +4482,10 @@ func (m *University) Size() (n int) {
 	n += 1 + l + sovModel(uint64(l))
 	l = len(m.TopicId)
 	n += 1 + l + sovModel(uint64(l))
+	if m.ResolvedSemesters != nil {
+		l = m.ResolvedSemesters.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
 	if len(m.Subjects) > 0 {
 		for _, e := range m.Subjects {
 			l = e.Size()
@@ -4271,92 +4509,6 @@ func (m *University) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovModel(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Response) Size() (n int) {
-	var l int
-	_ = l
-	if m.Meta != nil {
-		l = m.Meta.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Data != nil {
-		l = m.Data.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Meta) Size() (n int) {
-	var l int
-	_ = l
-	if m.ErrorType != nil {
-		l = len(*m.ErrorType)
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.ErrorMessage != nil {
-		l = len(*m.ErrorMessage)
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Code != nil {
-		n += 1 + sovModel(uint64(*m.Code))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Data) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.Universities) > 0 {
-		for _, e := range m.Universities {
-			l = e.Size()
-			n += 1 + l + sovModel(uint64(l))
-		}
-	}
-	if len(m.Subjects) > 0 {
-		for _, e := range m.Subjects {
-			l = e.Size()
-			n += 1 + l + sovModel(uint64(l))
-		}
-	}
-	if len(m.Courses) > 0 {
-		for _, e := range m.Courses {
-			l = e.Size()
-			n += 1 + l + sovModel(uint64(l))
-		}
-	}
-	if len(m.Sections) > 0 {
-		for _, e := range m.Sections {
-			l = e.Size()
-			n += 1 + l + sovModel(uint64(l))
-		}
-	}
-	if m.University != nil {
-		l = m.University.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Subject != nil {
-		l = m.Subject.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Course != nil {
-		l = m.Course.Size()
-		n += 1 + l + sovModel(uint64(l))
-	}
-	if m.Section != nil {
-		l = m.Section.Size()
-		n += 1 + l + sovModel(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -4593,12 +4745,119 @@ func (m *Registration) Size() (n int) {
 	return n
 }
 
+func (m *ResolvedSemester) Size() (n int) {
+	var l int
+	_ = l
+	if m.Current != nil {
+		l = m.Current.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Last != nil {
+		l = m.Last.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Next != nil {
+		l = m.Next.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *Semester) Size() (n int) {
 	var l int
 	_ = l
 	n += 1 + sovModel(uint64(m.Year))
 	l = len(m.Season)
 	n += 1 + l + sovModel(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Response) Size() (n int) {
+	var l int
+	_ = l
+	if m.Meta != nil {
+		l = m.Meta.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Data != nil {
+		l = m.Data.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Meta) Size() (n int) {
+	var l int
+	_ = l
+	if m.ErrorType != nil {
+		l = len(*m.ErrorType)
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.ErrorMessage != nil {
+		l = len(*m.ErrorMessage)
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Code != nil {
+		n += 1 + sovModel(uint64(*m.Code))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Data) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.Universities) > 0 {
+		for _, e := range m.Universities {
+			l = e.Size()
+			n += 1 + l + sovModel(uint64(l))
+		}
+	}
+	if len(m.Subjects) > 0 {
+		for _, e := range m.Subjects {
+			l = e.Size()
+			n += 1 + l + sovModel(uint64(l))
+		}
+	}
+	if len(m.Courses) > 0 {
+		for _, e := range m.Courses {
+			l = e.Size()
+			n += 1 + l + sovModel(uint64(l))
+		}
+	}
+	if len(m.Sections) > 0 {
+		for _, e := range m.Sections {
+			l = e.Size()
+			n += 1 + l + sovModel(uint64(l))
+		}
+	}
+	if m.University != nil {
+		l = m.University.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Subject != nil {
+		l = m.Subject.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Course != nil {
+		l = m.Course.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
+	if m.Section != nil {
+		l = m.Section.Size()
+		n += 1 + l + sovModel(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -4632,53 +4891,11 @@ func (this *University) String() string {
 		`AccentColor:` + fmt.Sprintf("%v", this.AccentColor) + `,`,
 		`TopicName:` + fmt.Sprintf("%v", this.TopicName) + `,`,
 		`TopicId:` + fmt.Sprintf("%v", this.TopicId) + `,`,
+		`ResolvedSemesters:` + strings.Replace(fmt.Sprintf("%v", this.ResolvedSemesters), "ResolvedSemester", "ResolvedSemester", 1) + `,`,
 		`Subjects:` + strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subject", "Subject", 1) + `,`,
 		`AvailableSemesters:` + strings.Replace(fmt.Sprintf("%v", this.AvailableSemesters), "Semester", "Semester", 1) + `,`,
 		`Registrations:` + strings.Replace(fmt.Sprintf("%v", this.Registrations), "Registration", "Registration", 1) + `,`,
 		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Response) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Response{`,
-		`Meta:` + strings.Replace(fmt.Sprintf("%v", this.Meta), "Meta", "Meta", 1) + `,`,
-		`Data:` + strings.Replace(fmt.Sprintf("%v", this.Data), "Data", "Data", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Meta) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Meta{`,
-		`ErrorType:` + valueToStringModel(this.ErrorType) + `,`,
-		`ErrorMessage:` + valueToStringModel(this.ErrorMessage) + `,`,
-		`Code:` + valueToStringModel(this.Code) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Data) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Data{`,
-		`Universities:` + strings.Replace(fmt.Sprintf("%v", this.Universities), "University", "University", 1) + `,`,
-		`Subjects:` + strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subject", "Subject", 1) + `,`,
-		`Courses:` + strings.Replace(fmt.Sprintf("%v", this.Courses), "Course", "Course", 1) + `,`,
-		`Sections:` + strings.Replace(fmt.Sprintf("%v", this.Sections), "Section", "Section", 1) + `,`,
-		`University:` + strings.Replace(fmt.Sprintf("%v", this.University), "University", "University", 1) + `,`,
-		`Subject:` + strings.Replace(fmt.Sprintf("%v", this.Subject), "Subject", "Subject", 1) + `,`,
-		`Course:` + strings.Replace(fmt.Sprintf("%v", this.Course), "Course", "Course", 1) + `,`,
-		`Section:` + strings.Replace(fmt.Sprintf("%v", this.Section), "Section", "Section", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -4826,6 +5043,19 @@ func (this *Registration) String() string {
 	}, "")
 	return s
 }
+func (this *ResolvedSemester) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ResolvedSemester{`,
+		`Current:` + strings.Replace(fmt.Sprintf("%v", this.Current), "Semester", "Semester", 1) + `,`,
+		`Last:` + strings.Replace(fmt.Sprintf("%v", this.Last), "Semester", "Semester", 1) + `,`,
+		`Next:` + strings.Replace(fmt.Sprintf("%v", this.Next), "Semester", "Semester", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Semester) String() string {
 	if this == nil {
 		return "nil"
@@ -4833,6 +5063,49 @@ func (this *Semester) String() string {
 	s := strings.Join([]string{`&Semester{`,
 		`Year:` + fmt.Sprintf("%v", this.Year) + `,`,
 		`Season:` + fmt.Sprintf("%v", this.Season) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Response) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Response{`,
+		`Meta:` + strings.Replace(fmt.Sprintf("%v", this.Meta), "Meta", "Meta", 1) + `,`,
+		`Data:` + strings.Replace(fmt.Sprintf("%v", this.Data), "Data", "Data", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Meta) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Meta{`,
+		`ErrorType:` + valueToStringModel(this.ErrorType) + `,`,
+		`ErrorMessage:` + valueToStringModel(this.ErrorMessage) + `,`,
+		`Code:` + valueToStringModel(this.Code) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Data) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Data{`,
+		`Universities:` + strings.Replace(fmt.Sprintf("%v", this.Universities), "University", "University", 1) + `,`,
+		`Subjects:` + strings.Replace(fmt.Sprintf("%v", this.Subjects), "Subject", "Subject", 1) + `,`,
+		`Courses:` + strings.Replace(fmt.Sprintf("%v", this.Courses), "Course", "Course", 1) + `,`,
+		`Sections:` + strings.Replace(fmt.Sprintf("%v", this.Sections), "Section", "Section", 1) + `,`,
+		`University:` + strings.Replace(fmt.Sprintf("%v", this.University), "University", "University", 1) + `,`,
+		`Subject:` + strings.Replace(fmt.Sprintf("%v", this.Subject), "Subject", "Subject", 1) + `,`,
+		`Course:` + strings.Replace(fmt.Sprintf("%v", this.Course), "Course", "Course", 1) + `,`,
+		`Section:` + strings.Replace(fmt.Sprintf("%v", this.Section), "Section", "Section", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -5128,6 +5401,39 @@ func (m *University) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResolvedSemesters", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ResolvedSemesters == nil {
+				m.ResolvedSemesters = &ResolvedSemester{}
+			}
+			if err := m.ResolvedSemesters.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subjects", wireType)
 			}
 			var msglen int
@@ -5157,7 +5463,7 @@ func (m *University) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 11:
+		case 12:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvailableSemesters", wireType)
 			}
@@ -5188,7 +5494,7 @@ func (m *University) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 12:
+		case 13:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Registrations", wireType)
 			}
@@ -5219,7 +5525,7 @@ func (m *University) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 13:
+		case 14:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
@@ -5247,561 +5553,6 @@ func (m *University) Unmarshal(data []byte) error {
 			}
 			m.Metadata = append(m.Metadata, &Metadata{})
 			if err := m.Metadata[len(m.Metadata)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthModel
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Response) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Response: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Response: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Meta", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Meta == nil {
-				m.Meta = &Meta{}
-			}
-			if err := m.Meta.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = &Data{}
-			}
-			if err := m.Data.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthModel
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Meta) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Meta: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Meta: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ErrorType", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[iNdEx:postIndex])
-			m.ErrorType = &s
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[iNdEx:postIndex])
-			m.ErrorMessage = &s
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
-			}
-			var v int32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				v |= (int32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Code = &v
-		default:
-			iNdEx = preIndex
-			skippy, err := skipModel(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthModel
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Data) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowModel
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Data: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Data: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Universities", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Universities = append(m.Universities, &University{})
-			if err := m.Universities[len(m.Universities)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Subjects", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Subjects = append(m.Subjects, &Subject{})
-			if err := m.Subjects[len(m.Subjects)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Courses", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Courses = append(m.Courses, &Course{})
-			if err := m.Courses[len(m.Courses)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sections", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Sections = append(m.Sections, &Section{})
-			if err := m.Sections[len(m.Sections)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field University", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.University == nil {
-				m.University = &University{}
-			}
-			if err := m.University.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Subject", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Subject == nil {
-				m.Subject = &Subject{}
-			}
-			if err := m.Subject.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Course", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Course == nil {
-				m.Course = &Course{}
-			}
-			if err := m.Course.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Section", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowModel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthModel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Section == nil {
-				m.Section = &Section{}
-			}
-			if err := m.Section.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -7812,6 +7563,156 @@ func (m *Registration) Unmarshal(data []byte) error {
 	}
 	return nil
 }
+func (m *ResolvedSemester) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowModel
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ResolvedSemester: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ResolvedSemester: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Current", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Current == nil {
+				m.Current = &Semester{}
+			}
+			if err := m.Current.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Last", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Last == nil {
+				m.Last = &Semester{}
+			}
+			if err := m.Last.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Next", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Next == nil {
+				m.Next = &Semester{}
+			}
+			if err := m.Next.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipModel(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthModel
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Semester) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
@@ -7888,6 +7789,561 @@ func (m *Semester) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Season = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipModel(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthModel
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Response) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowModel
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Response: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Response: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Meta", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Meta == nil {
+				m.Meta = &Meta{}
+			}
+			if err := m.Meta.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Data == nil {
+				m.Data = &Data{}
+			}
+			if err := m.Data.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipModel(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthModel
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Meta) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowModel
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Meta: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Meta: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorType", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.ErrorType = &s
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.ErrorMessage = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Code = &v
+		default:
+			iNdEx = preIndex
+			skippy, err := skipModel(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthModel
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Data) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowModel
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Data: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Data: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Universities", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Universities = append(m.Universities, &University{})
+			if err := m.Universities[len(m.Universities)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Subjects", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Subjects = append(m.Subjects, &Subject{})
+			if err := m.Subjects[len(m.Subjects)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Courses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Courses = append(m.Courses, &Course{})
+			if err := m.Courses[len(m.Courses)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sections", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sections = append(m.Sections, &Section{})
+			if err := m.Sections[len(m.Sections)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field University", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.University == nil {
+				m.University = &University{}
+			}
+			if err := m.University.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Subject", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Subject == nil {
+				m.Subject = &Subject{}
+			}
+			if err := m.Subject.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Course", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Course == nil {
+				m.Course = &Course{}
+			}
+			if err := m.Course.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Section", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowModel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthModel
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Section == nil {
+				m.Section = &Section{}
+			}
+			if err := m.Section.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -8016,93 +8472,99 @@ var (
 	ErrIntOverflowModel   = fmt.Errorf("proto: integer overflow")
 )
 
+func init() { proto.RegisterFile("common/model.proto", fileDescriptorModel) }
+
 var fileDescriptorModel = []byte{
-	// 1384 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x58, 0xbb, 0x93, 0x1b, 0x45,
-	0x13, 0xb7, 0xb4, 0x7a, 0xb6, 0x74, 0xbe, 0xbb, 0xb1, 0x3f, 0x5b, 0x1f, 0x86, 0x3b, 0xb3, 0x3c,
-	0xea, 0x28, 0xe3, 0x83, 0x32, 0x2e, 0x0c, 0x86, 0x00, 0x64, 0x27, 0x2e, 0xca, 0x2e, 0x6a, 0x30,
-	0x09, 0x81, 0x55, 0x2b, 0x69, 0xea, 0x58, 0xd0, 0xee, 0xaa, 0x76, 0x57, 0xc6, 0xca, 0xf8, 0x27,
-	0x08, 0xc9, 0x49, 0x88, 0x08, 0x4c, 0x48, 0x42, 0x95, 0x43, 0x42, 0x22, 0x63, 0x3b, 0x24, 0xa2,
-	0x28, 0x02, 0x42, 0xba, 0x7b, 0x66, 0xf6, 0x21, 0x09, 0x4b, 0x76, 0x15, 0x0e, 0xe6, 0x34, 0xd3,
-	0xfd, 0xeb, 0x99, 0x9e, 0xf9, 0x75, 0xf7, 0xcc, 0x1e, 0x88, 0x51, 0x14, 0x04, 0x51, 0xf8, 0x46,
-	0x10, 0x8d, 0xd5, 0xe4, 0x70, 0x1a, 0x47, 0x69, 0x24, 0x1a, 0x5a, 0xf6, 0x1c, 0x1c, 0x45, 0x47,
-	0x91, 0x96, 0xb9, 0x77, 0xeb, 0x00, 0x9f, 0x86, 0xfe, 0x6d, 0x15, 0x27, 0x7e, 0x3a, 0x17, 0xfb,
-	0x50, 0xf5, 0xc7, 0xbd, 0xca, 0xd9, 0xca, 0x81, 0xd3, 0xdf, 0xbe, 0x77, 0x7f, 0xff, 0xd8, 0x9f,
-	0xf7, 0xf7, 0x9b, 0xe3, 0xe1, 0x65, 0xd7, 0x1f, 0xbb, 0x12, 0x55, 0xe2, 0x15, 0xa8, 0x85, 0x5e,
-	0xa0, 0x7a, 0x55, 0x84, 0xb4, 0xfb, 0xbb, 0x06, 0xd2, 0x26, 0x08, 0xc9, 0x5d, 0xc9, 0x6a, 0x82,
-	0x79, 0xc3, 0x61, 0xdc, 0x73, 0x96, 0x61, 0x24, 0x47, 0x18, 0xfd, 0x88, 0xb7, 0xa0, 0xfd, 0x79,
-	0x14, 0xa8, 0xc1, 0xd4, 0x3b, 0x52, 0xbd, 0x1a, 0x63, 0x4f, 0x19, 0xec, 0x71, 0xc2, 0x66, 0x4a,
-	0x57, 0xb6, 0xa8, 0xff, 0x31, 0x76, 0xc5, 0x47, 0xb0, 0x1b, 0xab, 0x23, 0x3f, 0x49, 0x63, 0x2f,
-	0xf5, 0xa3, 0x50, 0x1b, 0xd7, 0xd9, 0x78, 0xcf, 0x18, 0x9f, 0x22, 0xe3, 0x25, 0x90, 0x2b, 0x77,
-	0x8a, 0x32, 0x9e, 0xec, 0x6d, 0x80, 0xc0, 0xf3, 0xc3, 0xc1, 0x28, 0x9a, 0x44, 0x71, 0xaf, 0xc1,
-	0xb3, 0x9c, 0x36, 0xb3, 0x6c, 0xd3, 0x2c, 0xb9, 0xd6, 0x95, 0x6d, 0x1a, 0x5c, 0xa1, 0xbe, 0x78,
-	0x1f, 0xba, 0xde, 0x68, 0xa4, 0xc2, 0xd4, 0x58, 0x36, 0xd9, 0xf2, 0xff, 0xc6, 0x72, 0x97, 0x37,
-	0x5a, 0xd0, 0xbb, 0xb2, 0xa3, 0x87, 0xda, 0x1a, 0x57, 0x4d, 0xa3, 0xa9, 0x3f, 0x1a, 0xf0, 0x59,
-	0xb6, 0x96, 0x57, 0xcd, 0xb5, 0xb8, 0x2a, 0x0f, 0x6e, 0xd0, 0xb1, 0xbe, 0x09, 0x2d, 0xad, 0x41,
-	0x92, 0xda, 0x6c, 0xf5, 0x3f, 0x63, 0xb5, 0x95, 0x5b, 0x11, 0x55, 0x4d, 0xee, 0x5e, 0x1b, 0x8b,
-	0x73, 0xd0, 0x4a, 0x66, 0xc3, 0x2f, 0xd4, 0x28, 0x4d, 0x7a, 0x70, 0xd6, 0x39, 0xe8, 0x5c, 0xd8,
-	0x3e, 0xd4, 0x61, 0x70, 0xf8, 0x89, 0x96, 0xcb, 0x0c, 0x20, 0x3e, 0x84, 0x13, 0xde, 0x6d, 0xcf,
-	0x9f, 0x78, 0xc3, 0x89, 0x1a, 0x24, 0x2a, 0x50, 0x49, 0x8a, 0x71, 0xd1, 0xeb, 0xb0, 0xdd, 0x4e,
-	0x66, 0x67, 0x14, 0x52, 0x64, 0x60, 0x2b, 0x4a, 0xc4, 0x65, 0xd8, 0x2a, 0x9e, 0x71, 0xd2, 0xeb,
-	0xb2, 0xf1, 0x49, 0x6b, 0x2c, 0x0b, 0x4a, 0x59, 0x86, 0x8a, 0xd7, 0xa1, 0x15, 0xa8, 0xd4, 0x1b,
-	0x7b, 0xa9, 0xd7, 0xdb, 0x2a, 0xaf, 0x79, 0xdd, 0xc8, 0x65, 0x86, 0x70, 0x6f, 0x40, 0x4b, 0xaa,
-	0x64, 0x8a, 0x86, 0x4a, 0x9c, 0x85, 0x1a, 0xc9, 0x39, 0x70, 0x3b, 0x17, 0xba, 0x45, 0x2b, 0xc9,
-	0x1a, 0x42, 0xf0, 0xbc, 0xd5, 0x32, 0xe2, 0x2a, 0xcd, 0xc9, 0x1a, 0xf7, 0x16, 0xd4, 0x08, 0x2f,
-	0x5e, 0x00, 0x50, 0x71, 0x1c, 0xc5, 0x83, 0x74, 0x3e, 0x55, 0x3c, 0x63, 0x5b, 0xb6, 0x59, 0x72,
-	0x13, 0x05, 0xe2, 0x25, 0xd8, 0xd2, 0x6a, 0xdc, 0x71, 0x42, 0x91, 0xc7, 0x99, 0x20, 0xbb, 0x2c,
-	0xbc, 0xae, 0x65, 0x42, 0x40, 0x6d, 0x84, 0x89, 0xc7, 0xe1, 0x5f, 0x97, 0xdc, 0x77, 0xff, 0xaa,
-	0x42, 0x8d, 0x96, 0x43, 0xf2, 0xbb, 0x33, 0x9b, 0x71, 0xbe, 0x4a, 0x70, 0x09, 0xda, 0xaa, 0xb0,
-	0x2e, 0xe5, 0xd9, 0x28, 0x4b, 0xb8, 0x12, 0x95, 0xd5, 0x75, 0x54, 0x1e, 0x40, 0x73, 0x14, 0xcd,
-	0xe2, 0x04, 0xe7, 0x77, 0x18, 0x7b, 0xdc, 0x62, 0xaf, 0xb0, 0x58, 0x5a, 0x35, 0x4f, 0x8b, 0x26,
-	0x4c, 0x56, 0x6d, 0x61, 0x5a, 0x2d, 0x97, 0x19, 0x40, 0x5c, 0x00, 0xc8, 0x7c, 0x9a, 0x73, 0xd2,
-	0xad, 0xf6, 0xbc, 0x80, 0x12, 0xaf, 0x41, 0xd3, 0xb8, 0xc5, 0xf9, 0xb5, 0xc2, 0x6d, 0xab, 0x17,
-	0xaf, 0x42, 0x43, 0xbb, 0xc5, 0xf9, 0xb4, 0xec, 0xb4, 0xd1, 0xf2, 0x94, 0xda, 0x25, 0x4e, 0x9e,
-	0x15, 0x2e, 0x5b, 0xbd, 0xfb, 0x9b, 0x03, 0x4d, 0xb3, 0x8e, 0x78, 0xb9, 0x50, 0xdd, 0x4e, 0x52,
-	0xe2, 0xfc, 0x7e, 0x7f, 0xbf, 0x72, 0x7e, 0xb1, 0xc4, 0x5d, 0x85, 0xad, 0xdc, 0x7b, 0xca, 0xb4,
-	0x2a, 0x1b, 0xec, 0x17, 0x0d, 0x04, 0x19, 0x94, 0x50, 0x6e, 0x81, 0xad, 0xf9, 0xb5, 0xbc, 0x50,
-	0x3a, 0x8f, 0x2f, 0x94, 0xe7, 0xa0, 0x11, 0xce, 0x82, 0xa1, 0x8a, 0x4d, 0xf9, 0x3b, 0x61, 0x80,
-	0x1d, 0x06, 0xb2, 0xc6, 0x95, 0x06, 0x42, 0xe0, 0x44, 0x79, 0x09, 0xee, 0xba, 0xbe, 0x0c, 0xd6,
-	0x1a, 0x04, 0xeb, 0x0e, 0x39, 0x30, 0x57, 0x9e, 0xad, 0x69, 0x25, 0x07, 0x48, 0x8e, 0x0e, 0xd0,
-	0xcf, 0x42, 0x29, 0x6a, 0x3e, 0x55, 0x29, 0x6a, 0x6d, 0x54, 0x8a, 0x0a, 0x21, 0xd9, 0x7e, 0x7c,
-	0x48, 0x16, 0x0b, 0x01, 0xac, 0x2d, 0x04, 0x3f, 0x38, 0xd0, 0xd0, 0x33, 0x6c, 0x48, 0xf0, 0x7b,
-	0x00, 0x26, 0xe0, 0x72, 0x76, 0x9f, 0x2f, 0xa2, 0x79, 0xdf, 0x39, 0x04, 0xf7, 0x6d, 0x06, 0xff,
-	0x11, 0xaf, 0xe7, 0x31, 0x05, 0xe7, 0x61, 0x34, 0x4d, 0xfc, 0xc4, 0x30, 0xbb, 0x6b, 0xcf, 0xd1,
-	0xca, 0xf1, 0x02, 0xb4, 0xdd, 0x05, 0xca, 0x1a, 0x4f, 0x45, 0x59, 0x73, 0xe3, 0xdb, 0xc3, 0xd6,
-	0x86, 0xd6, 0xba, 0xda, 0x50, 0x64, 0xad, 0xbd, 0x96, 0xb5, 0x6f, 0xea, 0x98, 0x97, 0xda, 0x74,
-	0x43, 0xda, 0xde, 0x81, 0xb6, 0x0e, 0x90, 0x9c, 0xb5, 0x33, 0x45, 0x30, 0xbf, 0x18, 0x32, 0x04,
-	0x1e, 0x98, 0xee, 0xf3, 0x36, 0x2c, 0x19, 0xce, 0x7a, 0x32, 0xde, 0x85, 0xce, 0xc8, 0x9b, 0x4c,
-	0x06, 0x25, 0xfa, 0x7a, 0xc6, 0x62, 0x87, 0xd7, 0xc8, 0xd5, 0xae, 0x04, 0x1a, 0xdd, 0xd0, 0xa6,
-	0x2e, 0x38, 0x81, 0x77, 0x87, 0x29, 0x74, 0xfa, 0x3b, 0xc6, 0xa4, 0xa5, 0x5f, 0x11, 0x77, 0x5c,
-	0x49, 0x4a, 0xc2, 0x84, 0xd1, 0x57, 0xcc, 0xda, 0x02, 0x06, 0xc5, 0x88, 0xc1, 0xbf, 0x9c, 0xe7,
-	0xa9, 0x97, 0xce, 0x12, 0x43, 0x53, 0x39, 0xcf, 0x59, 0x43, 0x79, 0xce, 0x1d, 0x71, 0x88, 0x69,
-	0x15, 0xab, 0xb1, 0x9f, 0x26, 0x26, 0x0f, 0x4f, 0x1a, 0x74, 0x97, 0x7d, 0xd5, 0x2a, 0xe4, 0xd4,
-	0xf4, 0x16, 0xa2, 0xa7, 0xfd, 0x54, 0xd1, 0x03, 0x9b, 0x46, 0x4f, 0xa0, 0x54, 0xea, 0x87, 0x47,
-	0xf6, 0x0d, 0xb1, 0x9d, 0x07, 0x04, 0xcb, 0x65, 0x06, 0x10, 0x17, 0xa1, 0xe3, 0x87, 0xf8, 0x16,
-	0x98, 0x8d, 0xd2, 0x28, 0xb6, 0xcf, 0x86, 0xec, 0x6a, 0xb9, 0x96, 0xa9, 0x64, 0x11, 0x86, 0xa7,
-	0x59, 0x1f, 0x46, 0xd1, 0x97, 0x89, 0x79, 0x2f, 0x64, 0xf7, 0x7a, 0x1f, 0x85, 0x52, 0xab, 0x4a,
-	0x71, 0x79, 0x7c, 0x6d, 0x5c, 0x7e, 0x8b, 0xf7, 0x85, 0xf1, 0xee, 0x09, 0xca, 0x89, 0x0e, 0xe4,
-	0xc7, 0x96, 0x93, 0x0c, 0x42, 0xe5, 0x44, 0x0f, 0xf0, 0x8c, 0x5e, 0x84, 0x5a, 0x1c, 0x45, 0x81,
-	0x09, 0xcc, 0x2d, 0x5b, 0x4a, 0x48, 0x86, 0xa5, 0x84, 0x7e, 0xc4, 0x1e, 0x38, 0x63, 0x6f, 0x6e,
-	0x02, 0xb1, 0x6b, 0xa3, 0x05, 0x45, 0x18, 0x2d, 0xf8, 0x97, 0xee, 0x64, 0x0c, 0x85, 0x38, 0x1d,
-	0xa4, 0x7e, 0x60, 0x1f, 0xc2, 0x27, 0xb2, 0x65, 0x33, 0x0d, 0x2d, 0x4b, 0x83, 0x9b, 0xd8, 0xa7,
-	0x33, 0x51, 0xe1, 0x58, 0x5b, 0x34, 0xca, 0x15, 0xc7, 0xca, 0x91, 0x48, 0xec, 0x32, 0x1a, 0x57,
-	0x18, 0x4d, 0xbc, 0x24, 0xd1, 0x4f, 0xa2, 0x66, 0x79, 0x85, 0x5c, 0x83, 0x2b, 0xf0, 0x80, 0xdf,
-	0x49, 0x07, 0x50, 0xf7, 0xc3, 0xb1, 0xba, 0xc3, 0x41, 0x59, 0xef, 0x0b, 0x13, 0x2b, 0xc0, 0x27,
-	0x47, 0x0a, 0x57, 0x6a, 0xc0, 0x13, 0xd6, 0x8d, 0x9f, 0x2b, 0x00, 0x79, 0x34, 0x3c, 0x0b, 0x8a,
-	0x36, 0xac, 0xf8, 0xe7, 0xed, 0x86, 0x6b, 0xbc, 0xe1, 0xd3, 0xc5, 0xe9, 0x97, 0x77, 0xed, 0xde,
-	0xad, 0x40, 0x8d, 0xa2, 0xf4, 0x59, 0xec, 0x00, 0xb9, 0x48, 0xfd, 0x74, 0x62, 0xb7, 0x50, 0xe2,
-	0x82, 0x15, 0xe8, 0x15, 0xff, 0x52, 0x75, 0x9a, 0xc5, 0x13, 0x13, 0x6b, 0xa5, 0xea, 0x84, 0x62,
-	0x8c, 0x37, 0xfa, 0xfb, 0xbd, 0x03, 0x2d, 0x4b, 0xcc, 0x86, 0xde, 0x7f, 0xb0, 0xfa, 0x49, 0x75,
-	0x66, 0xf3, 0xe7, 0xd4, 0xa5, 0xd2, 0x9d, 0xed, 0xb0, 0x79, 0x6f, 0x93, 0xfb, 0xfa, 0x62, 0xf1,
-	0xd6, 0xa8, 0xb1, 0xdd, 0xe9, 0xf5, 0x37, 0xc6, 0xa5, 0xd2, 0x71, 0xd7, 0x57, 0x2d, 0xb7, 0xfa,
-	0xa8, 0xd1, 0xd0, 0x94, 0x34, 0x32, 0x6c, 0xac, 0x30, 0xcc, 0xd5, 0xf4, 0x41, 0xa9, 0x07, 0x45,
-	0x8e, 0x9a, 0xeb, 0x38, 0xa2, 0x82, 0x1f, 0x85, 0x29, 0x7e, 0x4c, 0xae, 0x2c, 0xf8, 0x5a, 0x45,
-	0x05, 0xdf, 0xf4, 0x1e, 0x55, 0xa0, 0x5b, 0xfc, 0xec, 0x7a, 0xa6, 0xcf, 0x60, 0xbc, 0xca, 0xa6,
-	0x2a, 0xf6, 0xa3, 0xf1, 0xaa, 0xab, 0x57, 0x6b, 0xf0, 0x2a, 0xd3, 0x1d, 0xba, 0x7a, 0x75, 0x6f,
-	0x80, 0xb1, 0xa5, 0x0c, 0x5b, 0xa5, 0xab, 0xb7, 0xa0, 0xc6, 0xab, 0x57, 0x8f, 0xae, 0xd2, 0xe0,
-	0x16, 0xb4, 0xec, 0x47, 0x68, 0xf6, 0xf2, 0xad, 0x70, 0x22, 0xfe, 0xeb, 0xcb, 0x37, 0x7f, 0x4d,
-	0x57, 0xd7, 0xbe, 0xa6, 0xfb, 0x17, 0x7f, 0x7d, 0xb8, 0x77, 0xec, 0xc1, 0xc3, 0xbd, 0xca, 0x1f,
-	0xd8, 0xfe, 0xc6, 0xf6, 0xf5, 0xa3, 0xbd, 0xca, 0x77, 0xd8, 0x7e, 0xc4, 0xf6, 0x13, 0xb6, 0x7b,
-	0xd8, 0x7e, 0xc1, 0xf6, 0x00, 0xdb, 0x67, 0xe6, 0x3f, 0x2d, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff,
-	0x28, 0x52, 0x66, 0x11, 0x86, 0x11, 0x00, 0x00,
+	// 1447 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x58, 0x3d, 0x8c, 0x1b, 0x45,
+	0x14, 0x8e, 0xbd, 0xfe, 0x7d, 0xe7, 0x4b, 0xee, 0x26, 0x21, 0x31, 0x04, 0xee, 0xc2, 0xf2, 0xa3,
+	0x40, 0xc8, 0x81, 0x42, 0x44, 0x20, 0x50, 0xc0, 0x25, 0x12, 0x8a, 0x50, 0x22, 0x34, 0x09, 0x0d,
+	0x05, 0xd6, 0xda, 0x3b, 0x3a, 0x16, 0xbc, 0x3b, 0xd6, 0xee, 0x3a, 0xdc, 0x75, 0xa9, 0xe9, 0x29,
+	0xe9, 0x69, 0xa8, 0x28, 0xa0, 0xa4, 0x41, 0x4a, 0x49, 0x49, 0x15, 0x92, 0x94, 0x54, 0x08, 0x51,
+	0x50, 0xf2, 0xde, 0x9b, 0xd9, 0x3f, 0xdb, 0xc4, 0x4e, 0x24, 0xae, 0x58, 0xef, 0xcc, 0x7b, 0xdf,
+	0xdb, 0x79, 0x33, 0xdf, 0x9b, 0xf7, 0x66, 0x0c, 0x62, 0xa4, 0xc3, 0x50, 0x47, 0xaf, 0x87, 0xda,
+	0x57, 0xe3, 0x9d, 0x49, 0xac, 0x53, 0x2d, 0x5a, 0x46, 0xf6, 0x0c, 0xec, 0xe9, 0x3d, 0x6d, 0x64,
+	0xee, 0x9d, 0x16, 0xc0, 0x27, 0x51, 0x70, 0x5b, 0xc5, 0x49, 0x90, 0x1e, 0x88, 0x6d, 0xa8, 0x07,
+	0x7e, 0xbf, 0x76, 0xa6, 0x76, 0xd6, 0xd9, 0x3d, 0x76, 0xf7, 0xde, 0xf6, 0x91, 0xbf, 0xee, 0x6d,
+	0xb7, 0xfd, 0xe1, 0x65, 0x37, 0xf0, 0x5d, 0x89, 0x2a, 0xf1, 0x12, 0x34, 0x22, 0x2f, 0x54, 0xfd,
+	0x3a, 0x42, 0xba, 0xbb, 0x9b, 0x16, 0xd2, 0x25, 0x08, 0xc9, 0x5d, 0xc9, 0x6a, 0x82, 0x79, 0xc3,
+	0x61, 0xdc, 0x77, 0xe6, 0x61, 0x24, 0x47, 0x18, 0xbd, 0xc4, 0x9b, 0xd0, 0xfd, 0x5c, 0x87, 0x6a,
+	0x30, 0xf1, 0xf6, 0x54, 0xbf, 0xc1, 0xd8, 0x93, 0x16, 0x7b, 0x94, 0xb0, 0xb9, 0xd2, 0x95, 0x1d,
+	0x6a, 0x7f, 0x8c, 0x4d, 0xf1, 0x11, 0x6c, 0xc6, 0x6a, 0x2f, 0x48, 0xd2, 0xd8, 0x4b, 0x03, 0x1d,
+	0x19, 0xe3, 0x26, 0x1b, 0x6f, 0x59, 0xe3, 0x93, 0x64, 0x3c, 0x07, 0x72, 0xe5, 0x46, 0x59, 0xc6,
+	0x1f, 0x7b, 0x0b, 0x20, 0xf4, 0x82, 0x68, 0x30, 0xd2, 0x63, 0x1d, 0xf7, 0x5b, 0xfc, 0x95, 0x53,
+	0xf6, 0x2b, 0xc7, 0xe8, 0x2b, 0x85, 0xd6, 0x95, 0x5d, 0xea, 0x5c, 0xa1, 0xb6, 0x78, 0x0f, 0x7a,
+	0xde, 0x68, 0xa4, 0xa2, 0xd4, 0x5a, 0xb6, 0xd9, 0xf2, 0x69, 0x6b, 0xb9, 0xc9, 0x13, 0x2d, 0xe9,
+	0x5d, 0xb9, 0x66, 0xba, 0xc6, 0x1a, 0x47, 0x4d, 0xf5, 0x24, 0x18, 0x0d, 0x78, 0x2d, 0x3b, 0xf3,
+	0xa3, 0x16, 0x5a, 0x1c, 0x95, 0x3b, 0x37, 0x68, 0x59, 0xdf, 0x80, 0x8e, 0xd1, 0x20, 0x49, 0x5d,
+	0xb6, 0x7a, 0xca, 0x5a, 0xad, 0x17, 0x56, 0x44, 0x55, 0x9b, 0x9b, 0xd7, 0x7c, 0xf1, 0x21, 0x88,
+	0x58, 0x25, 0x7a, 0x7c, 0x5b, 0xf9, 0x83, 0x44, 0x85, 0x2a, 0x49, 0x91, 0xe9, 0x3e, 0xa0, 0xed,
+	0xda, 0x85, 0xfe, 0x8e, 0x09, 0x88, 0x1d, 0x69, 0x11, 0x37, 0x2d, 0x40, 0x6e, 0xc6, 0x33, 0x92,
+	0x44, 0x9c, 0x83, 0x4e, 0x32, 0x1d, 0x7e, 0xa1, 0x46, 0x69, 0xd2, 0x5f, 0x3b, 0xe3, 0xa0, 0xf9,
+	0xb1, 0xcc, 0xfc, 0xa6, 0x91, 0xcb, 0x1c, 0x20, 0x3e, 0x80, 0xe3, 0xde, 0x6d, 0x2f, 0x18, 0x7b,
+	0xc3, 0xb1, 0x2a, 0x0d, 0xdb, 0x63, 0xbb, 0x8d, 0xdc, 0x2e, 0x1b, 0x4e, 0xe4, 0xe0, 0x62, 0xbc,
+	0xcb, 0xb0, 0x5e, 0x26, 0x2b, 0xe9, 0xaf, 0xb3, 0xf1, 0x89, 0xc2, 0xe7, 0x42, 0x29, 0xab, 0x50,
+	0xf1, 0x1a, 0x74, 0x42, 0x95, 0x7a, 0xbe, 0x97, 0x7a, 0xfd, 0xa3, 0xd5, 0x31, 0xaf, 0x5b, 0xb9,
+	0xcc, 0x11, 0xee, 0xef, 0x0e, 0xb4, 0xed, 0x14, 0xc4, 0x8b, 0xa5, 0xf8, 0x3f, 0x41, 0x4b, 0xfb,
+	0xc7, 0xbd, 0xed, 0xda, 0xf9, 0xd9, 0x4d, 0x70, 0x15, 0xd6, 0xa7, 0xf9, 0x9e, 0x21, 0x2e, 0xea,
+	0x6c, 0xb0, 0x5d, 0x36, 0x10, 0x64, 0x50, 0x41, 0xb9, 0xb2, 0x57, 0xf4, 0xaf, 0x15, 0x5b, 0xc9,
+	0x79, 0xf4, 0x56, 0x3a, 0x07, 0xad, 0x68, 0x1a, 0x0e, 0x55, 0x6c, 0x37, 0xc8, 0x71, 0x0b, 0x5c,
+	0x63, 0x20, 0x6b, 0x5c, 0x69, 0x21, 0x04, 0x4e, 0x94, 0x97, 0xe8, 0xc8, 0x6e, 0x88, 0x0a, 0xd8,
+	0x68, 0x10, 0x6c, 0x1a, 0xe4, 0xc0, 0x81, 0xf2, 0xb2, 0xa8, 0xaf, 0x38, 0x40, 0x72, 0x74, 0x80,
+	0x5e, 0x33, 0xc1, 0xda, 0x7e, 0xa2, 0x60, 0xed, 0xac, 0x14, 0xac, 0x67, 0xa1, 0x3d, 0xd2, 0xd3,
+	0x38, 0x51, 0x09, 0x46, 0x37, 0xd1, 0x76, 0x34, 0xa3, 0xed, 0x0a, 0x8b, 0x65, 0xa6, 0xae, 0x30,
+	0x0c, 0x4b, 0x19, 0xfe, 0xc1, 0x81, 0x96, 0xf9, 0xc2, 0x8a, 0x04, 0xbf, 0x0b, 0x60, 0x63, 0xb9,
+	0x60, 0xf7, 0xd9, 0x32, 0x9a, 0xe7, 0x5d, 0x40, 0x70, 0xde, 0xb6, 0xf3, 0x3f, 0xf1, 0x7a, 0x1e,
+	0x77, 0xdf, 0x41, 0xa4, 0x27, 0x49, 0x90, 0x58, 0x66, 0x37, 0xb3, 0x75, 0xcc, 0xe4, 0x98, 0x22,
+	0xb3, 0xe6, 0x0c, 0x65, 0xad, 0x27, 0xa2, 0xac, 0xbd, 0x12, 0x65, 0x94, 0x16, 0x70, 0xda, 0xbc,
+	0x43, 0x3b, 0x33, 0x69, 0xc1, 0xc8, 0x65, 0x0e, 0xa8, 0xb0, 0xd6, 0x5d, 0xca, 0xda, 0x37, 0x4d,
+	0xdc, 0x97, 0xc6, 0x74, 0x45, 0xda, 0xde, 0x86, 0xae, 0x09, 0x90, 0x82, 0xb5, 0xd3, 0x65, 0x30,
+	0xd7, 0x94, 0x1c, 0x81, 0x0b, 0x66, 0xda, 0x3c, 0x8d, 0x8c, 0x0c, 0x67, 0x39, 0x19, 0xef, 0xc0,
+	0xda, 0xc8, 0x1b, 0x8f, 0x07, 0x15, 0xfa, 0xfa, 0xd6, 0x62, 0x83, 0xc7, 0x28, 0xd4, 0xae, 0x04,
+	0xea, 0xdd, 0x30, 0xa6, 0x2e, 0x38, 0xa1, 0xb7, 0xcf, 0x14, 0x3a, 0xbb, 0x1b, 0xd6, 0xa4, 0x63,
+	0xea, 0xcc, 0xbe, 0x2b, 0x49, 0x49, 0x98, 0x48, 0x7f, 0xc5, 0xac, 0xcd, 0x60, 0x50, 0x8c, 0x18,
+	0xfc, 0xe5, 0x7d, 0x9e, 0x7a, 0xe9, 0x34, 0xb1, 0x34, 0x55, 0xf7, 0x39, 0x6b, 0x68, 0x9f, 0x73,
+	0x43, 0xec, 0xe0, 0xb6, 0x8a, 0x95, 0x1f, 0xa4, 0x89, 0xdd, 0x87, 0x27, 0x2c, 0xba, 0xc7, 0xbe,
+	0x1a, 0x15, 0x72, 0x6a, 0x5b, 0x33, 0xd1, 0xd3, 0x7d, 0xa2, 0xe8, 0x81, 0x55, 0xa3, 0x27, 0x54,
+	0x2a, 0x0d, 0xa2, 0xbd, 0xb9, 0xa2, 0x72, 0xdd, 0xc8, 0x65, 0x0e, 0x10, 0x17, 0x61, 0x2d, 0x88,
+	0x30, 0xc9, 0x4f, 0x47, 0xa9, 0xce, 0x8b, 0x89, 0xc8, 0xf0, 0xd7, 0x72, 0x95, 0x2c, 0xc3, 0x70,
+	0x35, 0x9b, 0x43, 0xad, 0xbf, 0xcc, 0xea, 0x47, 0x2f, 0xc3, 0xef, 0xa2, 0x50, 0x1a, 0xd5, 0x63,
+	0xd6, 0x8b, 0x6f, 0xb1, 0x5e, 0x58, 0xef, 0x1e, 0x23, 0x9d, 0x98, 0x40, 0x7e, 0x64, 0x3a, 0xc9,
+	0x21, 0x94, 0x4e, 0x4c, 0x07, 0xd7, 0xe8, 0x79, 0x68, 0xc4, 0x5a, 0x87, 0x36, 0x30, 0xd7, 0xb3,
+	0x54, 0x42, 0x32, 0x4c, 0x25, 0xf4, 0x12, 0x5b, 0xe0, 0xf8, 0xde, 0x81, 0x0d, 0xc4, 0x5e, 0x16,
+	0x2d, 0x28, 0xc2, 0x68, 0xc1, 0x5f, 0x71, 0x01, 0xc7, 0x4f, 0xbd, 0x38, 0x1d, 0xa4, 0x41, 0x98,
+	0x1d, 0x95, 0x8e, 0xe7, 0xc3, 0xe6, 0x1a, 0x1a, 0x96, 0x3a, 0xb7, 0xb0, 0x4d, 0x6b, 0xa2, 0x22,
+	0xdf, 0x58, 0xb4, 0xaa, 0x19, 0x27, 0x93, 0x23, 0x91, 0xd8, 0x64, 0x34, 0x8e, 0x30, 0x1a, 0x7b,
+	0x49, 0x32, 0x48, 0x0f, 0x26, 0x59, 0x8d, 0xc8, 0x47, 0x28, 0x34, 0x38, 0x02, 0x77, 0x6e, 0x61,
+	0x1b, 0xb3, 0x7d, 0x33, 0x88, 0x7c, 0xb5, 0xcf, 0x41, 0xd9, 0xdc, 0x15, 0x36, 0x56, 0x80, 0x57,
+	0x8e, 0x14, 0xae, 0x34, 0x80, 0xc7, 0xcc, 0x1b, 0xbf, 0xd4, 0x00, 0x8a, 0x68, 0x38, 0x0c, 0x8a,
+	0x56, 0xcc, 0xf8, 0xe7, 0xb3, 0x09, 0x37, 0x78, 0xc2, 0xa7, 0xca, 0x9f, 0x9f, 0x9f, 0xb5, 0xfb,
+	0x63, 0x0d, 0x1a, 0x14, 0xa5, 0x87, 0x31, 0x03, 0xe4, 0x22, 0x0d, 0xd2, 0x71, 0x36, 0x85, 0x0a,
+	0x17, 0xac, 0x40, 0xaf, 0xf8, 0x4d, 0xd9, 0x69, 0x1a, 0x8f, 0x6d, 0xac, 0x55, 0xb2, 0x13, 0x8a,
+	0x31, 0xde, 0xe8, 0xf7, 0x7b, 0x07, 0x3a, 0x19, 0x31, 0x2b, 0x7a, 0xff, 0xfe, 0xe2, 0x23, 0xd5,
+	0xe9, 0xd5, 0x8f, 0x53, 0x97, 0x2a, 0x35, 0xdb, 0x61, 0xf3, 0xfe, 0x2a, 0xf5, 0xfa, 0x62, 0xb9,
+	0x6a, 0x34, 0xd8, 0xee, 0xd4, 0xf2, 0x8a, 0x71, 0xa9, 0xb2, 0xdc, 0xcd, 0x45, 0xc3, 0x2d, 0x5e,
+	0x6a, 0x34, 0xb4, 0x29, 0x8d, 0x0c, 0x5b, 0x0b, 0x0c, 0x0b, 0x35, 0x5d, 0x39, 0x4c, 0xa7, 0xcc,
+	0x51, 0x7b, 0x19, 0x47, 0x94, 0xf0, 0x75, 0x94, 0xe2, 0x75, 0x63, 0x61, 0xc2, 0x37, 0x2a, 0x4a,
+	0xf8, 0xb6, 0xf5, 0xb0, 0x06, 0xbd, 0xf2, 0x79, 0xfa, 0x50, 0x8f, 0xc1, 0x58, 0xca, 0x26, 0x2a,
+	0x0e, 0xb4, 0xbf, 0xa8, 0xf4, 0x1a, 0x0d, 0x96, 0x32, 0xd3, 0xa0, 0xd2, 0x6b, 0x5a, 0x03, 0x8c,
+	0x2d, 0x65, 0xd9, 0xaa, 0x94, 0xde, 0x92, 0x1a, 0x4b, 0xaf, 0xe9, 0x5d, 0xa5, 0xce, 0xd7, 0x35,
+	0xd8, 0x98, 0xbd, 0xe8, 0x88, 0x57, 0x71, 0xa5, 0xa6, 0x71, 0x4c, 0x2b, 0x55, 0xe3, 0x3b, 0xd1,
+	0xfc, 0xe5, 0x24, 0x03, 0xe0, 0xa2, 0x34, 0x30, 0x77, 0xa5, 0x3c, 0xcb, 0x45, 0x40, 0xd6, 0x12,
+	0x2a, 0x52, 0xfb, 0x29, 0x4f, 0x66, 0x21, 0x8a, 0xb4, 0xee, 0x67, 0xd0, 0xc9, 0x7d, 0xc8, 0x8e,
+	0xe1, 0x35, 0xce, 0x0a, 0xff, 0x79, 0x0c, 0x2f, 0x8e, 0xf6, 0xf5, 0xa5, 0x47, 0x7b, 0xf7, 0x06,
+	0x74, 0x70, 0xae, 0x13, 0x3c, 0x74, 0x29, 0x71, 0x06, 0x1a, 0x94, 0x1b, 0xed, 0x04, 0x7b, 0xe5,
+	0xcc, 0x29, 0x59, 0x43, 0x08, 0xce, 0xad, 0xf5, 0x2a, 0xe2, 0x2a, 0xe5, 0x55, 0xd6, 0xa0, 0xbf,
+	0x0d, 0xc2, 0x8b, 0xe7, 0x00, 0x54, 0x1c, 0xeb, 0xd8, 0xe4, 0x79, 0xfa, 0x62, 0x57, 0x76, 0x59,
+	0xc2, 0x29, 0xfd, 0x05, 0x58, 0x37, 0x6a, 0x9c, 0x5a, 0x42, 0xd7, 0x72, 0x76, 0x55, 0xf6, 0x58,
+	0x78, 0xdd, 0xc8, 0x84, 0x80, 0xc6, 0x48, 0xfb, 0x26, 0xd5, 0x34, 0x25, 0xb7, 0xdd, 0xbf, 0xeb,
+	0xd0, 0xa0, 0xe1, 0xf0, 0xec, 0x51, 0x44, 0x47, 0x80, 0xf7, 0x80, 0x5a, 0xb5, 0xca, 0x17, 0x7f,
+	0x55, 0xc8, 0x0a, 0xae, 0x72, 0x3d, 0xad, 0x2f, 0xbb, 0x9e, 0x96, 0xee, 0x19, 0xce, 0xa3, 0xef,
+	0x19, 0xe5, 0xe3, 0x6d, 0x63, 0xd9, 0xf1, 0x16, 0x8b, 0x60, 0x11, 0xd9, 0x9c, 0x12, 0x16, 0x7b,
+	0x5e, 0x42, 0x89, 0x57, 0xa0, 0x6d, 0xdd, 0xe2, 0x54, 0xb0, 0xc0, 0xed, 0x4c, 0x2f, 0x5e, 0x86,
+	0x96, 0x71, 0x8b, 0x13, 0xc0, 0xbc, 0xd3, 0x56, 0xcb, 0x9f, 0x34, 0x2e, 0xf1, 0xee, 0x5f, 0xe0,
+	0x72, 0xa6, 0xdf, 0xbd, 0xf8, 0xdb, 0x83, 0xad, 0x23, 0xf7, 0x1f, 0x6c, 0xd5, 0xfe, 0xc4, 0xe7,
+	0x1f, 0x7c, 0xee, 0x3c, 0xdc, 0xaa, 0x7d, 0x87, 0xcf, 0x4f, 0xf8, 0xfc, 0x8c, 0xcf, 0x5d, 0x7c,
+	0x7e, 0xc5, 0xe7, 0x3e, 0x3e, 0x9f, 0xda, 0xff, 0x8f, 0xfe, 0x0d, 0x00, 0x00, 0xff, 0xff, 0xb8,
+	0xd6, 0x76, 0x54, 0x5c, 0x12, 0x00, 0x00,
 }

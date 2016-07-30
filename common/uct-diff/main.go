@@ -11,7 +11,7 @@ import (
 
 var (
 	app     = kingpin.New("model-diff", "An application to filter unchanged objects")
-	format  = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	format  = app.Flag("format", "choose file input format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	old     = app.Arg("old", "the first file to compare").Required().File()
 	new     = app.Arg("new", "the second file to compare").File()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
@@ -20,7 +20,7 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != "json" && *format != "protobuf" {
+	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 

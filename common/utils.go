@@ -179,12 +179,12 @@ func InitTnfluxServer() (influxClient client.Client, err error) {
 func MarshalMessage(format string, m University) *bytes.Reader {
 	var out []byte
 	var err error
-	if format == "json" {
+	if format == JSON {
 		out, err = json.MarshalIndent(m, "", "   ")
 		if err != nil {
 			log.Fatalln("Failed to encode message:", err)
 		}
-	} else if format == "protobuf" {
+	} else if format == PROTOBUF {
 		out, err = m.Marshal()
 		if err != nil {
 			log.Fatalln("Failed to encode message:", err)
@@ -194,12 +194,12 @@ func MarshalMessage(format string, m University) *bytes.Reader {
 }
 
 func UnmarshallMessage(format string, r io.Reader, m *University) error {
-	if format == "json" {
+	if format == JSON {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(r, &*m); err != nil {
 			log.Fatalln("Failed to unmarshal message:", err)
 		}
-	} else if format == "protobuf" {
+	} else if format == PROTOBUF {
 		data, err := ioutil.ReadAll(r)
 		if err = m.Unmarshal(data); err != nil {
 			log.Fatalln("Failed to unmarshal message:", err)

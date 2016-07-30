@@ -52,7 +52,7 @@ var rutgers = []*Registration{
 	},
 	&Registration{
 		Period:     END_SUMMER.String(),
-		PeriodDate: time.Date(0000, time.August, 15, 0, 0, 0, 0, time.UTC).Unix(),
+		PeriodDate: time.Date(0000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
 	},
 	&Registration{
 		Period:     END_WINTER.String(),
@@ -72,11 +72,11 @@ func TestResolveSemesters(t *testing.T) {
 
 	semesters := ResolveSemesters(time.Now(), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SPRING, semesters.Last.Season)
+	assert.Equal(t, SUMMER, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SUMMER, semesters.Current.Season)
+	assert.Equal(t, FALL, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, FALL, semesters.Next.Season)
+	assert.Equal(t, WINTER, semesters.Next.Season)
 
 	semesters = ResolveSemesters(time.Date(2015, time.December, 24, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2015, int(semesters.Last.Year))
@@ -123,7 +123,7 @@ func TestResolveSemesters(t *testing.T) {
 	assert.Equal(t, FALL, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
-	semesters = ResolveSemesters(time.Date(2016, time.August, 14, 0, 0, 0, 0, time.UTC), rutgers)
+	semesters = ResolveSemesters(time.Date(2016, time.June, 14, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
 	assert.Equal(t, SPRING, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
@@ -132,7 +132,7 @@ func TestResolveSemesters(t *testing.T) {
 	assert.Equal(t, FALL, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
-	semesters = ResolveSemesters(time.Date(2016, time.August, 15, 0, 0, 0, 0, time.UTC), rutgers)
+	semesters = ResolveSemesters(time.Date(2016, time.June, 15, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
 	assert.Equal(t, SUMMER, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))

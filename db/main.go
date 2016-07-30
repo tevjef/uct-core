@@ -10,6 +10,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 	"time"
 	uct "uct/common"
 )
@@ -40,14 +41,14 @@ var (
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	oldFile    = app.Flag("diff", "file to read university data from.").Short('d').File()
 	newFile    = app.Flag("input", "file to read university data from.").Short('i').File()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
+	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
 	server     = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.DB_DEBUG_SERVER).TCP()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != "json" && *format != "protobuf" {
+	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -145,12 +146,12 @@ func (app App) updateSerialSection(section *uct.Section) {
 }
 
 func (app App) insertUniversity(uni *uct.University) {
-	university_id := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
+	universityId := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
-		subject.UniversityId = university_id
+		subject.UniversityId = universityId
 
 		subjectId := app.insertSubject(subject)
 
@@ -232,8 +233,12 @@ func (app App) insertUniversity(uni *uct.University) {
 		}
 	}
 
+	// ResolvedSemesters
+	app.insertSemester(universityId, uni.ResolvedSemesters)
+
+	// Registrations
 	for _, registrations := range uni.Registrations {
-		registrations.UniversityId = university_id
+		registrations.UniversityId = universityId
 		app.insertRegistration(registrations)
 	}
 
@@ -242,80 +247,92 @@ func (app App) insertUniversity(uni *uct.University) {
 	for metadataIndex := range metadatas {
 		metadata := metadatas[metadataIndex]
 
-		metadata.UniversityId = &university_id
+		metadata.UniversityId = &universityId
 		app.insertMetadata(metadata)
 	}
 }
 
-func (app App) insertSubject(sub *uct.Subject) (subject_id int64) {
+func (app App) insertSubject(sub *uct.Subject) (subjectId int64) {
 	if !*fullUpsert {
 
-		if subject_id = app.dbHandler.exists(SubjectExistQuery, sub); subject_id != 0 {
+		if subjectId = app.dbHandler.exists(SubjectExistQuery, sub); subjectId != 0 {
 			return
 		}
 	}
-	subject_id = app.dbHandler.upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
+	subjectId = app.dbHandler.upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
 
 	// Subject []Metadata
 	metadatas := sub.Metadata
 	for metadataIndex := range metadatas {
 		metadata := metadatas[metadataIndex]
 
-		metadata.SubjectId = &subject_id
+		metadata.SubjectId = &subjectId
 		app.insertMetadata(metadata)
 	}
-	return subject_id
+	return subjectId
 }
 
-func (app App) insertCourse(course *uct.Course) (course_id int64) {
+func (app App) insertCourse(course *uct.Course) (courseId int64) {
 	if !*fullUpsert {
 
-		if course_id = app.dbHandler.exists(CourseExistQuery, course); course_id != 0 {
+		if courseId = app.dbHandler.exists(CourseExistQuery, course); courseId != 0 {
 			return
 		}
 	}
-	course_id = app.dbHandler.upsert(CourseInsertQuery, CourseUpdateQuery, course)
+	courseId = app.dbHandler.upsert(CourseInsertQuery, CourseUpdateQuery, course)
 
-	return course_id
+	return courseId
 }
 
-func (app App) insertSection(section *uct.Section) (section_id int64) {
+func (app App) insertSemester(universityId int64, resolvedSemesters *uct.ResolvedSemester) int64 {
+	rs := &uct.DBResolvedSemester{}
+	rs.UniversityId = universityId
+	rs.CurrentSeason = resolvedSemesters.Current.Season
+	rs.CurrentYear = strconv.Itoa(int(resolvedSemesters.Current.Year))
+	rs.LastSeason = resolvedSemesters.Last.Season
+	rs.LastYear = strconv.Itoa(int(resolvedSemesters.Last.Year))
+	rs.NextSeason = resolvedSemesters.Next.Season
+	rs.NextYear = strconv.Itoa(int(resolvedSemesters.Next.Year))
+	return app.dbHandler.upsert(SemesterInsertQuery, SemesterUpdateQuery, rs)
+}
+
+func (app App) insertSection(section *uct.Section) int64 {
 	return app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 }
 
-func (app App) insertMeeting(meeting *uct.Meeting) (meeting_id int64) {
+func (app App) insertMeeting(meeting *uct.Meeting) (meetingId int64) {
 	if !*fullUpsert {
-		if meeting_id = app.dbHandler.exists(MeetingExistQuery, meeting); meeting_id != 0 {
+		if meetingId = app.dbHandler.exists(MeetingExistQuery, meeting); meetingId != 0 {
 			return
 		}
 	}
 	return app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 }
 
-func (app App) insertInstructor(instructor *uct.Instructor) (instructor_id int64) {
-	if instructor_id = app.dbHandler.exists(InstructorExistQuery, instructor); instructor_id != 0 {
+func (app App) insertInstructor(instructor *uct.Instructor) (instructorId int64) {
+	if instructorId = app.dbHandler.exists(InstructorExistQuery, instructor); instructorId != 0 {
 		return
 	}
 	return app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 }
 
-func (app App) insertBook(book *uct.Book) (book_id int64) {
-	book_id = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
+func (app App) insertBook(book *uct.Book) (bookId int64) {
+	bookId = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
-	return book_id
+	return bookId
 }
 
 func (app App) insertRegistration(registration *uct.Registration) int64 {
 	return app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 }
 
-func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
+func (app App) insertMetadata(metadata *uct.Metadata) (metadataId int64) {
 	var insertQuery string
 	var updateQuery string
 
 	if metadata.UniversityId != nil {
 		if !*fullUpsert {
-			if metadata_id = app.dbHandler.exists(MetaUniExistQuery, metadata); metadata_id != 0 {
+			if metadataId = app.dbHandler.exists(MetaUniExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -324,7 +341,7 @@ func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 
 	} else if metadata.SubjectId != nil {
 		if !*fullUpsert {
-			if metadata_id = app.dbHandler.exists(MetaSubjectExistQuery, metadata); metadata_id != 0 {
+			if metadataId = app.dbHandler.exists(MetaSubjectExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -333,7 +350,7 @@ func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 
 	} else if metadata.CourseId != nil {
 		if !*fullUpsert {
-			if metadata_id = app.dbHandler.exists(MetaCourseExistQuery, metadata); metadata_id != 0 {
+			if metadataId = app.dbHandler.exists(MetaCourseExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -342,7 +359,7 @@ func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 
 	} else if metadata.SectionId != nil {
 		if !*fullUpsert {
-			if metadata_id = app.dbHandler.exists(MetaSectionExistQuery, metadata); metadata_id != 0 {
+			if metadataId = app.dbHandler.exists(MetaSectionExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -351,7 +368,7 @@ func (app App) insertMetadata(metadata *uct.Metadata) (metadata_id int64) {
 
 	} else if metadata.MeetingId != nil {
 		if !*fullUpsert {
-			if metadata_id = app.dbHandler.exists(MetaMeetingExistQuery, metadata); metadata_id != 0 {
+			if metadataId = app.dbHandler.exists(MetaMeetingExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -445,7 +462,7 @@ func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id 
 	return
 }
 
-func GetCachedStmt(key string) (stmt *sqlx.NamedStmt) {
+func GetCachedStmt(key string) *sqlx.NamedStmt {
 	return preparedStmts[key]
 }
 
@@ -580,6 +597,8 @@ var preparedStmts = make(map[string]*sqlx.NamedStmt)
 func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 	queries := []string{UniversityInsertQuery,
 		UniversityUpdateQuery,
+		SemesterInsertQuery,
+		SemesterUpdateQuery,
 		SubjectExistQuery,
 		SubjectInsertQuery,
 		SubjectUpdateQuery,
@@ -631,7 +650,11 @@ var (
 	                WHERE name = :name
 	                RETURNING university.id`
 
-	SemestersInsert = `SELECT semester.`
+	SemesterInsertQuery = `INSERT INTO semester (university_id, current_season, current_year, last_season, last_year, next_season, next_year)
+							VALUES (:university_id, :current_season, :current_year, :last_season, :last_year, :next_season, :next_year) RETURNING semester.id`
+	SemesterUpdateQuery = `UPDATE semester SET (current_season, current_year, last_season, last_year, next_season, next_year) =
+						(:current_season, :current_year, :last_season, :last_year, :next_season, :next_year) WHERE university_id = :university_id RETURNING semester.id`
+
 	SubjectExistQuery = `SELECT subject.id FROM subject WHERE topic_name = :topic_name`
 
 	SubjectInsertQuery = `INSERT INTO subject (university_id, name, number, season, year, topic_name, topic_id)

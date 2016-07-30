@@ -18,12 +18,6 @@ type (
 	CourseByName    []Course
 	SubjectByName   []Subject
 
-	ResolvedSemester struct {
-		Last    Semester `json:"last,omitempty"`
-		Current Semester `json:"current,omitempty"`
-		Next    Semester `json:"next,omitempty"`
-	}
-
 	Period int
 	Status int
 
@@ -34,6 +28,22 @@ type (
 		Now        float64    `json:"now,omitempty"`
 		University University `json:"university,omitempty"`
 	}
+
+	DBResolvedSemester struct {
+		Id            int64  `db:"id"`
+		UniversityId  int64  `db:"university_id"`
+		CurrentSeason string `db:"current_season"`
+		CurrentYear   string `db:"current_year"`
+		LastSeason    string `db:"last_season"`
+		LastYear      string `db:"last_year"`
+		NextSeason    string `db:"next_season"`
+		NextYear      string `db:"next_year"`
+	}
+)
+
+const (
+	PROTOBUF = "protobuf"
+	JSON     = "json"
 )
 
 const (
@@ -178,6 +188,14 @@ func (u *University) Validate() {
 	// Registration
 	if len(u.Registrations) != 12 {
 		log.Panic("Registration != 12 ")
+	}
+
+	if u.ResolvedSemesters == nil {
+		log.Panic("ResolvedSemesters is nil")
+	}
+
+	if u.ResolvedSemesters.Current == nil {
+		log.Panic("ResolvedSemesters.Current is nil")
 	}
 
 	u.TopicName = toTopicName(u.Name)
@@ -371,7 +389,7 @@ func (r Registration) season() string {
 	}
 }
 
-func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemester {
+func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemester {
 	month := t.Month()
 	day := t.Day()
 	year := t.Year()
@@ -387,19 +405,19 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 	var endSummerReg = registration[END_SUMMER]
 	//var startSummerReg  = registration[START_SUMMER];
 
-	fall := Semester{
+	fall := &Semester{
 		Year:   int32(year),
 		Season: FALL}
 
-	winter := Semester{
+	winter := &Semester{
 		Year:   int32(year),
 		Season: WINTER}
 
-	spring := Semester{
+	spring := &Semester{
 		Year:   int32(year),
 		Season: SPRING}
 
-	summer := Semester{
+	summer := &Semester{
 		Year:   int32(year),
 		Season: SUMMER}
 
@@ -413,21 +431,21 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 			fall.Year = fall.Year - 1
 		}
 		Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
-		return ResolvedSemester{
+		return &ResolvedSemester{
 			Last:    winter,
 			Current: spring,
 			Next:    summer}
 
 	} else if yearDay >= startFallReg.dayOfYear() && yearDay < endSummerReg.dayOfYear() {
 		Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
-		return ResolvedSemester{
+		return &ResolvedSemester{
 			Last:    spring,
 			Current: summer,
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
 		Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
-		return ResolvedSemester{
+		return &ResolvedSemester{
 			Last:    summer,
 			Current: fall,
 			Next:    winter,
@@ -435,14 +453,14 @@ func ResolveSemesters(t time.Time, registration []*Registration) ResolvedSemeste
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
 		Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
-		return ResolvedSemester{
+		return &ResolvedSemester{
 			Last:    fall,
 			Current: winter,
 			Next:    spring,
 		}
 	}
 
-	return ResolvedSemester{}
+	return &ResolvedSemester{}
 }
 
 func (meeting Meeting) dayRank() int {

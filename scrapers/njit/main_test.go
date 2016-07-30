@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
-"net/http"
-	"strings"
 )
 
 var SubjectDoc *goquery.Document
@@ -110,7 +110,7 @@ func TestGetResolvedSemester(t *testing.T) {
 func TestGetHttp(t *testing.T) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", "http://catalog.njit.edu/ribbit/index.cgi?format=html&page=fsinjector.rjs&fullpage=true", nil)
-	req.Header.Add("Referer","http://catalog.njit.edu/search/?P=MATH%20337")
+	req.Header.Add("Referer", "http://catalog.njit.edu/search/?P=MATH%20337")
 	resp, err := client.Do(req)
 	checkError(err)
 	defer resp.Body.Close()
@@ -118,12 +118,12 @@ func TestGetHttp(t *testing.T) {
 	checkError(err)
 	fmt.Println(strings.Replace(string(body), "\\\"", "\"", -1))
 
-/*
-	doc, err := goquery.NewDocument("http://catalog.njit.edu/search/?P=CS  100")
-	checkError(err)
+	/*
+		doc, err := goquery.NewDocument("http://catalog.njit.edu/search/?P=CS  100")
+		checkError(err)
 
-	fmt.Println(doc.Text())
-*/
+		fmt.Println(doc.Text())
+	*/
 
 }
 
@@ -137,7 +137,7 @@ func TestExtractCourseDescription(t *testing.T) {
 func TestGetCourses(t *testing.T) {
 	setup()
 	expected := 74
-	result := getCourses(NSubject{SubjectId:"CS", SubjectName:"Computer Science"})
+	result := getCourses(NSubject{SubjectId: "CS", SubjectName: "Computer Science"})
 	log.Printf("%#v", result)
 	assert.Equal(t, expected, len(result))
 

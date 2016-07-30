@@ -8,21 +8,21 @@ import (
 
 func resolveErr(err error, c *gin.Context) {
 	if err == sql.ErrNoRows {
-		c.Set("meta", errResNotFound(c.Request.RequestURI))
+		c.Set(metaKey, errResNotFound(c.Request.RequestURI))
 	} else {
 		c.Error(&gin.Error{err, gin.ErrorTypePublic, c.Request.URL.String()})
 	}
 }
 
 func universityHandler(c *gin.Context) {
-	topicName := c.Param("topic")
+	topicName := c.ParamValue("topic")
 	if u, err := SelectUniversity(topicName); err != nil {
 		resolveErr(err, c)
 	} else {
 		response := uct.Response{
 			Data: &uct.Data{University: &u},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }
 
@@ -40,12 +40,12 @@ func universitiesHandler(c *gin.Context) {
 		response := uct.Response{
 			Data: &uct.Data{Universities: universities},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }
 
 func subjectHandler(c *gin.Context) {
-	subjectTopicName := c.Param("topic")
+	subjectTopicName := c.ParamValue("topic")
 
 	if sub, _, err := SelectSubject(subjectTopicName); err != nil {
 		resolveErr(err, c)
@@ -53,14 +53,14 @@ func subjectHandler(c *gin.Context) {
 		response := uct.Response{
 			Data: &uct.Data{Subject: &sub},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }
 
 func subjectsHandler(c *gin.Context) {
-	season := c.Param("season")
-	year := c.Param("year")
-	uniTopicName := c.Param("topic")
+	season := c.ParamValue("season")
+	year := c.ParamValue("year")
+	uniTopicName := c.ParamValue("topic")
 
 	if subjects, err := SelectSubjects(uniTopicName, season, year); err != nil {
 		resolveErr(err, c)
@@ -68,43 +68,43 @@ func subjectsHandler(c *gin.Context) {
 		response := uct.Response{
 			Data: &uct.Data{Subjects: subjects},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }
 
 func courseHandler(c *gin.Context) {
-	courseTopicName := c.Param("topic")
+	courseTopicName := c.ParamValue("topic")
 	if course, _, err := SelectCourse(courseTopicName); err != nil {
 		resolveErr(err, c)
 	} else {
 		response := uct.Response{
 			Data: &uct.Data{Course: &course},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 
 }
 
 func coursesHandler(c *gin.Context) {
-	subjectTopicName := c.Param("topic")
+	subjectTopicName := c.ParamValue("topic")
 	if courses, err := SelectCourses(subjectTopicName); err != nil {
 		resolveErr(err, c)
 	} else {
 		response := uct.Response{
 			Data: &uct.Data{Courses: courses},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }
 
 func sectionHandler(c *gin.Context) {
-	sectionTopicName := c.Param("topic")
+	sectionTopicName := c.ParamValue("topic")
 	if s, err := SelectSection(sectionTopicName); err != nil {
 		resolveErr(err, c)
 	} else {
 		response := uct.Response{
 			Data: &uct.Data{Section: &s},
 		}
-		c.Set("response", response)
+		c.Set(responseKey, response)
 	}
 }

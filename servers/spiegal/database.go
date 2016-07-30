@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"strconv"
 	"time"
 	uct "uct/common"
 )
@@ -17,24 +18,18 @@ type Data struct {
 	Data []byte `db:"data"`
 }
 
-
-func GetSemesters(topicName string, university *uct.University) error {
-	if s, err := SelectAvailableSemesters(topicName); err != nil {
-		return err
-	} else {
-		university.AvailableSemesters = s
-		university.Metadata, err = SelectMetadata(university.Id, 0, 0, 0, 0)
-		return err
-	}
-}
-
 func SelectUniversity(topicName string) (university uct.University, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
 	if err = Get(SelectUniversityQuery, &university, m); err != nil {
 		return
 	}
-	err = GetSemesters(topicName, &university)
+	if err = GetAvailableSemesters(topicName, &university); err != nil {
+		return
+	}
+	if err = GetResolvedSemesters(topicName, &university); err != nil {
+		return
+	}
 	return
 }
 
@@ -45,15 +40,57 @@ func SelectUniversities() (universities []*uct.University, err error) {
 	}
 
 	for i := range universities {
-		err = GetSemesters(universities[i].TopicName, universities[i])
+		if err = GetAvailableSemesters(universities[i].TopicName, universities[i]); err != nil {
+			return
+		}
+
+		if err = GetResolvedSemesters(universities[i].TopicName, universities[i]); err != nil {
+			return
+		}
 	}
+
 	return
+}
+
+func GetResolvedSemesters(topicName string, university *uct.University) error {
+	if r, err := SelectResolvedSemesters(topicName); err != nil {
+		return err
+	} else {
+		university.ResolvedSemesters = &r
+		return err
+	}
+}
+
+func GetAvailableSemesters(topicName string, university *uct.University) error {
+	if s, err := SelectAvailableSemesters(topicName); err != nil {
+		return err
+	} else {
+		university.AvailableSemesters = s
+		university.Metadata, err = SelectMetadata(university.Id, 0, 0, 0, 0)
+		return err
+	}
 }
 
 func SelectAvailableSemesters(topicName string) (semesters []*uct.Semester, err error) {
 	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
-	err = Select(GetAvailableSemestersQuery, &semesters, m)
+	err = Select(SelectAvailableSemestersQuery, &semesters, m)
+	return
+}
+
+func SelectResolvedSemesters(topicName string) (semesters uct.ResolvedSemester, err error) {
+	defer uct.TimeTrack(time.Now(), "SelectResolvedSemesters")
+	m := map[string]interface{}{"topic_name": topicName}
+	rs := uct.DBResolvedSemester{}
+	if err = Get(SelectResolvedSemestersQuery, &rs, m); err != nil {
+		return
+	}
+	curr, _ := strconv.ParseInt(rs.CurrentYear, 10, 32)
+	last, _ := strconv.ParseInt(rs.LastYear, 10, 32)
+	next, _ := strconv.ParseInt(rs.NextYear, 10, 32)
+	semesters.Current = &uct.Semester{Year: int32(curr), Season: rs.CurrentSeason}
+	semesters.Last = &uct.Semester{Year: int32(last), Season: rs.LastSeason}
+	semesters.Next = &uct.Semester{Year: int32(next), Season: rs.NextSeason}
 	return
 }
 
@@ -190,6 +227,7 @@ func Select(query string, dest interface{}, args interface{}) error {
 
 func Get(query string, dest interface{}, args interface{}) error {
 	if err := GetCachedStmt(query).Get(dest, args); err != nil {
+		log.Error(err)
 		return err
 	}
 	return nil
@@ -215,7 +253,8 @@ func PrepareAllStmts() {
 	queries := []string{
 		SelectUniversityQuery,
 		ListUniversitiesQuery,
-		GetAvailableSemestersQuery,
+		SelectAvailableSemestersQuery,
+		SelectResolvedSemestersQuery,
 		SelectProtoSubjectQuery,
 		ListSubjectQuery,
 		SelectCourseQuery,
@@ -237,10 +276,13 @@ func PrepareAllStmts() {
 }
 
 var (
-	SelectUniversityQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
-	ListUniversitiesQuery      = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
-	GetAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
+	SelectUniversityQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
+	ListUniversitiesQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
+	SelectAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
 									WHERE university.topic_name = :topic_name GROUP BY season, year`
+
+	SelectResolvedSemestersQuery = `SELECT current_season, current_year, last_season, last_year, next_season, next_year FROM semester JOIN university ON university.id = semester.university_id
+	WHERE university.topic_name = :topic_name`
 
 	SelectProtoSubjectQuery = `SELECT data FROM subject WHERE topic_name = :topic_name`
 

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/contrib/cache"
+	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,14 +33,16 @@ func main() {
 	database, err = uct.InitDB(uct.GetUniversityDB())
 	uct.CheckError(err)
 
-	// Prepare datbase connections
+	// Prepare database connections
 	database.SetMaxOpenConns(50)
 	PrepareAllStmts()
 
 	// Open cache
 	store := cache.NewInMemoryStore(CacheDuration)
 	// recovery and logging
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
 
 	// Json
 	v1 := r.Group("/v1")

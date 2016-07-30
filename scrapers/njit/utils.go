@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
-	"strings"
+	"bytes"
 	"database/sql"
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
-	"bytes"
+	"log"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -76,26 +76,26 @@ func isEmpty(str string) bool {
 
 //ToNullString invalidates a sql.NullString if empty, validates if not empty
 func ToNullString(s string) sql.NullString {
-	return sql.NullString{String : s, Valid : s != ""}
+	return sql.NullString{String: s, Valid: s != ""}
 }
 
 func ToNullFloat64(f float64) sql.NullFloat64 {
-	return sql.NullFloat64{Float64 : f, Valid : f != 0}
+	return sql.NullFloat64{Float64: f, Valid: f != 0}
 }
 
 func ToNullBool(b bool) sql.NullBool {
-	return sql.NullBool{Bool : b, Valid : true}
+	return sql.NullBool{Bool: b, Valid: true}
 }
 
 func ToNullInt64(i int64) sql.NullInt64 {
-	return sql.NullInt64{Int64 : i, Valid : true}
+	return sql.NullInt64{Int64: i, Valid: true}
 }
 
 func Atoi64(str string) sql.NullInt64 {
 	if val, err := strconv.Atoi(str); err == nil {
 		return ToNullInt64(int64(val))
 	}
-	return sql.NullInt64{Int64 : 0, Valid : true}
+	return sql.NullInt64{Int64: 0, Valid: true}
 }
 
 func ToFloat64(str string) float64 {
@@ -109,5 +109,3 @@ func getDummyDoc(filename string) *goquery.Document {
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(file))
 	return doc
 }
-
-

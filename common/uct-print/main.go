@@ -12,15 +12,15 @@ import (
 
 var (
 	app    = kingpin.New("print", "An application to print and translate json and protobuf")
-	format = app.Flag("format", "choose file input format").Short('f').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").Required().String()
-	out    = app.Flag("output", "output format").Short('o').HintOptions("protobuf", "json").PlaceHolder("[protobuf, json]").String()
+	format = app.Flag("format", "choose file input format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	out    = app.Flag("output", "output format").Short('o').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").String()
 	file   = app.Arg("input", "file to print").File()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != "json" && *format != "protobuf" {
+	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -35,11 +35,11 @@ func main() {
 
 	uct.UnmarshallMessage(*format, input, &university)
 
-	if *format == "json" {
+	if *format == uct.JSON {
 		if *out != "" {
 			io.Copy(os.Stdout, input)
 		}
-	} else if *format == "protobuf" {
+	} else if *format == uct.PROTOBUF {
 		if *out != "" {
 			log.Println(proto.MarshalTextString(&university))
 		}
