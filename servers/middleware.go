@@ -1,4 +1,4 @@
-package main
+package servers
 
 import (
 	"github.com/gin-gonic/gin"
@@ -11,22 +11,22 @@ const (
 	jsonContentType     = "application/json; charset=utf-8"
 	protobufContentType = "application/x-protobuf"
 
-	servingFromCache = "servingFromCache"
-	responseKey      = "response"
-	metaKey          = "meta"
+	ServingFromCache = "servingFromCache"
+	ResponseKey = "response"
+	MetaKey = "meta"
 
 	contentTypeHeader   = "Content-Type"
 	contentLengthHeader = "Content-Length"
 )
 
-func protobufWriter() gin.HandlerFunc {
+func ProtobufWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		if _, exists := c.Get(servingFromCache); exists {
+		if _, exists := c.Get(ServingFromCache); exists {
 			return
 		}
 
-		if value, exists := c.Get(responseKey); exists {
+		if value, exists := c.Get(ResponseKey); exists {
 			if response, ok := value.(uct.Response); ok {
 				// Write status header
 				c.Writer.WriteHeader(int(*response.Meta.Code))
@@ -47,14 +47,14 @@ func protobufWriter() gin.HandlerFunc {
 	}
 }
 
-func jsonWriter() gin.HandlerFunc {
+func JsonWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		if _, exists := c.Get(servingFromCache); exists {
+		if _, exists := c.Get(ServingFromCache); exists {
 			return
 		}
 
-		if value, exists := c.Get(responseKey); exists {
+		if value, exists := c.Get(ResponseKey); exists {
 			if response, ok := value.(uct.Response); ok {
 				// Write status header
 				c.Writer.WriteHeader(int(*response.Meta.Code))
@@ -75,7 +75,7 @@ func jsonWriter() gin.HandlerFunc {
 }
 
 // Each handler must either set a meta or response
-func errorWriter() gin.HandlerFunc {
+func ErrorWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 		meta := uct.Meta{}
@@ -83,27 +83,22 @@ func errorWriter() gin.HandlerFunc {
 		var responseExists bool
 		var value interface{}
 
-		if value, metaExists = c.Get(metaKey); metaExists {
+		if value, metaExists = c.Get(MetaKey); metaExists {
 			meta = value.(uct.Meta)
-			if len(c.Errors) != 0 {
-				errorJsonBytes := c.Errors.String()
-				errorJson := string(errorJsonBytes)
-				meta.ErrorMessage = &errorJson
-			}
 		}
 
-		if value, responseExists = c.Get(responseKey); responseExists {
+		if value, responseExists = c.Get(ResponseKey); responseExists {
 			response, _ := value.(uct.Response)
 			code := int32(200)
 			meta.Code = &code
 			response.Meta = &meta
-			c.Set(responseKey, response)
+			c.Set(ResponseKey, response)
 		} else {
-			c.Set(responseKey, uct.Response{Meta: &meta})
+			c.Set(ResponseKey, uct.Response{Meta: &meta})
 		}
 
 		if !metaExists && !responseExists {
-			c.Set(servingFromCache, true)
+			c.Set(ServingFromCache, true)
 		}
 	}
 }

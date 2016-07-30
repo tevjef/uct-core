@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"time"
 	uct "uct/common"
+	"uct/servers"
 )
 
 var (
@@ -37,6 +39,9 @@ func SelectUniversities() (universities []*uct.University, err error) {
 	m := map[string]interface{}{}
 	if err = Select(ListUniversitiesQuery, &universities, m); err != nil {
 		return
+	}
+	if err == nil && len(universities) == 0 {
+		err = servers.ErrNoRows{"No data found a list of universities"}
 	}
 
 	for i := range universities {
@@ -110,6 +115,9 @@ func SelectSubjects(uniTopicName, season, year string) (subjects []*uct.Subject,
 	defer uct.TimeTrack(time.Now(), "SelectSubjects")
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ListSubjectQuery, &subjects, m)
+	if err == nil && len(subjects) == 0 {
+		err = servers.ErrNoRows{fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year)}
+	}
 	return
 }
 
@@ -129,12 +137,12 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectCourses")
 	d := []Data{}
 	m := map[string]interface{}{"topic_name": subjectTopicName}
-
-	log.WithFields(log.Fields{"query": ListCoursesQuery, "args": m}).Debug()
 	if err = Select(ListCoursesQuery, &d, m); err != nil {
 		return
 	}
-
+	if err == nil && len(courses) == 0 {
+		err = servers.ErrNoRows{fmt.Sprintf("No courses found for %s", subjectTopicName)}
+	}
 	for i := range d {
 		c := uct.Course{}
 		if err = c.Unmarshal(d[i].Data); err != nil {
@@ -220,6 +228,9 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 
 func Select(query string, dest interface{}, args interface{}) error {
 	if err := GetCachedStmt(query).Select(dest, args); err != nil {
+		if err == sql.ErrNoRows {
+			err = servers.ErrNoRows{err.Error()}
+		}
 		return err
 	}
 	return nil
@@ -227,7 +238,9 @@ func Select(query string, dest interface{}, args interface{}) error {
 
 func Get(query string, dest interface{}, args interface{}) error {
 	if err := GetCachedStmt(query).Get(dest, args); err != nil {
-		log.Error(err)
+		if err == sql.ErrNoRows {
+			err = servers.ErrNoRows{err.Error()}
+		}
 		return err
 	}
 	return nil

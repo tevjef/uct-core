@@ -80,7 +80,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Infoln("Latency")
+	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debugln("Latency")
 }
 
 // stack returns a nicely formated stack frame, skipping skip frames

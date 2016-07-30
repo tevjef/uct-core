@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/go-gcm"
 	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
@@ -21,22 +22,30 @@ var (
 )
 
 var (
-	app    = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	debug  = app.Flag("debug", "enable debug mode").Short('d').Bool()
-	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
+	app           = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
+	debug         = app.Flag("debug", "enable debug mode").Short('d').Bool()
+	server        = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
+	database      *sqlx.DB
+	preparedStmts = make(map[string]*sqlx.NamedStmt)
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	log.SetFormatter(&log.TextFormatter{})
-	log.SetLevel(log.DebugLevel)
 	// Start profiling
 	go uct.StartPprof(*server)
 	// Start influx logging
 	go influxLog()
 
+	dbConnectionString := uct.GetUniversityDB()
+	var err error
+	// Open database connection
+	database, err = uct.InitDB(dbConnectionString)
+	uct.CheckError(err)
+	PrepareAllStmts()
+
 	// Open connection to postgresql
-	listener := pq.NewListener(uct.GetUniversityDB(), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(dbConnectionString, 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -68,7 +77,7 @@ func waitForNotification(l *pq.Listener) {
 					// Log notification
 					messageLog <- pgNotification
 					// Process and send notification, free workRoutine when done.
-					recvNotification(pgNotification, sem)
+					recvNotification(notification.Extra, pgNotification, sem)
 				}()
 			// If all workRoutines are filled for 5 minutes, kill the program. Very unlikely that this will happen.
 			// Notifications will be lost.
@@ -86,38 +95,29 @@ func waitForNotification(l *pq.Listener) {
 	}
 }
 
-func recvNotification(pgNotification uct.PostgresNotify, sem chan int) {
-	log.WithFields(log.Fields{"status": pgNotification.Status, "topic": pgNotification.Payload}).Info("PostgresNotify")
+func recvNotification(rawNotification string, pgNotification uct.PostgresNotify, sem chan int) {
+	log.WithFields(log.Fields{"notification_id": pgNotification.NotificationId, "status": pgNotification.Status, "topic": pgNotification.TopicName}).Info("PostgresNotify")
 
 	go func() {
 		defer uct.TimeTrack(time.Now(), "SendNotification")
 
-		// Encode the message to send to GCM
-		if uniBytes, err := ffjson.Marshal(pgNotification.University); err != nil {
-			// Fatal if message from the database is malformed
-			log.Fatalln(err)
-		} else {
-			to := pgNotification.Payload
-			message := string(uniBytes)
-
-			// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid
-			for i, retries := 0, 3; i < retries; i++ {
-				time.Sleep(time.Duration(i*2) * time.Second)
-				if err := sendGcmNotification(to, message); err != nil {
-					log.Errorln("Retrying", i, err)
-				} else {
-					break
-				}
+		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid
+		for i, retries := 0, 3; i < retries; i++ {
+			time.Sleep(time.Duration(i*2) * time.Second)
+			if err := sendGcmNotification(rawNotification, pgNotification); err != nil {
+				log.Errorln("Retrying", i, err)
+			} else {
+				break
 			}
 		}
 		<-sem
 	}()
 }
 
-func sendGcmNotification(to, message string) (err error) {
+func sendGcmNotification(rawNotification string, pgNotification uct.PostgresNotify) (err error) {
 	httpMessage := gcm.HttpMessage{
-		To:     "/topics/" + to,
-		Data:   map[string]interface{}{"message": message},
+		To:     "/topics/" + pgNotification.TopicName,
+		Data:   map[string]interface{}{"message": rawNotification},
 		DryRun: *debug,
 	}
 
@@ -132,8 +132,66 @@ func sendGcmNotification(to, message string) (err error) {
 		return fmt.Errorf(httpResponse.Error)
 	}
 
+	acknowledgeNotification(pgNotification.NotificationId, httpResponse.MessageId)
+
 	return
 }
+
+func acknowledgeNotification(notificationId, messageId int64) (id int64) {
+	defer uct.TimeTrack(time.Now(), "AcknowledgeNotification")
+
+	args := map[string]interface{}{"notification_id": notificationId, "message_id": messageId}
+
+	if rows, err := GetCachedStmt(AckNotificationQuery).Queryx(args); err != nil {
+		log.WithFields(log.Fields{"args": args}).Panic(err)
+	} else {
+		count := 0
+		for rows.Next() {
+			count++
+			if err = rows.Scan(&id); err != nil {
+				log.WithFields(log.Fields{"args": args}).Panic(err)
+			}
+			rows.Close()
+		}
+		if count > 1 {
+			log.WithFields(log.Fields{"args": args}).Panic("Multiple rows updated at once")
+		}
+		if id == 0 {
+			log.WithFields(log.Fields{"args": args}).Panic(errors.New("Id is 0 retuinig fro updating notification in database"))
+		}
+	}
+	return
+}
+
+func GetCachedStmt(query string) *sqlx.NamedStmt {
+	if stmt := preparedStmts[query]; stmt == nil {
+		preparedStmts[query] = Prepare(query)
+	}
+	return preparedStmts[query]
+}
+
+func Prepare(query string) *sqlx.NamedStmt {
+	if named, err := database.PrepareNamed(query); err != nil {
+		log.Panicln(fmt.Errorf("Error: %s Query: %s", query, err))
+		return nil
+	} else {
+		return named
+	}
+}
+
+func PrepareAllStmts() {
+	queries := []string{
+		AckNotificationQuery,
+	}
+
+	for _, query := range queries {
+		preparedStmts[query] = Prepare(query)
+	}
+}
+
+var (
+	AckNotificationQuery = `UPDATE notification SET (ack_at, message_id) = (now(), :message_id) WHERE id = :notification_id RETURNING notification.id`
+)
 
 func influxLog() {
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{

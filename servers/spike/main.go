@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/contrib/cache"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
@@ -11,18 +11,26 @@ import (
 	"strconv"
 	"time"
 	uct "uct/common"
+	"uct/servers"
 )
 
 var (
-	app    = kingpin.New("spiegal", "A command-line application to serve university course information")
-	port   = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
-	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.SPIEGAL_DEBUG_SERVER).TCP()
+	app      = kingpin.New("spike", "A command-line application to serve university course information")
+	port     = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
+	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
+	server   = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.SPIKE_DEBUG_SERVER).TCP()
 )
 
 const CacheDuration = 10 * time.Second
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	if lvl, err := log.ParseLevel(*logLevel); err != nil {
+		log.WithField("loglevel", *logLevel).Fatal(err)
+	} else {
+		log.SetLevel(lvl)
+	}
 
 	// Start profiling
 	go uct.StartPprof(*server)
@@ -42,27 +50,27 @@ func main() {
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
+	r.Use(ginrus.Ginrus(log.StandardLogger(), time.RFC3339, true))
 
 	// Json
 	v1 := r.Group("/v1")
-	v1.Use(jsonWriter())
-	v1.Use(errorWriter())
+	v1.Use(servers.JsonWriter())
+	v1.Use(servers.ErrorWriter())
 
 	// Protocol Buffers
 	v2 := r.Group("/v2")
-	v2.Use(protobufWriter())
-	v2.Use(errorWriter())
+	v2.Use(servers.ProtobufWriter())
+	v2.Use(servers.ErrorWriter())
 
 	// Json (caching)
 	v3 := r.Group("/v3")
-	v3.Use(jsonWriter())
-	v3.Use(errorWriter())
+	v3.Use(servers.JsonWriter())
+	v3.Use(servers.ErrorWriter())
 
 	// Protocol Buffers (caching)
 	v4 := r.Group("/v4")
-	v4.Use(protobufWriter())
-	v4.Use(errorWriter())
+	v4.Use(servers.ProtobufWriter())
+	v4.Use(servers.ErrorWriter())
 
 	v1.GET("/universities", universitiesHandler)
 	v1.GET("/university/:topic", universityHandler)

@@ -1,5 +1,5 @@
-hash: 4a8b0664d2bc5d69f2c8b196f8df6feca32d0edc115b6ee2a735fb0ac47f8ae3
-updated: 2016-07-29T05:57:49.2032819-04:00
+hash: 758b4a3b04b5d1ce46d01894196af028ea7fb4ae95c522fe2bf2276bbb937de2
+updated: 2016-07-30T02:43:19.2288628-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -24,6 +24,7 @@ imports:
   version: 547e518040cfb96576b507d2f26779ab9c6fc829
   subpackages:
   - cache
+  - ginrus
 - name: github.com/gin-gonic/gin
   version: 9163ee543d3f1fab9b0ad8cdf6dc2a6ec2c07dbb
   subpackages:
@@ -73,7 +74,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/go-gcm
-  version: 9195be04c34ea15caf9ad2e85c228de00532a8c1
+  version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
 - name: golang.org/x/exp
   version: 3c4824dd1cddf3c4eae78613f4a5caf2caf17675
   subpackages:

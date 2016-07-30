@@ -10,9 +10,8 @@ go install uct/common/uct-print
 echo "Installing rutgers scraper ..."
 go install uct/scrapers/rutgers
 
-
-echo "Installing spiegal ..."
-go install uct/servers/spiegal
+echo "Installing spike ..."
+go install uct/servers/spike
 
 echo "Installing db ..."
 go install uct/db
