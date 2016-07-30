@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/go-gcm"
 	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
@@ -18,7 +18,7 @@ import (
 
 var (
 	workRoutines = 100
-	messageLog   = make(chan uct.PostgresNotify)
+	messageLog   = make(chan uct.UCTNotification)
 )
 
 var (
@@ -66,18 +66,20 @@ func waitForNotification(l *pq.Listener) {
 	sem := make(chan int, workRoutines)
 	for {
 		select {
-		case notification := <-l.Notify:
+		case pgMessage := <-l.Notify:
 			select {
 			// Acquire a workRoutine
 			case sem <- 1:
 				go func() {
-					var pgNotification uct.PostgresNotify
-					err := json.Unmarshal([]byte(notification.Extra), &pgNotification)
+					var notification uct.UCTNotification
+					log.Infoln("Recieve notification")
+
+					err := ffjson.UnmarshalFast([]byte(pgMessage.Extra), &notification)
 					uct.CheckError(err)
 					// Log notification
-					messageLog <- pgNotification
+					messageLog <- notification
 					// Process and send notification, free workRoutine when done.
-					recvNotification(notification.Extra, pgNotification, sem)
+					recvNotification(pgMessage.Extra, notification, sem)
 				}()
 			// If all workRoutines are filled for 5 minutes, kill the program. Very unlikely that this will happen.
 			// Notifications will be lost.
@@ -95,8 +97,8 @@ func waitForNotification(l *pq.Listener) {
 	}
 }
 
-func recvNotification(rawNotification string, pgNotification uct.PostgresNotify, sem chan int) {
-	log.WithFields(log.Fields{"notification_id": pgNotification.NotificationId, "status": pgNotification.Status, "topic": pgNotification.TopicName}).Info("PostgresNotify")
+func recvNotification(rawNotification string, notification uct.UCTNotification, sem chan int) {
+	log.WithFields(log.Fields{"notification_id": notification.NotificationId, "status": notification.Status, "topic": notification.TopicName}).Info("PostgresNotify")
 
 	go func() {
 		defer uct.TimeTrack(time.Now(), "SendNotification")
@@ -104,7 +106,7 @@ func recvNotification(rawNotification string, pgNotification uct.PostgresNotify,
 		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid
 		for i, retries := 0, 3; i < retries; i++ {
 			time.Sleep(time.Duration(i*2) * time.Second)
-			if err := sendGcmNotification(rawNotification, pgNotification); err != nil {
+			if err := sendGcmNotification(rawNotification, notification); err != nil {
 				log.Errorln("Retrying", i, err)
 			} else {
 				break
@@ -114,7 +116,7 @@ func recvNotification(rawNotification string, pgNotification uct.PostgresNotify,
 	}()
 }
 
-func sendGcmNotification(rawNotification string, pgNotification uct.PostgresNotify) (err error) {
+func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotification) (err error) {
 	httpMessage := gcm.HttpMessage{
 		To:     "/topics/" + pgNotification.TopicName,
 		Data:   map[string]interface{}{"message": rawNotification},
@@ -138,8 +140,6 @@ func sendGcmNotification(rawNotification string, pgNotification uct.PostgresNoti
 }
 
 func acknowledgeNotification(notificationId, messageId int64) (id int64) {
-	defer uct.TimeTrack(time.Now(), "AcknowledgeNotification")
-
 	args := map[string]interface{}{"notification_id": notificationId, "message_id": messageId}
 
 	if rows, err := GetCachedStmt(AckNotificationQuery).Queryx(args); err != nil {

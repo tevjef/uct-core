@@ -131,6 +131,12 @@ message Semester {
     optional string season = 2 [(gogoproto.moretags) = "db:\"season\"", (gogoproto.nullable) = false];
 }
 
+message UCTNotification {
+    optional int64 notification_id = 1 [(gogoproto.nullable) = false];
+    optional string topic_name = 2 [(gogoproto.nullable) = false];
+    optional string status = 3 [(gogoproto.nullable) = false];
+    optional University university = 4 [(gogoproto.nullable) = false];
+}
 
 message Response {
     optional Meta meta = 1;

@@ -21,13 +21,6 @@ type (
 	Period int
 	Status int
 
-	PostgresNotify struct {
-		NotificationId int64      `json:"notification_id,omitempty"`
-		TopicName      string     `json:"topic_name,omitempty"`
-		Status         string     `json:"status,omitempty"`
-		University     University `json:"university,omitempty"`
-	}
-
 	DBResolvedSemester struct {
 		Id            int64  `db:"id"`
 		UniversityId  int64  `db:"university_id"`

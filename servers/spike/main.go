@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
