@@ -74,7 +74,7 @@ func waitForNotification(l *pq.Listener) {
 					var notification uct.UCTNotification
 					log.Infoln("Recieve notification")
 
-					err := ffjson.UnmarshalFast([]byte(pgMessage.Extra), &notification)
+					err := ffjson.Unmarshal([]byte(pgMessage.Extra), &notification)
 					uct.CheckError(err)
 					// Log notification
 					messageLog <- notification
@@ -120,6 +120,8 @@ func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotificat
 	httpMessage := gcm.HttpMessage{
 		To:     "/topics/" + pgNotification.TopicName,
 		Data:   map[string]interface{}{"message": rawNotification},
+		ContentAvailable: true,
+		Priority: "high",
 		DryRun: *debug,
 	}
 
