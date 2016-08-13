@@ -84,7 +84,7 @@ func coursesHandler(c *gin.Context) {
 
 func sectionHandler(c *gin.Context) {
 	sectionTopicName := c.ParamValue("topic")
-	if s, err := SelectSection(sectionTopicName); err != nil {
+	if s, _, err := SelectSection(sectionTopicName); err != nil {
 		servers.ResolveErr(err, c)
 	} else {
 		response := uct.Response{

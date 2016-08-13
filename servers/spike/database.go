@@ -154,16 +154,15 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 	return
 }
 
-func SelectSection(sectionTopicName string) (section uct.Section, err error) {
+func SelectSection(sectionTopicName string) (section uct.Section,  b []byte, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectSection")
-
+	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
-
-	if err = Get(SelectSectionQuery, &section, m); err != nil {
+	if err = Get(SelectProtoSectionQuery, &d, m); err != nil {
 		return
 	}
-
-	err = deepSelectSection(&section)
+	b = d.Data
+	err = section.Unmarshal(b)
 	return
 }
 
@@ -269,6 +268,7 @@ func PrepareAllStmts() {
 		SelectAvailableSemestersQuery,
 		SelectResolvedSemestersQuery,
 		SelectProtoSubjectQuery,
+		SelectProtoSectionQuery,
 		ListSubjectQuery,
 		SelectCourseQuery,
 		ListCoursesQuery,
@@ -297,7 +297,10 @@ var (
 	SelectResolvedSemestersQuery = `SELECT current_season, current_year, last_season, last_year, next_season, next_year FROM semester JOIN university ON university.id = semester.university_id
 	WHERE university.topic_name = :topic_name`
 
+
 	SelectProtoSubjectQuery = `SELECT data FROM subject WHERE topic_name = :topic_name`
+
+	SelectProtoSectionQuery = `SELECT data FROM section WHERE topic_name = :topic_name`
 
 	ListSubjectQuery = `SELECT subject.id, university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name, subject.topic_id FROM subject JOIN university ON university.id = subject.university_id
 									AND university.topic_name = :topic_name
