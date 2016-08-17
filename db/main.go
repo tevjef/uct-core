@@ -97,6 +97,7 @@ func main() {
 	app.updateSerial(*newUniversity)
 
 	endAudit <- true
+	<- doneAudit
 	// Before main ends, close the database and stop writing profile
 	defer func() {
 		database.Close()
@@ -125,24 +126,36 @@ func (app App) updateSerial(uni uct.University) {
 }
 
 func (app App) updateSerialSubject(subject *uct.Subject) {
+	serialSubjectCh <- 1
 	data, err := subject.Marshal()
 	uct.CheckError(err)
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
 	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+
+	// Sanity Check
+	log.WithFields(log.Fields{"subject": subject.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
 func (app App) updateSerialCourse(course *uct.Course) {
+	serialCourseCh <- 1
 	data, err := course.Marshal()
 	uct.CheckError(err)
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
 	app.dbHandler.update(SerialCourseUpdateQuery, arg)
+
+	// Sanity Check
+	log.WithFields(log.Fields{"course": course.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
 func (app App) updateSerialSection(section *uct.Section) {
+	serialSectionCh <- 1
 	data, err := section.Marshal()
 	uct.CheckError(err)
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
 	app.dbHandler.update(SerialSectionUpdateQuery, arg)
+
+	// Sanity Check
+	log.WithFields(log.Fields{"section": section.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
 func (app App) insertUniversity(uni *uct.University) {
@@ -476,17 +489,20 @@ func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 	}
 }
 
-func (stats AuditStats) Log() {
+func (stats AuditStats) log() {
 	log.WithFields(log.Fields{
-		"Insertions":  stats.insertions,
-		"Updates":     stats.updates,
-		"Upserts":     stats.upserts,
-		"Existential": stats.existential,
-		"Subjects":    stats.subjectCount,
-		"Courses":     stats.courseCount,
-		"Sections":    stats.sectionCount,
-		"Meetings":    stats.meetingCount,
-		"Metadata":    stats.metadataCount,
+		"Insertions":       stats.insertions,
+		"Updates":          stats.updates,
+		"Upserts":          stats.upserts,
+		"Existential":      stats.existential,
+		"Subjects":         stats.subjectCount,
+		"Courses":          stats.courseCount,
+		"Sections":         stats.sectionCount,
+		"Meetings":         stats.meetingCount,
+		"Metadata":         stats.metadataCount,
+		"SerialSubject":    stats.serialSubject,
+		"SerialCourse":     stats.serialCourse,
+		"SerialSection":    stats.serialSection,
 	}).Info("DB operations complete")
 }
 
@@ -507,16 +523,19 @@ func (stats AuditStats) audit() {
 	}
 
 	fields := map[string]interface{}{
-		"insertions":    stats.insertions,
-		"updates":       stats.updates,
-		"upserts":       stats.upserts,
-		"existential":   stats.existential,
-		"subjectCount":  stats.subjectCount,
-		"courseCount":   stats.courseCount,
-		"sectionCount":  stats.sectionCount,
-		"meetingCount":  stats.meetingCount,
-		"metadataCount": stats.metadataCount,
-		"elapsed":       stats.elapsed.Seconds(),
+		"insertions":       stats.insertions,
+		"updates":          stats.updates,
+		"upserts":          stats.upserts,
+		"existential":      stats.existential,
+		"subjectCount":     stats.subjectCount,
+		"courseCount":      stats.courseCount,
+		"sectionCount":     stats.sectionCount,
+		"meetingCount":     stats.meetingCount,
+		"metadataCount":    stats.metadataCount,
+		"serialSubject":    stats.serialSubject,
+		"serialCourse":     stats.serialCourse,
+		"serialSection":    stats.serialSection,
+		"elapsed":          stats.elapsed.Seconds(),
 	}
 
 	point, err := client.NewPoint(
@@ -550,6 +569,10 @@ func audit(university string) {
 	var sectionCount int
 	var meetingCount int
 	var metadataCount int
+	var serialCourse int
+	var serialSection int
+	var serialSubject int
+
 	for {
 		select {
 		case t1 := <-insertionsCh:
@@ -570,24 +593,33 @@ func audit(university string) {
 			meetingCount += t8
 		case t9 := <-metadataCountCh:
 			metadataCount += t9
+		case t11 := <-serialSubjectCh:
+			serialSubject += t11
+		case t12 := <-serialCourseCh:
+			serialCourse += t12
+		case t13 := <-serialSectionCh:
+			serialSection += t13
 		case <-endAudit:
 			stats := AuditStats{
-				influxClient:  influxClient,
-				uniName:       university,
-				elapsed:       time.Since(pointTime),
-				insertions:    insertions,
-				updates:       updates,
-				upserts:       upserts,
-				existential:   existential,
-				subjectCount:  subjectCount,
-				courseCount:   courseCount,
-				sectionCount:  sectionCount,
-				meetingCount:  meetingCount,
-				metadataCount: metadataCount}
+				influxClient:     influxClient,
+				uniName:          university,
+				elapsed:          time.Since(pointTime),
+				insertions:       insertions,
+				updates:          updates,
+				upserts:          upserts,
+				existential:      existential,
+				subjectCount:     subjectCount,
+				courseCount:      courseCount,
+				sectionCount:     sectionCount,
+				meetingCount:     meetingCount,
+				metadataCount:    metadataCount,
+				serialSubject:    serialSubject,
+				serialCourse:     serialCourse,
+				serialSection:    serialSection}
 
-			insertions, updates, upserts, existential, subjectCount, courseCount, sectionCount, meetingCount, metadataCount = 0, 0, 0, 0, 0, 0, 0, 0, 0
+			stats.log()
 			stats.audit()
-			stats.Log()
+			doneAudit <- true
 		}
 	}
 }
@@ -767,18 +799,21 @@ type ChannelSubjects struct {
 }
 
 type AuditStats struct {
-	influxClient  client.Client
-	uniName       string
-	elapsed       time.Duration
-	insertions    int
-	updates       int
-	upserts       int
-	existential   int
-	subjectCount  int
-	courseCount   int
-	sectionCount  int
-	meetingCount  int
-	metadataCount int
+	influxClient     client.Client
+	uniName          string
+	elapsed          time.Duration
+	insertions       int
+	updates          int
+	upserts          int
+	existential      int
+	subjectCount     int
+	courseCount      int
+	sectionCount     int
+	meetingCount     int
+	metadataCount    int
+	serialCourse     int
+	serialSection    int
+	serialSubject    int
 }
 
 var (
@@ -791,6 +826,13 @@ var (
 	sectionCountCh  = make(chan int)
 	meetingCountCh  = make(chan int)
 	metadataCountCh = make(chan int)
-	endAudit        = make(chan bool)
-	pointTime       = time.Now()
+
+	serialCourseCh     = make(chan int)
+	serialSectionCh    = make(chan int)
+	serialSubjectCh    = make(chan int)
+
+	endAudit  = make(chan bool)
+	doneAudit  = make(chan bool)
+
+	pointTime = time.Now()
 )
