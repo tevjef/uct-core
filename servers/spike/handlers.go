@@ -4,10 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	uct "uct/common"
 	"uct/servers"
+	"strings"
 )
 
 func universityHandler(c *gin.Context) {
-	topicName := c.ParamValue("topic")
+	topicName := strings.ToLower(c.ParamValue("topic"))
+
 	if u, err := SelectUniversity(topicName); err != nil {
 		servers.ResolveErr(err, c)
 	} else {
@@ -30,7 +32,7 @@ func universitiesHandler(c *gin.Context) {
 }
 
 func subjectHandler(c *gin.Context) {
-	subjectTopicName := c.ParamValue("topic")
+	subjectTopicName := strings.ToLower(c.ParamValue("topic"))
 
 	if sub, _, err := SelectSubject(subjectTopicName); err != nil {
 		servers.ResolveErr(err, c)
@@ -43,9 +45,9 @@ func subjectHandler(c *gin.Context) {
 }
 
 func subjectsHandler(c *gin.Context) {
-	season := c.ParamValue("season")
+	season := strings.ToLower(c.ParamValue("season"))
 	year := c.ParamValue("year")
-	uniTopicName := c.ParamValue("topic")
+	uniTopicName := strings.ToLower(c.ParamValue("topic"))
 
 	if subjects, err := SelectSubjects(uniTopicName, season, year); err != nil {
 		servers.ResolveErr(err, c)
@@ -58,7 +60,8 @@ func subjectsHandler(c *gin.Context) {
 }
 
 func courseHandler(c *gin.Context) {
-	courseTopicName := c.ParamValue("topic")
+	courseTopicName := strings.ToLower(c.ParamValue("topic"))
+
 	if course, _, err := SelectCourse(courseTopicName); err != nil {
 		servers.ResolveErr(err, c)
 	} else {
@@ -71,7 +74,8 @@ func courseHandler(c *gin.Context) {
 }
 
 func coursesHandler(c *gin.Context) {
-	subjectTopicName := c.ParamValue("topic")
+	subjectTopicName := strings.ToLower(c.ParamValue("topic"))
+
 	if courses, err := SelectCourses(subjectTopicName); err != nil {
 		servers.ResolveErr(err, c)
 	} else {
@@ -83,7 +87,8 @@ func coursesHandler(c *gin.Context) {
 }
 
 func sectionHandler(c *gin.Context) {
-	sectionTopicName := c.ParamValue("topic")
+	sectionTopicName := strings.ToLower(c.ParamValue("topic"))
+
 	if s, _, err := SelectSection(sectionTopicName); err != nil {
 		servers.ResolveErr(err, c)
 	} else {

@@ -108,6 +108,8 @@ func toTopicName(str string) string {
 	CheckError(err)
 	str = regex.ReplaceAllString(str, ".")
 
+	str = strings.ToLower(str)
+
 	return str
 }
 
