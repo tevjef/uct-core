@@ -625,7 +625,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			"same":        oldSubjects[s].Number == newSubjects[s].Number,
 		}).Debug()
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
-			log.Errorln("Subject differs")
+			log.Infoln("Subject differs")
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -643,7 +643,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					"same":       oldCourses[c].Number == newCourses[c].Number,
 				}).Debug()
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
-					log.Errorln("Course differs")
+					log.Infoln("Course differs")
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					var filteredSections []*Section
@@ -656,9 +656,14 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber,
 								"new_call_number": newSections[e].CallNumber,
-							}).Errorln()
+							}).Infoln()
 							filteredSections = append(filteredSections, newSections[e])
 						}
+
+						log.WithFields(log.Fields{
+							"old_course": oldCourses[c],
+							"new_course": newCourses[c],
+						}).Debugln("Course in subject" + oldSubjects[s].Name)
 					}
 					newCourses[c].Sections = filteredSections
 					filteredCourses = append(filteredCourses, newCourses[c])
