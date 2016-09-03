@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 	uct "uct/common"
+	"io/ioutil"
 )
 
 var (
@@ -294,12 +295,16 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 			continue
 		}
 
-		dec := json.NewDecoder(resp.Body)
-		if err := dec.Decode(&subjects); err != nil && err != io.EOF {
+		data, err := ioutil.ReadAll(resp.Body)
+		if err := json.Unmarshal(data, &subjects); err != nil && err != io.EOF {
 			log.Errorln(err)
 			resp.Body.Close()
 			continue
 		}
+
+		log.WithFields(log.Fields{"content-length": len(data), "status": resp.Status, "season": semester.Season,
+			"year": semester.Year, "campus": campus, "url": url}).Debugln("Subject Reponse")
+
 		resp.Body.Close()
 		break
 	}
@@ -315,19 +320,24 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 func getCourses(subject, campus string, semester *uct.Semester) (courses []RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
 
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Errorf("Retrying %s after error: %s\n", i, err)
 			continue
 		}
-		dec := json.NewDecoder(resp.Body)
-		if err := dec.Decode(&courses); err != nil && err != io.EOF {
+
+		data, err := ioutil.ReadAll(resp.Body)
+		if err := json.Unmarshal(data, &courses); err != nil && err != io.EOF {
 			resp.Body.Close()
 			log.Errorf("Retrying %s after error: %s\n", i, err)
 			continue
 		}
+
+		log.WithFields(log.Fields{"content-length": len(data), "subject" : subject, "status": resp.Status, "season": semester.Season,
+			"year": semester.Year, "campus": campus,"url": url}).Debugln("Course Reponse")
+
 		resp.Body.Close()
 		break
 	}
