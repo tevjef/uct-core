@@ -144,5 +144,5 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 }
 
 func (c Config) GetDbConfig() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.Db.User, c.Db.Password, c.Db.Host,c.Db.Port, c.Db.Name)
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", c.Db.User, c.Db.Password, c.Db.Host,c.Db.Port, c.Db.Name)
 }
