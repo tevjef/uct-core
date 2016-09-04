@@ -1,10 +1,11 @@
 package common
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"fmt"
-	"log"
 	"os"
-	"encoding/json"
+	"net"
+	"github.com/BurntSushi/toml"
 )
 
 type Env int
@@ -14,6 +15,7 @@ const (
 	UCT_DBUSER
 	UCT_DBPASSWORD
 	UCT_DBNAME
+	UCT_DBPORT
 )
 
 func (env Env) String() string {
@@ -26,40 +28,75 @@ func (env Env) String() string {
 		return "UCT_DBPASSWORD"
 	case UCT_DBUSER:
 		return "UCT_DBUSER"
+	case UCT_DBPORT:
+		return "UCT_DBPORT"
 	default:
 		return ""
 	}
 }
 
+type pprof map[string]server
+
 type Config struct {
-	DBUser string
-	DBHost string
-	DBPassword string
-	DBName string
+	Db     database `toml:"postgres"`
+	Pprof  pprof `toml:"pprof"`
+	Influx Influx `toml:"influx"`
+	Spike spike `toml:"spike"`
+	Hermes hermes `toml:"hermes"`
 }
 
-func (config *Config) New(file *os.File) string {
-	var user string
-	var host string
-	var pass string
-	var name string
+type spike struct {
 
+}
 
-	decoder := json.NewDecoder(file)
-	configuration := Config{}
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		log.Println("Error while decoding config file checking enrironment:", err)
-	} else {
-		return
+type hermes struct {
+	ApiKey string `toml:"api_key"`
+}
+
+type server struct {
+	Host string `toml:"host"`
+	Enabled bool
+}
+
+type database struct {
+	User     string `toml:"user"`
+	Host     string `toml:"host"`
+	Port     string `toml:"port"`
+	Password string `toml:"password"`
+	Name     string `toml:"name"`
+	ConnMax int `toml:"connection_max"`
+}
+
+type Influx struct {
+	User     string `toml:"user"`
+	Host     string `toml:"host"`
+	Password string `toml:"password"`
+}
+
+func (pprof pprof) Get(key string) server {
+	return pprof[key]
+}
+
+func NewConfig(file *os.File) Config {
+	c := Config{}
+	if _, err := toml.DecodeReader(file, &c); err != nil {
+		log.Fatalln("Error while decoding config file checking environment:", err)
+		return c
 	}
 
-	user = os.Getenv(UCT_DBUSER)
-	host = os.Getenv(UCT_DBHOST)
-	pass = os.Getenv(UCT_DBPASSWORD)
-	name = os.Getenv(UCT_DBNAME)
-
-
-	return fmt.Sprintf("postgres://%s:%s@%s:5432/%s", config.DBUser, config.DBPassword, config.DBHost, config.DBName)
+	return c
 }
 
+func (c Config) GetDebugSever(appName string) *net.TCPAddr {
+	value := c.Pprof[appName].Host
+	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
+		log.Panicf("'%s' is not a valid TCP address: %s", value, err)
+		return nil
+	} else {
+		return addr
+	}
+}
+
+func (c Config) GetDbConfig() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.Db.User, c.Db.Password, c.Db.Host,c.Db.Port, c.Db.Name)
+}
