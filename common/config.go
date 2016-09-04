@@ -11,25 +11,40 @@ import (
 type Env int
 
 const (
-	UCT_DBHOST Env = iota
-	UCT_DBUSER
-	UCT_DBPASSWORD
-	UCT_DBNAME
-	UCT_DBPORT
+	UCT_DB_HOST Env = iota
+	UCT_DB_USER
+	UCT_DB_PASSWORD
+	UCT_DB_NAME
+	UCT_DB_PORT
+
+	UCT_INFLUX_HOST
+	UCT_INFLUX_USER
+	UCT_INFLUX_PASSWORD
+
+	UCT_SPIKE_API_KEY
+
 )
 
 func (env Env) String() string {
 	switch env {
-	case UCT_DBHOST:
-		return "UCT_DBHOST"
-	case UCT_DBNAME:
-		return "UCT_DBNAME"
-	case UCT_DBPASSWORD:
-		return "UCT_DBPASSWORD"
-	case UCT_DBUSER:
-		return "UCT_DBUSER"
-	case UCT_DBPORT:
-		return "UCT_DBPORT"
+	case UCT_DB_HOST:
+		return "UCT_DB_HOST"
+	case UCT_DB_NAME:
+		return "UCT_DB_NAME"
+	case UCT_DB_PASSWORD:
+		return "UCT_DB_PASSWORD"
+	case UCT_DB_USER:
+		return "UCT_DB_USER"
+	case UCT_DB_PORT:
+		return "UCT_DB_PORT"
+	case UCT_INFLUX_HOST:
+		return "UCT_INFLUX_HOST"
+	case UCT_INFLUX_USER:
+		return "UCT_INFLUX_USER"
+	case UCT_INFLUX_PASSWORD:
+		return "UCT_INFLUX_PASSWORD"
+	case UCT_SPIKE_API_KEY:
+		return "UCT_SPIKE_API_KEY"
 	default:
 		return ""
 	}
@@ -84,7 +99,38 @@ func NewConfig(file *os.File) Config {
 		return c
 	}
 
+	c.fromEnvironment()
+
 	return c
+}
+
+func (c *Config) fromEnvironment() {
+	log.Println(c)
+
+	// Database
+	c.Db.User = bindEnv(c.Db.User, UCT_DB_USER)
+	c.Db.Host = bindEnv(c.Db.Host, UCT_DB_HOST)
+	c.Db.Port = bindEnv(c.Db.Port, UCT_DB_PASSWORD)
+	c.Db.Name = bindEnv(c.Db.Name, UCT_DB_NAME)
+	c.Db.Port = bindEnv(c.Db.Port, UCT_DB_PORT)
+
+	// Influx
+	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
+	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
+	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
+
+	log.Println(c)
+
+}
+
+func bindEnv(defValue string, env fmt.Stringer) string {
+	value := os.Getenv(env.String())
+	if value != "" {
+		log.WithFields(log.Fields{"env":env.String(), "value":value}).Infoln()
+		return value
+	} else {
+		return defValue
+	}
 }
 
 func (c Config) GetDebugSever(appName string) *net.TCPAddr {
