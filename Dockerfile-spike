@@ -14,4 +14,4 @@ WORKDIR /go/src/uct
 
 ENTRYPOINT ["spike"]
 
-CMD ["-c" , "common/config.toml"]
+CMD ["-c" , "/go/src/uct/common/config.toml"]
