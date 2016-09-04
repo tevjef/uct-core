@@ -25,10 +25,11 @@ var (
 
 var (
 	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('c').PlaceHolder("[CM, NK, NB]").Required().String()
+	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.RUTGERS_DEBUG_SERVER).TCP()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config = uct.Config{}
 )
 
 func main() {
@@ -38,8 +39,11 @@ func main() {
 		log.Fatalln("Invalid format:", *format)
 	}
 
+	// Parse configuration file
+	config = uct.NewConfig(*configFile)
+
 	// Start profiling
-	go uct.StartPprof(*server)
+	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	var school uct.University
 

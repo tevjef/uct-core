@@ -22,9 +22,10 @@ var (
 )
 
 var (
-	app           = kingpin.New("gcm", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
+	app           = kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
 	debug         = app.Flag("debug", "enable debug mode").Short('d').Bool()
-	server        = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.GCM_DEBUG_SERVER).TCP()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config = uct.Config{}
 	database      *sqlx.DB
 	preparedStmts = make(map[string]*sqlx.NamedStmt)
 )
@@ -32,20 +33,24 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	log.SetFormatter(&log.TextFormatter{})
+
+	// Parse configuration file
+	config = uct.NewConfig(*configFile)
+
 	// Start profiling
-	go uct.StartPprof(*server)
+	go uct.StartPprof(config.GetDebugSever(app.Name))
+
 	// Start influx logging
 	go influxLog()
 
-	dbConnectionString := uct.GetUniversityDB()
 	var err error
 	// Open database connection
-	database, err = uct.InitDB(dbConnectionString)
+	database, err = uct.InitDB(config.GetDbConfig())
 	uct.CheckError(err)
 	PrepareAllStmts()
 
 	// Open connection to postgresql
-	listener := pq.NewListener(dbConnectionString, 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(config.GetDbConfig(), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -126,7 +131,7 @@ func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotificat
 	}
 
 	var httpResponse *gcm.HttpResponse
-	if httpResponse, err = gcm.SendHttp(uct.GCM_API_KEY, httpMessage); err != nil {
+	if httpResponse, err = gcm.SendHttp(config.Hermes.ApiKey, httpMessage); err != nil {
 		return
 	}
 
@@ -197,9 +202,9 @@ var (
 
 func influxLog() {
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     uct.INFLUX_HOST,
-		Username: uct.INFLUX_USER,
-		Password: uct.INFLUX_PASS,
+		Addr:     config.Influx.Host,
+		Username: config.Influx.User,
+		Password: config.Influx.Password,
 	})
 	uct.CheckError(err)
 

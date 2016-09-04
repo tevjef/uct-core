@@ -19,7 +19,8 @@ var (
 	app      = kingpin.New("spike", "A command-line application to serve university course information")
 	port     = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
-	server   = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.SPIKE_DEBUG_SERVER).TCP()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config = uct.Config{}
 )
 
 const CacheDuration = 10 * time.Second
@@ -33,17 +34,19 @@ func main() {
 		log.SetLevel(lvl)
 	}
 
+	config = uct.NewConfig(*configFile)
+
 	// Start profiling
-	go uct.StartPprof(*server)
+	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	var err error
 
 	// Open database connection
-	database, err = uct.InitDB(uct.GetUniversityDB())
+	database, err = uct.InitDB(config.GetDbConfig())
 	uct.CheckError(err)
 
 	// Prepare database connections
-	database.SetMaxOpenConns(50)
+	database.SetMaxOpenConns(config.Db.ConnMax)
 	PrepareAllStmts()
 
 	// Open cache
