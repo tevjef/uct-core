@@ -1,0 +1,11 @@
+FROM golang:1.7
+
+COPY . /go/src/uct
+
+RUN go install -v uct/servers/spike
+
+WORKDIR /go/src/uct
+
+ENTRYPOINT ["spike"]
+
+CMD ["-c" , "../../common/config.toml"]
