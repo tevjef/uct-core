@@ -1,0 +1,36 @@
+[postgres]
+host = "thirteen.tevindev.me"
+port = "5432"
+user = "postgres"
+password = "***REMOVED***"
+name = "universityct"
+connection_max = 50
+
+[hermes]
+api_key = "***REMOVED***"
+
+[pprof]
+    [pprof.rutgers]
+    host = "localhost:13300"
+    enabled = true
+
+    [pprof.spike]
+    host = "localhost:13400"
+    enabled = true
+
+    [pprof.hermes]
+    host = "localhost:13200"
+    enabled = true
+
+    [pprof.influx-logger]
+    host = "localhost:13500"
+    enabled = true
+
+    [pprof.ein]
+    host = "localhost:13100"
+    enabled = true
+
+[influx]
+host = "http://thirteen.tevindev.me:8086"
+user = "admin"
+password = "***REMOVED***"
