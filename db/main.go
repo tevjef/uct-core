@@ -37,12 +37,13 @@ type serialSection struct {
 }
 
 var (
-	app        = kingpin.New("uct-db", "A command-line application for inserting and updated university information")
+	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	oldFile    = app.Flag("diff", "file to read university data from.").Short('d').File()
 	newFile    = app.Flag("input", "file to read university data from.").Short('i').File()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
-	server     = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.DB_DEBUG_SERVER).TCP()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config = uct.Config{}
 )
 
 func main() {
@@ -52,7 +53,11 @@ func main() {
 		log.Fatalln("Invalid format:", *format)
 	}
 
-	go uct.StartPprof(*server)
+	// Parse configuration file
+	config = uct.NewConfig(*configFile)
+
+	// Start profiling
+	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	var input *bufio.Reader
 	if *newFile != nil {
@@ -83,7 +88,7 @@ func main() {
 	}
 
 	// Initialize database connection
-	database, err := uct.InitDB(uct.GetUniversityDB())
+	database, err := uct.InitDB(config.GetDbConfig())
 	uct.CheckError(err)
 
 	dbHandler := DatabaseHandlerImpl{Database: database}
@@ -554,11 +559,13 @@ func (stats AuditStats) audit() {
 }
 
 func audit(university string) {
-	influxClient, _ := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     uct.INFLUX_HOST,
-		Username: uct.INFLUX_USER,
-		Password: uct.INFLUX_PASS,
+	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     config.Influx.Host,
+		Username: config.Influx.User,
+		Password: config.Influx.Password,
 	})
+
+	log.Errorln("error creating influx client", err)
 
 	var insertions int
 	var updates int
