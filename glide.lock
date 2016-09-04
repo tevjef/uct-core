@@ -1,5 +1,5 @@
 hash: 758b4a3b04b5d1ce46d01894196af028ea7fb4ae95c522fe2bf2276bbb937de2
-updated: 2016-07-30T02:43:19.2288628-04:00
+updated: 2016-09-03T22:55:27.841855374-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -10,11 +10,13 @@ imports:
 - name: github.com/andybalholm/cascadia
   version: 3ad29d1ad1c4f2023e355603324348cf1f4b2d48
 - name: github.com/boltdb/bolt
-  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/bradfitz/gomemcache
   version: fb1f79c6b65acda83063cbc69f6bba1522558bfc
   subpackages:
   - memcache
+- name: github.com/BurntSushi/toml
+  version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/garyburd/redigo
   version: b8dc90050f24c1a73a52f107f3f575be67b21b7c
   subpackages:
@@ -36,7 +38,7 @@ imports:
   - proto
   - jsonpb
 - name: github.com/influxdata/influxdb
-  version: 30efa2d922babde5ccbdf09960e510c0de5e0bcb
+  version: a6f6fda415dd6739436c7a5e9a93086cb9c27acf
   subpackages:
   - client/v2
   - models
@@ -68,7 +70,7 @@ imports:
   - fflib/v1
   - fflib/v1/internal
 - name: github.com/PuerkitoBio/goquery
-  version: 7f4291566cf7cac3be222a933e01a2bed97532b1
+  version: 56a198aba89cdf7a612e6c762eff9d788b9f2dae
 - name: github.com/robfig/go-cache
   version: 9fc39e0dbf62c034ec4e45e6120fc69433a3ec51
 - name: github.com/Sirupsen/logrus
@@ -90,12 +92,12 @@ imports:
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: e5900212cbf65b181d3d8e08308ef06a01d117cf
+  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
 - name: gopkg.in/bluesuncorp/validator.v5
   version: d5acf1dac43705f8bfbb71d878e290e2bed3950b
 testImports:
 - name: github.com/davecgh/go-spew
-  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
