@@ -42,7 +42,7 @@ func main() {
 	var err error
 
 	// Open database connection
-	database, err = uct.InitDB(config.GetDbConfig())
+	database, err = uct.InitDB(config.GetDbConfig(app.Name))
 	uct.CheckError(err)
 
 	// Prepare database connections
