@@ -45,12 +45,12 @@ func main() {
 
 	var err error
 	// Open database connection
-	database, err = uct.InitDB(config.GetDbConfig())
+	database, err = uct.InitDB(config.GetDbConfig(app.Name))
 	uct.CheckError(err)
 	PrepareAllStmts()
 
 	// Open connection to postgresql
-	listener := pq.NewListener(config.GetDbConfig(), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(config.GetDbConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println(err.Error())
 		}
