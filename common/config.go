@@ -28,15 +28,16 @@ const (
 func (env Env) String() string {
 	switch env {
 	case UCT_DB_HOST:
-		return "UCT_DB_HOST"
+		return "DB_PORT_5432_TCP_ADDR"
 	case UCT_DB_NAME:
-		return "UCT_DB_NAME"
+		return "DB_ENV_POSTGRES_DB"
 	case UCT_DB_PASSWORD:
-		return "UCT_DB_PASSWORD"
+		return "DB_ENV_POSTGRES_PASSWORD"
 	case UCT_DB_USER:
-		return "UCT_DB_USER"
+		return "DB_ENV_POSTGRES_USER"
 	case UCT_DB_PORT:
-		return "UCT_DB_PORT"
+		return "DB_PORT_5432_TCP_PORT"
+
 	case UCT_INFLUX_HOST:
 		return "UCT_INFLUX_HOST"
 	case UCT_INFLUX_USER:
