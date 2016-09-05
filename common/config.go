@@ -105,8 +105,6 @@ func NewConfig(file *os.File) Config {
 }
 
 func (c *Config) fromEnvironment() {
-	log.Println(c)
-
 	// Database
 	c.Db.User = bindEnv(c.Db.User, UCT_DB_USER)
 	c.Db.Host = bindEnv(c.Db.Host, UCT_DB_HOST)
@@ -118,15 +116,11 @@ func (c *Config) fromEnvironment() {
 	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
 	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
 	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
-
-	log.Println(c)
-
 }
 
 func bindEnv(defValue string, env fmt.Stringer) string {
 	value := os.Getenv(env.String())
 	if value != "" {
-		log.WithFields(log.Fields{"env":env.String(), "value":value}).Infoln()
 		return value
 	} else {
 		return defValue
@@ -143,6 +137,7 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 	}
 }
 
-func (c Config) GetDbConfig() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", c.Db.User, c.Db.Password, c.Db.Host,c.Db.Port, c.Db.Name)
+func (c Config) GetDbConfig(appName string) string {
+	return fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s fallback_application_name=%s sslmode=disable",
+		c.Db.User, c.Db.Name, c.Db.Password, c.Db.Host,c.Db.Port, appName)
 }
