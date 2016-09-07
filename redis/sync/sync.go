@@ -58,7 +58,7 @@ func New(uctRedis *v1.RedisWrapper, timeQuantum time.Duration, appId string) *Re
 		}
 	}
 
-	return
+	return rs
 }
 
 func (rsync *RedisSync) Sync(cancel chan bool) <-chan int {
@@ -119,6 +119,8 @@ func (rsync *RedisSync) unregisterAll() {
 // instanceId is not already on the list. Saves it index on the list where
 // the instanceId was pushed to
 func (rsync *RedisSync) registerInstance() {
+	// Reset list expiration
+	rsync.uctRedis.Client.Expire(nsInstances, rsync.syncExpiration)
 	if _, err := rsync.uctRedis.RPushNotExist(nsInstances, rsync.instanceId); err != nil {
 		log.WithError(err).Panic("failed to claim position in list:", nsInstances)
 	}
@@ -175,6 +177,10 @@ func calculateOffset(time, instances, position int64) int64 {
 	offset := int64((n / d))
 	log.WithFields(log.Fields{"offset": offset, "time": time,
 		"instances": instances, "position": position}).Debugln("calculateOffset")
+
+	if offset > time {
+		log.WithFields(log.Fields{"offset":offset, "time":time}).Panicln("offset is more than time")
+	}
 
 	return offset
 }
