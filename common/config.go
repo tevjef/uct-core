@@ -6,6 +6,7 @@ import (
 	"os"
 	"net"
 	"github.com/BurntSushi/toml"
+	"strconv"
 )
 
 type Env int
@@ -20,6 +21,13 @@ const (
 	UCT_INFLUX_HOST
 	UCT_INFLUX_USER
 	UCT_INFLUX_PASSWORD
+
+	UCT_REDIS_HOST
+	UCT_REDIS_DB
+	UCT_REDIS_PASSWORD
+	
+	UCT_SCRAPER_RUTGERS_INTERVAL
+	UCT_SCRAPER_RUTGERS_OFFSET
 
 	UCT_SPIKE_API_KEY
 
@@ -44,6 +52,20 @@ func (env Env) String() string {
 		return "UCT_INFLUX_USER"
 	case UCT_INFLUX_PASSWORD:
 		return "UCT_INFLUX_PASSWORD"
+
+	case UCT_REDIS_HOST:
+		return "UCT_REDIS_HOST"
+	case UCT_REDIS_DB:
+		return "UCT_REDIS_DB"
+	case UCT_REDIS_PASSWORD:
+		return "UCT_REDIS_PASSWORD"
+		
+	case UCT_SCRAPER_RUTGERS_INTERVAL:
+		return "UCT_SCRAPER_RUTGERS_INTERVAL"
+	case UCT_SCRAPER_RUTGERS_OFFSET:
+		return "UCT_SCRAPER_RUTGERS_OFFSET"
+
+
 	case UCT_SPIKE_API_KEY:
 		return "UCT_SPIKE_API_KEY"
 	default:
@@ -52,13 +74,22 @@ func (env Env) String() string {
 }
 
 type pprof map[string]server
+type scrapers map[string]scraper
 
 type Config struct {
 	Db     database `toml:"postgres"`
+	Redis     redis `toml:"redis"`
 	Pprof  pprof `toml:"pprof"`
 	Influx Influx `toml:"influx"`
 	Spike spike `toml:"spike"`
 	Hermes hermes `toml:"hermes"`
+	Scrapers scrapers `toml:"scrapers"`
+}
+
+type redis struct {
+	server
+	Host string
+	Db int
 }
 
 type spike struct {
@@ -71,6 +102,7 @@ type hermes struct {
 
 type server struct {
 	Host string `toml:"host"`
+	Password string `toml:"password"`
 	Enabled bool
 }
 
@@ -81,6 +113,11 @@ type database struct {
 	Password string `toml:"password"`
 	Name     string `toml:"name"`
 	ConnMax int `toml:"connection_max"`
+}
+
+type scraper struct {
+	interval string
+	offset string
 }
 
 type Influx struct {
@@ -117,6 +154,11 @@ func (c *Config) fromEnvironment() {
 	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
 	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
 	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
+
+	// Redis
+	c.Redis.Db = int(bindEnvInt(c.Redis.Db, UCT_REDIS_HOST))
+	c.Redis.Host = bindEnv(c.Redis.Host, UCT_REDIS_DB)
+	c.Redis.Password = bindEnv(c.Redis.Password, UCT_REDIS_PASSWORD)
 }
 
 func bindEnv(defValue string, env fmt.Stringer) string {
@@ -126,6 +168,13 @@ func bindEnv(defValue string, env fmt.Stringer) string {
 	} else {
 		return defValue
 	}
+}
+
+func bindEnvInt(defValue int, env fmt.Stringer) int64 {
+	value := bindEnv(strconv.Itoa(defValue), env)
+	i, err := strconv.ParseInt(value, 10, 64)
+	CheckError(err)
+	return i
 }
 
 func (c Config) GetDebugSever(appName string) *net.TCPAddr {
