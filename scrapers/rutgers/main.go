@@ -401,12 +401,16 @@ func getCampus(campus string) uct.University {
 	return university
 }
 
+var httpClient = &http.Client{
+	Timeout: 15 * time.Second,
+}
+
 func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 
 	for i := 0; i < 3; i++ {
 		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Subject Request")
-		resp, err := http.Get(url)
+		resp, err := httpClient.Get(url)
 		if err != nil {
 			log.Errorln(err)
 			continue
@@ -439,7 +443,7 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []RCour
 	for i := 0; i < 3; i++ {
 		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
 
-		resp, err := http.Get(url)
+		resp, err := httpClient.Get(url)
 		if err != nil {
 			log.Errorf("Retrying %s after error: %s\n", i, err)
 			continue
