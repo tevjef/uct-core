@@ -54,3 +54,17 @@ services:
         - redis
       links:
         - redis
+  rutgers_nb:
+        image: tevjef/uct-core:rutgers_nb
+        restart: always
+        depends_on:
+          - redis
+        links:
+          - redis
+  rutgers_nk:
+        image: tevjef/uct-core:rutgers_nk
+        restart: always
+        depends_on:
+          - redis
+        links:
+          - redis
