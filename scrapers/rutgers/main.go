@@ -33,7 +33,7 @@ var (
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
 	daemonFile = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
-	latest = app.Flag("lastest", "Only output the current and next semester").Short('l').Bool()
+	latest = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
 	config uct.Config
@@ -256,13 +256,13 @@ func getCampus(campus string) uct.University {
 
 	university.ResolvedSemesters = uct.ResolveSemesters(time.Now(), university.Registrations)
 
-	Semesters := [3]*uct.Semester{
+	Semesters := []*uct.Semester{
 		university.ResolvedSemesters.Last,
 		university.ResolvedSemesters.Current,
 		university.ResolvedSemesters.Next}
 
 	if *latest {
-		Semesters = [3]*uct.Semester{
+		Semesters = []*uct.Semester{
 			university.ResolvedSemesters.Current,
 			university.ResolvedSemesters.Next}
 	}
