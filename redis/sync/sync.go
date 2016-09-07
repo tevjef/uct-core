@@ -61,8 +61,8 @@ func New(uctRedis *v1.RedisWrapper, timeQuantum time.Duration, appId string) *Re
 	return rs
 }
 
-func (rsync *RedisSync) Sync(cancel chan bool) <-chan int {
-	c := make(chan int)
+func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
+	c := make(chan time.Duration)
 
 	go func() {
 		ticker := time.NewTicker(rsync.syncInterval)
@@ -97,7 +97,8 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan int {
 					rsync.instances = rsync.getInstanceCount()
 
 					// Calculate the offset given a duration and channel it so that the application update it's offset
-					c <- int(rsync.calculateOffset())
+					offset := time.Duration(rsync.calculateOffset()) * time.Second
+					c <- offset
 				}()
 			case <-cancel:
 				ticker.Stop()
