@@ -30,7 +30,22 @@ api_key = "***REMOVED***"
     host = "localhost:13100"
     enabled = true
 
+[scrapers]
+    [scrapers.rutgers-cm]
+    interval = "1m"
+
+    [scrapers.rutgers-nb]
+    interval = "2m"
+
+    [scrapers.rutgers-nk]
+    interval = "1m"
+
 [influx]
 host = "http://thirteen.tevindev.me:8086"
 user = "admin"
 password = "***REMOVED***"
+
+[redis]
+host = "localhost:32769"
+db = 0
+password = ""
