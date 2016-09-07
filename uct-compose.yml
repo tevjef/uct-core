@@ -21,7 +21,7 @@ services:
       - /var/lib/uct/postgresql:/var/lib/postgresql
 
   redis:
-    image: tevjef/uct-core:postgres
+    image: redis:alpine
     restart: always
     ports:
       - "6379:6379"
@@ -46,3 +46,11 @@ services:
       - db
     links:
       - db
+
+  rutgers_cm:
+      image: tevjef/uct-core:rutgers_cm
+      restart: always
+      depends_on:
+        - redis
+      links:
+        - redis
