@@ -23,7 +23,8 @@ const (
 	UCT_INFLUX_USER = "UCT_INFLUX_USER"
 	UCT_INFLUX_PASSWORD = "UCT_INFLUX_PASSWORD"
 
-	UCT_REDIS_HOST = "UCT_REDIS_HOST"
+	UCT_REDIS_HOST = "REDIS_PORT_6379_TCP_ADDR"
+	UCT_REDIS_PORT = "REDIS_PORT_6379_TCP_PORT"
 	UCT_REDIS_DB = "UCT_REDIS_DB"
 	UCT_REDIS_PASSWORD = "UCT_REDIS_PASSWORD"
 
@@ -48,6 +49,7 @@ type Config struct {
 type redis struct {
 	Host     string `toml:"host"`
 	Password string `toml:"password"`
+	Port     string `toml:"port"`
 	Db   int `toml:"db"`
 }
 
@@ -117,15 +119,10 @@ func (c *Config) fromEnvironment() {
 	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
 
 	// Redis
-	c.Redis.Db = int(bindEnvInt(c.Redis.Db, UCT_REDIS_HOST))
-	c.Redis.Host = bindEnv(c.Redis.Host, UCT_REDIS_DB)
+	c.Redis.Host = bindEnv(c.Redis.Host, UCT_REDIS_HOST)
+	c.Redis.Port = bindEnv(c.Redis.Port, UCT_REDIS_PORT)
+	c.Redis.Db = int(bindEnvInt(c.Redis.Db, UCT_REDIS_DB))
 	c.Redis.Password = bindEnv(c.Redis.Password, UCT_REDIS_PASSWORD)
-
-	for key := range c.Scrapers {
-		if strings.Contains(key, "rutgers") {
-			log.Debugln(c.Scrapers[key].Interval)
-		}
-	}
 
 	// bind env for rutgers
 	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != ""{

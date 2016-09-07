@@ -46,6 +46,7 @@ user = "admin"
 password = "WisrocLinden1"
 
 [redis]
-host = "localhost:32769"
+host = "localhost"
+port =  "32770"
 db = 0
 password = ""
