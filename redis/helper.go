@@ -23,7 +23,7 @@ func New(config uct.Config, appName string) *RedisWrapper {
 	return &RedisWrapper{
 		NameSpace: nameSpaceForApp(appName),
 		Client: redis.NewClient(&redis.Options{
-			Addr:    config.Redis.Host,
+			Addr:    config.Redis.Host + ":" + config.Redis.Port,
 			Password: config.Redis.Password,
 			DB:       config.Redis.Db}),
 	}
