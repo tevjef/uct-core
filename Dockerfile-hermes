@@ -1,0 +1,17 @@
+FROM golang:1.7
+
+COPY . /go/src/uct
+
+
+RUN curl -OL https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz && \
+    tar -xzf glide-v0.12.1-linux-amd64.tar.gz && \
+    mv linux-amd64/glide /usr/bin && \
+    cd /go/src/uct && \
+    glide install && \
+    go install -v uct/hermes
+
+WORKDIR /go/src/uct
+
+ENTRYPOINT ["hermes"]
+
+CMD ["-c" , "/go/src/uct/common/config.toml"]

@@ -14,9 +14,13 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	rs "uct/redis/sync"
 	"time"
 	uct "uct/common"
 	"io/ioutil"
+	"uct/redis"
+	"github.com/satori/go.uuid"
+	"errors"
 )
 
 var (
@@ -25,22 +29,124 @@ var (
 
 var (
 	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('c').PlaceHolder("[CM, NK, NB]").Required().String()
+	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.RUTGERS_DEBUG_SERVER).TCP()
+	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
+	daemonFile = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
+	latest = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config uct.Config
+	wrapper *v1.RedisWrapper
+	rsync *rs.RedisSync
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+	campus := strings.ToLower(*campus)
+	app.Name = app.Name + "-" + campus
 
 	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
-	// Start profiling
-	go uct.StartPprof(*server)
+	isDaemon := *daemonInterval > 0
+	// Parse configuration file
+	config = uct.NewConfig(*configFile)
 
+	// Start profiling
+	go uct.StartPprof(config.GetDebugSever(app.Name))
+
+	// Channel to send scraped data on
+	resultChan := make(chan uct.University)
+
+	// Runs at regular intervals
+	if isDaemon {
+		go startDaemon(resultChan, make(chan bool))
+	} else {
+		go func() {
+			entryPoint(resultChan)
+			close(resultChan)
+		}()
+	}
+
+	var school uct.University
+	var reader *bytes.Reader
+
+	for school = range resultChan {
+		reader = uct.MarshalMessage(*format, school)
+
+		// Push to redis
+		if isDaemon {
+			pushToRedis(reader)
+		}
+
+		if *daemonFile != "" {
+			if data, err := ioutil.ReadAll(reader); err != nil {
+				uct.CheckError(err)
+			} else {
+				fileName := *daemonFile +  "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
+				log.Debugln("Writing file", fileName)
+				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
+					uct.CheckError(err)
+				}
+			}
+		}
+	}
+
+	// Runs when the channel closes, the channel will not close in daemon mode
+	io.Copy(os.Stdout, reader)
+}
+
+func pushToRedis(reader *bytes.Reader) {
+	if data, err := ioutil.ReadAll(reader); err != nil {
+		uct.CheckError(err)
+	} else {
+		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
+			log.Panicln(errors.New("failed to connect to redis server"))
+		}
+	}
+}
+
+func startDaemon(result chan uct.University, cancel chan bool) {
+	// Override cli arg with environment variable
+	if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
+		if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
+			uct.CheckError(err)
+		} else if interval > 0 {
+			daemonInterval = &interval
+		}
+	}
+
+	// Start redis client
+	wrapper = v1.New(config, app.Name)
+	rsync = rs.New(wrapper, *daemonInterval, uuid.NewV4().String())
+
+	offsetChan := rsync.Sync(make(chan bool))
+
+	var offset time.Duration = 0
+
+	go func() {
+		for {
+			offset = <-offsetChan
+		}
+	}()
+
+	delayScrape := func() {
+		log.Println("Sleeping for", offset.String())
+		time.Sleep(offset)
+		entryPoint(result)
+	}
+
+	ticker := time.NewTicker(*daemonInterval)
+	delayScrape()
+	for range ticker.C {
+		go delayScrape()
+	}
+
+}
+
+func entryPoint(result chan uct.University) {
 	var school uct.University
 
 	campus := strings.ToUpper(*campus)
@@ -53,11 +159,11 @@ func main() {
 	} else {
 		log.Fatalln("Invalid campus code:", campus)
 	}
-	io.Copy(os.Stdout, uct.MarshalMessage(*format, school))
+
+	result <- school
 }
 
 func getCampus(campus string) uct.University {
-
 	var university uct.University
 
 	university = uct.University{
@@ -149,7 +255,18 @@ func getCampus(campus string) uct.University {
 	}
 
 	university.ResolvedSemesters = uct.ResolveSemesters(time.Now(), university.Registrations)
-	Semesters := [3]*uct.Semester{university.ResolvedSemesters.Last, university.ResolvedSemesters.Current, university.ResolvedSemesters.Next}
+
+	Semesters := []*uct.Semester{
+		university.ResolvedSemesters.Last,
+		university.ResolvedSemesters.Current,
+		university.ResolvedSemesters.Next}
+
+	if *latest {
+		Semesters = []*uct.Semester{
+			university.ResolvedSemesters.Current,
+			university.ResolvedSemesters.Next}
+	}
+
 	for _, ThisSemester := range Semesters {
 		if ThisSemester.Season == uct.WINTER {
 			ThisSemester.Year += 1
@@ -288,7 +405,7 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Subject Request")
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Errorln(err)
@@ -320,7 +437,7 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 func getCourses(subject, campus string, semester *uct.Semester) (courses []RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -762,6 +879,13 @@ func (course RCourse) synopsis() *string {
 }
 
 func (course RCourse) metadata() (metadata []*uct.Metadata) {
+
+	if course.UnitNotes != "" {
+		metadata = append(metadata, &uct.Metadata{
+			Title:   "School Notes",
+			Content: course.UnitNotes,
+		})
+	}
 
 	if course.SubjectNotes != "" {
 		metadata = append(metadata, &uct.Metadata{

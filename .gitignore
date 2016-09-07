@@ -49,4 +49,3 @@ Temporary Items
 .gen/
 secrets.go
 *.txt
-vendor/
