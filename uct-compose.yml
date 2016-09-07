@@ -1,0 +1,48 @@
+version: '2'
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  db:
+    image: tevjef/uct-core:postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=uct
+      - POSTGRES_PASSWORD=WisrocLinden1
+      - POSTGRES_DB=universityct
+    volumes:
+      - /var/lib/uct/postgresql:/var/lib/postgresql
+
+  redis:
+    image: tevjef/uct-core:postgres
+    restart: always
+    ports:
+      - "6379:6379"
+
+  spike:
+    restart: always
+    depends_on:
+      - db
+    image: tevjef/uct-core:spike
+    links:
+      - db
+    ports:
+      - "9876:9876"
+    environment:
+      - GIN_MODE=release
+      - VIRTUAL_HOST=foreman.tevindev.me
+
+  hermes:
+    image: tevjef/uct-core:hermes
+    restart: always
+    depends_on:
+      - db
+    links:
+      - db

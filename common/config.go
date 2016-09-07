@@ -1,68 +1,57 @@
 package common
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"fmt"
-	"os"
-	"net"
 	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
+	"net"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type Env int
 
 const (
-	UCT_DB_HOST Env = iota
-	UCT_DB_USER
-	UCT_DB_PASSWORD
-	UCT_DB_NAME
-	UCT_DB_PORT
+	UCT_DB_HOST = "DB_PORT_5432_TCP_ADDR"
+	UCT_DB_NAME = "DB_ENV_POSTGRES_DB"
+	UCT_DB_PASSWORD = "DB_ENV_POSTGRES_PASSWORD"
+	UCT_DB_USER = "DB_ENV_POSTGRES_USER"
+	UCT_DB_PORT = "DB_PORT_5432_TCP_PORT"
 
-	UCT_INFLUX_HOST
-	UCT_INFLUX_USER
-	UCT_INFLUX_PASSWORD
+	UCT_INFLUX_HOST = "UCT_INFLUX_HOST"
+	UCT_INFLUX_USER = "UCT_INFLUX_USER"
+	UCT_INFLUX_PASSWORD = "UCT_INFLUX_PASSWORD"
 
-	UCT_SPIKE_API_KEY
+	UCT_REDIS_HOST = "UCT_REDIS_HOST"
+	UCT_REDIS_DB = "UCT_REDIS_DB"
+	UCT_REDIS_PASSWORD = "UCT_REDIS_PASSWORD"
 
+	UCT_SCRAPER_RUTGERS_INTERVAL = "UCT_SCRAPER_RUTGERS_INTERVAL"
+
+	UCT_SPIKE_API_KEY = "UCT_SPIKE_API_KEY"
 )
 
-func (env Env) String() string {
-	switch env {
-	case UCT_DB_HOST:
-		return "DB_PORT_5432_TCP_ADDR"
-	case UCT_DB_NAME:
-		return "DB_ENV_POSTGRES_DB"
-	case UCT_DB_PASSWORD:
-		return "DB_ENV_POSTGRES_PASSWORD"
-	case UCT_DB_USER:
-		return "DB_ENV_POSTGRES_USER"
-	case UCT_DB_PORT:
-		return "DB_PORT_5432_TCP_PORT"
-
-	case UCT_INFLUX_HOST:
-		return "UCT_INFLUX_HOST"
-	case UCT_INFLUX_USER:
-		return "UCT_INFLUX_USER"
-	case UCT_INFLUX_PASSWORD:
-		return "UCT_INFLUX_PASSWORD"
-	case UCT_SPIKE_API_KEY:
-		return "UCT_SPIKE_API_KEY"
-	default:
-		return ""
-	}
-}
-
 type pprof map[string]server
+type scrapers map[string]*scraper
 
 type Config struct {
-	Db     database `toml:"postgres"`
-	Pprof  pprof `toml:"pprof"`
-	Influx Influx `toml:"influx"`
-	Spike spike `toml:"spike"`
-	Hermes hermes `toml:"hermes"`
+	Db       database `toml:"postgres"`
+	Redis    redis    `toml:"redis"`
+	Pprof    pprof    `toml:"pprof"`
+	Influx   Influx   `toml:"influx"`
+	Spike    spike    `toml:"spike"`
+	Hermes   hermes   `toml:"hermes"`
+	Scrapers scrapers `toml:"scrapers"`
+}
+
+type redis struct {
+	Host     string `toml:"host"`
+	Password string `toml:"password"`
+	Db   int `toml:"db"`
 }
 
 type spike struct {
-
 }
 
 type hermes struct {
@@ -70,8 +59,9 @@ type hermes struct {
 }
 
 type server struct {
-	Host string `toml:"host"`
-	Enabled bool
+	Host     string `toml:"host"`
+	Password string `toml:"password"`
+	Enabled  bool
 }
 
 type database struct {
@@ -80,7 +70,11 @@ type database struct {
 	Port     string `toml:"port"`
 	Password string `toml:"password"`
 	Name     string `toml:"name"`
-	ConnMax int `toml:"connection_max"`
+	ConnMax  int    `toml:"connection_max"`
+}
+
+type scraper struct {
+	Interval string `toml:"interval"`
 }
 
 type Influx struct {
@@ -91,6 +85,10 @@ type Influx struct {
 
 func (pprof pprof) Get(key string) server {
 	return pprof[key]
+}
+
+func (scrapers scrapers) Get(key string) *scraper {
+	return scrapers[key]
 }
 
 func NewConfig(file *os.File) Config {
@@ -117,15 +115,44 @@ func (c *Config) fromEnvironment() {
 	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
 	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
 	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
+
+	// Redis
+	c.Redis.Db = int(bindEnvInt(c.Redis.Db, UCT_REDIS_HOST))
+	c.Redis.Host = bindEnv(c.Redis.Host, UCT_REDIS_DB)
+	c.Redis.Password = bindEnv(c.Redis.Password, UCT_REDIS_PASSWORD)
+
+	for key := range c.Scrapers {
+		if strings.Contains(key, "rutgers") {
+			log.Debugln(c.Scrapers[key].Interval)
+		}
+	}
+
+	// bind env for rutgers
+	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != ""{
+		for key := range c.Scrapers {
+			if strings.Contains(key, "rutgers") {
+				log.Debugln(c.Scrapers[key])
+				c.Scrapers[key].Interval = env
+			}
+		}
+	}
+
 }
 
-func bindEnv(defValue string, env fmt.Stringer) string {
-	value := os.Getenv(env.String())
+func bindEnv(defValue string, env string) string {
+	value := os.Getenv(env)
 	if value != "" {
 		return value
 	} else {
 		return defValue
 	}
+}
+
+func bindEnvInt(defValue int, env string) int64 {
+	value := bindEnv(strconv.Itoa(defValue), env)
+	i, err := strconv.ParseInt(value, 10, 64)
+	CheckError(err)
+	return i
 }
 
 func (c Config) GetDebugSever(appName string) *net.TCPAddr {
@@ -140,5 +167,5 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 
 func (c Config) GetDbConfig(appName string) string {
 	return fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s fallback_application_name=%s sslmode=disable",
-		c.Db.User, c.Db.Name, c.Db.Password, c.Db.Host,c.Db.Port, appName)
+		c.Db.User, c.Db.Name, c.Db.Password, c.Db.Host, c.Db.Port, appName)
 }

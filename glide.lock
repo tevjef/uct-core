@@ -1,5 +1,5 @@
 hash: d6ff5746a13a36d457db66fee04e21990d0f51fe2fc7788754988828552c4f67
-updated: 2016-09-03T23:23:00.883388208-04:00
+updated: 2016-09-07T08:37:50.634735365-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -73,6 +73,8 @@ imports:
   version: 56a198aba89cdf7a612e6c762eff9d788b9f2dae
 - name: github.com/robfig/go-cache
   version: 9fc39e0dbf62c034ec4e45e6120fc69433a3ec51
+- name: github.com/satori/go.uuid
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/go-gcm
@@ -95,6 +97,17 @@ imports:
   version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
 - name: gopkg.in/bluesuncorp/validator.v5
   version: d5acf1dac43705f8bfbb71d878e290e2bed3950b
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
+- name: gopkg.in/redis.v4
+  version: 49f197e6d11de35192fce19b2b9fd2f9b8b13c4a
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/errors
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 testImports:
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
