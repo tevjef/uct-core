@@ -27,6 +27,9 @@ var (
 	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
 	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	daemon = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
+	offset = app.Flag("offset", "Offset of the refresh interval").Duration()
+	lastest = app.Flag("lastest", "Only output the current and next semester").Short('l').Bool()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
 	config = uct.Config{}
@@ -45,6 +48,24 @@ func main() {
 	// Start profiling
 	go uct.StartPprof(config.GetDebugSever(app.Name))
 
+
+	// Runs at regular intervals
+	if daemon != nil {
+		ticker := time.NewTicker(*daemon + *offset)
+		for t := range ticker.C {
+			go func() {
+				var school = entryPoint()
+
+			}()
+		}
+	}
+
+	var school = entryPoint()
+
+	io.Copy(os.Stdout, uct.MarshalMessage(*format, school))
+}
+
+func entryPoint() uct.University {
 	var school uct.University
 
 	campus := strings.ToUpper(*campus)
@@ -57,11 +78,11 @@ func main() {
 	} else {
 		log.Fatalln("Invalid campus code:", campus)
 	}
-	io.Copy(os.Stdout, uct.MarshalMessage(*format, school))
+
+	return school
 }
 
 func getCampus(campus string) uct.University {
-
 	var university uct.University
 
 	university = uct.University{
@@ -766,6 +787,13 @@ func (course RCourse) synopsis() *string {
 }
 
 func (course RCourse) metadata() (metadata []*uct.Metadata) {
+
+	if course.UnitNotes != "" {
+		metadata = append(metadata, &uct.Metadata{
+			Title:   "School Notes",
+			Content: course.UnitNotes,
+		})
+	}
 
 	if course.SubjectNotes != "" {
 		metadata = append(metadata, &uct.Metadata{
