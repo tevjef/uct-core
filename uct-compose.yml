@@ -20,6 +20,12 @@ services:
     volumes:
       - /var/lib/uct/postgresql:/var/lib/postgresql
 
+  redis:
+    image: tevjef/uct-core:postgres
+    restart: always
+    ports:
+      - "6379:6379"
+
   spike:
     restart: always
     depends_on:
