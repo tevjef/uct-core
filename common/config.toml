@@ -10,8 +10,16 @@ connection_max = 50
 api_key = "***REMOVED***"
 
 [pprof]
-    [pprof.rutgers]
-    host = "localhost:13300"
+    [pprof.rutgers-nk]
+    host = "localhost:13301"
+    enabled = true
+
+    [pprof.rutgers-cm]
+    host = "localhost:13302"
+    enabled = true
+
+    [pprof.rutgers-nb]
+    host = "localhost:13303"
     enabled = true
 
     [pprof.spike]
