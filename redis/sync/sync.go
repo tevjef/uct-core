@@ -13,6 +13,7 @@ type RedisSync struct {
 	instanceId     string
 	position       int64
 	instances      int64
+	offset         time.Duration
 	timeQuantum    time.Duration
 	uctRedis       *v1.RedisWrapper
 	syncInterval   time.Duration
@@ -41,6 +42,7 @@ func New(uctRedis *v1.RedisWrapper, timeQuantum time.Duration, appId string) *Re
 		timeQuantum:    timeQuantum,
 		uctRedis:       uctRedis,
 		position:       -1,
+		offset:         -1,
 		instanceId:     nsHealth + ":" + appId,
 		syncInterval:   2 * time.Second,
 		syncExpiration: 4 * time.Second,
@@ -68,8 +70,7 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
 		ticker := time.NewTicker(rsync.syncInterval)
 		for {
 			select {
-			case t := <-ticker.C:
-				_ = t
+			case <-ticker.C:
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
@@ -89,16 +90,23 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
 
 					// Get the number of currently alive instances, if it's less that the last count but not 0
 					// Unregister all instances all instances. They will all reorder themselves on their next ping
-					if count := rsync.getInstanceCount(); count < rsync.instances && count != 0 {
+					instanceCount := rsync.getInstanceCount()
+					if instanceCount < rsync.instances && instanceCount != 0 {
 						rsync.unregisterAll()
+					}
+
+					// Calculate the offset given a duration and channel it so that the application update it's offset
+					newOffset := time.Duration(rsync.calculateOffset()) * time.Second
+
+					// Send new offset on scale up and down???
+					if rsync.offset != newOffset {
+						c <- newOffset
 					}
 
 					// Store the current number of instances for future reference
 					rsync.instances = rsync.getInstanceCount()
 
-					// Calculate the offset given a duration and channel it so that the application update it's offset
-					offset := time.Duration(rsync.calculateOffset()) * time.Second
-					c <- offset
+					rsync.offset = newOffset
 				}()
 			case <-cancel:
 				ticker.Stop()
@@ -180,7 +188,7 @@ func calculateOffset(time, instances, position int64) int64 {
 		"instances": instances, "position": position}).Debugln("calculateOffset")
 
 	if offset > time {
-		log.WithFields(log.Fields{"offset":offset, "time":time}).Panicln("offset is more than time")
+		log.WithFields(log.Fields{"offset": offset, "time": time}).Panicln("offset is more than time")
 	}
 
 	return offset
