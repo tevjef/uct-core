@@ -47,22 +47,22 @@ services:
     links:
       - db
 
-  rutgers_cm:
-      image: tevjef/uct-core:rutgers_cm
+  rutgers-cm:
+      image: tevjef/uct-core:rutgers-cm
       restart: always
       depends_on:
         - redis
       links:
         - redis
-  rutgers_nb:
-        image: tevjef/uct-core:rutgers_nb
+  rutgers-nb:
+        image: tevjef/uct-core:rutgers-nb
         restart: always
         depends_on:
           - redis
         links:
           - redis
-  rutgers_nk:
-        image: tevjef/uct-core:rutgers_nk
+  rutgers-nk:
+        image: tevjef/uct-core:rutgers-nk
         restart: always
         depends_on:
           - redis
