@@ -125,24 +125,51 @@ func startDaemon(result chan uct.University, cancel chan bool) {
 
 	offsetChan := rsync.Sync(make(chan bool))
 
-	var offset time.Duration = 0
+	var cancelPrev chan bool
+	for {
+		select {
+		case offset := <-offsetChan:
+			// No need to cancel the previous go routine, there isn't one
+			if cancelPrev != nil {
+				cancelPrev <- true
+			}
+			cancelPrev = make(chan bool)
+			go func(cancelPrev chan bool) {
+				secondsTilNextMinute := time.Duration(60 - time.Now().Second()) * time.Second
+				// Sleeps until the next minute + the calculated offset
+				dur := secondsTilNextMinute + offset
+				log.Debugln("Sleeping to syncronize for", dur.String())
 
-	go func() {
-		for {
-			offset = <-offsetChan
+				innerDaemonStopper := make(chan bool, 1)
+
+				syncTimer := time.AfterFunc(dur, func() {
+					log.Debugln("Ticker for", daemonInterval.String())
+					ticker := time.NewTicker(*daemonInterval)
+
+					// Label this loop so that we can break out of it to let the go routine complete
+					innerDaemon:for {
+						select {
+						case <-ticker.C:
+							go entryPoint(result)
+						case <-innerDaemonStopper:
+							log.Debugln("New offset received, cancelling old ticker")
+						    // Clean up then break
+							ticker.Stop()
+							close(innerDaemonStopper)
+							break innerDaemon
+						}
+					}
+
+				})
+
+				<-cancelPrev
+				log.Debugln("Cancelling previous ticker")
+				innerDaemonStopper <- true
+
+				// Stop timer if it has not stopped already
+				syncTimer.Stop()
+			}(cancelPrev)
 		}
-	}()
-
-	delayScrape := func() {
-		log.Println("Sleeping for", offset.String())
-		time.Sleep(offset)
-		entryPoint(result)
-	}
-
-	ticker := time.NewTicker(*daemonInterval)
-	delayScrape()
-	for range ticker.C {
-		go delayScrape()
 	}
 
 }
@@ -278,13 +305,17 @@ func getCampus(campus string) uct.University {
 		subjects := getSubjects(ThisSemester, campus)
 
 		var wg sync.WaitGroup
+
+		sem := make(chan int, 10)
 		for i := range subjects {
 			wg.Add(1)
 			go func(sub *rutgers.RSubject) {
 				defer func() {
 					wg.Done()
 				}()
+				sem <- 1
 				courses := getCourses(sub.Number, campus, ThisSemester)
+				<- sem
 				for j := range courses {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
