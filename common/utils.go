@@ -9,11 +9,11 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var trim = strings.TrimSpace
@@ -63,14 +63,32 @@ func LogVerbose(v interface{}) {
 	log.Debugln(v)
 }
 
+var emptyByteArray = make([]byte, 0)
+
+var nullByte = []byte("\x00")
+var headingBytes = []byte("\x01")
+
+func stripSpaces(str string) string {
+	var lastRune rune
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) && unicode.IsSpace(lastRune) {
+			// if the character is a space, drop it
+			return -1
+		}
+		lastRune = r
+		// else keep it in the string
+		return r
+	}, str)
+}
+
 func TrimAll(str string) string {
-	regex, err := regexp.Compile("\\s+")
-	CheckError(err)
-	str = regex.ReplaceAllString(str, " ")
+	str = stripSpaces(str)
+	temp := []byte(str)
 
 	// Remove NUL and Heading bytes from string
-	str = string(bytes.Replace([]byte(str), []byte("\x00"), []byte(""), -1))
-	str = string(bytes.Replace([]byte(str), []byte("\x01"), []byte(""), -1))
+	temp = bytes.Replace(temp, nullByte, emptyByteArray, -1)
+	str = string(bytes.Replace(temp, headingBytes, emptyByteArray, -1))
+
 	return trim(str)
 }
 
