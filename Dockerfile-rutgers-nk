@@ -1,9 +1,13 @@
-FROM golang:1.7
+FROM golang:1.7-alpine
 
 COPY . /go/src/uct
 
-
-RUN curl -OL https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz && \
+RUN apk update && \
+    apk add ca-certificates && \
+    update-ca-certificates && \
+    apk add openssl && \
+    apk add git && \
+    wget https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz && \
     tar -xzf glide-v0.12.1-linux-amd64.tar.gz && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
