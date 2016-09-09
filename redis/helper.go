@@ -73,6 +73,23 @@ func (r RedisWrapper) RPushNotExist(list, key string) (int64, error) {
 	}
 }
 
+func (r RedisWrapper) LPushNotExist(list, key string) (int64, error) {
+	if i, err := r.Exists(list, key); err != nil {
+		//log.WithError(err).Panic("failed if exists on list:", list)
+	} else {
+		if i >= 0 {
+			return i, nil
+		}
+	}
+
+	if result, err := r.Client.LPush(list, key).Result(); err != nil {
+		return -1, err
+	} else {
+		//log.WithFields(log.Fields{"result":result}).Debugln("RPushNotExist")
+		return result, nil
+	}
+}
+
 func (r RedisWrapper) LPush(list, key string) (int64, error) {
 	if result, err := r.Client.LPush(list, key).Result(); err != nil {
 		return -1, err
