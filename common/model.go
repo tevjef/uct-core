@@ -2,7 +2,7 @@ package common
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"golang.org/x/exp/utf8string"
+//	"golang.org/x/exp/utf8string"
 	"hash/fnv"
 	"net/url"
 	"regexp"
@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type (
@@ -95,6 +96,31 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
+var topicRegex, err = regexp.Compile("[^A-Za-z0-9-_.~% ]+")
+
+func ToTopicName(str string) string {
+	topicRegex := topicRegex.Copy()
+	str = trim(topicRegex.ReplaceAllString(str, ""))
+
+	var lastRune rune
+	dot := rune('.')
+	str = strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			if unicode.IsSpace(lastRune) || lastRune == dot {
+				return -1
+			} else {
+				lastRune = dot
+				return dot
+			}
+		}
+		// else keep it in the string
+		lastRune = r
+		return unicode.ToLower(r)
+	}, str)
+
+	return str
+}
+
 func toTopicName(str string) string {
 	regex, err := regexp.Compile("[^A-Za-z0-9-_.~% ]+")
 	CheckError(err)
@@ -113,10 +139,12 @@ func toTopicName(str string) string {
 	return str
 }
 
-func toTopicId(str string) string {
-	h := fnv.New64a()
-	h.Write([]byte(str))
-	return strconv.FormatUint(h.Sum64(), 10)
+var topicHash = fnv.New64a()
+
+func ToTopicId(str string) string {
+	topicHash.Reset()
+	topicHash.Write([]byte(str))
+	return strconv.FormatUint(topicHash.Sum64(), 10)
 }
 
 func toTitle(str string) string {
@@ -192,8 +220,8 @@ func (u *University) Validate() {
 		log.Panic("ResolvedSemesters.Current is nil")
 	}
 
-	u.TopicName = toTopicName(u.Name)
-	u.TopicId = toTopicId(u.TopicName)
+	u.TopicName = ToTopicName(u.Name)
+	u.TopicId = ToTopicId(u.TopicName)
 }
 
 func (sub *Subject) Validate(uni *University) {
@@ -205,8 +233,8 @@ func (sub *Subject) Validate(uni *University) {
 
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
-	sub.TopicName = toTopicName(sub.TopicName)
-	sub.TopicId = toTopicId(sub.TopicName)
+	sub.TopicName = ToTopicName(sub.TopicName)
+	sub.TopicId = ToTopicId(sub.TopicName)
 
 	if len(sub.Courses) == 0 {
 		log.WithField("subject", sub.TopicName).Errorln("No course in subject")
@@ -231,19 +259,16 @@ func (course *Course) Validate(subject *Subject) {
 
 	// Synopsis
 	if course.Synopsis != nil {
-		regex, err := regexp.Compile("\\s\\s+")
-		CheckError(err)
-		temp := regex.ReplaceAllString(*course.Synopsis, " ")
-		course.Synopsis = &temp
-		temp = utf8string.NewString(*course.Synopsis).String()
+		temp := TrimAll(*course.Synopsis)
+		//temp = utf8string.NewString(*course.Synopsis).String()
 		course.Synopsis = &temp
 	}
 
 	// TopicName
 	course.TopicName = course.Number + "." + course.Name
 	course.TopicName = subject.TopicName + "." + course.TopicName
-	course.TopicName = toTopicName(course.TopicName)
-	course.TopicId = toTopicId(course.TopicName)
+	course.TopicName = ToTopicName(course.TopicName)
+	course.TopicId = ToTopicId(course.TopicName)
 	if len(course.Sections) == 0 {
 		log.WithField("course", course.TopicName).Errorln("No section in course")
 	} else {
@@ -286,8 +311,8 @@ func (section *Section) Validate(course *Course) {
 	}
 
 	section.TopicName = course.TopicName + "." + section.Number + "." + section.CallNumber
-	section.TopicName = toTopicName(section.TopicName)
-	section.TopicId = toTopicId(section.TopicName)
+	section.TopicName = ToTopicName(section.TopicName)
+	section.TopicId = ToTopicId(section.TopicName)
 	//sort.Stable(meetingSorter{section.Meetings})
 	sort.Stable(instructorSorter{section.Instructors})
 
@@ -495,7 +520,7 @@ func (a courseSorter) Swap(i, j int) {
 func (a courseSorter) Less(i, j int) bool {
 	c1 := a.courses[i]
 	c2 := a.courses[j]
-	return (c1.Number + c1.GoString()) < (c2.Number + c1.GoString())
+	return (c1.Number + c1.Name) < (c2.Number + c2.Number)
 }
 
 type sectionSorter struct {
@@ -659,11 +684,6 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							}).Infoln()
 							filteredSections = append(filteredSections, newSections[e])
 						}
-
-						log.WithFields(log.Fields{
-							"old_course": oldCourses[c],
-							"new_course": newCourses[c],
-						}).Debugln("Course in subject" + oldSubjects[s].Name)
 					}
 					newCourses[c].Sections = filteredSections
 					filteredCourses = append(filteredCourses, newCourses[c])

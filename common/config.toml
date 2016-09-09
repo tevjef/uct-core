@@ -1,7 +1,7 @@
 [postgres]
-host = "thirteen.tevindev.me"
+host = "localhost"
 port = "5432"
-user = "postgres"
+user = "uct"
 password = "***REMOVED***"
 name = "universityct"
 connection_max = 50
@@ -50,7 +50,7 @@ api_key = "***REMOVED***"
 
 [influx]
 host = "http://thirteen.tevindev.me:8086"
-user = "admin"
+user = "admibn"
 password = "***REMOVED***"
 
 [redis]
