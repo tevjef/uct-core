@@ -106,6 +106,10 @@ func pushToRedis(reader *bytes.Reader) {
 		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
+
+		if _, err := wrapper.LPushNotExist(v1.BaseNamespace + ":queue", wrapper.NameSpace); err != nil {
+			log.Panicln(errors.New("failed to queue univeristiy for upload"))
+		}
 	}
 }
 
@@ -444,13 +448,13 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSub
 		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Subject Request")
 		resp, err := httpClient.Get(url)
 		if err != nil {
-			log.Errorln(err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
 		data, err := ioutil.ReadAll(resp.Body)
 		if err := ffjson.NewDecoder().Decode(data, &subjects); err != nil && err != io.EOF {
-			log.Errorln(err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			resp.Body.Close()
 			continue
 		}
@@ -477,14 +481,14 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []rutge
 
 		resp, err := httpClient.Get(url)
 		if err != nil {
-			log.Errorf("Retrying %s after error: %s\n", i, err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
 		data, err := ioutil.ReadAll(resp.Body)
 		if err := ffjson.NewDecoder().Decode(data, &courses); err != nil {
 			resp.Body.Close()
-			log.Errorf("Retrying %s after error: %s\n", i, err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
