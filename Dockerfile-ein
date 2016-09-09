@@ -18,4 +18,4 @@ WORKDIR /go/src/uct
 
 ENTRYPOINT ["ein"]
 
-CMD ["-c" , "/go/src/uct/common/config.toml"]
+CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf"]

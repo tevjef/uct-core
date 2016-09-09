@@ -26,6 +26,15 @@ services:
     ports:
       - "6379:6379"
 
+  ein:
+    image: 'tevjef/uct-core:ein'
+    links:
+      - db
+      - redis
+    restart: always
+    tags:
+      - develop
+
   spike:
     restart: always
     depends_on:
