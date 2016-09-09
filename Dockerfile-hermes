@@ -18,4 +18,4 @@ WORKDIR /go/src/uct
 
 ENTRYPOINT ["hermes"]
 
-CMD ["-c" , "/go/src/uct/common/config.toml"]
+CMD ["-c" , "/go/src/uct/common/config.toml", "-d"]
