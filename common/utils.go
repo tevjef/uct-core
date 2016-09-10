@@ -94,7 +94,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debugln("Latency")
+	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Info("")
 }
 
 // stack returns a nicely formated stack frame, skipping skip frames
@@ -166,8 +166,8 @@ func function(pc uintptr) []byte {
 }
 
 func StartPprof(host *net.TCPAddr) {
-	log.Debug("Starting debug server on...", (*host).String())
-	log.Debug(http.ListenAndServe((*host).String(), nil))
+	log.Info("Starting debug server on...", (*host).String())
+	log.Info(http.ListenAndServe((*host).String(), nil))
 }
 
 func InitDB(connection string) (database *sqlx.DB, err error) {

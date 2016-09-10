@@ -1,5 +1,5 @@
 hash: d6ff5746a13a36d457db66fee04e21990d0f51fe2fc7788754988828552c4f67
-updated: 2016-09-07T08:37:50.634735365-04:00
+updated: 2016-09-10T01:16:19.91137935-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -38,7 +38,7 @@ imports:
   - proto
   - jsonpb
 - name: github.com/influxdata/influxdb
-  version: a6f6fda415dd6739436c7a5e9a93086cb9c27acf
+  version: 37992377a55fbc138b2c01edd4deffed64b53989
   subpackages:
   - client/v2
   - models
@@ -79,6 +79,8 @@ imports:
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/go-gcm
   version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
+- name: github.com/vlad-doru/influxus
+  version: 2a7a59926db4661bcdc39c50a5ab0fdc654a885a
 - name: golang.org/x/exp
   version: 3c4824dd1cddf3c4eae78613f4a5caf2caf17675
   subpackages:

@@ -49,8 +49,9 @@ api_key = "***REMOVED***"
     interval = "1m"
 
 [influx]
-host = "http://thirteen.tevindev.me:8086"
-user = "admibn"
+host = "localhost"
+user = "admin"
+port =  "8086"
 password = "***REMOVED***"
 
 [redis]
@@ -58,3 +59,6 @@ host = "localhost"
 port =  "32770"
 db = 0
 password = ""
+
+[all]
+loglevel = "debug"
