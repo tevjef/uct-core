@@ -26,7 +26,7 @@ services:
     ports:
       - "6379:6379"
   grafana:
-    image: influxdb:alpine
+    image: grafana/grafana
     restart: always
     links:
       - influxdb
