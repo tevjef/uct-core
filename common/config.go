@@ -116,8 +116,8 @@ func (c *Config) fromEnvironment() {
 	c.Db.Port = bindEnv(c.Db.Port, UCT_DB_PORT)
 
 	// Influx
-	c.InfluxDb.User = bindEnv(c.InfluxDb.User, UCT_INFLUXDB_HOST)
-	c.InfluxDb.Host = bindEnv(c.InfluxDb.Host, UCT_INFLUXDB_USER)
+	c.InfluxDb.User = bindEnv(c.InfluxDb.User, UCT_INFLUXDB_USER)
+	c.InfluxDb.Host = bindEnv(c.InfluxDb.Host, UCT_INFLUXDB_HOST)
 	c.InfluxDb.Port = bindEnv(c.InfluxDb.Port, UCT_INFLUXDB_PORT)
 	c.InfluxDb.Password = bindEnv(c.InfluxDb.Password, UCT_INFLUXDB_PASSWORD)
 
