@@ -328,6 +328,12 @@ func getCampus(campus string) uct.University {
 
 		}
 		wg.Wait()
+
+		// Filter subjects that don't have a course
+		subjects = rutgers.FilterSubjects(subjects, func(subject rutgers.RSubject) bool {
+			return len(subject.Courses) > 0
+		})
+
 		for _, subject := range subjects {
 			newSubject := &uct.Subject{
 				Name:   subject.Name,
@@ -465,10 +471,6 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSub
 		resp.Body.Close()
 		break
 	}
-
-	subjects = rutgers.FilterSubjects(subjects, func(subject rutgers.RSubject) bool {
-		return len(subject.Courses) > 0
-	})
 
 	for i := range subjects {
 		subjects[i].Name = strings.Title(strings.ToLower(subjects[i].Name))
