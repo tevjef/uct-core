@@ -5,8 +5,21 @@ services:
     container_name: nginx-proxy
     ports:
       - "80:80"
+      - "443:443"
     volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  letsencrypt-nginx-proxy:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: letsencrypt-nginx-proxy
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
 
   db:
     image: tevjef/uct-core:postgres
@@ -25,6 +38,7 @@ services:
     restart: always
     ports:
       - "6379:6379"
+
   grafana:
     image: grafana/grafana
     restart: always
@@ -68,7 +82,9 @@ services:
       - "9876:9876"
     environment:
       - GIN_MODE=release
-      - VIRTUAL_HOST=foreman.tevindev.me
+      - VIRTUAL_HOST=coursetrakr.io,foreman.tevindev.me
+      - LETSENCRYPT_HOST=coursetrakr.io
+      - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
 
   hermes:
     image: tevjef/uct-core:hermes

@@ -54,6 +54,7 @@ func main() {
 	isDaemon := *daemonInterval > 0
 	// Parse configuration file
 	config = uct.NewConfig(*configFile)
+	config.AppName = app.Name
 
 	// Start profiling
 	go uct.StartPprof(config.GetDebugSever(app.Name))
