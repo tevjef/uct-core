@@ -19,7 +19,8 @@ const (
 	UCT_DB_USER = "DB_ENV_POSTGRES_USER"
 	UCT_DB_PORT = "DB_PORT_5432_TCP_PORT"
 
-	UCT_INFLUX_HOST = "UCT_INFLUX_HOST"
+	UCT_INFLUX_HOST = "INFLUX_PORT_8086_TCP_ADDR"
+	UCT_INFLUX_PORT= "INFLUX_PORT_8086_TCP_PORT"
 	UCT_INFLUX_USER = "UCT_INFLUX_USER"
 	UCT_INFLUX_PASSWORD = "UCT_INFLUX_PASSWORD"
 
@@ -81,6 +82,7 @@ type scraper struct {
 
 type Influx struct {
 	User     string `toml:"user"`
+	Port     string `toml:"port"`
 	Host     string `toml:"host"`
 	Password string `toml:"password"`
 }
@@ -116,6 +118,7 @@ func (c *Config) fromEnvironment() {
 	// Influx
 	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
 	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
+	c.Influx.Port = bindEnv(c.Influx.Port, UCT_INFLUX_PORT)
 	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
 
 	// Redis
@@ -165,4 +168,8 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 func (c Config) GetDbConfig(appName string) string {
 	return fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s fallback_application_name=%s sslmode=disable",
 		c.Db.User, c.Db.Name, c.Db.Password, c.Db.Host, c.Db.Port, appName)
+}
+
+func (c Config) GetInfluxAddr() string {
+	return "http://" + c.Influx.Host + ":" + c.Influx.Port
 }
