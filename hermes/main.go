@@ -14,11 +14,11 @@ import (
 	"os"
 	"time"
 	uct "uct/common"
+	"github.com/vlad-doru/influxus"
 )
 
 var (
-	workRoutines = 100
-	messageLog   = make(chan uct.UCTNotification)
+	workRoutines = 50
 )
 
 var (
@@ -41,7 +41,7 @@ func main() {
 	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	// Start influx logging
-	go influxLog()
+	initInflux()
 
 	var err error
 	// Open database connection
@@ -77,12 +77,9 @@ func waitForNotification(l *pq.Listener) {
 			case sem <- 1:
 				go func() {
 					var notification uct.UCTNotification
-					log.Infoln("Recieve notification")
-
 					err := ffjson.Unmarshal([]byte(pgMessage.Extra), &notification)
 					uct.CheckError(err)
-					// Log notification
-					messageLog <- notification
+
 					// Process and send notification, free workRoutine when done.
 					recvNotification(pgMessage.Extra, notification, sem)
 				}()
@@ -103,10 +100,10 @@ func waitForNotification(l *pq.Listener) {
 }
 
 func recvNotification(rawNotification string, notification uct.UCTNotification, sem chan int) {
-	log.WithFields(log.Fields{"notification_id": notification.NotificationId, "status": notification.Status, "topic": notification.TopicName}).Info("PostgresNotify")
+	auditLogger.WithFields(log.Fields{"university_name": notification.University.TopicName, "notification_id": notification.NotificationId, "status": notification.Status, "topic": notification.TopicName}).Info("postgres_notification")
 
 	go func() {
-		defer uct.TimeTrack(time.Now(), "SendNotification")
+		defer uct.TimeTrackWithLog(time.Now(), auditLogger, "send_notification")
 
 		// Retry in case of SSL/TLS timeout errors. GCM itself should be rock solid
 		for i, retries := 0, 3; i < retries; i++ {
@@ -135,7 +132,7 @@ func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotificat
 		return
 	}
 
-	log.WithFields(log.Fields{"topic": httpMessage.To, "message_id": httpResponse.MessageId}).Infoln("FCMResponse")
+	log.WithFields(log.Fields{"topic": httpMessage.To, "message_id": httpResponse.MessageId, "error":httpResponse.Error, "failure":httpResponse.Failure}).Infoln("fcm_response")
 	// Print GCM errors, but don't panic
 	if httpResponse.Error != "" {
 		return fmt.Errorf(httpResponse.Error)
@@ -200,63 +197,39 @@ var (
 	AckNotificationQuery = `UPDATE notification SET (ack_at, message_id) = (now(), :message_id) WHERE id = :notification_id RETURNING notification.id`
 )
 
-func influxLog() {
-	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.InfluxDb.Host,
-		Username: config.InfluxDb.User,
+var (
+	influxClient client.Client
+	auditLogger *log.Logger
+)
+
+func initInflux() {
+	var err error
+	// Create the InfluxDB client.
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
+		Addr:     config.GetInfluxAddr(),
 		Password: config.InfluxDb.Password,
+		Username: config.InfluxDb.User,
 	})
+
+	if err != nil {
+		log.Fatalf("Error while creating the client: %v", err)
+	}
+
+	// Create and add the hook.
+	auditHook, err := influxus.NewHook(
+		&influxus.Config{
+			Client:             influxClient,
+			Database:           "universityct", // DATABASE MUST BE CREATED
+			DefaultMeasurement: "hermes_ops",
+			BatchSize:          1, // default is 100
+			BatchInterval:      1, // default is 5 seconds
+			Tags:               []string{"university_name"},
+			Precision: "ms",
+		})
+
 	uct.CheckError(err)
 
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  "universityct",
-		Precision: "s",
-	})
-
-	for {
-		select {
-		case message := <-messageLog:
-			go func() {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Println("Recovered from influx error", r)
-					}
-				}()
-				subject := message.University.Subjects[0]
-				course := subject.Courses[0]
-				section := course.Sections[0]
-
-				tags := map[string]string{
-					"university": message.University.TopicName,
-					"subject":    subject.TopicName,
-					"course":     course.TopicName,
-					"semester":   subject.Season + subject.Year,
-					"topic_name": section.TopicName,
-				}
-
-				fields := map[string]interface{}{
-					"now":    int(section.Now),
-					"status": section.Status,
-				}
-
-				point, err := client.NewPoint(
-					"section_status",
-					tags,
-					fields,
-					time.Now(),
-				)
-				uct.CheckError(err)
-				bp.AddPoint(point)
-			}()
-		case <-time.NewTicker(time.Minute).C:
-
-			err := influxClient.Write(bp)
-			uct.CheckError(err)
-			bp, err = client.NewBatchPoints(client.BatchPointsConfig{
-				Database:  "universityct",
-				Precision: "s",
-			})
-			uct.CheckError(err)
-		}
-	}
+	// Add the hook to the standard logger.
+	auditLogger = log.New()
+	auditLogger.Hooks.Add(auditHook)
 }

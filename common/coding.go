@@ -76,7 +76,14 @@ func CheckUniqueCourse(subject *Subject, courses []*Course) {
 	}
 }
 
-func ValidateAll(uni *University) {
+func ValidateAll(uni *University) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in ValidateAll", r)
+			err = fmt.Errorf("%v+", r)
+		}
+	}()
+
 	uni.Validate()
 	CheckUniqueSubject(uni.Subjects)
 	for subjectIndex := range uni.Subjects {
@@ -153,4 +160,6 @@ func ValidateAll(uni *University) {
 		metadata.Validate()
 
 	}
+
+	return nil
 }

@@ -97,6 +97,11 @@ func TimeTrack(start time.Time, name string) {
 	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Info("")
 }
 
+func TimeTrackWithLog(start time.Time, logger *log.Logger, name string) {
+	elapsed := time.Since(start)
+	logger.WithFields(log.Fields{"elapsed": elapsed.Seconds(), "name": name}).Info()
+}
+
 // stack returns a nicely formated stack frame, skipping skip frames
 func Stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
