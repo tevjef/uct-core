@@ -105,7 +105,7 @@ func ToTopicName(str string) string {
 	var lastRune rune
 	dot := rune('.')
 	str = strings.Map(func(r rune) rune {
-		if unicode.IsSpace(r) {
+		if unicode.IsSpace(r) || r == dot {
 			if unicode.IsSpace(lastRune) || lastRune == dot {
 				return -1
 			} else {
