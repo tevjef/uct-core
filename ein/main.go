@@ -69,6 +69,9 @@ func main() {
 	// Start redis client
 	wrapper := v1.New(config, app.Name)
 
+	// Start influx logging
+	initInflux()
+
 	// Initialize database connection
 	database, err := uct.InitDB(config.GetDbConfig(app.Name))
 	uct.CheckError(err)
@@ -77,36 +80,6 @@ func main() {
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
 	database.SetMaxOpenConns(mutiProgramming)
-
-
-	// Create the InfluxDB client.
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.GetInfluxAddr(),
-		Password: config.InfluxDb.Password,
-		Username: config.InfluxDb.User,
-	})
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "ein_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"university_name"},
-			Precision: "s",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Hooks.Add(auditHook)
 
 	for {
 		log.Info("Waiting on queue...")
@@ -149,10 +122,6 @@ func main() {
 						log.WithError(err).Panic("Error while unmarshalling new data")
 					}
 
-					// Log bytes received
-					auditLogger.WithFields(log.Fields{"bytes": len(raw), "university_name":university.TopicName}).Info(latestData)
-					auditLogger.WithFields(log.Fields{"bytes": len(oldRaw), "university_name":university.TopicName}).Info(oldData)
-
 					// Make sure the data received is primed for the database
 					if err := uct.ValidateAll(newUniversity); err != nil {
 						log.WithError(err).Panic("Error while validating newUniversity")
@@ -180,6 +149,11 @@ func main() {
 					app.insertUniversity(&university)
 					//app.insertUniversity(newUniversity)
 					app.updateSerial(*newUniversity)
+
+					// Log bytes received
+					auditLogger.WithFields(log.Fields{"bytes": len(raw), "university_name":university.TopicName}).Info(latestData)
+					auditLogger.WithFields(log.Fields{"bytes": len(oldRaw), "university_name":university.TopicName}).Info(oldData)
+
 
 					doneAudit <- true
 					<-doneAudit
@@ -226,7 +200,7 @@ func (app App) updateSerial(uni uct.University) {
 
 var (
 	influxClient client.Client
-	auditLogger log.Logger
+	auditLogger *log.Logger
 )
 
 func initInflux() {
