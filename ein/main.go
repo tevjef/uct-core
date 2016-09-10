@@ -49,8 +49,7 @@ var (
 	config     = uct.Config{}
 
 	influxClient client.Client
-	auditHook *influxus.Hook
-
+	auditLogger log.Logger
 	mutiProgramming = 5
 )
 
@@ -94,7 +93,7 @@ func main() {
 	}
 
 	// Create and add the hook.
-	auditHook, err = influxus.NewHook(
+	auditHook, err := influxus.NewHook(
 		&influxus.Config{
 			Client:             influxClient,
 			Database:           "universityct", // DATABASE MUST BE CREATED
@@ -105,64 +104,92 @@ func main() {
 			Precision: "s",
 		})
 
+	uct.CheckError(err)
+
+	// Add the hook to the standard logger.
+	auditLogger = log.New()
+	auditLogger.Hooks.Add(auditHook)
+
 	for {
 		log.Info("Waiting on queue...")
 		if data, err := wrapper.Client.BRPop(5*time.Minute, v1.BaseNamespace+":queue").Result(); err != nil {
 			uct.CheckError(err)
 		} else {
-			val := data[1]
+			func () {
+				defer func() {
+					if r := recover(); r != nil {
+						 log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Error()
+					}
+				}()
 
-			latestData := val + ":data:latest"
-			oldData := val + ":data:old"
+				val := data[1]
 
-			log.WithFields(log.Fields{"key":val}).Infoln("RPOP")
+				latestData := val + ":data:latest"
+				oldData := val + ":data:old"
 
-			if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
-				uct.CheckError(err)
-			} else {
-				log.WithFields(log.Fields{"bytes": len(raw)}).Info(latestData)
-				var university uct.University
+				log.WithFields(log.Fields{"key":val}).Infoln("RPOP")
 
-				var oldRaw string
-				if oldRaw, err = wrapper.Client.Get(oldData).Result(); err != nil {
-					log.Warningln("There was no older data, did it expire or is this first run?")
-				}
-				log.WithFields(log.Fields{"bytes": len(oldRaw)}).Info(oldData)
-
-				if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
-					uct.CheckError(err)
-				}
-
-
-				newUniversity := new(uct.University)
-				err := uct.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity)
-				uct.CheckError(err)
-
-				// Make sure the data received is primed for the database
-				uct.ValidateAll(newUniversity)
-
-				if oldRaw != "" {
-					oldUniversity := new(uct.University)
-					err := uct.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity)
-					uct.CheckError(err)
-
-					uct.ValidateAll(oldUniversity)
-					university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
+				if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
+					log.WithError(err).Panic("Error getting latest data")
 				} else {
-					university = *newUniversity
+					var university uct.University
+
+					// Try getting older data from redis
+					var oldRaw string
+					if oldRaw, err = wrapper.Client.Get(oldData).Result(); err != nil {
+						log.Warningln("There was no older data, did it expire or is this first run?")
+					}
+
+					// Set old data as the new data we just recieved
+					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
+						log.WithError(err).Panic("Error updating old data")
+					}
+
+					// Decode new data
+					newUniversity := new(uct.University)
+					if err := uct.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity); err != nil {
+						log.WithError(err).Panic("Error while unmarshalling new data")
+					}
+
+					// Log bytes received
+					auditLogger.WithFields(log.Fields{"bytes": len(raw), "university_name":university.TopicName}).Info(latestData)
+					auditLogger.WithFields(log.Fields{"bytes": len(oldRaw), "university_name":university.TopicName}).Info(oldData)
+
+					// Make sure the data received is primed for the database
+					if err := uct.ValidateAll(newUniversity); err != nil {
+						log.WithError(err).Panic("Error while validating newUniversity")
+					}
+
+					// Decode old data if have some
+					if oldRaw != "" {
+						oldUniversity := new(uct.University)
+						if err := uct.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity); err != nil {
+							log.WithError(err).Panic("Error while unmarshalling old data")
+						}
+
+						if err := uct.ValidateAll(oldUniversity); err != nil {
+							log.WithError(err).Panic("Error while validating oldUniversity")
+						}
+
+						university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
+					} else {
+						university = *newUniversity
+					}
+
+					// Start logging with influx
+					go audit(university.TopicName)
+
+					app.insertUniversity(&university)
+					//app.insertUniversity(newUniversity)
+					app.updateSerial(*newUniversity)
+
+					doneAudit <- true
+					<-doneAudit
+					//break
 				}
 
-				// Start logging with influx
-				go audit(university.TopicName)
+			}()
 
-				app.insertUniversity(&university)
-				//app.insertUniversity(newUniversity)
-				app.updateSerial(*newUniversity)
-
-				doneAudit <- true
-				<-doneAudit
-				//break
-			}
 		}
 	}
 }
@@ -597,9 +624,6 @@ func audit(university string) {
 	if err != nil {
 		log.Fatalf("Error while creating the hook: %v", err)
 	}
-	// Add the hook to the standard logger.
-	auditLogger := log.New()
-	auditLogger.Hooks.Add(auditHook)
 
 	var insertions int
 	var updates int

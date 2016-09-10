@@ -466,6 +466,10 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSub
 		break
 	}
 
+	subjects = rutgers.FilterSubjects(subjects, func(subject rutgers.RSubject) bool {
+		return len(subject.Courses) > 0
+	})
+
 	for i := range subjects {
 		subjects[i].Name = strings.Title(strings.ToLower(subjects[i].Name))
 		subjects[i].Season = semester.Season
