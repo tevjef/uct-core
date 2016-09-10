@@ -259,12 +259,16 @@ func TestSwapChar(t *testing.T) {
 func TestTopicName(t *testing.T) {
 	topic1 := "Rutgers University–New Brunswick"
 	topic2 := "AFRICAN, M. EAST. & S. ASIAN LANG & LIT $ __ "
+	topic3 := "Res Proposal In A....H.!@#$%^&*()_?><.02.87ASDA"
 
 	fmt.Printf("%s\n", ToTopicName(topic1))
 	fmt.Printf("%s\n", ToTopicName(topic1))
 
 	fmt.Printf("%s\n", ToTopicName(topic2))
 	fmt.Printf("%s\n", ToTopicName(topic2))
+
+	fmt.Printf("%s\n", ToTopicName(topic3))
+	fmt.Printf("%s\n", ToTopicName(topic3))
 
 	fmt.Println("\n")
 
@@ -273,6 +277,11 @@ func TestTopicName(t *testing.T) {
 
 	fmt.Printf("%s\n", toTopicName(topic2))
 	fmt.Printf("%s\n", toTopicName(topic2))
+
+	fmt.Printf("%s\n", toTopicName(topic3))
+	fmt.Printf("%s\n", toTopicName(topic3))
+
+
 }
 
 func BenchmarkToTopicName(b *testing.B) {
