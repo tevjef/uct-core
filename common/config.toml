@@ -48,7 +48,7 @@ api_key = "AIzaSyB21xI3W_LCQ8M5rY_-R5eJMcu4hmDqUS8"
     [scrapers.rutgers-nk]
     interval = "1m"
 
-[influx]
+[influxdb]
 host = "localhost"
 user = "admin"
 port =  "8086"

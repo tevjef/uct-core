@@ -560,9 +560,9 @@ func (stats AuditStats) audit() {
 
 func audit(university string) {
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.Influx.Host,
-		Username: config.Influx.User,
-		Password: config.Influx.Password,
+		Addr:     config.InfluxDb.Host,
+		Username: config.InfluxDb.User,
+		Password: config.InfluxDb.Password,
 	})
 
 	log.Errorln("error creating influx client", err)

@@ -19,10 +19,10 @@ const (
 	UCT_DB_USER = "DB_ENV_POSTGRES_USER"
 	UCT_DB_PORT = "DB_PORT_5432_TCP_PORT"
 
-	UCT_INFLUX_HOST = "INFLUX_PORT_8086_TCP_ADDR"
-	UCT_INFLUX_PORT= "INFLUX_PORT_8086_TCP_PORT"
-	UCT_INFLUX_USER = "UCT_INFLUX_USER"
-	UCT_INFLUX_PASSWORD = "UCT_INFLUX_PASSWORD"
+	UCT_INFLUXDB_HOST = "INFLUXDB_PORT_8086_TCP_ADDR"
+	UCT_INFLUXDB_PORT = "INFLUXDB_PORT_8086_TCP_PORT"
+	UCT_INFLUXDB_USER = "UCT_INFLUXDB_USER"
+	UCT_INFLUXDB_PASSWORD = "UCT_INFLUXDB_PASSWORD"
 
 	UCT_REDIS_HOST = "REDIS_PORT_6379_TCP_ADDR"
 	UCT_REDIS_PORT = "REDIS_PORT_6379_TCP_PORT"
@@ -41,7 +41,7 @@ type Config struct {
 	Db       database `toml:"postgres"`
 	Redis    redis    `toml:"redis"`
 	Pprof    pprof    `toml:"pprof"`
-	Influx   Influx   `toml:"influx"`
+	InfluxDb InfluxDb   `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
 	Hermes   hermes   `toml:"hermes"`
 	Scrapers scrapers `toml:"scrapers"`
@@ -80,7 +80,7 @@ type scraper struct {
 	Interval string `toml:"interval"`
 }
 
-type Influx struct {
+type InfluxDb struct {
 	User     string `toml:"user"`
 	Port     string `toml:"port"`
 	Host     string `toml:"host"`
@@ -116,10 +116,10 @@ func (c *Config) fromEnvironment() {
 	c.Db.Port = bindEnv(c.Db.Port, UCT_DB_PORT)
 
 	// Influx
-	c.Influx.User = bindEnv(c.Influx.User, UCT_INFLUX_HOST)
-	c.Influx.Host = bindEnv(c.Influx.Host, UCT_INFLUX_USER)
-	c.Influx.Port = bindEnv(c.Influx.Port, UCT_INFLUX_PORT)
-	c.Influx.Password = bindEnv(c.Influx.Password, UCT_INFLUX_PASSWORD)
+	c.InfluxDb.User = bindEnv(c.InfluxDb.User, UCT_INFLUXDB_HOST)
+	c.InfluxDb.Host = bindEnv(c.InfluxDb.Host, UCT_INFLUXDB_USER)
+	c.InfluxDb.Port = bindEnv(c.InfluxDb.Port, UCT_INFLUXDB_PORT)
+	c.InfluxDb.Password = bindEnv(c.InfluxDb.Password, UCT_INFLUXDB_PASSWORD)
 
 	// Redis
 	c.Redis.Host = bindEnv(c.Redis.Host, UCT_REDIS_HOST)
@@ -171,5 +171,5 @@ func (c Config) GetDbConfig(appName string) string {
 }
 
 func (c Config) GetInfluxAddr() string {
-	return "http://" + c.Influx.Host + ":" + c.Influx.Port
+	return "http://" + c.InfluxDb.Host + ":" + c.InfluxDb.Port
 }
