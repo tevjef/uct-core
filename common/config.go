@@ -38,6 +38,7 @@ type pprof map[string]server
 type scrapers map[string]*scraper
 
 type Config struct {
+	AppName string
 	Db       database `toml:"postgres"`
 	Redis    redis    `toml:"redis"`
 	Pprof    pprof    `toml:"pprof"`

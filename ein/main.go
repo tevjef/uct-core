@@ -18,6 +18,7 @@ import (
 	"time"
 	uct "uct/common"
 	"uct/redis"
+	"uct/influxdb"
 )
 
 type App struct {
@@ -196,43 +197,6 @@ func (app App) updateSerial(uni uct.University) {
 		cwg.Wait()
 	}
 
-}
-
-var (
-	influxClient client.Client
-	auditLogger *log.Logger
-)
-
-func initInflux() {
-	var err error
-	// Create the InfluxDB client.
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.GetInfluxAddr(),
-		Password: config.InfluxDb.Password,
-		Username: config.InfluxDb.User,
-	})
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "ein_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"university_name"},
-			Precision: "s",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Hooks.Add(auditHook)
 }
 
 func (app App) updateSerialSubject(subject *uct.Subject) {
@@ -701,6 +665,40 @@ func audit(university string) {
 }
 
 var (
+	influxClient client.Client
+	auditLogger *log.Logger
+)
+
+func initInflux() {
+	var err error
+	// Create the InfluxDB client.
+	influxClient, err = influxdbhelper.GetClient(config)
+
+	if err != nil {
+		log.Fatalf("Error while creating the client: %v", err)
+	}
+
+	// Create and add the hook.
+	auditHook, err := influxus.NewHook(
+		&influxus.Config{
+			Client:             influxClient,
+			Database:           "universityct", // DATABASE MUST BE CREATED
+			DefaultMeasurement: "ein_ops",
+			BatchSize:          1, // default is 100
+			BatchInterval:      1, // default is 5 seconds
+			Tags:               []string{"university_name"},
+			Precision: "s",
+		})
+
+	uct.CheckError(err)
+
+	// Add the hook to the standard logger.
+	auditLogger = log.New()
+	auditLogger.Hooks.Add(auditHook)
+}
+
+
+var (
 	insertionsCh    = make(chan int)
 	updatesCh       = make(chan int)
 	upsertsCh       = make(chan int)
@@ -891,3 +889,4 @@ type ChannelSubjects struct {
 	subjectId int64
 	courses   []uct.Course
 }
+
