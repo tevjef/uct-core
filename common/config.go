@@ -173,3 +173,7 @@ func (c Config) GetDbConfig(appName string) string {
 func (c Config) GetInfluxAddr() string {
 	return "http://" + c.InfluxDb.Host + ":" + c.InfluxDb.Port
 }
+
+func (c Config) GetRedisAddr() string {
+	return c.Redis.Host + ":" + c.Redis.Port
+}

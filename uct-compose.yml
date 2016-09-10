@@ -25,12 +25,31 @@ services:
     restart: always
     ports:
       - "6379:6379"
+  grafana:
+    image: influxdb:alpine
+    restart: always
+    links:
+      - influxdb
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/lib/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
+
+  influxdb:
+    image: influxdb:alpine
+    restart: always
+    ports:
+      - "8086:8086"
+      - "8083:8083"
 
   ein:
     image: 'tevjef/uct-core:ein'
     links:
       - db
       - redis
+      - influxdb
     restart: always
     tags:
       - develop
@@ -42,6 +61,9 @@ services:
     image: tevjef/uct-core:spike
     links:
       - db
+      - redis
+      - influxdb
+
     ports:
       - "9876:9876"
     environment:
@@ -55,6 +77,7 @@ services:
       - db
     links:
       - db
+      - influxdb
 
   rutgers-cm:
       image: tevjef/uct-core:rutgers-cm
