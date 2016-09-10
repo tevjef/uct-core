@@ -6,17 +6,18 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/vlad-doru/influxus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
+	"syscall"
 	"time"
 	uct "uct/common"
 	"uct/redis"
-	"strings"
-	"sync"
-	"net"
-	"syscall"
 )
 
 type App struct {
@@ -44,8 +45,13 @@ var (
 	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
-	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config = uct.Config{}
+	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
+	config     = uct.Config{}
+
+	influxClient client.Client
+	auditHook *influxus.Hook
+
+	mutiProgramming = 5
 )
 
 func main() {
@@ -54,6 +60,8 @@ func main() {
 	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
+
+	log.SetLevel(log.InfoLevel)
 
 	// Parse configuration file
 	config = uct.NewConfig(*configFile)
@@ -71,52 +79,72 @@ func main() {
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
-	database.SetMaxOpenConns(5)
+	database.SetMaxOpenConns(mutiProgramming)
+
+
+	// Create the InfluxDB client.
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
+		Addr:     config.GetInfluxAddr(),
+		Password: config.Influx.Password,
+		Username: config.Influx.User,
+	})
+
+	if err != nil {
+		log.Fatalf("Error while creating the client: %v", err)
+	}
+
+	// Create and add the hook.
+	auditHook, err = influxus.NewHook(
+		&influxus.Config{
+			Client:             influxClient,
+			Database:           "universityct", // DATABASE MUST BE CREATED
+			DefaultMeasurement: "ein_ops",
+			BatchSize:          1, // default is 100
+			BatchInterval:      1, // default is 5 seconds
+			Tags:               []string{"univerisity_name"},
+			Precision: "s",
+		})
 
 	for {
-		log.Debugln("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(5 * time.Minute, v1.BaseNamespace + ":queue").Result(); err != nil {
+		log.Info("Waiting on queue...")
+		if data, err := wrapper.Client.BRPop(5*time.Minute, v1.BaseNamespace+":queue").Result(); err != nil {
 			uct.CheckError(err)
 		} else {
-			key := data[0]
 			val := data[1]
-			log.Debugln("key", key)
-			log.Debugln("val", val)
 
 			latestData := val + ":data:latest"
 			oldData := val + ":data:old"
 
+			log.WithFields(log.Fields{"key":val}).Infoln("RPOP")
+
 			if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
 				uct.CheckError(err)
 			} else {
-
+				log.WithFields(log.Fields{"bytes": len(raw)}).Info(latestData)
 				var university uct.University
 
 				var oldRaw string
 				if oldRaw, err = wrapper.Client.Get(oldData).Result(); err != nil {
 					log.Warningln("There was no older data, did it expire or is this first run?")
 				}
+				log.WithFields(log.Fields{"bytes": len(oldRaw)}).Info(oldData)
 
 				if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
 					uct.CheckError(err)
 				}
 
-				reader := strings.NewReader(raw)
 
 				newUniversity := new(uct.University)
-				err := uct.UnmarshallMessage(*format, reader, newUniversity)
+				err := uct.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity)
 				uct.CheckError(err)
 
 				// Make sure the data received is primed for the database
 				uct.ValidateAll(newUniversity)
 
-				oldUniversity := new(uct.University)
-
 				if oldRaw != "" {
-					old := strings.NewReader(oldRaw)
-					err := uct.UnmarshallMessage(*format, old, oldUniversity)
+					oldUniversity := new(uct.University)
+					err := uct.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity)
 					uct.CheckError(err)
-
 
 					uct.ValidateAll(oldUniversity)
 					university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
@@ -131,9 +159,8 @@ func main() {
 				//app.insertUniversity(newUniversity)
 				app.updateSerial(*newUniversity)
 
-
-				endAudit <- true
-				<- doneAudit
+				doneAudit <- true
+				<-doneAudit
 				//break
 			}
 		}
@@ -141,7 +168,9 @@ func main() {
 }
 
 func (app App) updateSerial(uni uct.University) {
-	sem := make(chan bool, 500)
+	defer uct.TimeTrack(time.Now(), "updateSerial")
+
+	sem := make(chan bool, mutiProgramming)
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
@@ -150,11 +179,10 @@ func (app App) updateSerial(uni uct.University) {
 		cwg := sync.WaitGroup{}
 		for courseIndex := range subject.Courses {
 			course := subject.Courses[courseIndex]
+			cwg.Add(1)
 
+			sem <- true
 			go func() {
-				cwg.Add(1)
-				sem <- true
-
 				app.updateSerialCourse(course)
 
 				for sectionIndex := range course.Sections {
@@ -162,13 +190,12 @@ func (app App) updateSerial(uni uct.University) {
 					app.updateSerialSection(section)
 				}
 
-				<- sem
+				<-sem
 				cwg.Done()
 			}()
 		}
 		cwg.Wait()
 	}
-
 
 }
 
@@ -206,6 +233,8 @@ func (app App) updateSerialSection(section *uct.Section) {
 }
 
 func (app App) insertUniversity(uni *uct.University) {
+	defer uct.TimeTrack(time.Now(), "insertUniversity")
+
 	universityId := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
 	subjectCountCh <- len(uni.Subjects)
@@ -449,7 +478,7 @@ type DatabaseHandlerImpl struct {
 }
 
 func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
-	uct.TimeTrack(time.Now(), "insert")
+	// uct.TimeTrack(time.Now(), "insert")
 
 	insertionsCh <- 1
 	typeName := fmt.Sprintf("%T", data)
@@ -461,14 +490,14 @@ func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id 
 				log.WithFields(log.Fields{"ein_op": "Insert", "type": typeName, "data": data}).Panic(err)
 			}
 			rows.Close()
-			log.WithFields(log.Fields{"ein_op": "Insert", "type": typeName, "id": id}).Info()
+			log.WithFields(log.Fields{"ein_op": "Insert", "type": typeName, "id": id}).Debug()
 		}
 	}
 	return id
 }
 
 func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
-	uct.TimeTrack(time.Now(), "update")
+	// uct.TimeTrack(time.Now(), "update")
 	typeName := fmt.Sprintf("%T", data)
 
 	for i := 0; i < 5; i++ {
@@ -488,7 +517,7 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 					log.WithFields(log.Fields{"ein_op": "Update", "type": typeName, "data": data}).Panic(err)
 				}
 				rows.Close()
-				log.WithFields(log.Fields{"ein_op": "Update", "type": typeName, "id": id}).Info()
+				log.WithFields(log.Fields{"ein_op": "Update", "type": typeName, "id": id}).Debug()
 			}
 			if count > 1 {
 				log.WithFields(log.Fields{"ein_op": "Update", "type": typeName, "data": data}).Panic("Multiple rows updated at once")
@@ -503,7 +532,7 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 }
 
 func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {
-	uct.TimeTrack(time.Now(), "upsert")
+	// uct.TimeTrack(time.Now(), "upsert")
 	upsertsCh <- 1
 	if id = dbHandler.update(updateQuery, data); id != 0 {
 	} else if id == 0 {
@@ -524,8 +553,6 @@ func isConnectionError(err error) bool {
 }
 
 func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
-	uct.TimeTrack(time.Now(), "exists")
-
 	typeName := fmt.Sprintf("%T", data)
 	existentialCh <- 1
 
@@ -538,7 +565,7 @@ func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id 
 			if err = rows.Scan(&id); err != nil {
 				log.WithFields(log.Fields{"ein_op": "Exists", "type": typeName, "data": data}).Panic(err)
 			}
-			log.WithFields(log.Fields{"ein_op": "Exists", "type": typeName, "id": id}).Info()
+			log.WithFields(log.Fields{"ein_op": "Exists", "type": typeName, "id": id}).Debug()
 		}
 		if count > 1 {
 			log.WithFields(log.Fields{"ein_op": "Exists", "type": typeName, "data": data}).Panic("Multple rows exists")
@@ -562,79 +589,17 @@ func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 	}
 }
 
-func (stats AuditStats) log() {
-	log.WithFields(log.Fields{
-		"Insertions":       stats.insertions,
-		"Updates":          stats.updates,
-		"Upserts":          stats.upserts,
-		"Existential":      stats.existential,
-		"Subjects":         stats.subjectCount,
-		"Courses":          stats.courseCount,
-		"Sections":         stats.sectionCount,
-		"Meetings":         stats.meetingCount,
-		"Metadata":         stats.metadataCount,
-		"SerialSubject":    stats.serialSubject,
-		"SerialCourse":     stats.serialCourse,
-		"SerialSection":    stats.serialSection,
-		"Elapsed": stats.elapsed,
-	}).Info("DB operations complete")
-}
-
-func (stats AuditStats) audit() {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered from influx error", r)
-		}
-	}()
-
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  "universityct",
-		Precision: "s",
-	})
-
-	tags := map[string]string{
-		"university_name": stats.uniName,
-	}
-
-	fields := map[string]interface{}{
-		"insertions":       stats.insertions,
-		"updates":          stats.updates,
-		"upserts":          stats.upserts,
-		"existential":      stats.existential,
-		"subjectCount":     stats.subjectCount,
-		"courseCount":      stats.courseCount,
-		"sectionCount":     stats.sectionCount,
-		"meetingCount":     stats.meetingCount,
-		"metadataCount":    stats.metadataCount,
-		"serialSubject":    stats.serialSubject,
-		"serialCourse":     stats.serialCourse,
-		"serialSection":    stats.serialSection,
-		"elapsed":          stats.elapsed.Seconds(),
-	}
-
-	point, err := client.NewPoint(
-		"ein_ops",
-		tags,
-		fields,
-		pointTime,
-	)
-
-	uct.CheckError(err)
-
-	bp.AddPoint(point)
-
-	err = stats.influxClient.Write(bp)
-	uct.CheckError(err)
-}
-
 func audit(university string) {
-	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.Influx.Host,
-		Username: config.Influx.User,
-		Password: config.Influx.Password,
-	})
+	var err error
 
-	log.Errorln("error creating influx client", err)
+	start := time.Now()
+
+	if err != nil {
+		log.Fatalf("Error while creating the hook: %v", err)
+	}
+	// Add the hook to the standard logger.
+	auditLogger := log.New()
+	auditLogger.Hooks.Add(auditHook)
 
 	var insertions int
 	var updates int
@@ -649,56 +614,76 @@ func audit(university string) {
 	var serialSection int
 	var serialSubject int
 
+	Outerloop:
 	for {
 		select {
-		case t1 := <-insertionsCh:
-			insertions += t1
-		case t2 := <-updatesCh:
-			updates += t2
-		case t3 := <-upsertsCh:
-			upserts += t3
-		case t4 := <-existentialCh:
-			existential += t4
-		case t5 := <-subjectCountCh:
-			subjectCount += t5
-		case t6 := <-courseCountCh:
-			courseCount += t6
-		case t7 := <-sectionCountCh:
-			sectionCount += t7
-		case t8 := <-meetingCountCh:
-			meetingCount += t8
-		case t9 := <-metadataCountCh:
-			metadataCount += t9
-		case t11 := <-serialSubjectCh:
-			serialSubject += t11
-		case t12 := <-serialCourseCh:
-			serialCourse += t12
-		case t13 := <-serialSectionCh:
-			serialSection += t13
-		case <-endAudit:
-			stats := AuditStats{
-				influxClient:     influxClient,
-				uniName:          university,
-				elapsed:          time.Since(pointTime),
-				insertions:       insertions,
-				updates:          updates,
-				upserts:          upserts,
-				existential:      existential,
-				subjectCount:     subjectCount,
-				courseCount:      courseCount,
-				sectionCount:     sectionCount,
-				meetingCount:     meetingCount,
-				metadataCount:    metadataCount,
-				serialSubject:    serialSubject,
-				serialCourse:     serialCourse,
-				serialSection:    serialSection}
+		case count := <-insertionsCh:
+			insertions += count
+		case count := <-updatesCh:
+			updates += count
+		case count := <-upsertsCh:
+			upserts += count
+		case count := <-existentialCh:
+			existential += count
+		case count := <-subjectCountCh:
+			subjectCount += count
+		case count := <-courseCountCh:
+			courseCount += count
+		case count := <-sectionCountCh:
+			sectionCount += count
+		case count := <-meetingCountCh:
+			meetingCount += count
+		case count := <-metadataCountCh:
+			metadataCount += count
+		case count := <-serialSubjectCh:
+			serialSubject += count
+		case count := <-serialCourseCh:
+			serialCourse += count
+		case count := <-serialSectionCh:
+			serialSection += count
+		case <-doneAudit:
 
-			stats.log()
-			stats.audit()
+			auditLogger.WithFields(log.Fields{
+				"univerisity_name": university,
+
+				"insertions":       insertions,
+				"updates":          updates,
+				"upserts":          upserts,
+				"existential":      existential,
+				"subjectCount":     subjectCount,
+				"courseCount":      courseCount,
+				"sectionCount":     sectionCount,
+				"meetingCount":     meetingCount,
+				"metadataCount":    metadataCount,
+				"serialSubject":    serialSubject,
+				"serialCourse":     serialCourse,
+				"serialSection":    serialSection,
+				"elapsed":          time.Since(start).Seconds(),
+			}).Info("done!")
+
 			doneAudit <- true
+			break Outerloop // Break out of loop to end goroutine
 		}
 	}
 }
+
+var (
+	insertionsCh    = make(chan int)
+	updatesCh       = make(chan int)
+	upsertsCh       = make(chan int)
+	existentialCh   = make(chan int)
+	subjectCountCh  = make(chan int)
+	courseCountCh   = make(chan int)
+	sectionCountCh  = make(chan int)
+	meetingCountCh  = make(chan int)
+	metadataCountCh = make(chan int)
+
+	serialCourseCh  = make(chan int)
+	serialSectionCh = make(chan int)
+	serialSubjectCh = make(chan int)
+
+	doneAudit = make(chan bool)
+)
 
 var preparedStmts = make(map[string]*sqlx.NamedStmt)
 
@@ -873,42 +858,3 @@ type ChannelSubjects struct {
 	subjectId int64
 	courses   []uct.Course
 }
-
-type AuditStats struct {
-	influxClient     client.Client
-	uniName          string
-	elapsed          time.Duration
-	insertions       int
-	updates          int
-	upserts          int
-	existential      int
-	subjectCount     int
-	courseCount      int
-	sectionCount     int
-	meetingCount     int
-	metadataCount    int
-	serialCourse     int
-	serialSection    int
-	serialSubject    int
-}
-
-var (
-	insertionsCh    = make(chan int)
-	updatesCh       = make(chan int)
-	upsertsCh       = make(chan int)
-	existentialCh   = make(chan int)
-	subjectCountCh  = make(chan int)
-	courseCountCh   = make(chan int)
-	sectionCountCh  = make(chan int)
-	meetingCountCh  = make(chan int)
-	metadataCountCh = make(chan int)
-
-	serialCourseCh     = make(chan int)
-	serialSectionCh    = make(chan int)
-	serialSubjectCh    = make(chan int)
-
-	endAudit  = make(chan bool)
-	doneAudit  = make(chan bool)
-
-	pointTime = time.Now()
-)

@@ -53,7 +53,7 @@ func CheckUniqueSubject(subjects []*Subject) {
 		key := subject.Season + subject.Year + subject.Name
 		m[key]++
 		if m[key] > 1 {
-			log.WithFields(log.Fields{"key": key, "count": m[key]}).Info("Duplicate subject")
+			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")
 			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
 		}
 	}
@@ -70,7 +70,7 @@ func CheckUniqueCourse(subject *Subject, courses []*Course) {
 				"season": subject.Season,
 				"year":   subject.Year,
 				"key":    key,
-				"count":  m[key]}).Info("Duplicate course")
+				"count":  m[key]}).Debugln("Duplicate course")
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
 		}
 	}
