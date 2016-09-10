@@ -15,6 +15,7 @@ import (
 	"uct/servers"
 	"github.com/vlad-doru/influxus"
 	"github.com/influxdata/influxdb/client/v2"
+	"uct/influxdb"
 )
 
 var (
@@ -37,6 +38,7 @@ func main() {
 	}
 
 	config = uct.NewConfig(*configFile)
+	config.AppName = app.Name
 
 	// Start profiling
 	go uct.StartPprof(config.GetDebugSever(app.Name))
@@ -126,11 +128,7 @@ var (
 func initInflux() {
 	var err error
 	// Create the InfluxDB client.
-	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.GetInfluxAddr(),
-		Password: config.InfluxDb.Password,
-		Username: config.InfluxDb.User,
-	})
+	influxClient, err = influxdbhelper.GetClient(config)
 
 	if err != nil {
 		log.Fatalf("Error while creating the client: %v", err)
