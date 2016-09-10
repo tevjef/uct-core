@@ -49,9 +49,9 @@ func main() {
 	uct.CheckError(err)
 
 	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     config.Influx.Host,
-		Username: config.Influx.User,
-		Password: config.Influx.Password,
+		Addr:     config.InfluxDb.Host,
+		Username: config.InfluxDb.User,
+		Password: config.InfluxDb.Password,
 	})
 	if err != nil {
 		log.Fatalln("Failed to open influx databse connection. %s", err)
