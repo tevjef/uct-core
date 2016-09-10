@@ -3,7 +3,6 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/contrib/cache"
-	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -62,7 +61,7 @@ func main() {
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.Use(ginrus.Ginrus(auditLogger, time.RFC3339, true))
+	r.Use(servers.Ginrus(auditLogger, time.RFC3339, true))
 
 	// Json
 	v1 := r.Group("/v1")
