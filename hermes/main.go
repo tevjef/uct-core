@@ -132,7 +132,7 @@ func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotificat
 		return
 	}
 
-	log.WithFields(log.Fields{"success": httpResponse.Success, "topic": httpMessage.To, "message_id": httpResponse.MessageId, "error":httpResponse.Error, "failure":httpResponse.Failure}).Infoln("fcm_response")
+	auditLogger.WithFields(log.Fields{"success": httpResponse.Success, "topic": httpMessage.To, "message_id": httpResponse.MessageId, "error":httpResponse.Error, "failure":httpResponse.Failure}).Infoln("fcm_response")
 	// Print GCM errors, but don't panic
 	if httpResponse.Error != "" {
 		return fmt.Errorf(httpResponse.Error)
