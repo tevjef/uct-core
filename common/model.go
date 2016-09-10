@@ -293,6 +293,8 @@ func (section *Section) Validate(course *Course) {
 	// Status
 	if section.Status == "" {
 		log.Panic("Status == is empty")
+	} else if strings.ToLower(section.Status) != "open" && strings.ToLower(section.Status) != "closed" {
+		log.Panicf("Status != open || status != closed status=%s", section.Status)
 	}
 
 	// Max
