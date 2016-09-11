@@ -1,11 +1,12 @@
 version: '2'
 services:
   nginx-proxy:
-    image: jwilder/nginx-proxy
+    image: tevjef/uct-core:nginx-proxy
     container_name: nginx-proxy
     ports:
       - "80:80"
       - "443:443"
+      - "8090:8090"
     volumes:
       - /etc/nginx/certs:/etc/nginx/certs:ro
       - /etc/nginx/vhost.d
@@ -57,6 +58,17 @@ services:
     ports:
       - "8086:8086"
       - "8083:8083"
+    volumes:
+      - /var/lib/influxdb:/var/lib/influxdb
+
+  telegraf:
+      image: tevjef/uct-core:telegraf
+      volumes:
+        - /telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      links:
+        - db
+        - redis
+        - influxdb
 
   ein:
     image: 'tevjef/uct-core:ein'
