@@ -41,14 +41,18 @@ hermes:
   restart: always
   tags:
     - develop
+
 influxdb:
-  image: 'influxdb:alpine'
-  ports:
-    - '8083:8083'
-    - '8086:8086'
+  image: influxdb:alpine
   restart: always
+  ports:
+    - "8086:8086"
+    - "8083:8083"
+  volumes:
+    - /var/lib/influxdb:/var/lib/influxdb
   tags:
     - develop
+
 letsencrypt-nginx-proxy:
   image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
   tags:
@@ -59,7 +63,7 @@ letsencrypt-nginx-proxy:
   volumes_from:
     - nginx-proxy
 nginx-proxy:
-  image: 'jwilder/nginx-proxy:latest'
+  image: 'tevjef/uct-core:nginx-proxy'
   ports:
     - '80:80'
     - '443:443'
@@ -111,7 +115,7 @@ spike:
     - db
     - influxdb
     - redis
-  ports:
+  expose:
     - '9876'
   restart: always
   tags:
