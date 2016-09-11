@@ -1,26 +1,5 @@
 version: '2'
 services:
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /etc/nginx/certs:/etc/nginx/certs:ro
-      - /etc/nginx/vhost.d
-      - /usr/share/nginx/html
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-
-  letsencrypt-nginx-proxy:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: letsencrypt-nginx-proxy
-    volumes:
-      - /etc/nginx/certs:/etc/nginx/certs:rw
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    volumes_from:
-      - nginx-proxy
-
   db:
     image: tevjef/uct-core:postgres
     restart: always
@@ -33,11 +12,15 @@ services:
     volumes:
       - /var/lib/uct/postgresql:/var/lib/postgresql
 
-  redis:
-    image: redis:alpine
+  ein:
+    image: 'tevjef/uct-core:ein'
+    links:
+      - db
+      - redis
+      - influxdb
     restart: always
-    ports:
-      - "6379:6379"
+    tags:
+      - develop
 
   grafana:
     image: grafana/grafana
@@ -51,23 +34,74 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
 
+  hermes:
+    image: tevjef/uct-core:hermes
+    restart: always
+    depends_on:
+      - db
+    links:
+      - db
+      - influxdb
+
   influxdb:
     image: influxdb:alpine
     restart: always
     ports:
       - "8086:8086"
       - "8083:8083"
+    volumes:
+      - /var/lib/influxdb:/var/lib/influxdb
 
-  ein:
-    image: 'tevjef/uct-core:ein'
-    links:
-      - db
-      - redis
-      - influxdb
+  letsencrypt-nginx-proxy:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: letsencrypt-nginx-proxy
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+
+  nginx-proxy:
+    image: tevjef/uct-core:nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8090:8090"
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  redis:
+    image: redis:alpine
     restart: always
-    tags:
-      - develop
+    ports:
+      - "6379:6379"
 
+  rutgers-cm:
+      image: tevjef/uct-core:rutgers-cm
+      restart: always
+      depends_on:
+        - redis
+      links:
+        - redis
+  rutgers-nb:
+    image: tevjef/uct-core:rutgers-nb
+    restart: always
+    depends_on:
+      - redis
+    links:
+      - redis
+
+  rutgers-nk:
+    image: tevjef/uct-core:rutgers-nk
+    restart: always
+    depends_on:
+      - redis
+    links:
+      - redis
   spike:
     restart: always
     depends_on:
@@ -86,33 +120,11 @@ services:
       - LETSENCRYPT_HOST=coursetrakr.io
       - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
 
-  hermes:
-    image: tevjef/uct-core:hermes
-    restart: always
-    depends_on:
-      - db
-    links:
-      - db
-      - influxdb
-
-  rutgers-cm:
-      image: tevjef/uct-core:rutgers-cm
-      restart: always
-      depends_on:
-        - redis
+  telegraf:
+      image: tevjef/uct-core:telegraf
+      volumes:
+        - /telegraf.conf:/etc/telegraf/telegraf.conf:ro
       links:
+        - db
         - redis
-  rutgers-nb:
-        image: tevjef/uct-core:rutgers-nb
-        restart: always
-        depends_on:
-          - redis
-        links:
-          - redis
-  rutgers-nk:
-        image: tevjef/uct-core:rutgers-nk
-        restart: always
-        depends_on:
-          - redis
-        links:
-          - redis
+        - influxdb

@@ -1,0 +1,129 @@
+db:
+  image: 'tevjef/uct-core:postgres'
+  environment:
+    - POSTGRES_DB=universityct
+    - POSTGRES_PASSWORD=WisrocLinden1
+    - POSTGRES_USER=uct
+  ports:
+    - '5432:5432'
+  restart: always
+  tags:
+    - develop
+  volumes:
+    - '/var/lib/uct/postgresql:/var/lib/postgresql'
+ein:
+  image: 'tevjef/uct-core:ein'
+  links:
+    - db
+    - influxdb
+    - redis
+  restart: always
+  tags:
+    - develop
+grafana:
+  image: 'grafana/grafana:latest'
+  environment:
+    - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
+  links:
+    - influxdb
+  ports:
+    - '3000:3000'
+  restart: always
+  tags:
+    - develop
+  volumes:
+    - '/var/lib/grafana:/var/lib/grafana'
+hermes:
+  image: 'tevjef/uct-core:hermes'
+  links:
+    - db
+    - influxdb
+  restart: always
+  tags:
+    - develop
+influxdb:
+  image: 'influxdb:alpine'
+  ports:
+    - '8083:8083'
+    - '8086:8086'
+  restart: always
+  tags:
+    - develop
+letsencrypt-nginx-proxy:
+  image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
+  tags:
+    - develop
+  volumes:
+    - '/etc/nginx/certs:/etc/nginx/certs'
+    - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  volumes_from:
+    - nginx-proxy
+nginx-proxy:
+  image: 'jwilder/nginx-proxy:latest'
+  ports:
+    - '80:80'
+    - '443:443'
+    - "8090:8090"
+  tags:
+    - develop
+  volumes:
+    - '/etc/nginx/certs:/etc/nginx/certs:ro'
+    - /etc/nginx/vhost.d
+    - /usr/share/nginx/html
+    - '/var/run/docker.sock:/tmp/docker.sock:ro'
+
+redis:
+  image: 'redis:alpine'
+  restart: always
+  tags:
+    - develop
+rutgers-cm:
+  image: 'tevjef/uct-core:rutgers-cm'
+  links:
+    - redis
+  mem_limit: 40m
+  restart: always
+  tags:
+    - develop
+rutgers-nb:
+  image: 'tevjef/uct-core:rutgers-nb'
+  links:
+    - redis
+  mem_limit: 90m
+  restart: always
+  tags:
+    - develop
+rutgers-nk:
+  image: 'tevjef/uct-core:rutgers-nk'
+  links:
+    - redis
+  mem_limit: 40m
+  restart: always
+  tags:
+    - develop
+spike:
+  image: 'tevjef/uct-core:spike'
+  environment:
+    - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
+    - LETSENCRYPT_HOST=coursetrakr.io
+    - 'VIRTUAL_HOST=coursetrakr.io,foreman.tevindev.me'
+  links:
+    - db
+    - influxdb
+    - redis
+  ports:
+    - '9876'
+  restart: always
+  tags:
+    - develop
+
+telegraf:
+  image: tevjef/uct-core:telegraf
+  volumes:
+    - /telegraf.conf:/etc/telegraf/telegraf.conf:ro
+  links:
+    - db
+    - redis
+    - influxdb
+  tags:
+    - develop
