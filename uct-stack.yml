@@ -59,7 +59,7 @@ influxdb:
     - LETSENCRYPT_HOST=influxdb.coursetrakr.io
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
     - INFLUXDB_HTTP_AUTH_ENABLED=true
-    - UCT_INFLUXDB_PASS=WisrocLinden1_influx
+    - UCT_INFLUXDB_PASSWORD=WisrocLinden1_influx
 
 letsencrypt-nginx-proxy:
   image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
