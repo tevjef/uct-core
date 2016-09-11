@@ -23,5 +23,6 @@ RUN apk update && \
 WORKDIR /go/src/uct
 
 ENTRYPOINT ["ein"]
+EXPOSE 13100
 
 CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf"]
