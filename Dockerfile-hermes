@@ -23,5 +23,6 @@ RUN apk update && \
 WORKDIR /go/src/uct
 
 ENTRYPOINT ["hermes"]
+EXPOSE 13200
 
 CMD ["-c" , "/go/src/uct/common/config.toml", "-d"]

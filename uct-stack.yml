@@ -22,14 +22,17 @@ ein:
     - develop
 grafana:
   image: 'grafana/grafana:latest'
+  links:
+    - influxdb
+  restart: always
   environment:
+    - GF_USERS_ALLOW_SIGN_UP=false
+    - GF_USERS_ALLOW_ORG_CREATE=false
+    - GF_SERVER_ROOT_URL=https://grafana.coursetrakr.io
     - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
     - VIRTUAL_HOST=grafana.coursetrakr.io
     - LETSENCRYPT_HOST=grafana.coursetrakr.io
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
-  links:
-    - influxdb
-  restart: always
   tags:
     - develop
   volumes:
@@ -46,9 +49,6 @@ hermes:
 influxdb:
   image: influxdb:alpine
   restart: always
-  ports:
-    - "8086"
-    - "8083"
   volumes:
     - /var/lib/influxdb:/var/lib/influxdb
   tags:
@@ -58,6 +58,7 @@ influxdb:
     - VIRTUAL_HOST=influxdb.coursetrakr.io
     - LETSENCRYPT_HOST=influxdb.coursetrakr.io
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
+    - INFLUXDB_HTTP_AUTH_ENABLED=true
 
 letsencrypt-nginx-proxy:
   image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
@@ -73,7 +74,7 @@ nginx-proxy:
   ports:
     - '80:80'
     - '443:443'
-    - "8090:8090"
+    - "8090"
   tags:
     - develop
   volumes:
@@ -121,8 +122,6 @@ spike:
     - db
     - influxdb
     - redis
-  expose:
-    - '9876'
   restart: always
   tags:
     - develop
