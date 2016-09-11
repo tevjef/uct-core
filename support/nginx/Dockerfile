@@ -1,3 +1,4 @@
 FROM jwilder/nginx-proxy
 
-COPY . /etc/nginx/conf.d/
+COPY *.conf /etc/nginx/conf.d/
+COPY htpasswd/ /etc/nginx/htpasswd/

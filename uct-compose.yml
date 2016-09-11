@@ -28,11 +28,14 @@ services:
     links:
       - influxdb
     ports:
-      - "3000:3000"
+      - "3000"
     volumes:
       - /var/lib/grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
+      - VIRTUAL_HOST=grafana.coursetrakr.io
+      - LETSENCRYPT_HOST=grafana.coursetrakr.io
+      - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
 
   hermes:
     image: tevjef/uct-core:hermes
@@ -47,10 +50,15 @@ services:
     image: influxdb:alpine
     restart: always
     ports:
-      - "8086:8086"
-      - "8083:8083"
+      - "8086"
+      - "8083"
     volumes:
       - /var/lib/influxdb:/var/lib/influxdb
+    environment:
+      - VIRTUAL_PORT=8083
+      - VIRTUAL_HOST=influxdb.coursetrakr.io
+      - LETSENCRYPT_HOST=influxdb.coursetrakr.io
+      - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
 
   letsencrypt-nginx-proxy:
     image: jrcs/letsencrypt-nginx-proxy-companion
