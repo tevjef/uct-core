@@ -126,3 +126,5 @@ services:
         - db
         - redis
         - influxdb
+      volumes:
+        - '/var/run/docker.sock:/tmp/docker.sock:ro'
