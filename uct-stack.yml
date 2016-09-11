@@ -127,5 +127,8 @@ telegraf:
     - db
     - redis
     - influxdb
+  volumes:
+    - '/var/run/docker.sock:/tmp/docker.sock:ro'
+    - '/var/run/utmp:/var/run/utmp:ro'
   tags:
     - develop
