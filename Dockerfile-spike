@@ -22,6 +22,9 @@ RUN apk update && \
 
 WORKDIR /go/src/uct
 
+EXPOSE 9876
+EXPOSE 13400
+
 ENTRYPOINT ["spike"]
 
 CMD ["-c" , "/go/src/uct/common/config.toml"]
