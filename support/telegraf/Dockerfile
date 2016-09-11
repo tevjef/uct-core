@@ -1,3 +1,3 @@
 FROM telegraf:alpine
 
-COPY telegraf.conf /
+COPY telegraf.conf /telegraf.conf
