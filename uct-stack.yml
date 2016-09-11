@@ -54,7 +54,7 @@ influxdb:
   tags:
     - develop
   environment:
-    - VIRTUAL_PORT=8083
+    - VIRTUAL_PORT=8086
     - VIRTUAL_HOST=influxdb.coursetrakr.io
     - LETSENCRYPT_HOST=influxdb.coursetrakr.io
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
@@ -75,6 +75,7 @@ nginx-proxy:
   ports:
     - '80:80'
     - '443:443'
+  expose:
     - "8090"
   tags:
     - develop
