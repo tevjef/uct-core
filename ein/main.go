@@ -154,8 +154,6 @@ func main() {
 
 					// Log bytes received
 					auditLogger.WithFields(log.Fields{"bytes": len(raw), "university_name":university.TopicName}).Info(latestData)
-					auditLogger.WithFields(log.Fields{"bytes": len(oldRaw), "university_name":university.TopicName}).Info(oldData)
-
 
 					doneAudit <- true
 					<-doneAudit
