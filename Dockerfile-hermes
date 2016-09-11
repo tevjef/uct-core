@@ -2,6 +2,9 @@ FROM golang:1.7.1-alpine
 
 COPY . /go/src/uct
 
+ENV APP_PACKAGE="uct/hermes"
+ENV APP_NAME="hermes"
+
 RUN apk update && \
     apk add ca-certificates && \
     update-ca-certificates && \
@@ -12,7 +15,10 @@ RUN apk update && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
     glide install && \
-    go install -v uct/hermes
+    go install -v ${APP_PACKAGE} && \
+    rm -rf *.tar.gz* && \
+    apk del git && \
+    apk del openssl
 
 WORKDIR /go/src/uct
 
