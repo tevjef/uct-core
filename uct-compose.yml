@@ -122,8 +122,6 @@ services:
 
   telegraf:
       image: tevjef/uct-core:telegraf
-      volumes:
-        - /telegraf.conf:/etc/telegraf/telegraf.conf:ro
       links:
         - db
         - redis
