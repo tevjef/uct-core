@@ -21,5 +21,6 @@ RUN apk update && \
     apk del openssl
 
 WORKDIR /go/src/uct
+EXPOSE 13301
 
 ENTRYPOINT ["rutgers", "--campus", "NK", "--daemon", "2m", "--latest", "-f" , "protobuf", "-c" , "/go/src/uct/common/config.toml"]
