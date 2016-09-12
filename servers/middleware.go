@@ -123,7 +123,7 @@ func Ginrus(logger *logrus.Logger, timeFormat string, utc bool) gin.HandlerFunc 
 			"method":     c.Request.Method,
 			"path":       path,
 			"ip":         c.ClientIP(),
-			"elapsed":    latency.Seconds(),
+			"elapsed":    latency.Seconds()*1e3,
 			"latency":    latency,
 			"user-agent": c.Request.UserAgent(),
 			"time":       end.Format(timeFormat),
