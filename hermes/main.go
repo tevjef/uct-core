@@ -221,7 +221,7 @@ func initInflux() {
 			DefaultMeasurement: "hermes_ops",
 			BatchSize:          1, // default is 100
 			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"university_name"},
+			Tags:               []string{"university_name", "status"},
 			Precision: "ms",
 		})
 
