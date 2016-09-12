@@ -22,17 +22,17 @@ ein:
     - develop
 grafana:
   image: 'grafana/grafana:latest'
+  environment:
+    - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
+    - 'GF_SERVER_ROOT_URL=https://grafana.coursetrakr.io'
+    - GF_USERS_ALLOW_ORG_CREATE=false
+    - GF_USERS_ALLOW_SIGN_UP=false
+    - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
+    - LETSENCRYPT_HOST=grafana.coursetrakr.io
+    - VIRTUAL_HOST=grafana.coursetrakr.io
   links:
     - influxdb
   restart: always
-  environment:
-    - GF_USERS_ALLOW_SIGN_UP=false
-    - GF_USERS_ALLOW_ORG_CREATE=false
-    - GF_SERVER_ROOT_URL=https://grafana.coursetrakr.io
-    - GF_SECURITY_ADMIN_PASSWORD=WisrocLinden1
-    - VIRTUAL_HOST=grafana.coursetrakr.io
-    - LETSENCRYPT_HOST=grafana.coursetrakr.io
-    - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
   tags:
     - develop
   volumes:
@@ -45,22 +45,23 @@ hermes:
   restart: always
   tags:
     - develop
-
 influxdb:
-  image: influxdb:alpine
-  restart: always
-  volumes:
-    - /var/lib/influxdb:/var/lib/influxdb
-  tags:
-    - develop
+  image: 'influxdb:alpine'
   environment:
-    - VIRTUAL_PORT=8086
-    - VIRTUAL_HOST=influxdb.coursetrakr.io
-    - LETSENCRYPT_HOST=influxdb.coursetrakr.io
-    - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
     - INFLUXDB_HTTP_AUTH_ENABLED=true
     - UCT_INFLUXDB_PASSWORD=WisrocLinden1_influx
-
+    - VIRTUAL_HOST=influxdb.coursetrakr.io
+    - VIRTUAL_PORT=8083
+  ports:
+    - '8083:8083'
+    - '8086:8086'
+  restart: always
+  volumes:
+    - '/etc/nginx/certs/influxdb.coursetrakr.io.dhparam.pem'
+  tags:
+    - develop
+  volumes:
+    - '/var/lib/influxdb:/var/lib/influxdb'
 letsencrypt-nginx-proxy:
   image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
   tags:
@@ -72,11 +73,11 @@ letsencrypt-nginx-proxy:
     - nginx-proxy
 nginx-proxy:
   image: 'tevjef/uct-core:nginx-proxy'
+  expose:
+    - '8090'
   ports:
     - '80:80'
     - '443:443'
-  expose:
-    - "8090"
   tags:
     - develop
   volumes:
@@ -84,7 +85,6 @@ nginx-proxy:
     - /etc/nginx/vhost.d
     - /usr/share/nginx/html
     - '/var/run/docker.sock:/tmp/docker.sock:ro'
-
 redis:
   image: 'redis:alpine'
   restart: always
@@ -120,6 +120,7 @@ spike:
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
     - LETSENCRYPT_HOST=coursetrakr.io
     - 'VIRTUAL_HOST=coursetrakr.io,foreman.tevindev.me'
+    - VIRTUAL_PORT=9876
   links:
     - db
     - influxdb
@@ -127,15 +128,14 @@ spike:
   restart: always
   tags:
     - develop
-
 telegraf:
-  image: tevjef/uct-core:telegraf
+  image: 'tevjef/uct-core:telegraf'
   links:
     - db
-    - redis
     - influxdb
+    - redis
+  tags:
+    - develop
   volumes:
     - '/var/run/docker.sock:/tmp/docker.sock:ro'
     - '/var/run/utmp:/var/run/utmp:ro'
-  tags:
-    - develop

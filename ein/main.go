@@ -153,7 +153,7 @@ func main() {
 					app.updateSerial(*newUniversity)
 
 					// Log bytes received
-					auditLogger.WithFields(log.Fields{"bytes": len(raw), "university_name":university.TopicName}).Info(latestData)
+					auditLogger.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name":university.TopicName}).Info(latestData)
 
 					doneAudit <- true
 					<-doneAudit
