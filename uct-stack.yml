@@ -1,3 +1,12 @@
+blog:
+  image: ghost
+  restart: always
+  volume:
+    - /var/lib/ghost:/var/lib/ghost
+  environment:
+    - VIRTUAL_HOST=blog.coursetrakr.io
+    - LETSENCRYPT_HOST=blog.coursetrakr.io
+    - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
 db:
   image: 'tevjef/uct-core:postgres'
   environment:
@@ -118,8 +127,8 @@ spike:
   image: 'tevjef/uct-core:spike'
   environment:
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
-    - LETSENCRYPT_HOST=coursetrakr.io
-    - 'VIRTUAL_HOST=coursetrakr.io,foreman.tevindev.me'
+    - LETSENCRYPT_HOST=api.coursetrakr.io
+    - 'VIRTUAL_HOST=api.coursetrakr.io,foreman.tevindev.me'
     - VIRTUAL_PORT=9876
   links:
     - db
