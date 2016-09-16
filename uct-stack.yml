@@ -1,12 +1,24 @@
 blog:
-  image: ghost
+  image: gold/ghost
   restart: always
-  volume:
-    - /var/lib/ghost:/var/lib/ghost
+  volumes:
+    - '/var/lib/ghost:/var/lib/ghost'
   environment:
+    - NODE_ENV=production
+    - GHOST_URL=https://blog.coursetrakr.io/
+    - MAIL_FROM='"Staff" <staff@mail.coursetrakr.io>'
+    - MAIL_HOST=mail.coursetrakr.io
+    - PROD_FORCE_ADMIN_SSL=true
+    - MAIL_SSL=true
+    - MAIL_PORT=465
+    - MAIL_USERNAME=ghost@coursetrakr.io
+    - MAIL_PASSWORD=WisrocLinden1
     - VIRTUAL_HOST=blog.coursetrakr.io
     - LETSENCRYPT_HOST=blog.coursetrakr.io
     - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
+  tags:
+    - production
+
 db:
   image: 'tevjef/uct-core:postgres'
   environment:
@@ -17,7 +29,7 @@ db:
     - '5432:5432'
   restart: always
   tags:
-    - develop
+    - production
   volumes:
     - '/var/lib/uct/postgresql:/var/lib/postgresql'
 ein:
@@ -28,7 +40,7 @@ ein:
     - redis
   restart: always
   tags:
-    - develop
+    - production
 grafana:
   image: 'grafana/grafana:latest'
   environment:
@@ -43,7 +55,7 @@ grafana:
     - influxdb
   restart: always
   tags:
-    - develop
+    - production
   volumes:
     - '/var/lib/grafana:/var/lib/grafana'
 hermes:
@@ -53,7 +65,7 @@ hermes:
     - influxdb
   restart: always
   tags:
-    - develop
+    - production
 influxdb:
   image: 'influxdb:alpine'
   environment:
@@ -65,16 +77,16 @@ influxdb:
     - '8083:8083'
     - '8086:8086'
   restart: always
-  volumes:
-    - '/etc/nginx/certs/influxdb.coursetrakr.io.dhparam.pem'
   tags:
-    - develop
+    - production
   volumes:
     - '/var/lib/influxdb:/var/lib/influxdb'
+
+
 letsencrypt-nginx-proxy:
   image: 'jrcs/letsencrypt-nginx-proxy-companion:latest'
   tags:
-    - develop
+    - production
   volumes:
     - '/etc/nginx/certs:/etc/nginx/certs'
     - '/var/run/docker.sock:/var/run/docker.sock:ro'
@@ -88,7 +100,7 @@ nginx-proxy:
     - '80:80'
     - '443:443'
   tags:
-    - develop
+    - production
   volumes:
     - '/etc/nginx/certs:/etc/nginx/certs:ro'
     - /etc/nginx/vhost.d
@@ -98,7 +110,7 @@ redis:
   image: 'redis:alpine'
   restart: always
   tags:
-    - develop
+    - production
 rutgers-cm:
   image: 'tevjef/uct-core:rutgers-cm'
   links:
@@ -106,7 +118,7 @@ rutgers-cm:
   mem_limit: 40m
   restart: always
   tags:
-    - develop
+    - production
 rutgers-nb:
   image: 'tevjef/uct-core:rutgers-nb'
   links:
@@ -114,7 +126,7 @@ rutgers-nb:
   mem_limit: 90m
   restart: always
   tags:
-    - develop
+    - production
 rutgers-nk:
   image: 'tevjef/uct-core:rutgers-nk'
   links:
@@ -122,7 +134,7 @@ rutgers-nk:
   mem_limit: 40m
   restart: always
   tags:
-    - develop
+    - production
 spike:
   image: 'tevjef/uct-core:spike'
   environment:
@@ -136,7 +148,7 @@ spike:
     - redis
   restart: always
   tags:
-    - develop
+    - production
 telegraf:
   image: 'tevjef/uct-core:telegraf'
   links:
@@ -144,7 +156,7 @@ telegraf:
     - influxdb
     - redis
   tags:
-    - develop
+    - production
   volumes:
     - '/var/run/docker.sock:/tmp/docker.sock:ro'
     - '/var/run/utmp:/var/run/utmp:ro'

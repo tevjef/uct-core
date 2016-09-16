@@ -1,11 +1,20 @@
 version: '2'
 services:
   blog:
-    image: ghost
+    image: gold/ghost
     restart: always
-    volume:
-      - /var/lib/ghost:/var/lib/ghost
+    volumes:
+      - '/var/lib/ghost:/var/lib/ghost'
     environment:
+      - NODE_ENV=production
+      - GHOST_URL=https://blog.coursetrakr.io/
+      - MAIL_FROM='"Staff" <staff@mail.coursetrakr.io>'
+      - MAIL_HOST=mail.coursetrakr.io
+      - PROD_FORCE_ADMIN_SSL=true
+      - MAIL_SSL=true
+      - MAIL_PORT=465
+      - MAIL_USERNAME=ghost@coursetrakr.io
+      - MAIL_PASSWORD=WisrocLinden1
       - VIRTUAL_HOST=blog.coursetrakr.io
       - LETSENCRYPT_HOST=blog.coursetrakr.io
       - LETSENCRYPT_EMAIL=tev.jeffrey@gmail.com
