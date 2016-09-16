@@ -1,5 +1,5 @@
-hash: 758b4a3b04b5d1ce46d01894196af028ea7fb4ae95c522fe2bf2276bbb937de2
-updated: 2016-07-30T02:43:19.2288628-04:00
+hash: d6ff5746a13a36d457db66fee04e21990d0f51fe2fc7788754988828552c4f67
+updated: 2016-09-10T01:16:19.91137935-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -10,11 +10,13 @@ imports:
 - name: github.com/andybalholm/cascadia
   version: 3ad29d1ad1c4f2023e355603324348cf1f4b2d48
 - name: github.com/boltdb/bolt
-  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/bradfitz/gomemcache
   version: fb1f79c6b65acda83063cbc69f6bba1522558bfc
   subpackages:
   - memcache
+- name: github.com/BurntSushi/toml
+  version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/garyburd/redigo
   version: b8dc90050f24c1a73a52f107f3f575be67b21b7c
   subpackages:
@@ -36,7 +38,7 @@ imports:
   - proto
   - jsonpb
 - name: github.com/influxdata/influxdb
-  version: 30efa2d922babde5ccbdf09960e510c0de5e0bcb
+  version: 37992377a55fbc138b2c01edd4deffed64b53989
   subpackages:
   - client/v2
   - models
@@ -68,13 +70,17 @@ imports:
   - fflib/v1
   - fflib/v1/internal
 - name: github.com/PuerkitoBio/goquery
-  version: 7f4291566cf7cac3be222a933e01a2bed97532b1
+  version: 56a198aba89cdf7a612e6c762eff9d788b9f2dae
 - name: github.com/robfig/go-cache
   version: 9fc39e0dbf62c034ec4e45e6120fc69433a3ec51
+- name: github.com/satori/go.uuid
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/go-gcm
   version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
+- name: github.com/vlad-doru/influxus
+  version: 2a7a59926db4661bcdc39c50a5ab0fdc654a885a
 - name: golang.org/x/exp
   version: 3c4824dd1cddf3c4eae78613f4a5caf2caf17675
   subpackages:
@@ -90,12 +96,23 @@ imports:
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: e5900212cbf65b181d3d8e08308ef06a01d117cf
+  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
 - name: gopkg.in/bluesuncorp/validator.v5
   version: d5acf1dac43705f8bfbb71d878e290e2bed3950b
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
+- name: gopkg.in/redis.v4
+  version: 49f197e6d11de35192fce19b2b9fd2f9b8b13c4a
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/errors
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 testImports:
 - name: github.com/davecgh/go-spew
-  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib

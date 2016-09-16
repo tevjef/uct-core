@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -14,9 +13,15 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	rs "uct/redis/sync"
 	"time"
 	uct "uct/common"
 	"io/ioutil"
+	"uct/redis"
+	"github.com/satori/go.uuid"
+	"errors"
+	"github.com/pquerna/ffjson/ffjson"
+	rutgers "uct/scrapers/rutgers/model"
 )
 
 var (
@@ -25,22 +30,156 @@ var (
 
 var (
 	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('c').PlaceHolder("[CM, NK, NB]").Required().String()
+	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
 	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	server  = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.RUTGERS_DEBUG_SERVER).TCP()
+	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
+	daemonFile = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
+	latest = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config uct.Config
+	wrapper *v1.RedisWrapper
+	rsync *rs.RedisSync
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+	campus := strings.ToLower(*campus)
+	app.Name = app.Name + "-" + campus
 
 	if *format != uct.JSON && *format != uct.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
-	// Start profiling
-	go uct.StartPprof(*server)
+	isDaemon := *daemonInterval > 0
+	// Parse configuration file
+	config = uct.NewConfig(*configFile)
+	config.AppName = app.Name
 
+	// Start profiling
+	go uct.StartPprof(config.GetDebugSever(app.Name))
+
+	// Channel to send scraped data on
+	resultChan := make(chan uct.University)
+
+	// Runs at regular intervals
+	if isDaemon {
+		go startDaemon(resultChan, make(chan bool))
+	} else {
+		go func() {
+			entryPoint(resultChan)
+			close(resultChan)
+		}()
+	}
+
+	var school uct.University
+	var reader *bytes.Reader
+
+	for school = range resultChan {
+		reader = uct.MarshalMessage(*format, school)
+
+		// Push to redis
+		if isDaemon {
+			pushToRedis(reader)
+		}
+
+		if *daemonFile != "" {
+			if data, err := ioutil.ReadAll(reader); err != nil {
+				uct.CheckError(err)
+			} else {
+				fileName := *daemonFile +  "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
+				log.Debugln("Writing file", fileName)
+				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
+					uct.CheckError(err)
+				}
+			}
+		}
+	}
+
+	// Runs when the channel closes, the channel will not close in daemon mode
+	io.Copy(os.Stdout, reader)
+}
+
+func pushToRedis(reader *bytes.Reader) {
+	if data, err := ioutil.ReadAll(reader); err != nil {
+		uct.CheckError(err)
+	} else {
+		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
+			log.Panicln(errors.New("failed to connect to redis server"))
+		}
+
+		if _, err := wrapper.LPushNotExist(v1.BaseNamespace + ":queue", wrapper.NameSpace); err != nil {
+			log.Panicln(errors.New("failed to queue univeristiy for upload"))
+		}
+	}
+}
+
+func startDaemon(result chan uct.University, cancel chan bool) {
+	// Override cli arg with environment variable
+	if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
+		if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
+			uct.CheckError(err)
+		} else if interval > 0 {
+			daemonInterval = &interval
+		}
+	}
+
+	// Start redis client
+	wrapper = v1.New(config, app.Name)
+	rsync = rs.New(wrapper, *daemonInterval, uuid.NewV4().String())
+
+	offsetChan := rsync.Sync(make(chan bool))
+
+	var cancelPrev chan bool
+	for {
+		select {
+		case offset := <-offsetChan:
+			// No need to cancel the previous go routine, there isn't one
+			if cancelPrev != nil {
+				cancelPrev <- true
+			}
+			cancelPrev = make(chan bool)
+			go func(cancelPrev chan bool) {
+				secondsTilNextMinute := time.Duration(60 - time.Now().Second()) * time.Second
+				// Sleeps until the next minute + the calculated offset
+				dur := secondsTilNextMinute + offset
+				log.Debugln("Sleeping to syncronize for", dur.String())
+
+				innerDaemonStopper := make(chan bool, 1)
+
+				syncTimer := time.AfterFunc(dur, func() {
+					log.Debugln("Ticker for", daemonInterval.String())
+					ticker := time.NewTicker(*daemonInterval)
+
+					// Label this loop so that we can break out of it to let the go routine complete
+					innerDaemon:for {
+						select {
+						case <-ticker.C:
+							go entryPoint(result)
+						case <-innerDaemonStopper:
+							log.Debugln("New offset received, cancelling old ticker")
+						    // Clean up then break
+							ticker.Stop()
+							close(innerDaemonStopper)
+							break innerDaemon
+						}
+					}
+
+				})
+
+				<-cancelPrev
+				log.Debugln("Cancelling previous ticker")
+				innerDaemonStopper <- true
+
+				// Stop timer if it has not stopped already
+				syncTimer.Stop()
+			}(cancelPrev)
+		}
+	}
+
+}
+
+func entryPoint(result chan uct.University) {
 	var school uct.University
 
 	campus := strings.ToUpper(*campus)
@@ -53,11 +192,11 @@ func main() {
 	} else {
 		log.Fatalln("Invalid campus code:", campus)
 	}
-	io.Copy(os.Stdout, uct.MarshalMessage(*format, school))
+
+	result <- school
 }
 
 func getCampus(campus string) uct.University {
-
 	var university uct.University
 
 	university = uct.University{
@@ -149,7 +288,18 @@ func getCampus(campus string) uct.University {
 	}
 
 	university.ResolvedSemesters = uct.ResolveSemesters(time.Now(), university.Registrations)
-	Semesters := [3]*uct.Semester{university.ResolvedSemesters.Last, university.ResolvedSemesters.Current, university.ResolvedSemesters.Next}
+
+	Semesters := []*uct.Semester{
+		university.ResolvedSemesters.Last,
+		university.ResolvedSemesters.Current,
+		university.ResolvedSemesters.Next}
+
+	if *latest {
+		Semesters = []*uct.Semester{
+			university.ResolvedSemesters.Current,
+			university.ResolvedSemesters.Next}
+	}
+
 	for _, ThisSemester := range Semesters {
 		if ThisSemester.Season == uct.WINTER {
 			ThisSemester.Year += 1
@@ -160,13 +310,17 @@ func getCampus(campus string) uct.University {
 		subjects := getSubjects(ThisSemester, campus)
 
 		var wg sync.WaitGroup
+
+		sem := make(chan int, 10)
 		for i := range subjects {
 			wg.Add(1)
-			go func(sub *RSubject) {
+			go func(sub *rutgers.RSubject) {
 				defer func() {
 					wg.Done()
 				}()
+				sem <- 1
 				courses := getCourses(sub.Number, campus, ThisSemester)
+				<- sem
 				for j := range courses {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
@@ -175,6 +329,12 @@ func getCampus(campus string) uct.University {
 
 		}
 		wg.Wait()
+
+		// Filter subjects that don't have a course
+		subjects = rutgers.FilterSubjects(subjects, func(subject rutgers.RSubject) bool {
+			return len(subject.Courses) > 0
+		})
+
 		for _, subject := range subjects {
 			newSubject := &uct.Subject{
 				Name:   subject.Name,
@@ -185,17 +345,17 @@ func getCampus(campus string) uct.University {
 				newCourse := &uct.Course{
 					Name:     course.ExpandedTitle,
 					Number:   course.CourseNumber,
-					Synopsis: course.synopsis(),
-					Metadata: course.metadata()}
+					Synopsis: course.Synopsis(),
+					Metadata: course.Metadata()}
 
 				for _, section := range course.Sections {
 					newSection := &uct.Section{
 						Number:     section.Number,
 						CallNumber: section.Index,
-						Status:     section.status(),
+						Status:     section.Status(),
 						Credits:    uct.FloatToString("%.1f", course.Credits),
 						Max:        0,
-						Metadata:   section.metadata()}
+						Metadata:   section.Metadata()}
 
 					for _, instructor := range section.Instructor {
 						newInstructor := &uct.Instructor{Name: instructor.Name}
@@ -205,12 +365,12 @@ func getCampus(campus string) uct.University {
 
 					for _, meeting := range section.MeetingTimes {
 						newMeeting := &uct.Meeting{
-							Room:      meeting.room(),
-							Day:       meeting.dayPointer(),
+							Room:      meeting.Room(),
+							Day:       meeting.DayPointer(),
 							StartTime: meeting.PStartTime,
 							EndTime:   meeting.PEndTime,
-							ClassType: meeting.classType(),
-							Metadata:  meeting.metadata()}
+							ClassType: meeting.ClassType(),
+							Metadata:  meeting.Metadata()}
 
 						newSection.Meetings = append(newSection.Meetings, newMeeting)
 					}
@@ -284,20 +444,24 @@ func getCampus(campus string) uct.University {
 	return university
 }
 
-func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
+var httpClient = &http.Client{
+	Timeout: 15 * time.Second,
+}
+
+func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
-		resp, err := http.Get(url)
+		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Subject Request")
+		resp, err := httpClient.Get(url)
 		if err != nil {
-			log.Errorln(err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
 		data, err := ioutil.ReadAll(resp.Body)
-		if err := json.Unmarshal(data, &subjects); err != nil && err != io.EOF {
-			log.Errorln(err)
+		if err := ffjson.NewDecoder().Decode(data, &subjects); err != nil && err != io.EOF {
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			resp.Body.Close()
 			continue
 		}
@@ -317,21 +481,21 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []RSubject) {
 	return
 }
 
-func getCourses(subject, campus string, semester *uct.Semester) (courses []RCourse) {
+func getCourses(subject, campus string, semester *uct.Semester) (courses []rutgers.RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug()
+		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
 
-		resp, err := http.Get(url)
+		resp, err := httpClient.Get(url)
 		if err != nil {
-			log.Errorf("Retrying %s after error: %s\n", i, err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
 		data, err := ioutil.ReadAll(resp.Body)
-		if err := json.Unmarshal(data, &courses); err != nil && err != io.EOF {
+		if err := ffjson.NewDecoder().Decode(data, &courses); err != nil {
 			resp.Body.Close()
-			log.Errorf("Retrying %s after error: %s\n", i, err)
+			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
 		}
 
@@ -343,16 +507,16 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []RCour
 	}
 
 	for i := range courses {
-		courses[i].clean()
+		courses[i].Clean()
 		for j := range courses[i].Sections {
-			courses[i].Sections[j].clean()
+			courses[i].Sections[j].Clean()
 		}
 
-		sort.Sort(sectionSorter{courses[i].Sections})
+		sort.Sort(rutgers.SectionSorter{courses[i].Sections})
 	}
-	sort.Sort(courseSorter{courses})
+	sort.Sort(rutgers.CourseSorter{courses})
 
-	courses = FilterCourses(courses, func(course RCourse) bool {
+	courses = rutgers.FilterCourses(courses, func(course rutgers.RCourse) bool {
 		return len(course.Sections) > 0
 	})
 
@@ -371,555 +535,3 @@ func getRutgersSemester(semester *uct.Semester) string {
 	}
 	return ""
 }
-
-func (course *RCourse) clean() {
-	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
-		return section.Printed == "Y"
-	})
-
-	m := map[string]int{}
-
-	// Filter duplicate sections, yes it happens e.g Fall 2016 NB Biochem Engin SR DESIGN I PROJECTS
-	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
-		key := section.Index + section.Number
-		m[key]++
-		return m[key] <= 1
-	})
-
-	course.ExpandedTitle = uct.TrimAll(course.ExpandedTitle)
-	if len(course.ExpandedTitle) == 0 {
-		course.ExpandedTitle = course.Title
-	}
-
-	course.CourseNumber = uct.TrimAll(course.CourseNumber)
-
-	course.CourseDescription = uct.TrimAll(course.CourseDescription)
-
-	course.CourseNotes = uct.TrimAll(course.CourseNotes)
-
-	course.SubjectNotes = uct.TrimAll(course.SubjectNotes)
-
-	course.SynopsisURL = uct.TrimAll(course.SynopsisURL)
-
-	course.PreReqNotes = uct.TrimAll(course.PreReqNotes)
-
-}
-
-func (section *RSection) clean() {
-	section.Subtitle = uct.TrimAll(section.Subtitle)
-	section.SectionNotes = uct.TrimAll(section.SectionNotes)
-	section.CampusCode = uct.TrimAll(section.CampusCode)
-	section.SpecialPermissionAddCodeDescription = uct.TrimAll(section.SpecialPermissionAddCodeDescription)
-
-	for i := range section.MeetingTimes {
-		section.MeetingTimes[i].clean()
-	}
-
-	sort.Sort(MeetingByClass(section.MeetingTimes))
-}
-
-func (meeting *RMeetingTime) clean() {
-	meeting.StartTime = strings.TrimSpace(uct.TrimAll(meeting.StartTime))
-	meeting.EndTime = strings.TrimSpace(uct.TrimAll(meeting.EndTime))
-
-	meeting.MeetingDay = meeting.day()
-	meeting.StartTime = meeting.getMeetingHourBegin()
-	meeting.EndTime = meeting.getMeetingHourEnd()
-
-	if meeting.StartTime != "" {
-		t := meeting.StartTime
-		meeting.PStartTime = &t
-	} else {
-		meeting.PStartTime = nil
-	}
-	if meeting.EndTime != "" {
-		t := meeting.EndTime
-		meeting.PEndTime = &t
-	} else {
-		meeting.PEndTime = nil
-	}
-}
-
-func (section *RSection) status() string {
-	if section.OpenStatus {
-		return uct.OPEN.String()
-	} else {
-		return uct.CLOSED.String()
-	}
-}
-
-func (section RSection) instructor() (instructors []*uct.Instructor) {
-	for _, instructor := range section.Instructor {
-		instructors = append(instructors, &uct.Instructor{Name: instructor.Name})
-	}
-	return
-}
-
-func (section RSection) metadata() (metadata []*uct.Metadata) {
-
-	if len(section.CrossListedSections) > 0 {
-		str := ""
-		for _, cls := range section.CrossListedSections {
-			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
-		}
-		if len(str) != 5 {
-			metadata = append(metadata, &uct.Metadata{
-				Title:   "Cross-listed Sections",
-				Content: str,
-			})
-		}
-
-	}
-
-	if len(section.Comments) > 0 {
-		sort.Sort(commentSorter{section.Comments})
-		str := ""
-		for _, comment := range section.Comments {
-			str += (comment.Description + ", ")
-		}
-		str = str[:len(str)-2]
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Comments",
-			Content: str,
-		})
-	}
-
-	if len(section.Majors) > 0 {
-		isMajorHeaderSet := false
-		isUnitHeaderSet := false
-		var buffer bytes.Buffer
-		for _, unit := range section.Majors {
-			if unit.isMajorCode {
-				if !isMajorHeaderSet {
-					isMajorHeaderSet = true
-					buffer.WriteString("Majors: ")
-				}
-				buffer.WriteString(unit.code)
-				buffer.WriteString(", ")
-			} else if unit.isUnitCode {
-				if !isUnitHeaderSet {
-					isUnitHeaderSet = true
-					buffer.WriteString("Schools: ")
-				}
-				buffer.WriteString(unit.code)
-				buffer.WriteString(", ")
-			}
-		}
-
-		openTo := buffer.String()
-		if len(openTo) > len("Majors: ") {
-			metadata = append(metadata, &uct.Metadata{
-				Title:   "Open To",
-				Content: openTo,
-			})
-		}
-	}
-
-	if len(section.SectionNotes) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Section Notes",
-			Content: section.SectionNotes,
-		})
-	}
-
-	if len(section.SynopsisUrl) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Synopsis Url",
-			Content: section.SynopsisUrl,
-		})
-	}
-
-	if len(section.ExamCode) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Exam Code",
-			Content: getExamCode(section.ExamCode),
-		})
-	}
-
-	if len(section.SpecialPermissionAddCodeDescription) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Special Permission",
-			Content: "Code: " + section.SpecialPermissionAddCode + "\n" + section.SpecialPermissionAddCodeDescription,
-		})
-	}
-
-	if len(section.Subtitle) > 0 {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Subtitle",
-			Content: section.Subtitle,
-		})
-	}
-
-	return
-}
-
-type sectionSorter struct {
-	sections []RSection
-}
-
-func (a sectionSorter) Len() int {
-	return len(a.sections)
-}
-
-func (a sectionSorter) Swap(i, j int) {
-	a.sections[i], a.sections[j] = a.sections[j], a.sections[i]
-}
-
-func (a sectionSorter) Less(i, j int) bool {
-	return a.sections[i].Index < a.sections[j].Index
-}
-
-type courseSorter struct {
-	courses []RCourse
-}
-
-func (a courseSorter) Len() int {
-	return len(a.courses)
-}
-
-func (a courseSorter) Swap(i, j int) {
-	a.courses[i], a.courses[j] = a.courses[j], a.courses[i]
-}
-
-func (a courseSorter) Less(i, j int) bool {
-	c1 := a.courses[i]
-	c2 := a.courses[j]
-	var hash = func(s []RSection) string {
-		var buffer bytes.Buffer
-		for i := range s {
-			buffer.WriteString(s[i].Index)
-			buffer.WriteString(s[i].SectionNotes)
-			buffer.WriteString(s[i].Subtitle)
-		}
-		return buffer.String()
-	}
-	return (c1.Title + c1.CourseNumber + hash(c1.Sections) + strconv.Itoa(int(c1.Credits))) < (c2.Title + c2.CourseNumber + hash(c2.Sections) + strconv.Itoa(int(c2.Credits)))
-}
-
-type commentSorter struct {
-	comments []RComment
-}
-
-func (a commentSorter) Len() int {
-	return len(a.comments)
-}
-
-func (a commentSorter) Swap(i, j int) {
-	a.comments[i], a.comments[j] = a.comments[j], a.comments[i]
-}
-
-func (a commentSorter) Less(i, j int) bool {
-	return a.comments[i].Code < a.comments[j].Code
-}
-
-func (meeting MeetingByClass) Len() int {
-	return len(meeting)
-}
-
-func (meeting MeetingByClass) Swap(i, j int) {
-	meeting[i], meeting[j] = meeting[j], meeting[i]
-}
-
-func (meeting MeetingByClass) Less(i, j int) bool {
-	if meeting[i].isByArrangement() {
-		return false
-	}
-	if meeting[j].isByArrangement() {
-		return true
-	}
-	if meeting[i].isRecitation() {
-		return false
-	}
-	if meeting[j].isRecitation() {
-		return true
-	}
-	day1 := meeting[i].dayRank()
-	day2 := meeting[j].dayRank()
-
-	if day1 <= day2 {
-		return true
-	}
-	return IsAfter(meeting[i].StartTime, meeting[j].StartTime)
-}
-
-func (meeting RMeetingTime) classRank() int {
-	if meeting.isLecture() {
-		return 1
-	} else if meeting.isStudio() {
-		return 2
-	} else if meeting.isRecitation() {
-		return 3
-	} else if meeting.isByArrangement() {
-		return 4
-	} else if meeting.isLab() {
-		return 5
-	}
-	return 99
-}
-
-func (meeting RMeetingTime) dayRank() int {
-	switch meeting.MeetingDay {
-	case "Monday":
-		return 1
-	case "Tuesday":
-		return 2
-	case "Wednesday":
-		return 3
-	case "Thurdsday":
-		return 4
-	case "Friday":
-		return 5
-	case "Saturday":
-		return 6
-	case "Sunday":
-		return 7
-	}
-	return 8
-}
-
-func (meeting RMeetingTime) room() *string {
-	if meeting.BuildingCode != "" {
-		room := meeting.BuildingCode + "-" + meeting.RoomNumber
-		return &room
-	}
-	return nil
-}
-
-func (meetingTime RMeetingTime) getMeetingHourBegin() string {
-	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
-
-		meridian := ""
-
-		if meetingTime.PmCode != "" {
-			if meetingTime.PmCode == "A" {
-				meridian = "AM"
-			} else {
-				meridian = "PM"
-			}
-		}
-		return formatMeetingHours(meetingTime.StartTime) + " " + meridian
-	}
-	return ""
-}
-
-func (meetingTime RMeetingTime) getMeetingHourEnd() string {
-	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
-		var meridian string
-		starttime := meetingTime.StartTime
-		endtime := meetingTime.EndTime
-		pmcode := meetingTime.PmCode
-
-		end, _ := strconv.Atoi(endtime[:2])
-		start, _ := strconv.Atoi(starttime[:2])
-
-		if pmcode != "A" {
-			meridian = "PM"
-		} else if end < start {
-			meridian = "PM"
-		} else if endtime[:2] == "12" {
-			meridian = "PM"
-		} else {
-			meridian = "AM"
-		}
-
-		return formatMeetingHours(meetingTime.EndTime) + " " + meridian
-	}
-	return ""
-}
-
-func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
-	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
-
-		meridian := ""
-
-		if meetingTime.PmCode != "" {
-			if meetingTime.PmCode == "A" {
-				meridian = "AM"
-			} else {
-				meridian = "PM"
-			}
-		}
-
-		kitchenTime := uct.TrimAll(formatMeetingHours(meetingTime.StartTime) + meridian)
-		time, err := time.Parse(time.Kitchen, kitchenTime)
-		uct.CheckError(err)
-		return time
-	}
-	return time.Unix(0, 0)
-}
-
-func (meeting RMeetingTime) metadata() (metadata []*uct.Metadata) {
-
-	return
-}
-
-func (course RCourse) synopsis() *string {
-	if course.CourseDescription == "" {
-		return nil
-	} else {
-		return &course.CourseDescription
-	}
-}
-
-func (course RCourse) metadata() (metadata []*uct.Metadata) {
-
-	if course.SubjectNotes != "" {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Subject Notes",
-			Content: course.SubjectNotes,
-		})
-	}
-	if course.PreReqNotes != "" {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Prequisites",
-			Content: course.PreReqNotes,
-		})
-	}
-	if course.SynopsisURL != "" {
-		metadata = append(metadata, &uct.Metadata{
-			Title:   "Synopsis Url",
-			Content: course.SynopsisURL,
-		})
-	}
-
-	return metadata
-}
-
-func FilterSubjects(vs []RSubject, f func(RSubject) bool) []RSubject {
-	vsf := make([]RSubject, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
-}
-
-func FilterCourses(vs []RCourse, f func(RCourse) bool) []RCourse {
-	vsf := make([]RCourse, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
-}
-
-func FilterSections(vs []RSection, f func(RSection) bool) []RSection {
-	vsf := make([]RSection, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
-}
-
-func AppendRSubjects(subjects []RSubject, toAppend []RSubject) []RSubject {
-	for _, val := range toAppend {
-		subjects = append(subjects, val)
-	}
-	return subjects
-}
-
-type (
-	MeetingByClass []RMeetingTime
-
-	RSubject struct {
-		Name    string    `json:"description,omitempty"`
-		Number  string    `json:"code,omitempty"`
-		Courses []RCourse `json:"courses,omitempty"`
-		Season  string
-		Year    int
-	}
-
-	RCourse struct {
-		SubjectNotes      string        `json:"subjectNotes"`
-		CourseNumber      string        `json:"courseNumber"`
-		Subject           string        `json:"subject"`
-		CampusCode        string        `json:"campusCode"`
-		OpenSections      int           `json:"openSections"`
-		SynopsisURL       string        `json:"synopsisUrl"`
-		SubjectGroupNotes string        `json:"subjectGroupNotes"`
-		OfferingUnitCode  string        `json:"offeringUnitCode"`
-		OfferingUnitTitle string        `json:"offeringUnitTitle"`
-		Title             string        `json:"title"`
-		CourseDescription string        `json:"courseDescription"`
-		PreReqNotes       string        `json:"preReqNotes"`
-		Sections          []RSection    `json:"sections"`
-		SupplementCode    string        `json:"supplementCode"`
-		Credits           float64       `json:"credits"`
-		UnitNotes         string        `json:"unitNotes"`
-		CoreCodes         []interface{} `json:"coreCodes"`
-		CourseNotes       string        `json:"courseNotes"`
-		ExpandedTitle     string        `json:"expandedTitle"`
-	}
-
-	RSection struct {
-		SectionEligibility                   string                 `json:"sectionEligibility"`
-		SessionDatePrintIndicator            string                 `json:"sessionDatePrintIndicator"`
-		ExamCode                             string                 `json:"examCode"`
-		SpecialPermissionAddCode             string                 `json:"specialPermissionAddCode"`
-		CrossListedSections                  []RCrossListedSections `json:"crossListedSections"`
-		SectionNotes                         string                 `json:"sectionNotes"`
-		SpecialPermissionDropCode            string                 `json:"specialPermissionDropCode"`
-		Instructor                           []RInstructor          `json:"instructors"`
-		Number                               string                 `json:"number"`
-		Majors                               []RMajor               `json:"majors"`
-		SessionDates                         string                 `json:"sessionDates"`
-		SpecialPermissionDropCodeDescription string                 `json:"specialPermissionDropCodeDescription"`
-		Subtopic                             string                 `json:"subtopic"`
-		SynopsisUrl                          string                 `json:"synopsisUrl"`
-		OpenStatus                           bool                   `json:"openStatus"`
-		Comments                             []RComment             `json:"comments"`
-		Minors                               []interface{}          `json:"minors"`
-		CampusCode                           string                 `json:"campusCode"`
-		Index                                string                 `json:"index"`
-		UnitMajors                           []interface{}          `json:"unitMajors"`
-		Printed                              string                 `json:"printed"`
-		SpecialPermissionAddCodeDescription  string                 `json:"specialPermissionAddCodeDescription"`
-		Subtitle                             string                 `json:"subtitle"`
-		MeetingTimes                         []RMeetingTime         `json:"meetingTimes"`
-		LegendKey                            string                 `json:"legendKey"`
-		HonorPrograms                        []interface{}          `json:"honorPrograms"`
-	}
-
-	RInstructor struct {
-		Name string `json:"name"`
-	}
-
-	RMajor struct {
-		isMajorCode bool   `json:"isMajorCode"`
-		isUnitCode  bool   `json:"isUnitCode"`
-		code        string `json:"code"`
-	}
-
-	RComment struct {
-		Code        string `json:"code"`
-		Description string `json:"description"`
-	}
-
-	RCrossListedSections struct {
-		sectionNumber    string `json:"sectionNumber"`
-		offeringUnitCode string `json:"offeringUnitCode"`
-		courseNumber     string `json:"courseNumber"`
-		subjectCode      string `json:"subjectCode"`
-	}
-
-	RMeetingTime struct {
-		CampusLocation  string  `json:"campusLocation"`
-		BaClassHours    string  `json:"baClassHours"`
-		RoomNumber      string  `json:"roomNumber"`
-		PmCode          string  `json:"pmCode"`
-		CampusAbbrev    string  `json:"campusAbbrev"`
-		CampusName      string  `json:"campusName"`
-		MeetingDay      string  `json:"meetingDay"`
-		BuildingCode    string  `json:"buildingCode"`
-		StartTime       string  `json:"startTime"`
-		EndTime         string  `json:"endTime"`
-		PStartTime      *string `json:"-"`
-		PEndTime        *string `json:"-"`
-		MeetingModeDesc string  `json:"meetingModeDesc"`
-		MeetingModeCode string  `json:"meetingModeCode"`
-	}
-)

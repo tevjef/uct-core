@@ -5,6 +5,8 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
 	uct "uct/common"
+	"time"
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -99,6 +101,39 @@ func ErrorWriter() gin.HandlerFunc {
 
 		if !metaExists && !responseExists {
 			c.Set(ServingFromCache, true)
+		}
+	}
+}
+
+func Ginrus(logger *logrus.Logger, timeFormat string, utc bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		// some evil middlewares modify this values
+		path := c.Request.URL.Path
+		c.Next()
+
+		end := time.Now()
+		latency := end.Sub(start)
+		if utc {
+			end = end.UTC()
+		}
+
+		entry := logger.WithFields(logrus.Fields{
+			"status":     c.Writer.Status(),
+			"method":     c.Request.Method,
+			"path":       path,
+			"ip":         c.ClientIP(),
+			"elapsed":    latency.Seconds()*1e3,
+			"latency":    latency,
+			"user-agent": c.Request.UserAgent(),
+			"time":       end.Format(timeFormat),
+		})
+
+		if len(c.Errors) > 0 {
+			// Append error field if this is an erroneous request.
+			entry.Error(c.Errors.String())
+		} else {
+			entry.Info()
 		}
 	}
 }

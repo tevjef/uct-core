@@ -1,6 +1,7 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"fmt"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jmoiron/sqlx"
@@ -30,20 +31,31 @@ type SectionsStatus struct {
 
 var (
 	app    = kingpin.New("influx-logger", "A command-line application logging status inflomation about the database")
-	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.INFLUX_DEBUG_SERVER).TCP()
+	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
+	config = uct.Config{}
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	go uct.StartPprof(*server)
+	// Parse configuration file
+	config := uct.NewConfig(*configFile)
+
+	// Start profiling
+	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	var err error
-	database, err = uct.InitDB(uct.GetUniversityDB())
+	database, err = uct.InitDB(config.GetDbConfig())
 	uct.CheckError(err)
 
-	influxClient, err = uct.InitTnfluxServer()
-	uct.CheckError(err)
+	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
+		Addr:     config.InfluxDb.Host,
+		Username: config.InfluxDb.User,
+		Password: config.InfluxDb.Password,
+	})
+	if err != nil {
+		log.Fatalln("Failed to open influx databse connection. %s", err)
+	}
 
 	sections := getSectionStatus()
 
@@ -105,3 +117,4 @@ func getSectionStatus() (sectionsStatuses []SectionsStatus) {
 	uct.CheckError(err)
 	return
 }
+
