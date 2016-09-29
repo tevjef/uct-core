@@ -1,5 +1,5 @@
 [postgres]
-host = "localhost"
+host = "foreman.tevindev.me"
 port = "5432"
 user = "uct"
 password = "***REMOVED***"
@@ -56,7 +56,7 @@ password = "***REMOVED***"
 
 [redis]
 host = "localhost"
-port =  "32770"
+port =  "6379"
 db = 0
 password = ""
 

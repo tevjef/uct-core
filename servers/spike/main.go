@@ -2,7 +2,7 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/contrib/cache"
+	"github.com/tevjef/contrib/cache"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -20,7 +20,7 @@ import (
 var (
 	app      = kingpin.New("spike", "A command-line application to serve university course information")
 	port     = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
-	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
+	logLevel = app.Flag("log-level", "Log level").Short('l').Default("info").String()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
 	config = uct.Config{}
 )
@@ -56,6 +56,8 @@ func main() {
 	PrepareAllStmts()
 
 	// Open cache
+	//store := cache.NewInMemoryStore(CacheDuration)
+
 	store := cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, CacheDuration)
 
 	// recovery and logging

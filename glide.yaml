@@ -6,9 +6,6 @@ import:
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - package: github.com/boltdb/bolt
   version: ^1.2.1
-- package: github.com/gin-gonic/contrib
-  subpackages:
-  - cache
 - package: github.com/gin-gonic/gin
   version: v1.0rc1
 - package: github.com/gogo/protobuf

@@ -94,7 +94,7 @@ func TrimAll(str string) string {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Info("")
+	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debug("")
 }
 
 func TimeTrackWithLog(start time.Time, logger *log.Logger, name string) {
