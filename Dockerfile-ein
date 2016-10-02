@@ -1,4 +1,4 @@
-FROM golang:1.7.1-alpine
+FROM golang:1.6.3-alpine
 
 COPY . /go/src/uct
 
@@ -25,4 +25,4 @@ WORKDIR /go/src/uct
 ENTRYPOINT ["ein"]
 EXPOSE 13100
 
-CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf"]
+CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf", "--no-diff"]

@@ -44,6 +44,7 @@ type serialSection struct {
 
 var (
 	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
+	noDiff = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
@@ -130,7 +131,7 @@ func main() {
 					}
 
 					// Decode old data if have some
-					if oldRaw != "" {
+					if oldRaw != "" && !*noDiff {
 						oldUniversity := new(uct.University)
 						if err := uct.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity); err != nil {
 							log.WithError(err).Panic("Error while unmarshalling old data")
