@@ -59,6 +59,9 @@ func main() {
 	config = uct.NewConfig(*configFile)
 	config.AppName = app.Name
 
+	// Start influx logging
+	initInflux()
+
 	// Start profiling
 	go uct.StartPprof(config.GetDebugSever(app.Name))
 
