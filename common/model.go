@@ -673,6 +673,8 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					log.Infoln("Course differs")
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
+					logSection(oldSections).Infoln("oldSections")
+					logSection(oldSections).Infoln("newSections")
 					var filteredSections []*Section
 					for e := range newSections {
 						if e >= len(oldSections) {
@@ -697,4 +699,20 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	}
 	filteredUniversity.Subjects = filteredSubjects
 	return
+}
+
+func logSection(section []*Section) *log.Entry {
+	openCount := 0
+	closedCount := 0
+	for i := range section {
+		if section[i].Status == "Open" {
+			openCount++
+		} else if section[i].Status == "Closed" {
+			closedCount++
+		}
+	}
+	return log.WithFields(log.Fields{
+		"open": openCount,
+		"closed": closedCount,
+	})
 }

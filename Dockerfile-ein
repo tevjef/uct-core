@@ -15,7 +15,7 @@ RUN apk update && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
     glide install && \
-    go install -v ${APP_PACKAGE} && \
+    go install -race -v ${APP_PACKAGE} && \
     rm -rf *.tar.gz* && \
     apk del git && \
     apk del openssl
@@ -25,4 +25,4 @@ WORKDIR /go/src/uct
 ENTRYPOINT ["ein"]
 EXPOSE 13100
 
-CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf", "--no-diff"]
+CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf"]
