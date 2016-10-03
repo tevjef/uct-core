@@ -107,7 +107,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		uct.CheckError(err)
 	} else {
-		auditLogger.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)})
+		auditLogger.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)}).Info()
 
 		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
@@ -139,7 +139,7 @@ func startDaemon(result chan uct.University, cancel chan bool) {
 	for {
 		select {
 		case offset := <-offsetChan:
-			auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "timeQuantum":daemonInterval})
+			auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "timeQuantum":daemonInterval}).Infoln()
 			// No need to cancel the previous go routine, there isn't one
 			if cancelPrev != nil {
 				cancelPrev <- true
