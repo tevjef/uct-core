@@ -1,4 +1,4 @@
-FROM golang:1.7.1-alpine
+FROM golang:1.6.3-alpine
 
 COPY . /go/src/uct
 
@@ -15,7 +15,7 @@ RUN apk update && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
     glide install && \
-    go install -race -v ${APP_PACKAGE} && \
+    go install -v ${APP_PACKAGE} && \
     rm -rf *.tar.gz* && \
     apk del git && \
     apk del openssl
