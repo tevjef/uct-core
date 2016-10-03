@@ -142,7 +142,7 @@ func startDaemon(result chan uct.University, cancel chan bool) {
 	for {
 		select {
 		case offset := <-offsetChan:
-			auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "timeQuantum":daemonInterval}).Infoln()
+			auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "time_quantum":daemonInterval.Seconds()}).Infoln()
 			// No need to cancel the previous go routine, there isn't one
 			if cancelPrev != nil {
 				cancelPrev <- true
