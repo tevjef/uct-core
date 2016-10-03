@@ -22,6 +22,9 @@ import (
 	"errors"
 	"github.com/pquerna/ffjson/ffjson"
 	rutgers "uct/scrapers/rutgers/model"
+	"uct/influxdb"
+	"github.com/vlad-doru/influxus"
+	"github.com/influxdata/influxdb/client/v2"
 )
 
 var (
@@ -104,6 +107,8 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		uct.CheckError(err)
 	} else {
+		auditLogger.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)})
+
 		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
@@ -134,6 +139,7 @@ func startDaemon(result chan uct.University, cancel chan bool) {
 	for {
 		select {
 		case offset := <-offsetChan:
+			auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "timeQuantum":daemonInterval})
 			// No need to cancel the previous go routine, there isn't one
 			if cancelPrev != nil {
 				cancelPrev <- true
@@ -229,7 +235,7 @@ func getCampus(campus string) uct.University {
 			},
 			{
 				Period:     uct.START_SPRING.String(),
-				PeriodDate: time.Date(2000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
+				PeriodDate: time.Date(2000, time.October, 5, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
 				Period:     uct.START_SUMMER.String(),
@@ -534,4 +540,37 @@ func getRutgersSemester(semester *uct.Semester) string {
 		return "0" + strconv.Itoa(int(semester.Year))
 	}
 	return ""
+}
+
+var (
+	influxClient client.Client
+	auditLogger *log.Logger
+)
+
+func initInflux() {
+	var err error
+	// Create the InfluxDB client.
+	influxClient, err = influxdbhelper.GetClient(config)
+
+	if err != nil {
+		log.Fatalf("Error while creating the client: %v", err)
+	}
+
+	// Create and add the hook.
+	auditHook, err := influxus.NewHook(
+		&influxus.Config{
+			Client:             influxClient,
+			Database:           "universityct", // DATABASE MUST BE CREATED
+			DefaultMeasurement: "scaper_ops",
+			BatchSize:          1, // default is 100
+			BatchInterval:      1, // default is 5 seconds
+			Tags:               []string{"scraper_name"},
+			Precision: "s",
+		})
+
+	uct.CheckError(err)
+
+	// Add the hook to the standard logger.
+	auditLogger = log.New()
+	auditLogger.Hooks.Add(auditHook)
 }

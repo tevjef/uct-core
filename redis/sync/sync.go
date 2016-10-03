@@ -12,7 +12,7 @@ type RedisSync struct {
 	guid           string
 	instanceId     string
 	position       int64
-	instances      int64
+	Instances      int64
 	offset         time.Duration
 	timeQuantum    time.Duration
 	uctRedis       *v1.RedisWrapper
@@ -91,7 +91,7 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
 					// Get the number of currently alive instances, if it's less that the last count but not 0
 					// Unregister all instances all instances. They will all reorder themselves on their next ping
 					instanceCount := rsync.getInstanceCount()
-					if instanceCount < rsync.instances && instanceCount != 0 {
+					if instanceCount < rsync.Instances && instanceCount != 0 {
 						rsync.unregisterAll()
 					}
 
@@ -104,7 +104,7 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
 					}
 
 					// Store the current number of instances for future reference
-					rsync.instances = rsync.getInstanceCount()
+					rsync.Instances = rsync.getInstanceCount()
 
 					rsync.offset = newOffset
 				}()
