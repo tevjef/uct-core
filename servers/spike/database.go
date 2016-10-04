@@ -9,6 +9,7 @@ import (
 	"time"
 	uct "uct/common"
 	"uct/servers"
+	"sort"
 )
 
 var (
@@ -80,6 +81,7 @@ func SelectAvailableSemesters(topicName string) (semesters []*uct.Semester, err 
 	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(SelectAvailableSemestersQuery, &semesters, m)
+	sort.Sort(uct.SemesterSorter(semesters))
 	return
 }
 

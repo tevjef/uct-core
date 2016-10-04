@@ -716,3 +716,38 @@ func logSection(section []*Section) *log.Entry {
 		"closed": closedCount,
 	})
 }
+
+type SemesterSorter []*Semester
+
+func (a SemesterSorter) Len() int {
+	return len(a)
+}
+
+func (a SemesterSorter) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a SemesterSorter) Less(i, j int) bool {
+	if a[j].Year < a[i].Year {
+		return true
+	} else if a[i].Year == a[j].Year {
+		return rankSeason(a[j].Season) < rankSeason(a[i].Season)
+	}
+	return false
+}
+
+
+func rankSeason(seasonStr string) int {
+	seasonStr = strings.ToLower(seasonStr)
+	switch seasonStr {
+	case "fall":
+		return 4
+	case "summer":
+		return 3
+	case "spring":
+		return 2
+	case "winter":
+		return 1
+	}
+	return 0
+}

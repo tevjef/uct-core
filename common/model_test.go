@@ -280,8 +280,58 @@ func TestTopicName(t *testing.T) {
 
 	fmt.Printf("%s\n", toTopicName(topic3))
 	fmt.Printf("%s\n", toTopicName(topic3))
+}
 
+func TestSemesterSorter(t *testing.T) {
+	semesters := []*Semester{
+		{Year:2016, Season: WINTER},
+		{Year:2015, Season: WINTER},
+		{Year:2016, Season: SPRING},
+		{Year:2016, Season: SUMMER},
+		{Year:2017, Season: FALL},
+		{Year:2015, Season: FALL},
+		{Year:2015, Season: SPRING},
+		{Year:2015, Season: SUMMER},
+	}
 
+	expected := []*Semester{
+		{Year:2017, Season: FALL},
+		{Year:2016, Season: SUMMER},
+		{Year:2016, Season: SPRING},
+		{Year:2016, Season: WINTER},
+		{Year:2015, Season: FALL},
+		{Year:2015, Season: SUMMER},
+		{Year:2015, Season: SPRING},
+		{Year:2015, Season: WINTER},
+	}
+
+	sort.Sort(SemesterSorter(semesters))
+	assert.True(t, seasonEqu(semesters, expected))
+}
+
+func seasonEqu(a, b []*Semester) bool {
+	if a == nil && b == nil {
+		return true;
+	}
+
+	if a == nil || b == nil {
+		return false;
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i].Year != b[i].Year {
+			return false
+		}
+
+		if a[i].Season != b[i].Season {
+			return false
+		}
+	}
+	return true
 }
 
 func BenchmarkToTopicName(b *testing.B) {

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pquerna/ffjson/ffjson"
 	"io/ioutil"
 	"log"
 	"os"
-	"sort"
 	"testing"
 	uct "uct/common"
 )
