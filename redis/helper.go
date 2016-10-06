@@ -2,8 +2,8 @@ package v1
 
 import (
 	"gopkg.in/redis.v4"
-	uct "uct/common"
 	//log "github.com/Sirupsen/logrus"
+	"uct/common/conf"
 )
 
 type RedisWrapper struct {
@@ -19,7 +19,7 @@ func nameSpaceForApp(appName string) string {
 	return BaseNamespace + ":" + appName
 }
 
-func New(config uct.Config, appName string) *RedisWrapper {
+func New(config conf.Config, appName string) *RedisWrapper {
 	return &RedisWrapper{
 		NameSpace: nameSpaceForApp(appName),
 		Client: redis.NewClient(&redis.Options{

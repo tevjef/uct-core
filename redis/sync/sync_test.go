@@ -11,10 +11,11 @@ import (
 	_ "github.com/Sirupsen/logrus"
 	"strconv"
 	"log"
+	"uct/common/conf"
 )
 
 func setupClient() *v1.RedisWrapper {
-	c := uct.Config{}
+	c := conf.Config{}
 	c.Redis.Host = "localhost:32768"
 	c.Redis.Db = 0
 	c.Redis.Password = ""

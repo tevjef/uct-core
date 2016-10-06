@@ -15,6 +15,7 @@ import (
 	"github.com/vlad-doru/influxus"
 	"github.com/influxdata/influxdb/client/v2"
 	"uct/influxdb"
+	"uct/common/conf"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 	port     = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("info").String()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config = uct.Config{}
+	config = conf.Config{}
 )
 
 const CacheDuration = 10 * time.Second
@@ -36,7 +37,7 @@ func main() {
 		log.SetLevel(lvl)
 	}
 
-	config = uct.NewConfig(*configFile)
+	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
 	// Start profiling
@@ -52,7 +53,7 @@ func main() {
 	initInflux()
 
 	// Prepare database connections
-	database.SetMaxOpenConns(config.Db.ConnMax)
+	database.SetMaxOpenConns(config.Postgres.ConnMax)
 	PrepareAllStmts()
 
 	// Open cache
@@ -151,5 +152,6 @@ func initInflux() {
 
 	// Add the hook to the standard logger.
 	auditLogger = log.New()
+	auditLogger.Formatter = new(log.JSONFormatter)
 	auditLogger.Hooks.Add(auditHook)
 }

@@ -1,0 +1,17 @@
+version: '2'
+services:
+  fluentd:
+    image: tevjef/uct-core:staging-fluentd
+    ports:
+      - '24224:24224'
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    volumes:
+      - ./fluent.conf:/fluentd/etc/fluent.conf
+
+networks:
+  default:
+    external:
+      name: uct_default
+
+

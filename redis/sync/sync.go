@@ -131,7 +131,7 @@ func (rsync *RedisSync) registerInstance() {
 	// Reset list expiration
 	rsync.uctRedis.Client.Expire(nsInstances, rsync.syncExpiration)
 	if _, err := rsync.uctRedis.RPushNotExist(nsInstances, rsync.instanceId); err != nil {
-		log.WithError(err).Panic("failed to claim position in list:", nsInstances)
+		log.WithError(err).Fatalln("failed to claim position in list:", nsInstances)
 	}
 
 	rsync.position = rsync.getPosition()
@@ -142,7 +142,7 @@ func (rsync *RedisSync) registerInstance() {
 // Get the index position on the list where the instance resides
 func (rsync *RedisSync) getPosition() int64 {
 	if index, err := rsync.uctRedis.Exists(nsInstances, rsync.instanceId); err != nil {
-		log.WithError(err).Panic("failed to check if key exists in list:", nsInstances)
+		log.WithError(err).Fatalln("failed to check if key exists in list:", nsInstances)
 		return -1
 	} else {
 		return index
@@ -153,7 +153,7 @@ func (rsync *RedisSync) getPosition() int64 {
 // instances by pattern matching the prefix of the instanceId
 func (rsync *RedisSync) getInstanceCount() int64 {
 	if count, err := rsync.uctRedis.Count(nsHealth + ":*"); err != nil {
-		log.WithError(err).Panic("failed to get number of instances")
+		log.WithError(err).Fatalln("failed to get number of instances")
 	} else {
 		return count
 	}
@@ -167,7 +167,7 @@ func (rsync *RedisSync) ping() {
 // Ping sets its instanceId on the redis.
 func (rsync *RedisSync) pingWithExpiration(duration time.Duration) {
 	if _, err := rsync.uctRedis.Client.Set(rsync.instanceId, 1, duration).Result(); err != nil {
-		log.WithError(err).Panic("failed to perform health check for this instance")
+		log.WithError(err).Fatalln("failed to perform health check for this instance")
 	}
 }
 
@@ -179,16 +179,16 @@ func (rsync *RedisSync) calculateOffset() int64 {
 	return calculateOffset(time, instances, position)
 }
 
-func calculateOffset(time, instances, position int64) int64 {
-	n := time * position
+func calculateOffset(interval, instances, position int64) int64 {
+	n := interval * position
 	d := instances
 
 	offset := int64((n / d))
-	log.WithFields(log.Fields{"offset": offset, "time": time,
+	log.WithFields(log.Fields{"offset": offset, "interval": interval,
 		"instances": instances, "position": position}).Debugln("calculateOffset")
 
-	if offset > time {
-		log.WithFields(log.Fields{"offset": offset, "time": time}).Panicln("offset is more than time")
+	if offset > interval {
+		log.WithFields(log.Fields{"offset": offset, "interval": interval}).Panicln("offset is more than interval")
 	}
 
 	return offset

@@ -1,7 +1,7 @@
 [postgres]
-host = "foreman.tevindev.me"
+host = "postgresql"
 port = "5432"
-user = "uct"
+user = "universityct"
 password = "***REMOVED***"
 name = "universityct"
 connection_max = 10
@@ -49,13 +49,13 @@ api_key = "***REMOVED***"
     interval = "1m"
 
 [influxdb]
-host = "localhost"
+host = "influxdb"
 user = "admin"
 port =  "8086"
-password = "***REMOVED***"
+password = "***REMOVED***_influx"
 
 [redis]
-host = "localhost"
+host = "redis"
 port =  "6379"
 db = 0
 password = ""

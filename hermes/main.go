@@ -14,6 +14,7 @@ import (
 	"os"
 	"time"
 	uct "uct/common"
+	"uct/common/conf"
 	"github.com/vlad-doru/influxus"
 	"uct/influxdb"
 )
@@ -26,7 +27,7 @@ var (
 	app           = kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
 	debug         = app.Flag("debug", "enable debug mode").Short('d').Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config = uct.Config{}
+	config = conf.Config{}
 	database      *sqlx.DB
 	preparedStmts = make(map[string]*sqlx.NamedStmt)
 )
@@ -36,7 +37,7 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{})
 
 	// Parse configuration file
-	config = uct.NewConfig(*configFile)
+	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
 	// Start profiling
@@ -229,5 +230,6 @@ func initInflux() {
 
 	// Add the hook to the standard logger.
 	auditLogger = log.New()
+	auditLogger.Formatter = new(log.JSONFormatter)
 	auditLogger.Hooks.Add(auditHook)
 }

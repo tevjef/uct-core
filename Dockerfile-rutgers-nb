@@ -15,10 +15,11 @@ RUN apk update && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
     glide install && \
-    go install -v ${APP_PACKAGE} && \
     rm -rf *.tar.gz* && \
     apk del git && \
     apk del openssl
+
+RUN go install -v ${APP_PACKAGE}
 
 WORKDIR /go/src/uct
 EXPOSE 13303
