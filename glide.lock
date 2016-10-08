@@ -1,5 +1,5 @@
 hash: a8e857a0d9d0707503052cb84826498094b55b6f4fa16a67dc02becc8da9f13a
-updated: 2016-10-07T19:18:23.118966125-04:00
+updated: 2016-10-07T23:10:12.150194985-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -64,6 +64,8 @@ imports:
   version: e44d1877bb457f5c3991903e9934a31e55c3a2ad
 - name: github.com/pborman/uuid
   version: c55201b036063326c5b1b89ccfe45a184973d073
+- name: github.com/pkg/errors
+  version: 839d9e913e063e28dfd0e6c7b7512793e0a48be9
 - name: github.com/pquerna/ffjson
   version: 5b79949af5378123d6b0672afc88d3b214bb4f9f
   subpackages:
