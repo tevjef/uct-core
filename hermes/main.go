@@ -34,7 +34,6 @@ var (
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	log.SetFormatter(&log.TextFormatter{})
 
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)

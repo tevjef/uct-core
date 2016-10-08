@@ -10,6 +10,8 @@ RUN apk --no-cache --update add sudo build-base ruby-dev && \
     sudo -u fluent gem install fluent-plugin-influxdb && \
     sudo -u fluent gem install fluent-plugin-concat && \
     sudo -u fluent gem install fluent-plugin-s3 && \
+    sudo -u fluent gem install fluent-plugin-forest && \
+    sudo -u fluent gem install fluent-plugin-cloudwatch-logs && \
 
     rm -rf /home/fluent/.gem/ruby/2.3.0/cache/*.gem && sudo -u fluent gem sources -c && \
     apk del sudo build-base ruby-dev && rm -rf /var/cache/apk/*
