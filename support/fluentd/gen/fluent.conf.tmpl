@@ -26,7 +26,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
             @log_level debug
             aws_key_id ***REMOVED***
             aws_sec_key ***REMOVED***
-            s3_bucket $project
+            s3_bucket {{$project}}
             s3_region us-east-1
             path {{replace $service "." "/" -1}}/{{$value.Name}}/
             buffer_path /fluentd/logs/{{$value.Name}}/
@@ -49,12 +49,26 @@ time_format %Y-%m-%dT%H:%M:%S%z
              region us-east-1
              aws_key_id ***REMOVED***
              aws_sec_key ***REMOVED***
-             log_group_name $project
+             log_group_name {{$project}}
              log_stream_name {{$service}}
              auto_create_stream true
              {{if $isCoreService}}#{{end}}message_keys log
          </store>
 
+         {{if eq $service "nginx"}}
+         <store>
+             @type influxdb
+             @log_level debug
+             host influxdb
+             port 8086
+             dbname system
+             user admin
+             password ***REMOVED***_influx
+             use_ssl false
+             time_precision s
+             tag_keys ["host", "status"]
+         </store>
+         {{end}}
          {{if $value.Env.FLUENTD_STDOUT}}
          <store>
             @type stdout
