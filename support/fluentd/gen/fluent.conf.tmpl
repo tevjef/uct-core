@@ -1,0 +1,65 @@
+<system>
+  rpc_endpoint 127.0.0.1:24220
+</system>
+
+<source>
+@type forward
+</source>
+
+<filter docker.core.**>
+@type parser
+format json
+key_name log
+time_format %Y-%m-%dT%H:%M:%S%z
+</filter>
+
+{{range $key, $value := whereLabelExists . "fluent_tag"}}
+    {{$service := $value.Labels.fluent_tag}}
+    {{$project := index $value.Labels "com.docker.compose.project"}}
+    {{$isCoreService := hasPrefix "core" (print $service)}}
+
+    <match docker.{{$service}}>
+        @type copy
+        deep_copy true
+        <store>
+            @type s3
+            @log_level debug
+            aws_key_id ***REMOVED***
+            aws_sec_key ***REMOVED***
+            s3_bucket $project
+            s3_region us-east-1
+            path {{replace $service "." "/" -1}}/{{$value.Name}}/
+            buffer_path /fluentd/logs/{{$value.Name}}/
+
+            store_as json
+            format json
+            include_time_key true
+            time_key time
+            include_tag_key true
+
+            time_slice_format %Y%m%d%H
+            time_slice_wait 1m
+
+            utc
+        </store>
+
+         <store>
+             @type cloudwatch_logs
+             @log_level debug
+             region us-east-1
+             aws_key_id ***REMOVED***
+             aws_sec_key ***REMOVED***
+             log_group_name $project
+             log_stream_name {{$service}}
+             auto_create_stream true
+             {{if $isCoreService}}#{{end}}message_keys log
+         </store>
+
+         {{if $value.Env.FLUENTD_STDOUT}}
+         <store>
+            @type stdout
+         </store>
+         {{end}}
+    </match>
+{{end}}
+

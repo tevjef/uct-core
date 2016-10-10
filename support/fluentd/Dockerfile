@@ -1,22 +1,34 @@
-FROM fluent/fluentd:v0.12.27-onbuild
+FROM alpine:3.4
 
-WORKDIR /home/fluent
-ENV PATH /home/fluent/.gem/ruby/2.3.0/bin:$PATH
+# Do not split this into multiple RUN!
+# Docker creates a layer for every RUN-Statement
+# therefore an 'apk delete build*' has no effect
+RUN apk --no-cache --update add \
+                            build-base \
+                            ca-certificates \
+                            ruby \
+                            ruby-irb \
+                            ruby-dev && \
+    echo 'gem: --no-document' >> /etc/gemrc && \
+    gem install oj && \
+    gem install json && \
+    gem install fluentd -v 0.12.29 && \
+    gem install fluent-plugin-influxdb && \
+    gem install fluent-plugin-parser && \
+    gem install fluent-plugin-s3 && \
+    gem install fluent-plugin-cloudwatch-logs && \
+    gem install fluent-plugin-elasticsearch && \
+    apk del build-base ruby-dev && \
+    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /usr/lib/ruby/gems/*/cache/*.gem
 
-USER root
-RUN apk --no-cache --update add sudo build-base ruby-dev && \
+# for log storage (maybe shared with host)
+RUN mkdir -p /fluentd/log
 
-    sudo -u fluent gem install fluent-plugin-secure-forward && \
-    sudo -u fluent gem install fluent-plugin-influxdb && \
-    sudo -u fluent gem install fluent-plugin-concat && \
-    sudo -u fluent gem install fluent-plugin-s3 && \
-    sudo -u fluent gem install fluent-plugin-forest && \
-    sudo -u fluent gem install fluent-plugin-cloudwatch-logs && \
+COPY fluent.conf /fluentd/etc/
 
-    rm -rf /home/fluent/.gem/ruby/2.3.0/cache/*.gem && sudo -u fluent gem sources -c && \
-    apk del sudo build-base ruby-dev && rm -rf /var/cache/apk/*
+ENV FLUENTD_OPT=""
+ENV FLUENTD_CONF="fluent.conf"
 
-EXPOSE 24284
+EXPOSE 24224 5140 24220 24444
 
-USER fluent
 CMD exec fluentd -c /fluentd/etc/$FLUENTD_CONF -p /fluentd/plugins $FLUENTD_OPT

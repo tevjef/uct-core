@@ -1,0 +1,51 @@
+version: '2'
+services:
+  letsencrypt-nginx:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.letsencrypt"
+    labels:
+      fluent_tag: "letsencrypt"
+
+  nginx:
+    container_name: nginx
+    image: tevjef/uct-core:staging-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.nginx"
+    labels:
+      fluent_tag: "nginx"
+
+  nginx-gen:
+      image: tevjef/uct-core:staging-nginx-gen
+      command: -notify-sighup nginx -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+      volumes_from:
+        - nginx
+      volumes:
+        - /var/run/docker.sock:/tmp/docker.sock:ro
+
+networks:
+  default:
+    external:
+      name: uct_default
+
+
