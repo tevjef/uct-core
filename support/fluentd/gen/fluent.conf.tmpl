@@ -13,6 +13,14 @@ key_name log
 time_format %Y-%m-%dT%H:%M:%S%z
 </filter>
 
+<filter docker.nginx>
+@type parser
+format json
+key_name log
+time_format %Y-%m-%dT%H:%M:%S%z
+</filter>
+
+
 {{range $key, $value := whereLabelExists . "fluent_tag"}}
     {{$service := $value.Labels.fluent_tag}}
     {{$project := index $value.Labels "com.docker.compose.project"}}
@@ -52,7 +60,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
              log_group_name {{$project}}
              log_stream_name {{$service}}
              auto_create_stream true
-             {{if $isCoreService}}#{{end}}message_keys log
+             {{if or $isCoreService (eq $service "nginx")}}#{{end}}message_keys log
          </store>
 
          {{if eq $service "nginx"}}

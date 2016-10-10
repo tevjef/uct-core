@@ -1,0 +1,30 @@
+workspace:
+  base: /go
+  path: src/github.com/tevjef/uct
+
+
+pipeline:
+  compile:
+    image: golang:1.6
+    environment:
+      - GOPATH=/go
+    commands:
+      - sleep 10
+      - export PATH=$PATH:$GOPATH/bin
+      - go build uct/ein
+
+  docker:
+    image: plugins/docker
+    username: tevjef
+    password: "***REMOVED***"
+    email: ***REMOVED***
+    repo: tevjef/uct-core
+    tag: ci-staging-ein
+    file: Dockerfile-ein
+    environment:
+      - DOCKER_LAUNCH_DEBUG=true
+
+  slack:
+    webhook_url: https://hooks.slack.com/services/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
+    channel: ci
+    username: drone
