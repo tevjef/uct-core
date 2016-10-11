@@ -5,26 +5,26 @@ workspace:
 
 pipeline:
   compile:
-    image: golang:1.6
+    image: golang:1.7
     environment:
       - GOPATH=/go
     commands:
-      - sleep 10
+      - cd /go/src/uct
       - export PATH=$PATH:$GOPATH/bin
-      - go build uct/ein
-
-  docker:
-    image: plugins/docker
-    username: tevjef
-    password: "***REMOVED***"
-    email: ***REMOVED***
-    repo: tevjef/uct-core
-    tag: ci-staging-ein
-    file: Dockerfile-ein
-    environment:
-      - DOCKER_LAUNCH_DEBUG=true
-
+      - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz
+      - tar -xzf glide-v0.12.1-linux-amd64.tar.gz
+      - mv linux-amd64/glide /usr/bin
+      - glide install
+      - export PATH=$PATH:$GOPATH/bin
+      - go install -v uct/$$CORE
   slack:
     webhook_url: https://hooks.slack.com/services/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
     channel: ci
     username: drone
+
+matrix:
+  CORE:
+   - ein
+   - hermes
+   - scrapers/rutgers
+   - servers/spike
