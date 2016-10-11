@@ -1,3 +1,4 @@
+{{ $GenContainer := where $ "ID" .Docker.CurrentContainerID | first }}
 <system>
   rpc_endpoint 127.0.0.1:24220
 </system>
@@ -20,10 +21,9 @@ key_name log
 time_format %Y-%m-%dT%H:%M:%S%z
 </filter>
 
-
-{{range $key, $value := whereLabelExists . "fluent_tag"}}
-    {{$service := $value.Labels.fluent_tag}}
-    {{$project := index $value.Labels "com.docker.compose.project"}}
+{{range $key, $CurrentContainer := whereLabelExists . "fluentd.tag"}}
+    {{$service := index $CurrentContainer.Labels "fluentd.tag"}}
+    {{$project := index $CurrentContainer.Labels "com.docker.compose.project"}}
     {{$isCoreService := hasPrefix "core" (print $service)}}
 
     <match docker.{{$service}}>
@@ -32,12 +32,12 @@ time_format %Y-%m-%dT%H:%M:%S%z
         <store>
             @type s3
             @log_level debug
-            aws_key_id ***REMOVED***
-            aws_sec_key ***REMOVED***
+            aws_key_id {{$GenContainer.Env.AWS_KEY_ID}}
+            aws_sec_key {{$GenContainer.Env.AWS_SECRET_KEY}}
             s3_bucket {{$project}}
-            s3_region us-east-1
-            path {{replace $service "." "/" -1}}/{{$value.Name}}/
-            buffer_path /fluentd/logs/{{$value.Name}}/
+            s3_region {{$GenContainer.Env.AWS_REGION}}
+            path {{replace $service "." "/" -1}}/{{$CurrentContainer.Name}}/
+            buffer_path /fluentd/logs/{{$CurrentContainer.Name}}/
 
             store_as json
             format json
@@ -54,30 +54,30 @@ time_format %Y-%m-%dT%H:%M:%S%z
          <store>
              @type cloudwatch_logs
              @log_level debug
-             region us-east-1
-             aws_key_id ***REMOVED***
-             aws_sec_key ***REMOVED***
+             region {{$GenContainer.Env.AWS_REGION}}
+             aws_key_id {{$GenContainer.Env.AWS_KEY_ID}}
+             aws_sec_key {{$GenContainer.Env.AWS_SECRET_KEY}}
              log_group_name {{$project}}
              log_stream_name {{$service}}
              auto_create_stream true
              {{if or $isCoreService (eq $service "nginx")}}#{{end}}message_keys log
          </store>
 
-         {{if eq $service "nginx"}}
+         {{if index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
          <store>
              @type influxdb
              @log_level debug
              host influxdb
              port 8086
-             dbname system
-             user admin
-             password ***REMOVED***_influx
-             use_ssl false
-             time_precision s
-             tag_keys ["host", "status"]
-         </store>
+             dbname {{$GenContainer.Env.INFLUXDB_DATABASE}}
+             user {{$GenContainer.Env.INFLUXDB_ADMIN_USER}}
+             password {{$GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
+             time_precision {{index .CurrentContainer.Labels "fluentd.influxdb.precision"}}
+             tag_keys {{index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
+          </store>
          {{end}}
-         {{if $value.Env.FLUENTD_STDOUT}}
+
+         {{if $CurrentContainer.Env.FLUENTD_STDOUT}}
          <store>
             @type stdout
          </store>
