@@ -36,7 +36,7 @@ type spike struct {
 }
 
 type hermes struct {
-	ApiKey string `toml:"api_key"`
+	ApiKey string `toml:"api_key" envconfig:"FCM_API_KEY"`
 }
 
 type server struct {
@@ -121,7 +121,7 @@ func (c *Config) fromEnvironment() {
 		log.Fatal(err.Error())
 	}
 
-	err = envconfig.Process("", c)
+	err = envconfig.Process("", &c.Hermes)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

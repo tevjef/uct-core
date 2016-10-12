@@ -37,17 +37,14 @@ time_format %Y-%m-%dT%H:%M:%S%z
             s3_bucket {{$project}}
             s3_region {{$GenContainer.Env.AWS_REGION}}
             path {{replace $service "." "/" -1}}/{{$CurrentContainer.Name}}/
-            buffer_path /fluentd/logs/{{$CurrentContainer.Name}}/
-
+            buffer_path /fluentd/buffer/{{$CurrentContainer.Name}}/
             store_as json
             format json
             include_time_key true
             time_key time
             include_tag_key true
-
             time_slice_format %Y%m%d%H
             time_slice_wait 1m
-
             utc
         </store>
 
@@ -72,7 +69,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
              dbname {{$GenContainer.Env.INFLUXDB_DATABASE}}
              user {{$GenContainer.Env.INFLUXDB_ADMIN_USER}}
              password {{$GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
-             time_precision {{index .CurrentContainer.Labels "fluentd.influxdb.precision"}}
+             time_precision {{index $CurrentContainer.Labels "fluentd.influxdb.precision"}}
              tag_keys {{index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
           </store>
          {{end}}
