@@ -442,7 +442,7 @@ func (meetingTime RMeetingTime) getMeetingHourBegin() string {
 }
 
 func (meetingTime RMeetingTime) getMeetingHourEnd() string {
-	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
+	if len(meetingTime.StartTime) > 1 && len(meetingTime.EndTime) > 1 {
 		var meridian string
 		starttime := meetingTime.StartTime
 		endtime := meetingTime.EndTime
@@ -463,6 +463,7 @@ func (meetingTime RMeetingTime) getMeetingHourEnd() string {
 
 		return FormatMeetingHours(meetingTime.EndTime) + " " + meridian
 	}
+
 	return ""
 }
 
