@@ -1,12 +1,12 @@
 package v1
 
 import (
-	uct "uct/common"
 	"testing"
+	"uct/common/conf"
 )
 
 func TestClientConnection(t *testing.T) {
-	c := uct.Config{}
+	c := conf.Config{}
 	c.Redis.Host = "localhost:32768"
 	c.Redis.Db = 0
 	c.Redis.Password = ""

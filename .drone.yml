@@ -1,0 +1,60 @@
+workspace:
+  base: /go
+  path: src/uct
+
+
+pipeline:
+  core:
+    image: golang:1.7
+    environment:
+      - GOPATH=/go
+    commands:
+      - cd /go/src/uct
+      - export PATH=$PATH:$GOPATH/bin
+      - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz
+      - tar -xzf glide-v0.12.1-linux-amd64.tar.gz
+      - mv linux-amd64/glide /usr/bin
+      - glide install
+      - export PATH=$PATH:$GOPATH/bin
+      - go install -v uct/ein
+      - go install -v uct/hermes
+      - go install -v uct/scrapers/rutgers
+      - go install -v uct/servers/spike
+
+  image:
+    image: library/docker:dind
+    commands:
+      - cd /go/src/uct
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+      - docker build -t tevjef/uct-core:staging-ein -f Dockerfile-ein .
+      - docker build -t tevjef/uct-core:staging-spike -f Dockerfile-spike .
+      - docker build -t tevjef/uct-core:staging-hermes -f Dockerfile-hermes .
+      - docker build -t tevjef/uct-core:staging-rutgers-cm -f Dockerfile-rutgers-cm .
+      - docker build -t tevjef/uct-core:staging-rutgers-nb -f Dockerfile-rutgers-nb .
+      - docker build -t tevjef/uct-core:staging-rutgers-nk -f Dockerfile-rutgers-nk .
+      - docker build -t tevjef/uct-core:staging-fluentd -f support/fluentd/Dockerfile support/fluentd
+      - docker build -t tevjef/uct-core:staging-fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
+      - docker build -t tevjef/uct-core:staging-nginx -f support/nginx/Dockerfile support/nginx
+      - docker build -t tevjef/uct-core:staging-nginx-gen -f support/nginx/gen/Dockerfile support/nginx/gen
+      - docker build -t tevjef/uct-core:staging-postgresql -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/uct-core:staging-telegraf -f support/telegraf/Dockerfile support/telegraf
+
+      - docker push tevjef/uct-core:staging-ein
+      - docker push tevjef/uct-core:staging-spike
+      - docker push tevjef/uct-core:staging-hermes
+      - docker push tevjef/uct-core:staging-rutgers-cm
+      - docker push tevjef/uct-core:staging-rutgers-nb
+      - docker push tevjef/uct-core:staging-rutgers-nk
+      - docker push tevjef/uct-core:staging-fluentd
+      - docker push tevjef/uct-core:staging-fluentd-gen
+      - docker push tevjef/uct-core:staging-nginx
+      - docker push tevjef/uct-core:staging-nginx-gen
+      - docker push tevjef/uct-core:staging-postgresql
+      - docker push tevjef/uct-core:staging-telegraf
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  slack:
+    webhook: https://hooks.slack.com/services/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
+    channel: ci
+    username: drone

@@ -5,20 +5,16 @@ COPY . /go/src/uct
 ENV APP_PACKAGE="uct/ein"
 ENV APP_NAME="ein"
 
-RUN apk update && \
-    apk add ca-certificates && \
-    update-ca-certificates && \
-    apk add openssl && \
-    apk add git && \
+RUN apk --no-cache add ca-certificates openssl git && \
     wget https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz && \
     tar -xzf glide-v0.12.1-linux-amd64.tar.gz && \
     mv linux-amd64/glide /usr/bin && \
     cd /go/src/uct && \
     glide install && \
-    go install -v ${APP_PACKAGE} && \
     rm -rf *.tar.gz* && \
-    apk del git && \
-    apk del openssl
+    apk del git openssl ca-certificates
+
+RUN go install -v ${APP_PACKAGE}
 
 WORKDIR /go/src/uct
 

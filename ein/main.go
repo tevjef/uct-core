@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 	uct "uct/common"
+	"uct/common/conf"
 	"uct/redis"
 	"uct/influxdb"
 )
@@ -48,7 +49,7 @@ var (
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
-	config     = uct.Config{}
+	config     = conf.Config{}
 
 	mutiProgramming = 5
 )
@@ -63,7 +64,7 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 
 	// Parse configuration file
-	config = uct.NewConfig(*configFile)
+	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
 	// Start profiling
@@ -694,6 +695,7 @@ func initInflux() {
 
 	// Add the hook to the standard logger.
 	auditLogger = log.New()
+	auditLogger.Formatter = new(log.JSONFormatter)
 	auditLogger.Hooks.Add(auditHook)
 }
 

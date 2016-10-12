@@ -1,0 +1,12 @@
+version: '2'
+services:
+  hello-world:
+    depends_on:
+      - fluentd
+    image: hello-world
+    logging:
+      driver: fluentd
+  fluentd:
+    image: fluent/fluentd
+    ports:
+      - '24224:24224'

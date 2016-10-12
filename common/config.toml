@@ -1,13 +1,13 @@
 [postgres]
-host = "foreman.tevindev.me"
+host = "postgresql"
 port = "5432"
-user = "uct"
-password = "***REMOVED***"
-name = "universityct"
+user = ""
+password = ""
+name = ""
 connection_max = 10
 
 [hermes]
-api_key = "***REMOVED***"
+api_key = ""
 
 [pprof]
     [pprof.rutgers-nk]
@@ -49,13 +49,13 @@ api_key = "***REMOVED***"
     interval = "1m"
 
 [influxdb]
-host = "localhost"
-user = "admin"
+host = "influxdb"
+user = ""
 port =  "8086"
-password = "***REMOVED***"
+password = ""
 
 [redis]
-host = "localhost"
+host = "redis"
 port =  "6379"
 db = 0
 password = ""

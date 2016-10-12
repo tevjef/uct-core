@@ -25,6 +25,7 @@ import (
 	"uct/influxdb"
 	"github.com/vlad-doru/influxus"
 	"github.com/influxdata/influxdb/client/v2"
+	"uct/common/conf"
 )
 
 var (
@@ -38,9 +39,8 @@ var (
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
 	daemonFile = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
 	latest = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
-	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config uct.Config
+	config conf.Config
 	wrapper *v1.RedisWrapper
 	rsync *rs.RedisSync
 )
@@ -56,7 +56,7 @@ func main() {
 
 	isDaemon := *daemonInterval > 0
 	// Parse configuration file
-	config = uct.NewConfig(*configFile)
+	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
 	// Start influx logging
@@ -575,5 +575,6 @@ func initInflux() {
 
 	// Add the hook to the standard logger.
 	auditLogger = log.New()
+	auditLogger.Formatter = new(log.JSONFormatter)
 	auditLogger.Hooks.Add(auditHook)
 }

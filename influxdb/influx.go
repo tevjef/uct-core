@@ -4,6 +4,7 @@ import (
 	"github.com/vlad-doru/influxus"
 	"github.com/influxdata/influxdb/client/v2"
 	uct "uct/common"
+	"uct/common/conf"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -12,7 +13,7 @@ var (
 	AuditLogger *log.Logger
 )
 
-func initInflux(config *uct.Config) {
+func initInflux(config *conf.Config) {
 	var err error
 	// Create the InfluxDB client.
 	influxClient, err = client.NewHTTPClient(client.HTTPConfig{
@@ -44,7 +45,7 @@ func initInflux(config *uct.Config) {
 	AuditLogger.Hooks.Add(auditHook)
 }
 
-func GetClient(config uct.Config) (client.Client, error) {
+func GetClient(config conf.Config) (client.Client, error) {
 	return client.NewHTTPClient(client.HTTPConfig{
 		Addr:     config.GetInfluxAddr(),
 		Password: config.InfluxDb.Password,

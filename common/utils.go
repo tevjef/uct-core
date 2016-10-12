@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/pkg/errors"
+	"uct/common/conf"
 )
 
 var trim = strings.TrimSpace
@@ -24,7 +27,10 @@ func init() {
 
 func CheckError(err error) {
 	if err != nil {
-		log.Panic(err)
+		if conf.IsDebug() {
+			log.Panicf("%+v\n", errors.Wrap(err, ""))
+		}
+		log.Fatalf("%+v\n", errors.Wrap(err, ""))
 	}
 }
 
