@@ -7,13 +7,35 @@
 @type forward
 </source>
 
+# Capture panics from go programs
 <filter docker.core.**>
-@type parser
-format json
-key_name log
-time_format %Y-%m-%dT%H:%M:%S%z
+@type concat
+@log_level debug
+key log
+multiline_start_regexp /^panic:/
+multiline_end_regexp /^created by/
 </filter>
 
+# Parse them into json
+<filter docker.core.**>
+@type parser
+
+key_name log
+format multi_format
+   <pattern>
+     format json
+     time_format %Y-%m-%dT%H:%M:%S%z
+   </pattern>
+
+   <pattern>
+     format multiline
+     format_firstline /^panic:/
+     format1 /^(?<panic>panic:.*)/
+     format2 /^(?<trace>goroutine.*)/
+   </pattern>
+</filter>
+
+# Special rule for nginx since it can output json
 <filter docker.nginx>
 @type parser
 format json
