@@ -37,7 +37,9 @@ pipeline:
       - docker build -t tevjef/uct-core:ci-nginx-gen -f support/nginx/Dockerfile support/nginx/gen
       - docker build -t tevjef/uct-core:ci-postgresql -f support/postgresql/Dockerfile support/postgresql
       - docker build -t tevjef/uct-core:ci-telegraf -f support/telegraf/Dockerfile support/telegraf
-
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      
   slack:
     webhook_url: https://hooks.slack.com/services/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
     channel: ci
