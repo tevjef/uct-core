@@ -18,8 +18,8 @@ pipeline:
       - export PATH=$PATH:$GOPATH/bin
       - go install -v uct/ein
       - go install -v uct/hermes
-      - go install -v scrapers/rutgers
-      - go install -v servers/spike
+      - go install -v uct/scrapers/rutgers
+      - go install -v uct/servers/spike
 
   image:
     image: docker
