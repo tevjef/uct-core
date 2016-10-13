@@ -24,6 +24,7 @@ pipeline:
   image:
     image: library/docker:1.11.2-dind
     commands:
+      - printenv
       - cd /go/src/uct
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
       - docker build -t tevjef/uct-core:staging-ein -f Dockerfile-ein .
