@@ -357,7 +357,7 @@ services:
   fluentd-gen:
     container_name: fluentd-gen
     image: tevjef/uct-core:staging-fluentd-gen
-    command: -notify-sighup fluentd -wait 5s -watch /etc/docker-gen/templates/fluent.conf.tmpl /fluentd/etc/fluent.conf
+    command: -notify-sighup fluentd -wait 2s -watch /etc/docker-gen/templates/fluent.conf.tmpl /fluentd/etc/fluent.conf
     volumes:
       - /fluentd/etc
       - /var/run/docker.sock:/tmp/docker.sock:ro
