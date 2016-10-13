@@ -22,7 +22,7 @@ pipeline:
       - go install -v uct/servers/spike
 
   image:
-    image: library/docker:dind
+    image: library/docker:1.11.2-dind
     commands:
       - cd /go/src/uct
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
