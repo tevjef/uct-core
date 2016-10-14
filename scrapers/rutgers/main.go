@@ -22,9 +22,6 @@ import (
 	"errors"
 	"github.com/pquerna/ffjson/ffjson"
 	rutgers "uct/scrapers/rutgers/model"
-	"uct/influxdb"
-	"github.com/vlad-doru/influxus"
-	"github.com/influxdata/influxdb/client/v2"
 	"uct/common/conf"
 )
 
@@ -58,9 +55,6 @@ func main() {
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
-
-	// Start influx logging
-	initInflux()
 
 	// Start profiling
 	go uct.StartPprof(config.GetDebugSever(app.Name))
@@ -110,7 +104,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		uct.CheckError(err)
 	} else {
-		auditLogger.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)}).Info()
 
 		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
@@ -163,7 +157,7 @@ func startDaemon(result chan uct.University, cancel chan bool) {
 					innerDaemon:for {
 						select {
 						case <-ticker.C:
-							auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "time_quantum":daemonInterval.Seconds()}).Infoln()
+							log.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "time_quantum":daemonInterval.Seconds()}).Infoln()
 							go entryPoint(result)
 						case <-innerDaemonStopper:
 							log.Debugln("New offset received, cancelling old ticker")
@@ -543,38 +537,4 @@ func getRutgersSemester(semester *uct.Semester) string {
 		return "0" + strconv.Itoa(int(semester.Year))
 	}
 	return ""
-}
-
-var (
-	influxClient client.Client
-	auditLogger *log.Logger
-)
-
-func initInflux() {
-	var err error
-	// Create the InfluxDB client.
-	influxClient, err = influxdbhelper.GetClient(config)
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "scaper_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"scraper_name"},
-			Precision: "s",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Formatter = new(log.JSONFormatter)
-	auditLogger.Hooks.Add(auditHook)
 }
