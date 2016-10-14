@@ -71,7 +71,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
             utc
         </store>
         {{end}}
-        {{if and $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
+        {{if or $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
          <store>
              @type cloudwatch_logs
              @log_level debug
@@ -86,7 +86,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
          {{end}}
 
          {{if index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
-         {{if and $GenContainer.Env.INFLUXDB_DATABASE $GenContainer.Env.INFLUXDB_ADMIN_USER $GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
+         {{if or $GenContainer.Env.INFLUXDB_DATABASE $GenContainer.Env.INFLUXDB_ADMIN_USER $GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
          <store>
              @type influxdb
              @log_level debug
