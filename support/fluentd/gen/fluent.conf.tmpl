@@ -51,6 +51,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
     <match docker.{{$service}}>
         @type copy
         deep_copy true
+        {{if or $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
         <store>
             @type s3
             @log_level debug
@@ -69,7 +70,8 @@ time_format %Y-%m-%dT%H:%M:%S%z
             time_slice_wait 1m
             utc
         </store>
-
+        {{end}}
+        {{if and $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
          <store>
              @type cloudwatch_logs
              @log_level debug
@@ -81,8 +83,10 @@ time_format %Y-%m-%dT%H:%M:%S%z
              auto_create_stream true
              {{if or $isCoreService (eq $service "nginx")}}#{{end}}message_keys log
          </store>
+         {{end}}
 
          {{if index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
+         {{if and $GenContainer.Env.INFLUXDB_DATABASE $GenContainer.Env.INFLUXDB_ADMIN_USER $GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
          <store>
              @type influxdb
              @log_level debug
@@ -95,7 +99,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
              tag_keys {{index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
           </store>
          {{end}}
-
+         {{end}}
          {{if $CurrentContainer.Env.FLUENTD_STDOUT}}
          <store>
             @type stdout
