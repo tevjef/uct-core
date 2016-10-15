@@ -12,9 +12,6 @@ import (
 	"time"
 	uct "uct/common"
 	"uct/servers"
-	"github.com/vlad-doru/influxus"
-	"github.com/influxdata/influxdb/client/v2"
-	"uct/influxdb"
 	"uct/common/conf"
 )
 
@@ -49,9 +46,6 @@ func main() {
 	database, err = uct.InitDB(config.GetDbConfig(app.Name))
 	uct.CheckError(err)
 
-	// Start influx logging
-	initInflux()
-
 	// Prepare database connections
 	database.SetMaxOpenConns(config.Postgres.ConnMax)
 	PrepareAllStmts()
@@ -64,7 +58,7 @@ func main() {
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.Use(servers.Ginrus(auditLogger, time.RFC3339, true))
+	r.Use(servers.Ginrus(log.StandardLogger(), time.RFC3339, true))
 
 	// Json
 	v1 := r.Group("/v1")
@@ -119,39 +113,4 @@ func main() {
 	v4.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
 
 	r.Run(":" + strconv.Itoa(int(*port)))
-}
-
-
-var (
-	influxClient client.Client
-	auditLogger *log.Logger
-)
-
-func initInflux() {
-	var err error
-	// Create the InfluxDB client.
-	influxClient, err = influxdbhelper.GetClient(config)
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "spike_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"university_name", "user-agent", "method", "status"},
-			Precision: "ms",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Formatter = new(log.JSONFormatter)
-	auditLogger.Hooks.Add(auditHook)
 }
