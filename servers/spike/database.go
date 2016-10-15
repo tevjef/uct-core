@@ -168,42 +168,6 @@ func SelectSection(sectionTopicName string) (section uct.Section,  b []byte, err
 	return
 }
 
-func deepSelectSection(section *uct.Section) (err error) {
-	section.Meetings, err = SelectMeetings(section.Id)
-	section.Books, err = SelectBooks(section.Id)
-	section.Instructors, err = SelectInstructors(section.Id)
-	section.Metadata, err = SelectMetadata(0, 0, 0, section.Id, 0)
-	return
-}
-
-func SelectMeetings(sectionId int64) (meetings []*uct.Meeting, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectMeetings")
-	m := map[string]interface{}{"section_id": sectionId}
-	if err = Select(SelectMeeting, &meetings, m); err != nil {
-		return
-	}
-	for i := range meetings {
-		if meetings[i].Metadata, err = SelectMetadata(0, 0, 0, 0, meetings[i].Id); err != nil {
-			return
-		}
-	}
-	return
-}
-
-func SelectInstructors(sectionId int64) (instructors []*uct.Instructor, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectInstructors")
-	m := map[string]interface{}{"section_id": sectionId}
-	err = Select(SelectInstructor, &instructors, m)
-	return
-}
-
-func SelectBooks(sectionId int64) (books []*uct.Book, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectInstructors")
-	m := map[string]interface{}{"section_id": sectionId}
-	err = Select(SelectBook, &books, m)
-	return
-}
-
 func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*uct.Metadata, err error) {
 	defer uct.TimeTrack(time.Now(), "SelectMetadata")
 	m := map[string]interface{}{
