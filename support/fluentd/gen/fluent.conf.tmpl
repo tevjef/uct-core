@@ -81,6 +81,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
              log_group_name {{$project}}
              log_stream_name {{$service}}
              auto_create_stream true
+             include_time_key true
              {{if or $isCoreService (eq $service "nginx")}}#{{end}}message_keys log
          </store>
          {{end}}

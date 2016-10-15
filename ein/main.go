@@ -94,7 +94,7 @@ func main() {
 				latestData := val + ":data:latest"
 				oldData := val + ":data:old"
 
-				log.WithFields(log.Fields{"key": val}).Infoln("RPOP")
+				log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
 
 				if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
 					log.WithError(err).Panic("Error getting latest data")
