@@ -362,14 +362,10 @@ func (meeting MeetingByClass) Swap(i, j int) {
 func (meeting MeetingByClass) Less(i, j int) bool {
 	left, right := meeting[i], meeting[j]
 
-	if left.classRank() < right.classRank() {
+	if left.dayRank() < right.dayRank() {
 		return true
-	} else if left.classRank() == right.classRank() {
-		if left.dayRank() < right.dayRank() {
-			return true
-		} else if left.dayRank() == right.dayRank() {
-			return IsAfter(left.StartTime, right.StartTime)
-		}
+	} else if left.dayRank() == right.dayRank() {
+		return IsAfter(left.StartTime, right.StartTime)
 	}
 
 	return false
@@ -695,9 +691,13 @@ func IsAfter(t1, t2 string) bool {
 		t2 = t2[2:]
 		t2 = "00" + t2
 	}
+
 	if t1[6:] == "AM" && t2[6:] == "PM" {
 		return true
+	} else if t1[6:] == "PM" && t2[6:] == "AM" {
+		return false
 	}
+
 	if t1[:2] == t2[:2] {
 		return t1[3:5] < t2[3:5]
 	}
