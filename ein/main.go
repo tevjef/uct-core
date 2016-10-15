@@ -2,12 +2,6 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"github.com/vlad-doru/influxus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"net"
 	_ "net/http/pprof"
 	"os"
@@ -19,7 +13,11 @@ import (
 	uct "uct/common"
 	"uct/common/conf"
 	"uct/redis"
-	"uct/influxdb"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type App struct {
@@ -45,7 +43,7 @@ type serialSection struct {
 
 var (
 	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
-	noDiff = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
+	noDiff     = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
@@ -71,10 +69,7 @@ func main() {
 	go uct.StartPprof(config.GetDebugSever(app.Name))
 
 	// Start redis client
-	wrapper := v1.New(config, app.Name)
-
-	// Start influx logging
-	initInflux()
+	wrapper := redishelper.New(config, app.Name)
 
 	// Initialize database connection
 	database, err := uct.InitDB(config.GetDbConfig(app.Name))
@@ -87,13 +82,13 @@ func main() {
 
 	for {
 		log.Info("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(5*time.Minute, v1.BaseNamespace+":queue").Result(); err != nil {
+		if data, err := wrapper.Client.BRPop(5*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
 			uct.CheckError(err)
 		} else {
-			func () {
+			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						 log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Error()
+						log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Error()
 					}
 				}()
 
@@ -102,7 +97,7 @@ func main() {
 				latestData := val + ":data:latest"
 				oldData := val + ":data:old"
 
-				log.WithFields(log.Fields{"key":val}).Infoln("RPOP")
+				log.WithFields(log.Fields{"key": val}).Infoln("RPOP")
 
 				if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
 					log.WithError(err).Panic("Error getting latest data")
@@ -155,7 +150,7 @@ func main() {
 					app.updateSerial(*newUniversity)
 
 					// Log bytes received
-					auditLogger.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name":university.TopicName}).Info(latestData)
+					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Info(latestData)
 
 					doneAudit <- true
 					<-doneAudit
@@ -612,7 +607,7 @@ func audit(university string) {
 	var serialSection int
 	var serialSubject int
 
-	Outerloop:
+Outerloop:
 	for {
 		select {
 		case count := <-insertionsCh:
@@ -641,22 +636,22 @@ func audit(university string) {
 			serialSection += count
 		case <-doneAudit:
 
-			auditLogger.WithFields(log.Fields{
+			log.WithFields(log.Fields{
 				"university_name": university,
 
-				"insertions":       insertions,
-				"updates":          updates,
-				"upserts":          upserts,
-				"existential":      existential,
-				"subjectCount":     subjectCount,
-				"courseCount":      courseCount,
-				"sectionCount":     sectionCount,
-				"meetingCount":     meetingCount,
-				"metadataCount":    metadataCount,
-				"serialSubject":    serialSubject,
-				"serialCourse":     serialCourse,
-				"serialSection":    serialSection,
-				"elapsed":          time.Since(start).Seconds(),
+				"insertions":    insertions,
+				"updates":       updates,
+				"upserts":       upserts,
+				"existential":   existential,
+				"subjectCount":  subjectCount,
+				"courseCount":   courseCount,
+				"sectionCount":  sectionCount,
+				"meetingCount":  meetingCount,
+				"metadataCount": metadataCount,
+				"serialSubject": serialSubject,
+				"serialCourse":  serialCourse,
+				"serialSection": serialSection,
+				"elapsed":       time.Since(start).Seconds(),
 			}).Info("done!")
 
 			doneAudit <- true
@@ -664,41 +659,6 @@ func audit(university string) {
 		}
 	}
 }
-
-var (
-	influxClient client.Client
-	auditLogger *log.Logger
-)
-
-func initInflux() {
-	var err error
-	// Create the InfluxDB client.
-	influxClient, err = influxdbhelper.GetClient(config)
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "ein_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"university_name"},
-			Precision: "s",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Formatter = new(log.JSONFormatter)
-	auditLogger.Hooks.Add(auditHook)
-}
-
 
 var (
 	insertionsCh    = make(chan int)
@@ -891,4 +851,3 @@ type ChannelSubjects struct {
 	subjectId int64
 	courses   []uct.Course
 }
-
