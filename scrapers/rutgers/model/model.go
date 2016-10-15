@@ -681,6 +681,7 @@ func (meeting RMeetingTime) ClassType() *string {
 	}
 }
 
+// Determines if one date string is after another e.g 1:00PM is after 9:00AM
 func IsAfter(t1, t2 string) bool {
 	if l1 := len(t1); l1 == 7 {
 		t1 = "0" + t1

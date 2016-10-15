@@ -1,4 +1,4 @@
-package v1
+package redishelper
 
 import (
 	"gopkg.in/redis.v4"
