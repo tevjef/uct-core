@@ -78,6 +78,7 @@ func main() {
 		harmony.DaemonScraper(redisWrapper, *daemonInterval, func(cancel chan bool) {
 			entryPoint(resultChan)
 		})
+
 	} else {
 		go func() {
 			entryPoint(resultChan)
@@ -85,17 +86,17 @@ func main() {
 		}()
 	}
 
-	var school uct.University
-	var reader *bytes.Reader
+	// block as it waits for results to come in
+	for school := range resultChan {
+		reader := uct.MarshalMessage(*format, school)
 
-	for school = range resultChan {
-		reader = uct.MarshalMessage(*format, school)
-
-		// Push to redis
+		// Write to redis
 		if isDaemon {
 			pushToRedis(reader)
+			continue
 		}
 
+		// Write to file
 		if *daemonFile != "" {
 			if data, err := ioutil.ReadAll(reader); err != nil {
 				uct.CheckError(err)
@@ -106,11 +107,12 @@ func main() {
 					uct.CheckError(err)
 				}
 			}
+			continue
 		}
-	}
 
-	// Runs when the channel closes, the channel will not close in daemon mode
-	io.Copy(os.Stdout, reader)
+		// Write to stdout
+		io.Copy(os.Stdout, reader)
+	}
 }
 
 func pushToRedis(reader *bytes.Reader) {
@@ -307,7 +309,7 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []rutge
 		}
 
 		log.WithFields(log.Fields{"content-length": len(data), "subject": subject, "status": resp.Status, "season": semester.Season,
-			"year": semester.Year, "campus": campus, "url": url}).Debugln("Course Reponse")
+			"year": semester.Year, "campus": campus, "url": url}).Debugln("Course Response")
 
 		resp.Body.Close()
 		break

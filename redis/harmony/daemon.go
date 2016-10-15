@@ -10,26 +10,26 @@ import (
 )
 
 func DaemonScraper(wrapper *redishelper.RedisWrapper, interval time.Duration, start func(cancel chan bool)) {
-	// Start redis client
-	rsync := New(wrapper, interval, uuid.NewV4().String())
+	go func() {
+		rsync := New(wrapper, interval, uuid.NewV4().String())
 
-	newOffsetChan := rsync.Sync(make(chan bool))
+		newOffsetChan := rsync.Sync(make(chan bool))
 
-	var cancelSync chan bool
-	for {
-		select {
-		case offset := <-newOffsetChan:
-			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Debugln("New offset recieved")
+		var cancelSync chan bool
+		for {
+			select {
+			case offset := <-newOffsetChan:
+				log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Debugln("New offset recieved")
 
 			// No need to cancel the previous go routine, there isn't one
-			if cancelSync != nil {
-				cancelSync <- true
+				if cancelSync != nil {
+					cancelSync <- true
+				}
+				cancelSync = make(chan bool)
+				go prepareForSync(offset, start, interval, cancelSync)
 			}
-			cancelSync = make(chan bool)
-			go prepareForSync(offset, start, interval, cancelSync)
 		}
-	}
-
+	}()
 }
 
 func prepareForSync(offset time.Duration, start func(cancel chan bool), interval time.Duration, cancel chan bool) {
