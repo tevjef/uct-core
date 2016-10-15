@@ -22,4 +22,4 @@ WORKDIR /go/src/uct
 ENTRYPOINT ["ein"]
 EXPOSE 13100
 
-CMD ["-c" , "/go/src/uct/common/config.toml", "-f", "protobuf"]
+CMD ["-c" , "/go/src/uct/common/conf/config.toml", "-f", "protobuf"]

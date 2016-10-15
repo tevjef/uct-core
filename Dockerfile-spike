@@ -24,4 +24,4 @@ EXPOSE 13400
 
 ENTRYPOINT ["spike"]
 
-CMD ["-c" , "/go/src/uct/common/config.toml"]
+CMD ["-c" , "/go/src/uct/common/conf/config.toml"]
