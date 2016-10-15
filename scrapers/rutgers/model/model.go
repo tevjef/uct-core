@@ -536,6 +536,14 @@ func (course RCourse) Metadata() (metadata []*model.Metadata) {
 			Content: course.SubjectNotes,
 		})
 	}
+
+	if course.CourseNotes != "" {
+		metadata = append(metadata, &model.Metadata{
+			Title:   "Course Notes",
+			Content: course.CourseNotes,
+		})
+	}
+
 	if course.PreReqNotes != "" {
 		metadata = append(metadata, &model.Metadata{
 			Title:   "Prequisites",
