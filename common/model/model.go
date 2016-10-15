@@ -211,6 +211,8 @@ func (sub *Subject) Validate(uni *University) {
 	if sub.Name == "" {
 		log.Panic("Subject name == is empty")
 	}
+
+	sub.Name = TrimAll(sub.Name)
 	sub.Name = toTitle(sub.Name)
 
 	// TopicName

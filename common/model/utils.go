@@ -90,7 +90,7 @@ func TrimAll(str string) string {
 	str = stripSpaces(str)
 	temp := []byte(str)
 
-	// Remove NUL and Heading bytes from string
+	// Remove NUL and Heading bytes from string, cannot be inserted into postgresql
 	temp = bytes.Replace(temp, nullByte, emptyByteArray, -1)
 	str = string(bytes.Replace(temp, headingBytes, emptyByteArray, -1))
 
