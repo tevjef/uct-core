@@ -153,6 +153,12 @@ func getCampus(campus string) model.University {
 
 	university = getRutgers(campus)
 
+	// Rutgers servers go down for maintenance between 3 and 5 AM UTC every day.
+	// Data scraped from this time would be inaccurate and may lead to unforeseen errors
+	if currentHour := time.Now().UTC().Hour(); currentHour >= 7 && currentHour < 9 {
+		return university
+	}
+
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
 
 	Semesters := []*model.Semester{
