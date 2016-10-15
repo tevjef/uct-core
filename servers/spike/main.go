@@ -10,7 +10,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 	"uct/servers"
 	"uct/common/conf"
 )
@@ -38,13 +38,13 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go uct.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	var err error
 
 	// Open database connection
-	database, err = uct.InitDB(config.GetDbConfig(app.Name))
-	uct.CheckError(err)
+	database, err = model.InitDB(config.GetDbConfig(app.Name))
+	model.CheckError(err)
 
 	// Prepare database connections
 	database.SetMaxOpenConns(config.Postgres.ConnMax)

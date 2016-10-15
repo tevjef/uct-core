@@ -1,4 +1,4 @@
-package common
+package model
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -117,24 +117,6 @@ func ToTopicName(str string) string {
 		lastRune = r
 		return unicode.ToLower(r)
 	}, str)
-
-	return str
-}
-
-func toTopicName(str string) string {
-	regex, err := regexp.Compile("[^A-Za-z0-9-_.~% ]+")
-	CheckError(err)
-	str = trim(regex.ReplaceAllString(str, ""))
-
-	regex, err = regexp.Compile("\\s+")
-	CheckError(err)
-	str = regex.ReplaceAllString(str, ".")
-
-	regex, err = regexp.Compile("[.]+")
-	CheckError(err)
-	str = regex.ReplaceAllString(str, ".")
-
-	str = strings.ToLower(str)
 
 	return str
 }

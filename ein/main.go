@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 	"uct/common/conf"
 	"uct/redis"
 
@@ -42,7 +42,7 @@ var (
 	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
 	noDiff     = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions(uct.JSON, uct.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
+	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.JSON, model.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
 	config     = conf.Config{}
 
@@ -52,7 +52,7 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -63,14 +63,14 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go uct.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	// Start redis client
 	wrapper := redishelper.New(config, app.Name)
 
 	// Initialize database connection
-	database, err := uct.InitDB(config.GetDbConfig(app.Name))
-	uct.CheckError(err)
+	database, err := model.InitDB(config.GetDbConfig(app.Name))
+	model.CheckError(err)
 
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
@@ -80,7 +80,7 @@ func main() {
 	for {
 		log.Info("Waiting on queue...")
 		if data, err := wrapper.Client.BRPop(5*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
-			uct.CheckError(err)
+			model.CheckError(err)
 		} else {
 			func() {
 				defer func() {
@@ -99,7 +99,7 @@ func main() {
 				if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
 					log.WithError(err).Panic("Error getting latest data")
 				} else {
-					var university uct.University
+					var university model.University
 
 					// Try getting older data from redis
 					var oldRaw string
@@ -113,28 +113,28 @@ func main() {
 					}
 
 					// Decode new data
-					newUniversity := new(uct.University)
-					if err := uct.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity); err != nil {
+					newUniversity := new(model.University)
+					if err := model.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity); err != nil {
 						log.WithError(err).Panic("Error while unmarshalling new data")
 					}
 
 					// Make sure the data received is primed for the database
-					if err := uct.ValidateAll(newUniversity); err != nil {
+					if err := model.ValidateAll(newUniversity); err != nil {
 						log.WithError(err).Panic("Error while validating newUniversity")
 					}
 
 					// Decode old data if have some
 					if oldRaw != "" && !*noDiff {
-						oldUniversity := new(uct.University)
-						if err := uct.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity); err != nil {
+						oldUniversity := new(model.University)
+						if err := model.UnmarshallMessage(*format, strings.NewReader(oldRaw), oldUniversity); err != nil {
 							log.WithError(err).Panic("Error while unmarshalling old data")
 						}
 
-						if err := uct.ValidateAll(oldUniversity); err != nil {
+						if err := model.ValidateAll(oldUniversity); err != nil {
 							log.WithError(err).Panic("Error while validating oldUniversity")
 						}
 
-						university = uct.DiffAndFilter(*oldUniversity, *newUniversity)
+						university = model.DiffAndFilter(*oldUniversity, *newUniversity)
 					} else {
 						university = *newUniversity
 					}
@@ -160,8 +160,8 @@ func main() {
 	}
 }
 
-func (app App) updateSerial(uni uct.University) {
-	defer uct.TimeTrack(time.Now(), "updateSerial")
+func (app App) updateSerial(uni model.University) {
+	defer model.TimeTrack(time.Now(), "updateSerial")
 
 	sem := make(chan bool, mutiProgramming)
 	for subjectIndex := range uni.Subjects {
@@ -192,10 +192,10 @@ func (app App) updateSerial(uni uct.University) {
 
 }
 
-func (app App) updateSerialSubject(subject *uct.Subject) {
+func (app App) updateSerialSubject(subject *model.Subject) {
 	serialSubjectCh <- 1
 	data, err := subject.Marshal()
-	uct.CheckError(err)
+	model.CheckError(err)
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
 	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 
@@ -203,10 +203,10 @@ func (app App) updateSerialSubject(subject *uct.Subject) {
 	// log.WithFields(log.Fields{"subject": subject.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) updateSerialCourse(course *uct.Course) {
+func (app App) updateSerialCourse(course *model.Course) {
 	serialCourseCh <- 1
 	data, err := course.Marshal()
-	uct.CheckError(err)
+	model.CheckError(err)
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
 	app.dbHandler.update(SerialCourseUpdateQuery, arg)
 
@@ -214,10 +214,10 @@ func (app App) updateSerialCourse(course *uct.Course) {
 	// log.WithFields(log.Fields{"course": course.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) updateSerialSection(section *uct.Section) {
+func (app App) updateSerialSection(section *model.Section) {
 	serialSectionCh <- 1
 	data, err := section.Marshal()
-	uct.CheckError(err)
+	model.CheckError(err)
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
 	app.dbHandler.update(SerialSectionUpdateQuery, arg)
 
@@ -225,8 +225,8 @@ func (app App) updateSerialSection(section *uct.Section) {
 	// log.WithFields(log.Fields{"section": section.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) insertUniversity(uni *uct.University) {
-	defer uct.TimeTrack(time.Now(), "insertUniversity")
+func (app App) insertUniversity(uni *model.University) {
+	defer model.TimeTrack(time.Now(), "insertUniversity")
 
 	universityId := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
 
@@ -334,7 +334,7 @@ func (app App) insertUniversity(uni *uct.University) {
 	}
 }
 
-func (app App) insertSubject(sub *uct.Subject) (subjectId int64) {
+func (app App) insertSubject(sub *model.Subject) (subjectId int64) {
 	if !*fullUpsert {
 		if subjectId = app.dbHandler.exists(SubjectExistQuery, sub); subjectId != 0 {
 			return
@@ -353,7 +353,7 @@ func (app App) insertSubject(sub *uct.Subject) (subjectId int64) {
 	return subjectId
 }
 
-func (app App) insertCourse(course *uct.Course) (courseId int64) {
+func (app App) insertCourse(course *model.Course) (courseId int64) {
 	if !*fullUpsert {
 
 		if courseId = app.dbHandler.exists(CourseExistQuery, course); courseId != 0 {
@@ -365,8 +365,8 @@ func (app App) insertCourse(course *uct.Course) (courseId int64) {
 	return courseId
 }
 
-func (app App) insertSemester(universityId int64, resolvedSemesters *uct.ResolvedSemester) int64 {
-	rs := &uct.DBResolvedSemester{}
+func (app App) insertSemester(universityId int64, resolvedSemesters *model.ResolvedSemester) int64 {
+	rs := &model.DBResolvedSemester{}
 	rs.UniversityId = universityId
 	rs.CurrentSeason = resolvedSemesters.Current.Season
 	rs.CurrentYear = strconv.Itoa(int(resolvedSemesters.Current.Year))
@@ -377,11 +377,11 @@ func (app App) insertSemester(universityId int64, resolvedSemesters *uct.Resolve
 	return app.dbHandler.upsert(SemesterInsertQuery, SemesterUpdateQuery, rs)
 }
 
-func (app App) insertSection(section *uct.Section) int64 {
+func (app App) insertSection(section *model.Section) int64 {
 	return app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 }
 
-func (app App) insertMeeting(meeting *uct.Meeting) (meetingId int64) {
+func (app App) insertMeeting(meeting *model.Meeting) (meetingId int64) {
 	if !*fullUpsert {
 		if meetingId = app.dbHandler.exists(MeetingExistQuery, meeting); meetingId != 0 {
 			return
@@ -390,24 +390,24 @@ func (app App) insertMeeting(meeting *uct.Meeting) (meetingId int64) {
 	return app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 }
 
-func (app App) insertInstructor(instructor *uct.Instructor) (instructorId int64) {
+func (app App) insertInstructor(instructor *model.Instructor) (instructorId int64) {
 	if instructorId = app.dbHandler.exists(InstructorExistQuery, instructor); instructorId != 0 {
 		return
 	}
 	return app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 }
 
-func (app App) insertBook(book *uct.Book) (bookId int64) {
+func (app App) insertBook(book *model.Book) (bookId int64) {
 	bookId = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return bookId
 }
 
-func (app App) insertRegistration(registration *uct.Registration) int64 {
+func (app App) insertRegistration(registration *model.Registration) int64 {
 	return app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 }
 
-func (app App) insertMetadata(metadata *uct.Metadata) (metadataId int64) {
+func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 	var insertQuery string
 	var updateQuery string
 

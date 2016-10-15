@@ -10,15 +10,19 @@ import (
 )
 
 type RedisSync struct {
-	guid           string
-	instanceId     string
-	position       int64
-	Instances      int64
-	offset         time.Duration
-	timeQuantum    time.Duration
+	instance Instance
 	uctRedis       *redishelper.RedisWrapper
 	syncInterval   time.Duration
 	syncExpiration time.Duration
+}
+
+type Instance struct {
+	guid        string
+	id          string
+	position    int64
+	count       int64
+	offset      time.Duration
+	timeQuantum time.Duration
 }
 
 var (
@@ -39,12 +43,14 @@ func New(uctRedis *redishelper.RedisWrapper, timeQuantum time.Duration, appId st
 	nsHealth = nsSpace + ":health"
 
 	rs := &RedisSync{
-		guid:           appId,
-		timeQuantum:    timeQuantum,
+		instance: Instance{
+			guid:           appId,
+			timeQuantum:    timeQuantum,
+			position:       -1,
+			offset:         -1,
+			id:     nsHealth + ":" + appId,
+	},
 		uctRedis:       uctRedis,
-		position:       -1,
-		offset:         -1,
-		instanceId:     nsHealth + ":" + appId,
 		syncInterval:   2 * time.Second,
 		syncExpiration: 4 * time.Second,
 	}
@@ -64,16 +70,16 @@ func New(uctRedis *redishelper.RedisWrapper, timeQuantum time.Duration, appId st
 	return rs
 }
 
-func (rsync *RedisSync) Sync(cancel chan bool) <-chan time.Duration {
-	offsetChan := make(chan time.Duration)
+func (rsync *RedisSync) Sync(cancel chan bool) <-chan Instance {
+	instanceConfigChan := make(chan Instance)
 
-	go rsync.beginSync(offsetChan, cancel)
+	go rsync.beginSync(instanceConfigChan, cancel)
 
-	return offsetChan
+	return instanceConfigChan
 
 }
 
-func (rsync *RedisSync) beginSync(offset chan<- time.Duration, cancel <-chan bool) {
+func (rsync *RedisSync) beginSync(instanceConfig chan<- Instance, cancel <-chan bool) {
 	ticker := time.NewTicker(rsync.syncInterval)
 	for {
 		select {
@@ -98,26 +104,27 @@ func (rsync *RedisSync) beginSync(offset chan<- time.Duration, cancel <-chan boo
 				// Get the number of currently alive instances, if it's less that the last count but not 0
 				// Unregister all instances all instances. They will all reorder themselves on their next ping
 				instanceCount := rsync.getInstanceCount()
-				if instanceCount < rsync.Instances && instanceCount != 0 {
+				if instanceCount < rsync.instance.count && instanceCount != 0 {
 					rsync.unregisterAll()
 				}
 
+				// Store the current number of instances for future reference
+				rsync.instance.count = rsync.getInstanceCount()
+
 				// Calculate the offset given a duration and channel it so that the application update it's offset
-				newOffset := time.Duration(rsync.calculateOffset()) * time.Second
+				oldOffset := rsync.instance.offset
+				rsync.instance.offset = time.Duration(rsync.calculateOffset()) * time.Second
 
 				// Send new offset on scale up and down???
-				if rsync.offset != newOffset {
-					offset <- newOffset
+				if rsync.instance.offset != oldOffset {
+					log.Infoln("Sending new offset")
+					instanceConfig <- rsync.instance
 				}
 
-				// Store the current number of instances for future reference
-				rsync.Instances = rsync.getInstanceCount()
-
-				rsync.offset = newOffset
 			}()
 		case <-cancel:
 			ticker.Stop()
-			close(offset)
+			close(instanceConfig)
 		}
 	}
 }
@@ -133,16 +140,16 @@ func (rsync *RedisSync) unregisterAll() {
 func (rsync *RedisSync) registerInstance() {
 	// Reset list expiration
 	rsync.uctRedis.Client.Expire(nsInstances, rsync.syncExpiration)
-	if _, err := rsync.uctRedis.RPushNotExist(nsInstances, rsync.instanceId); err != nil {
+	if _, err := rsync.uctRedis.RPushNotExist(nsInstances, rsync.instance.id); err != nil {
 		log.WithError(err).Fatalln("failed to claim position in list:", nsInstances)
 	}
 
-	rsync.position = rsync.getPosition()
+	rsync.instance.position = rsync.getPosition()
 }
 
 // Get the index position on the list where the instance resides
 func (rsync *RedisSync) getPosition() int64 {
-	if index, err := rsync.uctRedis.Exists(nsInstances, rsync.instanceId); err != nil {
+	if index, err := rsync.uctRedis.Exists(nsInstances, rsync.instance.id); err != nil {
 		log.WithError(err).Fatalln("failed to check if key exists in list:", nsInstances)
 		return -1
 	} else {
@@ -167,15 +174,15 @@ func (rsync *RedisSync) ping() {
 
 // Ping sets its instanceId on the redis.
 func (rsync *RedisSync) pingWithExpiration(duration time.Duration) {
-	if _, err := rsync.uctRedis.Client.Set(rsync.instanceId, 1, duration).Result(); err != nil {
+	if _, err := rsync.uctRedis.Client.Set(rsync.instance.id, 1, duration).Result(); err != nil {
 		log.WithError(err).Fatalln("failed to perform health check for this instance")
 	}
 }
 
 func (rsync *RedisSync) calculateOffset() int64 {
-	time := int64(rsync.timeQuantum.Seconds())
+	time := int64(rsync.instance.timeQuantum.Seconds())
 	instances := rsync.getInstanceCount()
-	position := rsync.position
+	position := rsync.instance.position
 
 	return calculateOffset(time, instances, position)
 }

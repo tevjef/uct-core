@@ -2,68 +2,68 @@ package main
 
 import (
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 )
 
-func getRutgers(campus string) uct.University {
-	university := uct.University{
+func getRutgers(campus string) model.University {
+	university := model.University{
 		Name:             "Rutgers University–New Brunswick",
 		Abbr:             "RU-NB",
 		MainColor:        "F44336",
 		AccentColor:      "607D8B",
 		HomePage:         "http://newbrunswick.rutgers.edu/",
 		RegistrationPage: "https://sims.rutgers.edu/webreg/",
-		Registrations: []*uct.Registration{
+		Registrations: []*model.Registration{
 			{
-				Period:     uct.SEM_FALL.String(),
+				Period:     model.SEM_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.SEM_SPRING.String(),
+				Period:     model.SEM_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.SEM_SUMMER.String(),
+				Period:     model.SEM_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.SEM_WINTER.String(),
+				Period:     model.SEM_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.START_FALL.String(),
+				Period:     model.START_FALL.String(),
 				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.START_SPRING.String(),
+				Period:     model.START_SPRING.String(),
 				PeriodDate: time.Date(2000, time.October, 5, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.START_SUMMER.String(),
+				Period:     model.START_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.START_WINTER.String(),
+				Period:     model.START_WINTER.String(),
 				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.END_FALL.String(),
+				Period:     model.END_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.END_SPRING.String(),
+				Period:     model.END_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.END_SUMMER.String(),
+				Period:     model.END_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     uct.END_WINTER.String(),
+				Period:     model.END_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 		},
-		Metadata: []*uct.Metadata{{
+		Metadata: []*model.Metadata{{
 			Title: "About", Content: aboutNewbrunswick,
 		},
 		},
@@ -73,7 +73,7 @@ func getRutgers(campus string) uct.University {
 		university.Name = "Rutgers University–Newark"
 		university.Abbr = "RU-NK"
 		university.HomePage = "http://www.newark.rutgers.edu/"
-		university.Metadata = []*uct.Metadata{
+		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutNewark,
 			},
@@ -83,7 +83,7 @@ func getRutgers(campus string) uct.University {
 		university.Name = "Rutgers University–Camden"
 		university.Abbr = "RU-CAM"
 		university.HomePage = "http://www.camden.rutgers.edu/"
-		university.Metadata = []*uct.Metadata{
+		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutCamden,
 			},

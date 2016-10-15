@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"uct/servers"
 	"errors"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 func notificationHandler(c *gin.Context) {
@@ -22,7 +22,7 @@ func notificationHandler(c *gin.Context) {
 	if id := acknowledgeNotification(topicName, messageId); id == 0 {
 		servers.ResolveErr(errors.New("Failed to acknowlege notification on server"), c)
 	} else {
-		response := uct.Response{}
+		response := model.Response{}
 		c.Set(servers.ResponseKey, response)
 	}
 }

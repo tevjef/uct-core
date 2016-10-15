@@ -10,26 +10,26 @@ import (
 	"os"
 	"strconv"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 var (
 	app    = kingpin.New("faye", "A command-line application to serve university course information")
 	port   = app.Flag("port", "port to start server on").Short('o').Default("9877").Uint16()
-	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(uct.FAYE_DEBUG_SERVER).TCP()
+	server = app.Flag("pprof", "host:port to start profiling on").Short('p').Default(model.FAYE_DEBUG_SERVER).TCP()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Start profiling
-	go uct.StartPprof(*server)
+	go model.StartPprof(*server)
 
 	var err error
 
 	// Open database connection
-	database, err = uct.InitDB(uct.GetUniversityDB())
-	uct.CheckError(err)
+	database, err = model.InitDB(model.GetUniversityDB())
+	model.CheckError(err)
 
 	// Prepare database connections
 	database.SetMaxOpenConns(50)

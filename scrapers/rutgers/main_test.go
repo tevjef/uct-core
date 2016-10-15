@@ -7,12 +7,12 @@ import (
 	"log"
 	"os"
 	"testing"
-	uct "uct/common"
+	"uct/common/model"
 )
 
-var emptyUniversity = uct.University{}
-var scrapedUni *uct.University
-var university uct.University
+var emptyUniversity = model.University{}
+var scrapedUni *model.University
+var university model.University
 var jsonBytes []byte
 var protoBytes []byte
 var err error
@@ -69,13 +69,13 @@ func writeProtoData() []byte {
 
 func TestMarshalJsonUniversity(t *testing.T) {
 	_, err := ffjson.Marshal(university)
-	uct.CheckError(err)
+	model.CheckError(err)
 	//fmt.Println(string(data))
 }
 
 func TestMarshalProtoUniversity(t *testing.T) {
 	_, err := proto.Marshal(&university)
-	uct.CheckError(err)
+	model.CheckError(err)
 	//fmt.Println(string(data))
 }
 
@@ -84,7 +84,7 @@ func TestUnmarshalJsonUniversity(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error reading file:", err)
 	}
-	school := &uct.University{}
+	school := &model.University{}
 	if err := ffjson.UnmarshalFast(in, school); err != nil {
 		log.Fatalln("Failed to parse university:", err)
 	}
@@ -96,7 +96,7 @@ func TestUnmarshalProtoUniversity(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error reading file:", err)
 	}
-	school := &uct.University{}
+	school := &model.University{}
 	if err := proto.Unmarshal(in, school); err != nil {
 		log.Fatalln("Failed to parse address book:", err)
 	}
@@ -108,7 +108,7 @@ func TestUnmarshalProtoEqualUniversity(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error reading file:", err)
 	}
-	s := &uct.University{}
+	s := &model.University{}
 	if err := ffjson.UnmarshalFast(in, s); err != nil {
 
 	}
@@ -117,7 +117,7 @@ func TestUnmarshalProtoEqualUniversity(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error reading file:", err)
 	}
-	school := &uct.University{}
+	school := &model.University{}
 	if err := proto.Unmarshal(in, school); err != nil {
 		log.Fatalln("Failed to parse university:", err)
 	}
@@ -127,7 +127,7 @@ func TestUnmarshalProtoEqualUniversity(t *testing.T) {
 	//fmt.Println(school.GoString())
 	//school.GoString()
 
-	uct.CheckError(err)
+	model.CheckError(err)
 }
 
 func BenchmarkMarshalJsonUniversity(b *testing.B) {

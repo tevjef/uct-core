@@ -6,14 +6,14 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"os"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 var (
 	app      = kingpin.New("print", "An application to print and translate json and protobuf")
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
-	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	out      = app.Flag("output", "output format").Short('o').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").String()
+	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	out      = app.Flag("output", "output format").Short('o').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").String()
 	file     = app.Arg("input", "file to clean").File()
 )
 
@@ -24,7 +24,7 @@ func main() {
 	} else {
 		log.SetLevel(lvl)
 	}
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.WithField("format", *format).Fatal("Invalid format")
 	}
 
@@ -35,16 +35,16 @@ func main() {
 		input = bufio.NewReader(os.Stdin)
 	}
 
-	var university uct.University
-	uct.UnmarshallMessage(*format, input, &university)
+	var university model.University
+	model.UnmarshallMessage(*format, input, &university)
 
-	uct.ValidateAll(&university)
+	model.ValidateAll(&university)
 
 	if *out != "" {
-		output := uct.MarshalMessage(*out, university)
+		output := model.MarshalMessage(*out, university)
 		io.Copy(os.Stdout, output)
 	} else {
-		output := uct.MarshalMessage(*format, university)
+		output := model.MarshalMessage(*format, university)
 		io.Copy(os.Stdout, output)
 	}
 }

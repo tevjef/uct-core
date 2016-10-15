@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/jmoiron/sqlx"
 	log "github.com/Sirupsen/logrus"
-	uct "uct/common"
+	"uct/common/model"
 
 )
 
@@ -17,7 +17,7 @@ func GetCachedStmt(key string) *sqlx.NamedStmt {
 func (dbHandler DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
 	if named, err := dbHandler.Database.PrepareNamed(query); err != nil {
 		log.Debugln(query)
-		uct.CheckError(err)
+		model.CheckError(err)
 		return nil
 	} else {
 		return named

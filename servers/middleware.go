@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
-	uct "uct/common"
+	"uct/common/model"
 	"time"
 	"github.com/Sirupsen/logrus"
 )
@@ -29,13 +29,13 @@ func ProtobufWriter() gin.HandlerFunc {
 		}
 
 		if value, exists := c.Get(ResponseKey); exists {
-			if response, ok := value.(uct.Response); ok {
+			if response, ok := value.(model.Response); ok {
 				// Write status header
 				c.Writer.WriteHeader(int(*response.Meta.Code))
 
 				// Serialize response
 				b, err := response.Marshal()
-				uct.LogError(err)
+				model.LogError(err)
 
 				// Write Headers
 				c.Header(contentLengthHeader, strconv.Itoa(len(b)))
@@ -57,12 +57,12 @@ func JsonWriter() gin.HandlerFunc {
 		}
 
 		if value, exists := c.Get(ResponseKey); exists {
-			if response, ok := value.(uct.Response); ok {
+			if response, ok := value.(model.Response); ok {
 				// Write status header
 				c.Writer.WriteHeader(int(*response.Meta.Code))
 				// Serialize response
 				b, err := ffjson.Marshal(response)
-				uct.LogError(err)
+				model.LogError(err)
 
 				// Write Headers
 				c.Header(contentLengthHeader, strconv.Itoa(len(b)))
@@ -80,23 +80,23 @@ func JsonWriter() gin.HandlerFunc {
 func ErrorWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		meta := uct.Meta{}
+		meta := model.Meta{}
 		var metaExists bool
 		var responseExists bool
 		var value interface{}
 
 		if value, metaExists = c.Get(MetaKey); metaExists {
-			meta = value.(uct.Meta)
+			meta = value.(model.Meta)
 		}
 
 		if value, responseExists = c.Get(ResponseKey); responseExists {
-			response, _ := value.(uct.Response)
+			response, _ := value.(model.Response)
 			code := int32(200)
 			meta.Code = &code
 			response.Meta = &meta
 			c.Set(ResponseKey, response)
 		} else {
-			c.Set(ResponseKey, uct.Response{Meta: &meta})
+			c.Set(ResponseKey, model.Response{Meta: &meta})
 		}
 
 		if !metaExists && !responseExists {

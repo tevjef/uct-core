@@ -2,7 +2,7 @@ package servers
 
 import (
 	"github.com/gin-gonic/gin"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 type ErrNoRows struct {
@@ -29,19 +29,19 @@ func ResolveErr(err error, c *gin.Context) {
 	} else {
 		code := int32(500)
 		message := "Internal server error: " + err.Error() + " "
-		c.Set(MetaKey, uct.Meta{Code: &code, Message: &message})
+		c.Set(MetaKey, model.Meta{Code: &code, Message: &message})
 	}
 }
 
-func resolveMissingParam(str string) uct.Meta {
+func resolveMissingParam(str string) model.Meta {
 	code := int32(400)
 	message := "Bad Request: " + str
-	return uct.Meta{Code: &code, Message: &message}
+	return model.Meta{Code: &code, Message: &message}
 }
 
-func resolveResNotFound(str string) uct.Meta {
+func resolveResNotFound(str string) model.Meta {
 	code := int32(404)
 	message := "Not Found: " + str
-	return uct.Meta{Code: &code, Message: &message}
+	return model.Meta{Code: &code, Message: &message}
 }
 

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"strconv"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 type (
@@ -125,30 +125,30 @@ func (course *RCourse) Clean() {
 		return m[key] <= 1
 	})
 
-	course.ExpandedTitle = uct.TrimAll(course.ExpandedTitle)
+	course.ExpandedTitle = model.TrimAll(course.ExpandedTitle)
 	if len(course.ExpandedTitle) == 0 {
 		course.ExpandedTitle = course.Title
 	}
 
-	course.CourseNumber = uct.TrimAll(course.CourseNumber)
+	course.CourseNumber = model.TrimAll(course.CourseNumber)
 
-	course.CourseDescription = uct.TrimAll(course.CourseDescription)
+	course.CourseDescription = model.TrimAll(course.CourseDescription)
 
-	course.CourseNotes = uct.TrimAll(course.CourseNotes)
+	course.CourseNotes = model.TrimAll(course.CourseNotes)
 
-	course.SubjectNotes = uct.TrimAll(course.SubjectNotes)
+	course.SubjectNotes = model.TrimAll(course.SubjectNotes)
 
-	course.SynopsisURL = uct.TrimAll(course.SynopsisURL)
+	course.SynopsisURL = model.TrimAll(course.SynopsisURL)
 
-	course.PreReqNotes = uct.TrimAll(course.PreReqNotes)
+	course.PreReqNotes = model.TrimAll(course.PreReqNotes)
 
 }
 
 func (section *RSection) Clean() {
-	section.Subtitle = uct.TrimAll(section.Subtitle)
-	section.SectionNotes = uct.TrimAll(section.SectionNotes)
-	section.CampusCode = uct.TrimAll(section.CampusCode)
-	section.SpecialPermissionAddCodeDescription = uct.TrimAll(section.SpecialPermissionAddCodeDescription)
+	section.Subtitle = model.TrimAll(section.Subtitle)
+	section.SectionNotes = model.TrimAll(section.SectionNotes)
+	section.CampusCode = model.TrimAll(section.CampusCode)
+	section.SpecialPermissionAddCodeDescription = model.TrimAll(section.SpecialPermissionAddCodeDescription)
 
 	for i := range section.MeetingTimes {
 		section.MeetingTimes[i].Clean()
@@ -158,8 +158,8 @@ func (section *RSection) Clean() {
 }
 
 func (meeting *RMeetingTime) Clean() {
-	meeting.StartTime = uct.TrimAll(meeting.StartTime)
-	meeting.EndTime = uct.TrimAll(meeting.EndTime)
+	meeting.StartTime = model.TrimAll(meeting.StartTime)
+	meeting.EndTime = model.TrimAll(meeting.EndTime)
 
 	meeting.MeetingDay = meeting.day()
 	meeting.StartTime = meeting.getMeetingHourBegin()
@@ -181,20 +181,20 @@ func (meeting *RMeetingTime) Clean() {
 
 func (section *RSection) Status() string {
 	if section.OpenStatus {
-		return uct.OPEN.String()
+		return model.OPEN.String()
 	} else {
-		return uct.CLOSED.String()
+		return model.CLOSED.String()
 	}
 }
 
-func (section RSection) instructor() (instructors []*uct.Instructor) {
+func (section RSection) instructor() (instructors []*model.Instructor) {
 	for _, instructor := range section.Instructor {
-		instructors = append(instructors, &uct.Instructor{Name: instructor.Name})
+		instructors = append(instructors, &model.Instructor{Name: instructor.Name})
 	}
 	return
 }
 
-func (section RSection) Metadata() (metadata []*uct.Metadata) {
+func (section RSection) Metadata() (metadata []*model.Metadata) {
 
 	if len(section.CrossListedSections) > 0 {
 		str := ""
@@ -202,7 +202,7 @@ func (section RSection) Metadata() (metadata []*uct.Metadata) {
 			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
 		}
 		if len(str) != 5 {
-			metadata = append(metadata, &uct.Metadata{
+			metadata = append(metadata, &model.Metadata{
 				Title:   "Cross-listed Sections",
 				Content: str,
 			})
@@ -217,7 +217,7 @@ func (section RSection) Metadata() (metadata []*uct.Metadata) {
 			str += (comment.Description + ", ")
 		}
 		str = str[:len(str)-2]
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Comments",
 			Content: str,
 		})
@@ -247,7 +247,7 @@ func (section RSection) Metadata() (metadata []*uct.Metadata) {
 
 		openTo := buffer.String()
 		if len(openTo) > len("Majors: ") {
-			metadata = append(metadata, &uct.Metadata{
+			metadata = append(metadata, &model.Metadata{
 				Title:   "Open To",
 				Content: openTo,
 			})
@@ -255,35 +255,35 @@ func (section RSection) Metadata() (metadata []*uct.Metadata) {
 	}
 
 	if len(section.SectionNotes) > 0 {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Section Notes",
 			Content: section.SectionNotes,
 		})
 	}
 
 	if len(section.SynopsisUrl) > 0 {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Synopsis Url",
 			Content: section.SynopsisUrl,
 		})
 	}
 
 	if len(section.ExamCode) > 0 {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Exam Code",
 			Content: getExamCode(section.ExamCode),
 		})
 	}
 
 	if len(section.SpecialPermissionAddCodeDescription) > 0 {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Special Permission",
 			Content: "Code: " + section.SpecialPermissionAddCode + "\n" + section.SpecialPermissionAddCodeDescription,
 		})
 	}
 
 	if len(section.Subtitle) > 0 {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Subtitle",
 			Content: section.Subtitle,
 		})
@@ -468,7 +468,7 @@ func (meetingTime RMeetingTime) getMeetingHourEnd() string {
 }
 
 func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
-	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
+	if len(model.TrimAll(meetingTime.StartTime)) > 1 || len(model.TrimAll(meetingTime.EndTime)) > 1 {
 
 		meridian := ""
 
@@ -480,15 +480,15 @@ func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
 			}
 		}
 
-		kitchenTime := uct.TrimAll(FormatMeetingHours(meetingTime.StartTime) + meridian)
+		kitchenTime := model.TrimAll(FormatMeetingHours(meetingTime.StartTime) + meridian)
 		time, err := time.Parse(time.Kitchen, kitchenTime)
-		uct.CheckError(err)
+		model.CheckError(err)
 		return time
 	}
 	return time.Unix(0, 0)
 }
 
-func (meeting RMeetingTime) Metadata() (metadata []*uct.Metadata) {
+func (meeting RMeetingTime) Metadata() (metadata []*model.Metadata) {
 
 	return
 }
@@ -501,29 +501,29 @@ func (course RCourse) Synopsis() *string {
 	}
 }
 
-func (course RCourse) Metadata() (metadata []*uct.Metadata) {
+func (course RCourse) Metadata() (metadata []*model.Metadata) {
 
 	if course.UnitNotes != "" {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "School Notes",
 			Content: course.UnitNotes,
 		})
 	}
 
 	if course.SubjectNotes != "" {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Subject Notes",
 			Content: course.SubjectNotes,
 		})
 	}
 	if course.PreReqNotes != "" {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Prequisites",
 			Content: course.PreReqNotes,
 		})
 	}
 	if course.SynopsisURL != "" {
-		metadata = append(metadata, &uct.Metadata{
+		metadata = append(metadata, &model.Metadata{
 			Title:   "Synopsis Url",
 			Content: course.SynopsisURL,
 		})
@@ -580,7 +580,7 @@ func FormatMeetingHours(time string) string {
 }
 
 func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
-	if len(uct.TrimAll(meetingTime.StartTime)) > 1 || len(uct.TrimAll(meetingTime.EndTime)) > 1 {
+	if len(model.TrimAll(meetingTime.StartTime)) > 1 || len(model.TrimAll(meetingTime.EndTime)) > 1 {
 		var meridian string
 		starttime := meetingTime.StartTime
 		endtime := meetingTime.EndTime
@@ -600,7 +600,7 @@ func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
 		}
 
 		time, err := time.Parse(time.Kitchen, FormatMeetingHours(meetingTime.EndTime)+meridian)
-		uct.CheckError(err)
+		model.CheckError(err)
 		return time
 	}
 	return time.Unix(0, 0)

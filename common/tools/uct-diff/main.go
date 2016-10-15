@@ -6,12 +6,12 @@ import (
 	"io"
 	"log"
 	"os"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 var (
 	app     = kingpin.New("model-diff", "An application to filter unchanged objects")
-	format  = app.Flag("format", "choose file input format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	format  = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	old     = app.Arg("old", "the first file to compare").Required().File()
 	new     = app.Arg("new", "the second file to compare").File()
 	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
@@ -20,7 +20,7 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -33,17 +33,17 @@ func main() {
 		secondFile = bufio.NewReader(os.Stdin)
 	}
 
-	var oldUniversity uct.University
+	var oldUniversity model.University
 
-	uct.UnmarshallMessage(*format, firstFile, &oldUniversity)
+	model.UnmarshallMessage(*format, firstFile, &oldUniversity)
 
-	var newUniversity uct.University
+	var newUniversity model.University
 
-	uct.UnmarshallMessage(*format, secondFile, &newUniversity)
+	model.UnmarshallMessage(*format, secondFile, &newUniversity)
 
-	filteredUniversity := uct.DiffAndFilter(oldUniversity, newUniversity)
+	filteredUniversity := model.DiffAndFilter(oldUniversity, newUniversity)
 
-	buf := uct.MarshalMessage(*format, filteredUniversity)
+	buf := model.MarshalMessage(*format, filteredUniversity)
 
 	io.Copy(os.Stdout, buf)
 }

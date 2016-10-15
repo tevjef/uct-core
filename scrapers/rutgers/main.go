@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 	"uct/common/conf"
 	rutgers "uct/scrapers/rutgers/model"
 
@@ -33,7 +33,7 @@ var (
 var (
 	app            = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
 	campus         = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
-	format         = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	format         = app.Flag("format", "Choose output format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
 	daemonFile     = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
 	latest         = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
@@ -47,7 +47,7 @@ func main() {
 	campus := strings.ToLower(*campus)
 	app.Name = app.Name + "-" + campus
 
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -57,17 +57,17 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go uct.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	// Channel to send scraped data on
-	resultChan := make(chan uct.University)
+	resultChan := make(chan model.University)
 
 	// Runs at regular intervals
 	if isDaemon {
 		// Override cli arg with environment variable
 		if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
 			if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
-				uct.CheckError(err)
+				model.CheckError(err)
 			} else if interval > 0 {
 				daemonInterval = &interval
 			}
@@ -88,7 +88,7 @@ func main() {
 
 	// block as it waits for results to come in
 	for school := range resultChan {
-		reader := uct.MarshalMessage(*format, school)
+		reader := model.MarshalMessage(*format, school)
 
 		// Write to redis
 		if isDaemon {
@@ -99,12 +99,12 @@ func main() {
 		// Write to file
 		if *daemonFile != "" {
 			if data, err := ioutil.ReadAll(reader); err != nil {
-				uct.CheckError(err)
+				model.CheckError(err)
 			} else {
 				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
 				log.Debugln("Writing file", fileName)
 				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
-					uct.CheckError(err)
+					model.CheckError(err)
 				}
 			}
 			continue
@@ -117,7 +117,7 @@ func main() {
 
 func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
-		uct.CheckError(err)
+		model.CheckError(err)
 	} else {
 		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data)}).Info()
 
@@ -131,8 +131,8 @@ func pushToRedis(reader *bytes.Reader) {
 	}
 }
 
-func entryPoint(result chan uct.University) {
-	var school uct.University
+func entryPoint(result chan model.University) {
+	var school model.University
 
 	campus := strings.ToUpper(*campus)
 	if campus == "CM" {
@@ -148,26 +148,26 @@ func entryPoint(result chan uct.University) {
 	result <- school
 }
 
-func getCampus(campus string) uct.University {
-	var university uct.University
+func getCampus(campus string) model.University {
+	var university model.University
 
 	university = getRutgers(campus)
 
-	university.ResolvedSemesters = uct.ResolveSemesters(time.Now(), university.Registrations)
+	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
 
-	Semesters := []*uct.Semester{
+	Semesters := []*model.Semester{
 		university.ResolvedSemesters.Last,
 		university.ResolvedSemesters.Current,
 		university.ResolvedSemesters.Next}
 
 	if *latest {
-		Semesters = []*uct.Semester{
+		Semesters = []*model.Semester{
 			university.ResolvedSemesters.Current,
 			university.ResolvedSemesters.Next}
 	}
 
 	for _, ThisSemester := range Semesters {
-		if ThisSemester.Season == uct.WINTER {
+		if ThisSemester.Season == model.WINTER {
 			ThisSemester.Year += 1
 		}
 
@@ -202,35 +202,35 @@ func getCampus(campus string) uct.University {
 		})
 
 		for _, subject := range subjects {
-			newSubject := &uct.Subject{
+			newSubject := &model.Subject{
 				Name:   subject.Name,
 				Number: subject.Number,
 				Season: subject.Season,
 				Year:   strconv.Itoa(subject.Year)}
 			for _, course := range subject.Courses {
-				newCourse := &uct.Course{
+				newCourse := &model.Course{
 					Name:     course.ExpandedTitle,
 					Number:   course.CourseNumber,
 					Synopsis: course.Synopsis(),
 					Metadata: course.Metadata()}
 
 				for _, section := range course.Sections {
-					newSection := &uct.Section{
+					newSection := &model.Section{
 						Number:     section.Number,
 						CallNumber: section.Index,
 						Status:     section.Status(),
-						Credits:    uct.FloatToString("%.1f", course.Credits),
+						Credits:    model.FloatToString("%.1f", course.Credits),
 						Max:        0,
 						Metadata:   section.Metadata()}
 
 					for _, instructor := range section.Instructor {
-						newInstructor := &uct.Instructor{Name: instructor.Name}
+						newInstructor := &model.Instructor{Name: instructor.Name}
 
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 					}
 
 					for _, meeting := range section.MeetingTimes {
-						newMeeting := &uct.Meeting{
+						newMeeting := &model.Meeting{
 							Room:      meeting.Room(),
 							Day:       meeting.DayPointer(),
 							StartTime: meeting.PStartTime,
@@ -257,7 +257,7 @@ var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
 }
 
-func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSubject) {
+func getSubjects(semester *model.Semester, campus string) (subjects []rutgers.RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 
 	for i := 0; i < 3; i++ {
@@ -290,7 +290,7 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSub
 	return
 }
 
-func getCourses(subject, campus string, semester *uct.Semester) (courses []rutgers.RCourse) {
+func getCourses(subject, campus string, semester *model.Semester) (courses []rutgers.RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
 		log.WithFields(log.Fields{"subject": subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
@@ -332,14 +332,14 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []rutge
 	return
 }
 
-func getRutgersSemester(semester *uct.Semester) string {
-	if semester.Season == uct.FALL {
+func getRutgersSemester(semester *model.Semester) string {
+	if semester.Season == model.FALL {
 		return "9" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.SUMMER {
+	} else if semester.Season == model.SUMMER {
 		return "7" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.SPRING {
+	} else if semester.Season == model.SPRING {
 		return "1" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.WINTER {
+	} else if semester.Season == model.WINTER {
 		return "0" + strconv.Itoa(int(semester.Year))
 	}
 	return ""

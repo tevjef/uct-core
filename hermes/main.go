@@ -5,7 +5,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 	"uct/common/conf"
 
 	log "github.com/Sirupsen/logrus"
@@ -37,12 +37,12 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go uct.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	var err error
 	// Open database connection
-	database, err = uct.InitDB(config.GetDbConfig(app.Name))
-	uct.CheckError(err)
+	database, err = model.InitDB(config.GetDbConfig(app.Name))
+	model.CheckError(err)
 	prepareAllStmts()
 
 	// Open connection to postgresql
@@ -72,9 +72,9 @@ func waitForNotification(l *pq.Listener) {
 			// Acquire a workRoutine
 			case sem <- 1:
 				go func() {
-					var notification uct.UCTNotification
+					var notification model.UCTNotification
 					err := ffjson.Unmarshal([]byte(pgMessage.Extra), &notification)
-					uct.CheckError(err)
+					model.CheckError(err)
 
 					// Process and send notification, free workRoutine when done.
 					recvNotification(pgMessage.Extra, notification)
@@ -96,11 +96,11 @@ func waitForNotification(l *pq.Listener) {
 	}
 }
 
-func recvNotification(rawNotification string, notification uct.UCTNotification) {
+func recvNotification(rawNotification string, notification model.UCTNotification) {
 	log.WithFields(log.Fields{"university_name": notification.University.TopicName,
 		"notification_id": notification.NotificationId, "status": notification.Status,
 		"topic": notification.TopicName}).Info("postgres_notification")
-	defer uct.TimeTrackWithLog(time.Now(), log.StandardLogger(), "send_notification")
+	defer model.TimeTrackWithLog(time.Now(), log.StandardLogger(), "send_notification")
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
 	for i, retries := 0, 3; i < retries; i++ {
@@ -113,7 +113,7 @@ func recvNotification(rawNotification string, notification uct.UCTNotification) 
 	}
 }
 
-func sendGcmNotification(rawNotification string, pgNotification uct.UCTNotification) (err error) {
+func sendGcmNotification(rawNotification string, pgNotification model.UCTNotification) (err error) {
 	httpMessage := gcm.HttpMessage{
 		To:               "/topics/" + pgNotification.TopicName,
 		Data:             map[string]interface{}{"message": rawNotification},

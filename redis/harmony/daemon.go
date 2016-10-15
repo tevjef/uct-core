@@ -13,29 +13,30 @@ func DaemonScraper(wrapper *redishelper.RedisWrapper, interval time.Duration, st
 	go func() {
 		rsync := New(wrapper, interval, uuid.NewV4().String())
 
-		newOffsetChan := rsync.Sync(make(chan bool))
+		newInstanceConfig := rsync.Sync(make(chan bool))
 
 		var cancelSync chan bool
 		for {
 			select {
-			case offset := <-newOffsetChan:
-				log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Debugln("New offset recieved")
+			case instance := <-newInstanceConfig:
+				log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": instance.count,
+					"position": instance.position, "guid":instance.guid}).Debugln("new offset recieved")
 
-			// No need to cancel the previous go routine, there isn't one
+				// No need to cancel the previous go routine, there isn't one
 				if cancelSync != nil {
 					cancelSync <- true
 				}
 				cancelSync = make(chan bool)
-				go prepareForSync(offset, start, interval, cancelSync)
+				go prepareForSync(instance, start, interval, cancelSync)
 			}
 		}
 	}()
 }
 
-func prepareForSync(offset time.Duration, start func(cancel chan bool), interval time.Duration, cancel chan bool) {
+func prepareForSync(instance Instance, start func(cancel chan bool), interval time.Duration, cancel chan bool) {
 	secondsTilNextMinute := time.Duration(60-time.Now().Second()) * time.Second
 	// Sleeps until the next minute + the calculated offset
-	dur := secondsTilNextMinute + offset
+	dur := secondsTilNextMinute + instance.offset
 	log.Debugln("Sleeping to syncronize for", dur.String())
 
 	cancelTicker := make(chan bool, 1)

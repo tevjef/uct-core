@@ -22,7 +22,7 @@ type DatabaseHandlerImpl struct {
 }
 
 func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
-	// uct.TimeTrack(time.Now(), "insert")
+	// model.TimeTrack(time.Now(), "insert")
 
 	insertionsCh <- 1
 	typeName := fmt.Sprintf("%T", data)
@@ -41,7 +41,7 @@ func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id 
 }
 
 func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
-	// uct.TimeTrack(time.Now(), "update")
+	// model.TimeTrack(time.Now(), "update")
 	typeName := fmt.Sprintf("%T", data)
 
 	for i := 0; i < 5; i++ {
@@ -76,7 +76,7 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 }
 
 func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {
-	// uct.TimeTrack(time.Now(), "upsert")
+	// model.TimeTrack(time.Now(), "upsert")
 	upsertsCh <- 1
 	if id = dbHandler.update(updateQuery, data); id != 0 {
 	} else if id == 0 {

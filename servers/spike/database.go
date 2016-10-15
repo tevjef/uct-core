@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 	"uct/servers"
 	"sort"
 )
@@ -21,8 +21,8 @@ type Data struct {
 	Data []byte `db:"data"`
 }
 
-func SelectUniversity(topicName string) (university uct.University, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectUniversity")
+func SelectUniversity(topicName string) (university model.University, err error) {
+	defer model.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
 	if err = Get(SelectUniversityQuery, &university, m); err != nil {
 		return
@@ -36,7 +36,7 @@ func SelectUniversity(topicName string) (university uct.University, err error) {
 	return
 }
 
-func SelectUniversities() (universities []*uct.University, err error) {
+func SelectUniversities() (universities []*model.University, err error) {
 	m := map[string]interface{}{}
 	if err = Select(ListUniversitiesQuery, &universities, m); err != nil {
 		return
@@ -58,7 +58,7 @@ func SelectUniversities() (universities []*uct.University, err error) {
 	return
 }
 
-func GetResolvedSemesters(topicName string, university *uct.University) error {
+func GetResolvedSemesters(topicName string, university *model.University) error {
 	if r, err := SelectResolvedSemesters(topicName); err != nil {
 		return err
 	} else {
@@ -67,7 +67,7 @@ func GetResolvedSemesters(topicName string, university *uct.University) error {
 	}
 }
 
-func GetAvailableSemesters(topicName string, university *uct.University) error {
+func GetAvailableSemesters(topicName string, university *model.University) error {
 	if s, err := SelectAvailableSemesters(topicName); err != nil {
 		return err
 	} else {
@@ -77,32 +77,32 @@ func GetAvailableSemesters(topicName string, university *uct.University) error {
 	}
 }
 
-func SelectAvailableSemesters(topicName string) (semesters []*uct.Semester, err error) {
-	defer uct.TimeTrack(time.Now(), "GetAvailableSemesters")
+func SelectAvailableSemesters(topicName string) (semesters []*model.Semester, err error) {
+	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(SelectAvailableSemestersQuery, &semesters, m)
-	sort.Sort(uct.SemesterSorter(semesters))
+	sort.Sort(model.SemesterSorter(semesters))
 	return
 }
 
-func SelectResolvedSemesters(topicName string) (semesters uct.ResolvedSemester, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectResolvedSemesters")
+func SelectResolvedSemesters(topicName string) (semesters model.ResolvedSemester, err error) {
+	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
-	rs := uct.DBResolvedSemester{}
+	rs := model.DBResolvedSemester{}
 	if err = Get(SelectResolvedSemestersQuery, &rs, m); err != nil {
 		return
 	}
 	curr, _ := strconv.ParseInt(rs.CurrentYear, 10, 32)
 	last, _ := strconv.ParseInt(rs.LastYear, 10, 32)
 	next, _ := strconv.ParseInt(rs.NextYear, 10, 32)
-	semesters.Current = &uct.Semester{Year: int32(curr), Season: rs.CurrentSeason}
-	semesters.Last = &uct.Semester{Year: int32(last), Season: rs.LastSeason}
-	semesters.Next = &uct.Semester{Year: int32(next), Season: rs.NextSeason}
+	semesters.Current = &model.Semester{Year: int32(curr), Season: rs.CurrentSeason}
+	semesters.Last = &model.Semester{Year: int32(last), Season: rs.LastSeason}
+	semesters.Next = &model.Semester{Year: int32(next), Season: rs.NextSeason}
 	return
 }
 
-func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectProtoSubject")
+func SelectSubject(subjectTopicName string) (subject model.Subject, b []byte, err error) {
+	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := Data{}
 	if err = Get(SelectProtoSubjectQuery, &d, m); err != nil {
@@ -113,8 +113,8 @@ func SelectSubject(subjectTopicName string) (subject uct.Subject, b []byte, err 
 	return
 }
 
-func SelectSubjects(uniTopicName, season, year string) (subjects []*uct.Subject, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectSubjects")
+func SelectSubjects(uniTopicName, season, year string) (subjects []*model.Subject, err error) {
+	defer model.TimeTrack(time.Now(), "SelectSubjects")
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
@@ -123,8 +123,8 @@ func SelectSubjects(uniTopicName, season, year string) (subjects []*uct.Subject,
 	return
 }
 
-func SelectCourse(courseTopicName string) (course uct.Course, b []byte, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectCourse")
+func SelectCourse(courseTopicName string) (course model.Course, b []byte, err error) {
+	defer model.TimeTrack(time.Now(), "SelectCourse")
 	d := Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
 	if err = Get(SelectCourseQuery, &d, m); err != nil {
@@ -135,8 +135,8 @@ func SelectCourse(courseTopicName string) (course uct.Course, b []byte, err erro
 	return
 }
 
-func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectCourses")
+func SelectCourses(subjectTopicName string) (courses []*model.Course, err error) {
+	defer model.TimeTrack(time.Now(), "SelectCourses")
 	d := []Data{}
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	if err = Select(ListCoursesQuery, &d, m); err != nil {
@@ -146,7 +146,7 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 		err = servers.ErrNoRows{fmt.Sprintf("No courses found for %s", subjectTopicName)}
 	}
 	for i := range d {
-		c := uct.Course{}
+		c := model.Course{}
 		if err = c.Unmarshal(d[i].Data); err != nil {
 			return
 		}
@@ -156,8 +156,8 @@ func SelectCourses(subjectTopicName string) (courses []*uct.Course, err error) {
 	return
 }
 
-func SelectSection(sectionTopicName string) (section uct.Section,  b []byte, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectSection")
+func SelectSection(sectionTopicName string) (section model.Section,  b []byte, err error) {
+	defer model.TimeTrack(time.Now(), "SelectSection")
 	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
 	if err = Get(SelectProtoSectionQuery, &d, m); err != nil {
@@ -168,8 +168,8 @@ func SelectSection(sectionTopicName string) (section uct.Section,  b []byte, err
 	return
 }
 
-func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*uct.Metadata, err error) {
-	defer uct.TimeTrack(time.Now(), "SelectMetadata")
+func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*model.Metadata, err error) {
+	defer model.TimeTrack(time.Now(), "SelectMetadata")
 	m := map[string]interface{}{
 		"university_id": universityId,
 		"subject_id":    subjectId,
