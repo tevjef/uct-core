@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"uct/common/model"
 )
@@ -14,11 +14,17 @@ var (
 	format  = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	old     = app.Arg("old", "the first file to compare").Required().File()
 	new     = app.Arg("new", "the second file to compare").File()
-	verbose = app.Flag("verbose", "Verbose log of object representations.").Short('v').Bool()
+	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	if lvl, err := log.ParseLevel(*logLevel); err != nil {
+		log.WithField("loglevel", *logLevel).Fatal(err)
+	} else {
+		log.SetLevel(lvl)
+	}
 
 	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)

@@ -618,25 +618,17 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	filteredUniversity = uni2
 	oldSubjects := uni.Subjects
 	newSubjects := uni2.Subjects
+
 	var filteredSubjects []*Subject
 	// For each newer subject
-
 	for s := range newSubjects {
 		// If current index is out of range of the old subjects[] break and add every subject
 		if s >= len(oldSubjects) {
 			filteredSubjects = newSubjects
 			break
 		}
-		log.WithFields(log.Fields{
-			"index":       s,
-			"old_subject": oldSubjects[s].Name,
-			"old_season":  oldSubjects[s].Season,
-			"new_subject": newSubjects[s].Name,
-			"new_season":  newSubjects[s].Season,
-			"same":        oldSubjects[s].Number == newSubjects[s].Number,
-		}).Debug()
+
 		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
-			log.Infoln("Subject differs")
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -645,20 +637,12 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					filteredCourses = newCourses
 					break
 				}
-				log.WithFields(log.Fields{
-					"index":      c,
-					"old_course": oldCourses[c].Name,
-					"old_number": oldCourses[c].Number,
-					"new_course": newCourses[c].Name,
-					"new_number": oldCourses[c].Number,
-					"same":       oldCourses[c].Number == newCourses[c].Number,
-				}).Debug()
+
 				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
-					log.Infoln("Course differs")
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
-					logSection(oldSections).Infoln("oldSections")
-					logSection(oldSections).Infoln("newSections")
+					oldSectionFields := logSection(oldSections, "old")
+					newSectionFields := logSection(newSections, "new")
 					var filteredSections []*Section
 					for e := range newSections {
 						if e >= len(oldSections) {
@@ -667,9 +651,9 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
 							log.WithFields(log.Fields{
-								"old_call_number": oldSections[e].CallNumber,
-								"new_call_number": newSections[e].CallNumber,
-							}).Infoln()
+								"old_call_number": oldSections[e].CallNumber, "old_status": oldSections[e].Status,
+								"new_call_number": newSections[e].CallNumber, "new_status": newSections[e].Status,
+							}).WithFields(oldSectionFields).WithFields(newSectionFields).WithFields(log.Fields{"old_section": oldSections[e].TopicName, "new_section": newSections[e].TopicName}).Info("diff")
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}
@@ -685,7 +669,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 	return
 }
 
-func logSection(section []*Section) *log.Entry {
+func logSection(section []*Section, prepend string) log.Fields {
 	openCount := 0
 	closedCount := 0
 	for i := range section {
@@ -695,10 +679,10 @@ func logSection(section []*Section) *log.Entry {
 			closedCount++
 		}
 	}
-	return log.WithFields(log.Fields{
-		"open": openCount,
-		"closed": closedCount,
-	})
+	return log.Fields{
+		prepend + "_open_count": openCount,
+		prepend + "_closed_count": closedCount,
+	}
 }
 
 type SemesterSorter []*Semester
