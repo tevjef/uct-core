@@ -363,14 +363,14 @@ func (meeting MeetingByClass) Swap(i, j int) {
 func (meeting MeetingByClass) Less(i, j int) bool {
 	left, right := meeting[i], meeting[j]
 
+	if left.MeetingDay == "" || right.MeetingDay == "" {
+		return left.classRank() < right.classRank()
+	}
+
 	if left.dayRank() < right.dayRank() {
 		return true
 	} else if left.dayRank() == right.dayRank() {
 		return IsAfter(left.StartTime, right.StartTime)
-	}
-
-	if left.day() == "" || right.day() == "" {
-		return left.classRank() < right.classRank()
 	}
 
 	return false
@@ -403,7 +403,16 @@ func (meeting RMeetingTime) classRank() int {
 		return 4
 	} else if meeting.isLab() {
 		return 5
+	} else if meeting.isHybrid() {
+		return 6
+	} else if meeting.isOnline() {
+		return 7
+	} else if meeting.isInternship() {
+		return 8
+	} else if meeting.isSeminar() {
+		return 9
 	}
+
 	return 99
 }
 
@@ -617,6 +626,22 @@ func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
 	return time.Unix(0, 0)
 }
 
+func (meeting RMeetingTime) isSeminar() bool {
+	return meeting.MeetingModeCode == "04"
+}
+
+func (meeting RMeetingTime) isInternship() bool {
+	return meeting.MeetingModeCode == "15"
+}
+
+func (meeting RMeetingTime) isOnline() bool {
+	return meeting.MeetingModeCode == "90"
+}
+
+func (meeting RMeetingTime) isHybrid() bool {
+	return meeting.MeetingModeCode == "91"
+}
+
 func (meeting RMeetingTime) isByArrangement() bool {
 	return meeting.MeetingModeCode == "B"
 }
@@ -638,27 +663,23 @@ func (meeting RMeetingTime) isLecture() bool {
 }
 
 func (meeting RMeetingTime) day() string {
-	var day string
 	switch meeting.MeetingDay {
 	case "M":
-		day = "Monday"
+		return "Monday"
 	case "T":
-		day = "Tuesday"
+		return "Tuesday"
 	case "W":
-		day = "Wednesday"
+		return "Wednesday"
 	case "TH":
-		day = "Thursday"
+		return "Thursday"
 	case "F":
-		day = "Friday"
+		return "Friday"
 	case "S":
-		day = "Saturday"
+		return "Saturday"
 	case "U":
-		day = "Sunday"
-	}
-	if len(day) == 0 {
+		return "Sunday"
+	default:
 		return ""
-	} else {
-		return day
 	}
 }
 
@@ -680,6 +701,14 @@ func (meeting RMeetingTime) ClassType() *string {
 		mtype = "Hours By Arrangement"
 	} else if meeting.isLecture() {
 		mtype = "Lecture"
+	} else if meeting.isOnline() {
+		mtype = "Online"
+	} else if meeting.isInternship() {
+		mtype = "Insternship"
+	} else if meeting.isSeminar() {
+		mtype = "Seminar"
+	} else if meeting.isHybrid() {
+		mtype = "Hybrid"
 	} else if meeting.isRecitation() {
 		mtype = "Recitation"
 	} else {

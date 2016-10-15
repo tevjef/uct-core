@@ -29,7 +29,7 @@ func TestMeetingSort(t *testing.T) {
 	}
 
 	printMeeting(meetings)
-	sort.Stable(MeetingByClass(meetings))
+	sort.Sort(MeetingByClass(meetings))
 	printMeeting(meetings)
 	printMeeting(expected)
 }

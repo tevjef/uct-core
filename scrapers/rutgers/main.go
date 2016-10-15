@@ -25,7 +25,6 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"crypto/md5"
-	"hash/fnv"
 )
 
 var (
