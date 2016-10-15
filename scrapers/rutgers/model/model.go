@@ -360,25 +360,19 @@ func (meeting MeetingByClass) Swap(i, j int) {
 }
 
 func (meeting MeetingByClass) Less(i, j int) bool {
-	if meeting[i].isByArrangement() {
-		return false
-	}
-	if meeting[j].isByArrangement() {
-		return true
-	}
-	if meeting[i].isRecitation() {
-		return false
-	}
-	if meeting[j].isRecitation() {
-		return true
-	}
-	day1 := meeting[i].dayRank()
-	day2 := meeting[j].dayRank()
+	left, right := meeting[i], meeting[j]
 
-	if day1 <= day2 {
+	if left.classRank() < right.classRank() {
 		return true
+	} else if left.classRank() == right.classRank() {
+		if left.dayRank() < right.dayRank() {
+			return true
+		} else if left.dayRank() == right.dayRank() {
+			return IsAfter(left.StartTime, right.StartTime)
+		}
 	}
-	return IsAfter(meeting[i].StartTime, meeting[j].StartTime)
+
+	return false
 }
 
 func (meeting RMeetingTime) classRank() int {
