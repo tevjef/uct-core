@@ -46,7 +46,7 @@ var (
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
 	config     = conf.Config{}
 
-	mutiProgramming = 5
+	multiProgramming = 5
 )
 
 func main() {
@@ -75,7 +75,7 @@ func main() {
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
 	app := App{dbHandler: dbHandler}
-	database.SetMaxOpenConns(mutiProgramming)
+	database.SetMaxOpenConns(multiProgramming)
 
 	for {
 		log.Info("Waiting on queue...")
@@ -163,7 +163,7 @@ func main() {
 func (app App) updateSerial(uni model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
-	sem := make(chan bool, mutiProgramming)
+	sem := make(chan bool, multiProgramming)
 	for subjectIndex := range uni.Subjects {
 		subject := uni.Subjects[subjectIndex]
 
