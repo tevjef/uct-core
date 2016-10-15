@@ -155,6 +155,7 @@ func (section *RSection) Clean() {
 	}
 
 	sort.Sort(MeetingByClass(section.MeetingTimes))
+	sort.Sort(instructorSorter{section.Instructor})
 }
 
 func (meeting *RMeetingTime) Clean() {
@@ -368,7 +369,27 @@ func (meeting MeetingByClass) Less(i, j int) bool {
 		return IsAfter(left.StartTime, right.StartTime)
 	}
 
+	if left.day() == "" || right.day() == "" {
+		return left.classRank() < right.classRank()
+	}
+
 	return false
+}
+
+type instructorSorter struct {
+	instructors []RInstructor
+}
+
+func (a instructorSorter) Len() int {
+	return len(a.instructors)
+}
+
+func (a instructorSorter) Swap(i, j int) {
+	a.instructors[i], a.instructors[j] = a.instructors[j], a.instructors[i]
+}
+
+func (a instructorSorter) Less(i, j int) bool {
+	return a.instructors[i].Name < a.instructors[j].Name
 }
 
 func (meeting RMeetingTime) classRank() int {
