@@ -129,10 +129,7 @@ func (course *RCourse) Clean() {
 		return m[key] <= 1
 	})
 
-	course.ExpandedTitle = model.TrimAll(course.ExpandedTitle)
-	if len(course.ExpandedTitle) == 0 {
-		course.ExpandedTitle = course.Title
-	}
+	course.Title = model.TrimAll(course.Title)
 
 	course.CourseNumber = model.TrimAll(course.CourseNumber)
 
@@ -146,6 +143,11 @@ func (course *RCourse) Clean() {
 
 	course.PreReqNotes = model.TrimAll(course.PreReqNotes)
 
+	course.ExpandedTitle = model.TrimAll(course.ExpandedTitle)
+
+	if len(course.ExpandedTitle) == 0 {
+		course.ExpandedTitle = course.Title
+	}
 }
 
 func (section *RSection) Clean() {
@@ -235,10 +237,12 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 			if unit.IsMajorCode {
 				majors = append(majors, unit.Code)
 			} else if unit.IsUnitCode {
-				schools = append(majors, unit.Code)
+				schools = append(schools, unit.Code)
 			}
 		}
 
+		sort.Strings(majors)
+		sort.Strings(schools)
 		if len(majors) > 0 {
 			openTo = append(openTo, "Majors: " + strings.Join(majors, ", "))
 		}

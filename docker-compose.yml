@@ -64,7 +64,6 @@ services:
         tag: "docker.core.ein"
     labels:
       fluentd.tag: "core.ein"
-      fluentd.influxdb.precision: "s"
       fluentd.influxdb.tags: "[\"university_name\"]"
 
   grafana:
@@ -116,7 +115,6 @@ services:
         tag: "docker.core.hermes"
     labels:
       fluentd.tag: "core.hermes"
-      fluentd.influxdb.precision: "ms"
       fluentd.influxdb.tags: "[\"status\", \"university_name\"]"
 
   influxdb:
@@ -162,7 +160,6 @@ services:
         tag: "docker.nginx"
     labels:
       fluentd.tag: "nginx"
-      fluentd.influxdb.precision: "s"
       fluentd.influxdb.tags: "[\"host\", \"status\"]"
 
   nginx-gen:
@@ -316,7 +313,6 @@ services:
         tag: "docker.core.spike"
     labels:
       fluentd.tag: "core.spike"
-      fluentd.influxdb.precision: "ms"
       fluentd.influxdb.tags: "[\"university_name\", \"user-agent\", \"method\", \"status\"]"
 
   telegraf:
