@@ -1,11 +1,14 @@
 package model
 
 import (
-	"sort"
 	"bytes"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"uct/common/model"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type (
@@ -75,9 +78,9 @@ type (
 	}
 
 	RMajor struct {
-		isMajorCode bool   `json:"isMajorCode"`
-		isUnitCode  bool   `json:"isUnitCode"`
-		code        string `json:"code"`
+		IsMajorCode bool   `json:"isMajorCode"`
+		IsUnitCode  bool   `json:"isUnitCode"`
+		Code        string `json:"code"`
 	}
 
 	RComment struct {
@@ -86,10 +89,14 @@ type (
 	}
 
 	RCrossListedSections struct {
-		sectionNumber    string `json:"sectionNumber"`
-		offeringUnitCode string `json:"offeringUnitCode"`
-		courseNumber     string `json:"courseNumber"`
-		subjectCode      string `json:"subjectCode"`
+		CourseNumber             string `json:"courseNumber"`
+		SupplementCode           string `json:"supplementCode"`
+		SectionNumber            string `json:"sectionNumber"`
+		OfferingUnitCampus       string `json:"offeringUnitCampus"`
+		PrimaryRegistrationIndex string `json:"primaryRegistrationIndex"`
+		OfferingUnitCode         string `json:"offeringUnitCode"`
+		RegistrationIndex        string `json:"registrationIndex"`
+		SubjectCode              string `json:"subjectCode"`
 	}
 
 	RMeetingTime struct {
@@ -109,7 +116,6 @@ type (
 		MeetingModeCode string  `json:"meetingModeCode"`
 	}
 )
-
 
 func (course *RCourse) Clean() {
 	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
@@ -198,29 +204,27 @@ func (section RSection) instructor() (instructors []*model.Instructor) {
 func (section RSection) Metadata() (metadata []*model.Metadata) {
 
 	if len(section.CrossListedSections) > 0 {
-		str := ""
+		crossListedSections := []string{}
 		for _, cls := range section.CrossListedSections {
-			str += cls.offeringUnitCode + ":" + cls.subjectCode + ":" + cls.courseNumber + ":" + cls.sectionNumber + ", "
+			crossListedSections = append(crossListedSections, cls.OfferingUnitCode+":"+cls.SubjectCode+":"+cls.CourseNumber+":"+cls.SectionNumber)
 		}
-		if len(str) != 5 {
-			metadata = append(metadata, &model.Metadata{
-				Title:   "Cross-listed Sections",
-				Content: str,
-			})
-		}
+		metadata = append(metadata, &model.Metadata{
+			Title:   "Cross-listed Sections",
+			Content: strings.Join(crossListedSections, ", "),
+		})
 
 	}
 
 	if len(section.Comments) > 0 {
 		sort.Sort(commentSorter{section.Comments})
-		str := ""
+		comments := []string{}
 		for _, comment := range section.Comments {
-			str += (comment.Description + ", ")
+			comments = append(comments, comment.Description)
 		}
-		str = str[:len(str)-2]
+
 		metadata = append(metadata, &model.Metadata{
 			Title:   "Comments",
-			Content: str,
+			Content: strings.Join(comments, ", "),
 		})
 	}
 
@@ -229,19 +233,19 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 		isUnitHeaderSet := false
 		var buffer bytes.Buffer
 		for _, unit := range section.Majors {
-			if unit.isMajorCode {
+			if unit.IsMajorCode {
 				if !isMajorHeaderSet {
 					isMajorHeaderSet = true
 					buffer.WriteString("Majors: ")
 				}
-				buffer.WriteString(unit.code)
+				buffer.WriteString(unit.Code)
 				buffer.WriteString(", ")
-			} else if unit.isUnitCode {
+			} else if unit.IsUnitCode {
 				if !isUnitHeaderSet {
 					isUnitHeaderSet = true
 					buffer.WriteString("Schools: ")
 				}
-				buffer.WriteString(unit.code)
+				buffer.WriteString(unit.Code)
 				buffer.WriteString(", ")
 			}
 		}
