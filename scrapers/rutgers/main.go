@@ -120,7 +120,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		model.CheckError(err)
 	} else {
-		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:63]}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
 		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
