@@ -132,6 +132,8 @@ func pushToRedis(reader *bytes.Reader) {
 }
 
 func entryPoint(result chan model.University) {
+	starTime := time.Now()
+
 	var school model.University
 
 	campus := strings.ToUpper(*campus)
@@ -144,6 +146,8 @@ func entryPoint(result chan model.University) {
 	} else {
 		log.Fatalln("Invalid campus code:", campus)
 	}
+
+	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
 
 	result <- school
 }
