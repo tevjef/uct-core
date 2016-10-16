@@ -78,17 +78,18 @@ func main() {
 	database.SetMaxOpenConns(multiProgramming)
 
 	for {
-		log.Info("Waiting on queue...")
+		log.Infoln("Waiting on queue...")
 		if data, err := wrapper.Client.BRPop(5*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
 			model.CheckError(err)
 		} else {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Error()
+						log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Errorln()
 					}
 				}()
 
+				log.Panicln("Some shit is going on")
 				val := data[1]
 
 				latestData := val + ":data:latest"
@@ -105,11 +106,6 @@ func main() {
 					var oldRaw string
 					if oldRaw, err = wrapper.Client.Get(oldData).Result(); err != nil {
 						log.Warningln("There was no older data, did it expire or is this first run?")
-					}
-
-					// Set old data as the new data we just recieved
-					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
-						log.WithError(err).Panic("Error updating old data")
 					}
 
 					// Decode new data
@@ -139,6 +135,12 @@ func main() {
 						university = *newUniversity
 					}
 
+					// Set old data as the new data we just recieved. Important that this is after validating the new raw data
+					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
+						log.WithError(err).Panic("Error updating old data")
+					}
+
+
 					// Start logging with influx
 					go audit(university.TopicName)
 
@@ -147,7 +149,7 @@ func main() {
 					app.updateSerial(*newUniversity)
 
 					// Log bytes received
-					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Info(latestData)
+					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
 
 					doneAudit <- true
 					<-doneAudit
