@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 	"uct/common/model"
-
-	"github.com/Sirupsen/logrus"
 )
 
 type (
@@ -229,32 +227,30 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 	}
 
 	if len(section.Majors) > 0 {
-		isMajorHeaderSet := false
-		isUnitHeaderSet := false
-		var buffer bytes.Buffer
+		var openTo []string
+		var majors []string
+		var schools []string
+
 		for _, unit := range section.Majors {
 			if unit.IsMajorCode {
-				if !isMajorHeaderSet {
-					isMajorHeaderSet = true
-					buffer.WriteString("Majors: ")
-				}
-				buffer.WriteString(unit.Code)
-				buffer.WriteString(", ")
+				majors = append(majors, unit.Code)
 			} else if unit.IsUnitCode {
-				if !isUnitHeaderSet {
-					isUnitHeaderSet = true
-					buffer.WriteString("Schools: ")
-				}
-				buffer.WriteString(unit.Code)
-				buffer.WriteString(", ")
+				schools = append(majors, unit.Code)
 			}
 		}
 
-		openTo := buffer.String()
-		if len(openTo) > len("Majors: ") {
+		if len(majors) > 0 {
+			openTo = append(openTo, "Majors: " + strings.Join(majors, ", "))
+		}
+
+		if len(schools) > 0 {
+			openTo = append(openTo, "Schools: " + strings.Join(schools, ", "))
+		}
+
+		if len(openTo) > 0 {
 			metadata = append(metadata, &model.Metadata{
 				Title:   "Open To",
-				Content: openTo,
+				Content: strings.Join(openTo, ", "),
 			})
 		}
 	}
