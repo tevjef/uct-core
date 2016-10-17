@@ -16,15 +16,15 @@ import (
 	"strings"
 	"sync"
 	"time"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 var boltDb *bolt.DB
 
 func main() {
 	go func() {
-		log.Println("**Starting debug server on...", uct.NJIT_DEBUG_SERVER)
-		log.Println(http.ListenAndServe(uct.NJIT_DEBUG_SERVER, nil))
+		log.Println("**Starting debug server on...", model.NJIT_DEBUG_SERVER)
+		log.Println(http.ListenAndServe(model.NJIT_DEBUG_SERVER, nil))
 	}()
 
 	var err error
@@ -45,82 +45,82 @@ func main() {
 
 	enc := ffjson.NewEncoder(os.Stdout)
 
-	var schools []uct.University
+	var schools []model.University
 	schools = append(schools, getUniversity())
 	err = enc.Encode(schools)
-	uct.CheckError(err)
+	model.CheckError(err)
 
 }
 
-func getUniversity() (university uct.University) {
-	university = uct.University{
+func getUniversity() (university model.University) {
+	university = model.University{
 		Name:             "New Jersey Institute of Technology",
 		Abbr:             "NJIT",
 		MainColor:        "F44336",
 		AccentColor:      "607D8B",
 		HomePage:         "http://njit.edu/",
 		RegistrationPage: "https://www.njit.edu/cp/login.php",
-		Registrations: []uct.Registration{
-			uct.Registration{
-				Period:     uct.SEM_FALL.String(),
+		Registrations: []model.Registration{
+			model.Registration{
+				Period:     model.SEM_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.SEM_SPRING.String(),
+			model.Registration{
+				Period:     model.SEM_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.SEM_SUMMER.String(),
+			model.Registration{
+				Period:     model.SEM_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.SEM_WINTER.String(),
+			model.Registration{
+				Period:     model.SEM_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.START_FALL.String(),
+			model.Registration{
+				Period:     model.START_FALL.String(),
 				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.START_SPRING.String(),
+			model.Registration{
+				Period:     model.START_SPRING.String(),
 				PeriodDate: time.Date(2000, time.October, 18, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.START_SUMMER.String(),
+			model.Registration{
+				Period:     model.START_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.START_WINTER.String(),
+			model.Registration{
+				Period:     model.START_WINTER.String(),
 				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.END_FALL.String(),
+			model.Registration{
+				Period:     model.END_FALL.String(),
 				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.END_SPRING.String(),
+			model.Registration{
+				Period:     model.END_SPRING.String(),
 				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.END_SUMMER.String(),
+			model.Registration{
+				Period:     model.END_SUMMER.String(),
 				PeriodDate: time.Date(2000, time.August, 15, 0, 0, 0, 0, time.UTC),
 			},
-			uct.Registration{
-				Period:     uct.END_WINTER.String(),
+			model.Registration{
+				Period:     model.END_WINTER.String(),
 				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC),
 			},
 		},
-		Metadata: []uct.Metadata{
-			uct.Metadata{
+		Metadata: []model.Metadata{
+			model.Metadata{
 				Title: "About", Content: ``,
 			},
 		},
 	}
 
-	res := uct.ResolveSemesters(time.Now(), university.Registrations)
-	Semesters := [3]uct.Semester{res.Last, res.Current, res.Next}
+	res := model.ResolveSemesters(time.Now(), university.Registrations)
+	Semesters := [3]model.Semester{res.Last, res.Current, res.Next}
 	for _, ThisSemester := range Semesters {
-		if ThisSemester.Season == uct.WINTER {
+		if ThisSemester.Season == model.WINTER {
 			ThisSemester.Year += 1
 		}
 		subjects := getSubjectList(uctToNjitSeason(ThisSemester))
@@ -141,19 +141,19 @@ func getUniversity() (university uct.University) {
 		}
 		wg.Wait()
 		for _, subject := range subjects {
-			newSubject := uct.Subject{
+			newSubject := model.Subject{
 				Name:   subject.SubjectName,
 				Number: subject.SubjectId,
 				Season: subject.Semester.Season.FullString(),
 				Year:   strconv.Itoa(subject.Semester.Year)}
 			for _, course := range subject.Courses {
-				newCourse := uct.Course{
+				newCourse := model.Course{
 					Name:     course.CourseName,
 					Number:   course.CourseNum,
 					Synopsis: &course.CourseDescription}
 
 				for _, section := range course.Section {
-					newSection := uct.Section{
+					newSection := model.Section{
 						Number:     section.SectionNum,
 						CallNumber: section.CallNum,
 						Status:     section.Status,
@@ -162,7 +162,7 @@ func getUniversity() (university uct.University) {
 						Now:        section.Now}
 
 					if section.Instructor != "" {
-						newInstructor := uct.Instructor{Name: section.Instructor}
+						newInstructor := model.Instructor{Name: section.Instructor}
 
 						newInstructor.Validate()
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
@@ -170,7 +170,7 @@ func getUniversity() (university uct.University) {
 					}
 
 					for _, meeting := range section.MeetingTimes {
-						newMeeting := uct.Meeting{
+						newMeeting := model.Meeting{
 							Room:      &meeting.Room,
 							Day:       &meeting.Day,
 							StartTime: meeting.StartTime,
@@ -194,7 +194,7 @@ func getUniversity() (university uct.University) {
 func getSubjectList(semester NSemester) []NSubject {
 	url := fmt.Sprintf("https://courseschedules.njit.edu/index.aspx?semester=%s%s",
 		strconv.Itoa(semester.Year), semester.Season.String())
-	uct.Log("Getting: ", url)
+	model.Log("Getting: ", url)
 
 	doc, err := goquery.NewDocument(url)
 	checkError(err)
@@ -227,7 +227,7 @@ func extractSubjectList(doc *goquery.Document, semester NSemester) (subjectList 
 func getCourses(subject NSubject) (courses []NCourse) {
 	var url = fmt.Sprintf("https://courseschedules.njit.edu/index.aspx?semester=%s%s&subjectID=%s",
 		strconv.Itoa(subject.Semester.Year), subject.Semester.Season.String(), subject.SubjectId)
-	uct.Log("Geting Course: ", url)
+	model.Log("Geting Course: ", url)
 	doc, err := goquery.NewDocument(url)
 	checkError(err)
 
@@ -282,11 +282,11 @@ var descriptionCache = make(map[string]string)
 func extractCourseDescription(selection *goquery.Selection) string {
 	url := trim(fmt.Sprintln(selection.Find(".catalogdescription a").AttrOr("href", "")))
 	if cacheContainDesc(url) {
-		uct.Log("Get Cached Descriptiion: ", url)
+		model.Log("Get Cached Descriptiion: ", url)
 		return getCacheDescription(url)
 	}
 
-	uct.LogVerbose(url)
+	model.LogVerbose(url)
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", "http://catalog.njit.edu/ribbit/index.cgi?format=html&page=fsinjector.rjs&fullpage=true", nil)
 	req.Header.Add("Referer", url)
@@ -371,7 +371,7 @@ func extractRoomNum(selection *goquery.Selection) string {
 	s = strings.Replace(s, "<br/>", "\n", -1)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(s))
 	if err != nil {
-		uct.Log(err)
+		model.Log(err)
 	}
 	return trim(doc.Text())
 }
@@ -387,7 +387,7 @@ func extractTimes(selection *goquery.Selection) (meetingTimes []NMeetingTime) {
 	rooms := strings.Split(rawroom, "\n")
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(s))
 	if err != nil {
-		uct.Log(err)
+		model.Log(err)
 	}
 	result := trim(doc.Text())
 	scanner := bufio.NewScanner(strings.NewReader(result))
@@ -572,16 +572,16 @@ func (s NSeason) FullString() string {
 	return seasonsFull[s]
 }
 
-func uctToNjitSeason(sem uct.Semester) NSemester {
+func uctToNjitSeason(sem model.Semester) NSemester {
 	var season NSeason
 	switch sem.Season {
-	case uct.FALL:
+	case model.FALL:
 		season = FALL
-	case uct.SPRING:
+	case model.SPRING:
 		season = SPRING
-	case uct.SUMMER:
+	case model.SUMMER:
 		season = SUMMER
-	case uct.WINTER:
+	case model.WINTER:
 		season = WINTER
 	}
 

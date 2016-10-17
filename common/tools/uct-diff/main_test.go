@@ -8,11 +8,11 @@ import (
 	"log"
 	"os"
 	"testing"
-	uct "uct/common"
+	"uct/common/model"
 )
 
-var uni1 uct.University
-var uni2 uct.University
+var uni1 model.University
+var uni2 model.University
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -27,14 +27,14 @@ func TestDiffUniversity(t *testing.T) {
 	funi := diffAndFilter(uni1, uni2)
 
 	data, err := ffjson.Marshal(funi)
-	uct.CheckError(err)
+	model.CheckError(err)
 
 	ioutil.WriteFile("filtered.out", data, 0644)
 }
 
-func openFile(filePath string) (uni uct.University) {
+func openFile(filePath string) (uni model.University) {
 	file, err := os.Open(filePath)
-	uct.CheckError(err)
+	model.CheckError(err)
 
 	input := bufio.NewReader(file)
 	dec := ffjson.NewDecoder()

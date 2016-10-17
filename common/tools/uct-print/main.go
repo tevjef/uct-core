@@ -7,20 +7,20 @@ import (
 	"io"
 	"log"
 	"os"
-	uct "uct/common"
+	"uct/common/model"
 )
 
 var (
 	app    = kingpin.New("print", "An application to print and translate json and protobuf")
-	format = app.Flag("format", "choose file input format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	out    = app.Flag("output", "output format").Short('o').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").String()
+	format = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	out    = app.Flag("output", "output format").Short('o').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").String()
 	file   = app.Arg("input", "file to print").File()
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -31,25 +31,25 @@ func main() {
 		input = bufio.NewReader(os.Stdin)
 	}
 
-	var university uct.University
+	var university model.University
 
-	uct.UnmarshallMessage(*format, input, &university)
+	model.UnmarshallMessage(*format, input, &university)
 
-	if *format == uct.JSON {
+	if *format == model.JSON {
 		if *out != "" {
 			io.Copy(os.Stdout, input)
 		}
-	} else if *format == uct.PROTOBUF {
+	} else if *format == model.PROTOBUF {
 		if *out != "" {
 			log.Println(proto.MarshalTextString(&university))
 		}
 	}
 
 	if *out != "" {
-		output := uct.MarshalMessage(*out, university)
+		output := model.MarshalMessage(*out, university)
 		io.Copy(os.Stdout, output)
 	} else {
-		output := uct.MarshalMessage(*format, university)
+		output := model.MarshalMessage(*format, university)
 		io.Copy(os.Stdout, output)
 	}
 }

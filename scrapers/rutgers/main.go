@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
+	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -13,19 +13,18 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	rs "uct/redis/sync"
 	"time"
-	uct "uct/common"
-	"io/ioutil"
-	"uct/redis"
-	"github.com/satori/go.uuid"
-	"errors"
-	"github.com/pquerna/ffjson/ffjson"
-	rutgers "uct/scrapers/rutgers/model"
-	"uct/influxdb"
-	"github.com/vlad-doru/influxus"
-	"github.com/influxdata/influxdb/client/v2"
 	"uct/common/conf"
+	"uct/common/model"
+	rutgers "uct/scrapers/rutgers/model"
+
+	"uct/redis"
+	"uct/redis/harmony"
+
+	"crypto/md5"
+	log "github.com/Sirupsen/logrus"
+	"github.com/pquerna/ffjson/ffjson"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -33,16 +32,15 @@ var (
 )
 
 var (
-	app     = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campus  = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
-	format  = app.Flag("format", "Choose output format").Short('f').HintOptions(uct.PROTOBUF, uct.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	app            = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
+	campus         = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
+	format         = app.Flag("format", "Choose output format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
-	daemonFile = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
-	latest = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
-	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config conf.Config
-	wrapper *v1.RedisWrapper
-	rsync *rs.RedisSync
+	daemonFile     = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
+	latest         = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
+	configFile     = app.Flag("config", "configuration file for the application").Short('c').File()
+	config         conf.Config
+	redisWrapper   *redishelper.RedisWrapper
 )
 
 func main() {
@@ -50,7 +48,7 @@ func main() {
 	campus := strings.ToLower(*campus)
 	app.Name = app.Name + "-" + campus
 
-	if *format != uct.JSON && *format != uct.PROTOBUF {
+	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -59,18 +57,29 @@ func main() {
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
-	// Start influx logging
-	initInflux()
-
 	// Start profiling
-	go uct.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	// Channel to send scraped data on
-	resultChan := make(chan uct.University)
+	resultChan := make(chan model.University)
 
 	// Runs at regular intervals
 	if isDaemon {
-		go startDaemon(resultChan, make(chan bool))
+		// Override cli arg with environment variable
+		if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
+			if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
+				model.CheckError(err)
+			} else if interval > 0 {
+				daemonInterval = &interval
+			}
+		}
+
+		redisWrapper = redishelper.New(config, app.Name)
+
+		harmony.DaemonScraper(redisWrapper, *daemonInterval, func(cancel chan bool) {
+			entryPoint(resultChan)
+		})
+
 	} else {
 		go func() {
 			entryPoint(resultChan)
@@ -78,118 +87,54 @@ func main() {
 		}()
 	}
 
-	var school uct.University
-	var reader *bytes.Reader
+	// block as it waits for results to come in
+	for school := range resultChan {
+		reader := model.MarshalMessage(*format, school)
 
-	for school = range resultChan {
-		reader = uct.MarshalMessage(*format, school)
-
-		// Push to redis
+		// Write to redis
 		if isDaemon {
 			pushToRedis(reader)
+			continue
 		}
 
+		// Write to file
 		if *daemonFile != "" {
 			if data, err := ioutil.ReadAll(reader); err != nil {
-				uct.CheckError(err)
+				model.CheckError(err)
 			} else {
-				fileName := *daemonFile +  "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
+				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
 				log.Debugln("Writing file", fileName)
 				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
-					uct.CheckError(err)
+					model.CheckError(err)
 				}
 			}
+			continue
 		}
-	}
 
-	// Runs when the channel closes, the channel will not close in daemon mode
-	io.Copy(os.Stdout, reader)
+		// Write to stdout
+		io.Copy(os.Stdout, reader)
+	}
 }
 
 func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
-		uct.CheckError(err)
+		model.CheckError(err)
 	} else {
-		auditLogger.WithFields(log.Fields{"scraper_name": app.Name, "bytes":len(data)}).Info()
-
-		if err := wrapper.Client.Set(wrapper.NameSpace + ":data:latest", data, 0).Err(); err != nil {
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
+		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
 
-		if _, err := wrapper.LPushNotExist(v1.BaseNamespace + ":queue", wrapper.NameSpace); err != nil {
+		if _, err := redisWrapper.LPushNotExist(redishelper.BaseNamespace+":queue", redisWrapper.NameSpace); err != nil {
 			log.Panicln(errors.New("failed to queue univeristiy for upload"))
 		}
 	}
 }
 
-func startDaemon(result chan uct.University, cancel chan bool) {
-	// Override cli arg with environment variable
-	if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
-		if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
-			uct.CheckError(err)
-		} else if interval > 0 {
-			daemonInterval = &interval
-		}
-	}
+func entryPoint(result chan model.University) {
+	starTime := time.Now()
 
-	// Start redis client
-	wrapper = v1.New(config, app.Name)
-	rsync = rs.New(wrapper, *daemonInterval, uuid.NewV4().String())
-
-	offsetChan := rsync.Sync(make(chan bool))
-
-	var cancelPrev chan bool
-	for {
-		select {
-		case offset := <-offsetChan:
-			// No need to cancel the previous go routine, there isn't one
-			if cancelPrev != nil {
-				cancelPrev <- true
-			}
-			cancelPrev = make(chan bool)
-			go func(cancelPrev chan bool) {
-				secondsTilNextMinute := time.Duration(60 - time.Now().Second()) * time.Second
-				// Sleeps until the next minute + the calculated offset
-				dur := secondsTilNextMinute + offset
-				log.Debugln("Sleeping to syncronize for", dur.String())
-
-				innerDaemonStopper := make(chan bool, 1)
-
-				syncTimer := time.AfterFunc(dur, func() {
-					log.Debugln("Ticker for", daemonInterval.String())
-					ticker := time.NewTicker(*daemonInterval)
-
-					// Label this loop so that we can break out of it to let the go routine complete
-					innerDaemon:for {
-						select {
-						case <-ticker.C:
-							auditLogger.WithFields(log.Fields{"scraper_name":app.Name, "instances":rsync.Instances, "time_quantum":daemonInterval.Seconds()}).Infoln()
-							go entryPoint(result)
-						case <-innerDaemonStopper:
-							log.Debugln("New offset received, cancelling old ticker")
-						    // Clean up then break
-							ticker.Stop()
-							close(innerDaemonStopper)
-							break innerDaemon
-						}
-					}
-
-				})
-
-				<-cancelPrev
-				log.Debugln("Cancelling previous ticker")
-				innerDaemonStopper <- true
-
-				// Stop timer if it has not stopped already
-				syncTimer.Stop()
-			}(cancelPrev)
-		}
-	}
-
-}
-
-func entryPoint(result chan uct.University) {
-	var school uct.University
+	var school model.University
 
 	campus := strings.ToUpper(*campus)
 	if campus == "CM" {
@@ -202,115 +147,37 @@ func entryPoint(result chan uct.University) {
 		log.Fatalln("Invalid campus code:", campus)
 	}
 
+	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
+
 	result <- school
 }
 
-func getCampus(campus string) uct.University {
-	var university uct.University
+func getCampus(campus string) model.University {
+	var university model.University
 
-	university = uct.University{
-		Name:             "Rutgers University–New Brunswick",
-		Abbr:             "RU-NB",
-		MainColor:        "F44336",
-		AccentColor:      "607D8B",
-		HomePage:         "http://newbrunswick.rutgers.edu/",
-		RegistrationPage: "https://sims.rutgers.edu/webreg/",
-		Registrations: []*uct.Registration{
-			{
-				Period:     uct.SEM_FALL.String(),
-				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.SEM_SPRING.String(),
-				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.SEM_SUMMER.String(),
-				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.SEM_WINTER.String(),
-				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.START_FALL.String(),
-				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.START_SPRING.String(),
-				PeriodDate: time.Date(2000, time.October, 5, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.START_SUMMER.String(),
-				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.START_WINTER.String(),
-				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.END_FALL.String(),
-				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.END_SPRING.String(),
-				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.END_SUMMER.String(),
-				PeriodDate: time.Date(2000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			{
-				Period:     uct.END_WINTER.String(),
-				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-		},
-		Metadata: []*uct.Metadata{
-			{
-				Title: "About", Content: `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
-				versity" title="Rutgers University">Rutgers University</a>, the others being in <a href="/wiki/Rutgers%
-				E2%80%93Camden" title="Rutgers–Camden" class="mw-redirect">Camden</a> and <a href="/wiki/Rutgers%E2%80%
-				93Newark" title="Rutgers–Newark" class="mw-redirect">Newark</a>. It is primarily located in the <a href
-				="/wiki/New_Brunswick,_New_Jersey" title="New Brunswick, New Jersey">City of New Brunswick</a> and <a h
-				ref="/wiki/Piscataway_Township,_New_Jersey" title="Piscataway Township, New Jersey" class="mw-redirect"
-				>Piscataway Township</a>. The campus is composed of several smaller campuses: <i>College Avenue</i>, <i
-				><a href="/wiki/Busch_Campus_(Rutgers_University)" title="Busch Campus (Rutgers University)" class="mw-
-				redirect">Busch</a></i>, <i>Livingston,</i> <i>Cook</i>, and <i>Douglass</i>, the latter two sometimes
-				referred to as "Cook/Douglass," as they are adjacent to each other. Rutgers–New Brunswick also includes
-				 several buildings in downtown New Brunswick. The New Brunswick campuses include 19 undergraduate, grad
-				 uate and professional schools, including the School of Arts and Sciences, School of Environmental and
-				 Biological Sciences, School of Communication, Information and Library Studies, the <a href="/wiki/Edwa
-				 rd_J._Bloustein_School_of_Planning_and_Public_Policy" title="Edward J. Bloustein School of Planning an
-				 d Public Policy">Edward J. Bloustein School of Planning and Public Policy</a>, <a href="/wiki/School_o
-				 f_Engineering_(Rutgers_University)" title="School of Engineering (Rutgers University)" class="mw-redir
-				 ect">School of Engineering</a>, the <a href="/wiki/Ernest_Mario_School_of_Pharmacy" title="Ernest Mari
-				 o School of Pharmacy">Ernest Mario School of Pharmacy</a>, the Graduate School, the Graduate School of
-				  Applied and Professional Psychology, the Graduate School of Education, <a href="/wiki/School_of_Manag
-				  ement_and_Labor_Relations" title="School of Management and Labor Relations" class="mw-redirect">School
-				   of Management and Labor Relations</a>, the <a href="/wiki/Mason_Gross_School_of_the_Arts" title="Maso
-				   n Gross School of the Arts">Mason Gross School of the Arts</a>, the College of Nursing, the <a href="
-				   /wiki/Rutgers_Business_School" title="Rutgers Business School" class="mw-redirect">Rutgers Business
-				   School</a> and the <a href="/wiki/School_of_Social_Work_(Rutgers_University)" title="School of Social
-					Work (Rutgers University)" class="mw-redirect">School of Social Work</a>.</p>`,
-			},
-		},
+	university = getRutgers(campus)
+
+	// Rutgers servers go down for maintenance between 3 and 5 AM UTC every day.
+	// Data scraped from this time would be inaccurate and may lead to unforeseen errors
+	if currentHour := time.Now().UTC().Hour(); currentHour >= 7 && currentHour < 9 {
+		return university
 	}
 
-	university.ResolvedSemesters = uct.ResolveSemesters(time.Now(), university.Registrations)
+	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
 
-	Semesters := []*uct.Semester{
+	Semesters := []*model.Semester{
 		university.ResolvedSemesters.Last,
 		university.ResolvedSemesters.Current,
 		university.ResolvedSemesters.Next}
 
 	if *latest {
-		Semesters = []*uct.Semester{
+		Semesters = []*model.Semester{
 			university.ResolvedSemesters.Current,
 			university.ResolvedSemesters.Next}
 	}
 
 	for _, ThisSemester := range Semesters {
-		if ThisSemester.Season == uct.WINTER {
+		if ThisSemester.Season == model.WINTER {
 			ThisSemester.Year += 1
 		}
 
@@ -329,7 +196,7 @@ func getCampus(campus string) uct.University {
 				}()
 				sem <- 1
 				courses := getCourses(sub.Number, campus, ThisSemester)
-				<- sem
+				<-sem
 				for j := range courses {
 					sub.Courses = append(sub.Courses, courses[j])
 				}
@@ -345,35 +212,35 @@ func getCampus(campus string) uct.University {
 		})
 
 		for _, subject := range subjects {
-			newSubject := &uct.Subject{
+			newSubject := &model.Subject{
 				Name:   subject.Name,
 				Number: subject.Number,
 				Season: subject.Season,
 				Year:   strconv.Itoa(subject.Year)}
 			for _, course := range subject.Courses {
-				newCourse := &uct.Course{
+				newCourse := &model.Course{
 					Name:     course.ExpandedTitle,
 					Number:   course.CourseNumber,
 					Synopsis: course.Synopsis(),
 					Metadata: course.Metadata()}
 
 				for _, section := range course.Sections {
-					newSection := &uct.Section{
+					newSection := &model.Section{
 						Number:     section.Number,
 						CallNumber: section.Index,
 						Status:     section.Status(),
-						Credits:    uct.FloatToString("%.1f", course.Credits),
+						Credits:    model.FloatToString("%.1f", course.Credits),
 						Max:        0,
 						Metadata:   section.Metadata()}
 
 					for _, instructor := range section.Instructor {
-						newInstructor := &uct.Instructor{Name: instructor.Name}
+						newInstructor := &model.Instructor{Name: instructor.Name}
 
 						newSection.Instructors = append(newSection.Instructors, newInstructor)
 					}
 
 					for _, meeting := range section.MeetingTimes {
-						newMeeting := &uct.Meeting{
+						newMeeting := &model.Meeting{
 							Room:      meeting.Room(),
 							Day:       meeting.DayPointer(),
 							StartTime: meeting.PStartTime,
@@ -393,63 +260,6 @@ func getCampus(campus string) uct.University {
 		}
 	}
 
-	if campus == "NK" {
-		university.Name = "Rutgers University–Newark"
-		university.Abbr = "RU-NK"
-		university.HomePage = "http://www.newark.rutgers.edu/"
-		university.Metadata = []*uct.Metadata{
-			{
-				Title: "About", Content: `<p><b>Rutgers–Newark</b> is one of three regional campuses of <a href="/wiki/R
-							utgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/Public_universit
-							y" title="Public university">public</a> research university of the <a href="/wiki/U.S._state" title="U.S
-							. state">U.S. state</a> of <a href="/wiki/New_Jersey" title="New Jersey">New Jersey</a>, located in the
-							 city of <a href="/wiki/Newark,_New_Jersey" title="Newark, New Jersey">Newark</a>. Rutgers, founded in 1
-							 766 in <a href="/wiki/New_Brunswick,_New_Jersey" title="New Brunswick, New Jersey">New Brunswick</a>, i
-							 s the <a href="/wiki/Colonial_colleges" title="Colonial colleges" class="mw-redirect">eighth oldest col
-							 lege in the United States</a> and a member of the <a href="/wiki/Association_of_American_Universities"
-							 title="Association of American Universities">Association of American Universities</a>. In 1945, the sta
-							 te legislature voted to make Rutgers University, then a private <a href="/wiki/Liberal_arts_college" ti
-							 tle="Liberal arts college">liberal arts college</a>, into the state university and the following year m
-							 erged the school with the former <a href="/wiki/University_of_Newark" title="University of Newark" clas
-							 s="mw-redirect">University of Newark</a> (1936–1946), which became the Rutgers–Newark campus. Rutgers a
-							 lso incorporated the College of South Jersey and South Jersey Law School, in Camden, as a constituent c
-							 ampus of the university and renamed it <a href="/wiki/Rutgers%E2%80%93Camden" title="Rutgers–Camden" cl
-							 ass="mw-redirect">Rutgers–Camden</a> in 1950.</p> <p>Rutgers–Newark offers undergraduate (bachelors) an
-							 d graduate (masters, doctoral) programs to more than 11,000 students. The campus is located on 38 acre
-							 s in Newark's <a href="/wiki/University_Heights,_Newark,_New_Jersey" title="University Heights, Newark
-							 , New Jersey" class="mw-redirect">University Heights</a> section. It consists of seven degree-granting
-							  undergraduate, graduate, and professional schools, including the <a href="/wiki/Rutgers_Business_Schoo
-							  l" title="Rutgers Business School" class="mw-redirect">Rutgers Business School</a> and <a href="/wiki/
-							  Rutgers_School_of_Law_-_Newark" title="Rutgers School of Law - Newark" class="mw-redirect">Rutgers Sch
-							  ool of Law - Newark</a>, and several research institutes including the <a href="/wiki/Institute_of_Ja
-							  zz_Studies" title="Institute of Jazz Studies">Institute of Jazz Studies</a>. According to <i>U.S. News
-							   &amp; World Report</i>, Rutgers–Newark is the most <a href="/wiki/Cultural_diversity" title="Cultural
-								diversity">diverse</a> national university in the United States.</p>`,
-			},
-		}
-	}
-	if campus == "CM" {
-		university.Name = "Rutgers University–Camden"
-		university.Abbr = "RU-CAM"
-		university.HomePage = "http://www.camden.rutgers.edu/"
-		university.Metadata = []*uct.Metadata{
-			{
-				Title: "About", Content: `<p><b>Rutgers University–Camden</b> is one of three regional campuses of <a
-							href="/wiki/Rutgers_University" title="Rutgers University">Rutgers University</a>, the <a href="/wiki/N
-							ew_Jersey" title="New Jersey">New Jersey</a>'s <a href="/wiki/Public_university" title="Public universit
-							y">public</a> <a href="/wiki/Research_university" title="Research university" class="mw-redirect">resear
-							ch university</a>. It is located in <a href="/wiki/Camden,_New_Jersey" title="Camden, New Jersey">Camden
-							</a>, New Jersey, <a href="/wiki/United_States" title="United States">United States</a>. Founded in the
-							1920s, Rutgers–Camden began as an amalgam of the South Jersey Law School and the College of South Jersey
-							. It is the southernmost of the three regional campuses of Rutgers—the others being located in <a href="
-							/wiki/New_Brunswick,_New_Jersey" title="New Brunswick, New Jersey">New Brunswick</a> and <a href="/wiki/
-							Newark,_New_Jersey" title="Newark, New Jersey">Newark</a>.<sup id="cite_ref-3" class="reference"><a href
-							="#cite_note-3"><span>[</span>3<span>]</span></a></sup> The city of Camden is located on the <a href="/w
-							iki/Delaware_River" title="Delaware River">Delaware River</a> east of <a href="/wiki/Philadelphia,_Penn
-							sylvania" title="Philadelphia, Pennsylvania" class="mw-redirect">Philadelphia</a>.</p>`,
-			},
-		}
-	}
 	return university
 }
 
@@ -457,7 +267,7 @@ var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
 }
 
-func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSubject) {
+func getSubjects(semester *model.Semester, campus string) (subjects []rutgers.RSubject) {
 	var url = fmt.Sprintf("%s/subjects.json?semester=%s&campus=%s&level=U%sG", host, getRutgersSemester(semester), campus, "%2C")
 
 	for i := 0; i < 3; i++ {
@@ -490,10 +300,10 @@ func getSubjects(semester *uct.Semester, campus string) (subjects []rutgers.RSub
 	return
 }
 
-func getCourses(subject, campus string, semester *uct.Semester) (courses []rutgers.RCourse) {
+func getCourses(subject, campus string, semester *model.Semester) (courses []rutgers.RCourse) {
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
-		log.WithFields(log.Fields{"subject" : subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
+		log.WithFields(log.Fields{"subject": subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
 
 		resp, err := httpClient.Get(url)
 		if err != nil {
@@ -508,8 +318,8 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []rutge
 			continue
 		}
 
-		log.WithFields(log.Fields{"content-length": len(data), "subject" : subject, "status": resp.Status, "season": semester.Season,
-			"year": semester.Year, "campus": campus,"url": url}).Debugln("Course Reponse")
+		log.WithFields(log.Fields{"content-length": len(data), "subject": subject, "status": resp.Status, "season": semester.Season,
+			"year": semester.Year, "campus": campus, "url": url}).Debugln("Course Response")
 
 		resp.Body.Close()
 		break
@@ -532,49 +342,15 @@ func getCourses(subject, campus string, semester *uct.Semester) (courses []rutge
 	return
 }
 
-func getRutgersSemester(semester *uct.Semester) string {
-	if semester.Season == uct.FALL {
+func getRutgersSemester(semester *model.Semester) string {
+	if semester.Season == model.FALL {
 		return "9" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.SUMMER {
+	} else if semester.Season == model.SUMMER {
 		return "7" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.SPRING {
+	} else if semester.Season == model.SPRING {
 		return "1" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == uct.WINTER {
+	} else if semester.Season == model.WINTER {
 		return "0" + strconv.Itoa(int(semester.Year))
 	}
 	return ""
-}
-
-var (
-	influxClient client.Client
-	auditLogger *log.Logger
-)
-
-func initInflux() {
-	var err error
-	// Create the InfluxDB client.
-	influxClient, err = influxdbhelper.GetClient(config)
-
-	if err != nil {
-		log.Fatalf("Error while creating the client: %v", err)
-	}
-
-	// Create and add the hook.
-	auditHook, err := influxus.NewHook(
-		&influxus.Config{
-			Client:             influxClient,
-			Database:           "universityct", // DATABASE MUST BE CREATED
-			DefaultMeasurement: "scaper_ops",
-			BatchSize:          1, // default is 100
-			BatchInterval:      1, // default is 5 seconds
-			Tags:               []string{"scraper_name"},
-			Precision: "s",
-		})
-
-	uct.CheckError(err)
-
-	// Add the hook to the standard logger.
-	auditLogger = log.New()
-	auditLogger.Formatter = new(log.JSONFormatter)
-	auditLogger.Hooks.Add(auditHook)
 }

@@ -1,25 +1,27 @@
-package sync
+package harmony
 
 import (
-	uct "uct/common"
 	"testing"
-	"uct/redis"
 	"time"
+	"uct/redis"
+
 	"github.com/stretchr/testify/assert"
 
-	"github.com/satori/go.uuid"
-	_ "github.com/Sirupsen/logrus"
 	"strconv"
-	"log"
 	"uct/common/conf"
+
+	_ "github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
+	"github.com/satori/go.uuid"
 )
 
-func setupClient() *v1.RedisWrapper {
+func setupClient() *redishelper.RedisWrapper {
 	c := conf.Config{}
-	c.Redis.Host = "localhost:32768"
+	c.Redis.Host = "redis"
+	c.Redis.Port = "6379"
 	c.Redis.Db = 0
 	c.Redis.Password = ""
-	return v1.New(c, "snanitycheck")
+	return redishelper.New(c, "snanitycheck")
 }
 
 func setup(timeQuantum time.Duration, appId string) *RedisSync {
@@ -31,7 +33,7 @@ func teardown(rsync *RedisSync) {
 }
 
 func TestClientConnection(t *testing.T) {
-	rsync := setup(1 * time.Minute, uuid.NewV4().String())
+	rsync := setup(1*time.Minute, uuid.NewV4().String())
 
 	rsync.ping()
 
@@ -67,7 +69,7 @@ func TestRedisSync_ClaimPosition_Different_Result_Different_Id(t *testing.T) {
 }
 
 func TestRedisSync_calculateOffset_client_1(t *testing.T) {
-	rsync := setup(1 * time.Minute, "test")
+	rsync := setup(1*time.Minute, "test")
 
 	rsync.ping()
 	rsync.registerInstance()
@@ -81,16 +83,16 @@ func TestRedisSync_calculateOffset_client_1(t *testing.T) {
 }
 
 func TestRedisSync_calculateOffset_client_3(t *testing.T) {
-	rsync := setup(1 * time.Minute, "test1")
+	rsync := setup(1*time.Minute, "test1")
 
 	rsync.ping()
 	rsync.registerInstance()
 
-	rsync = setup(1 * time.Minute, "test2")
+	rsync = setup(1*time.Minute, "test2")
 	rsync.ping()
 	rsync.registerInstance()
 
-	rsync = setup(1 * time.Minute, "test3")
+	rsync = setup(1*time.Minute, "test3")
 	rsync.ping()
 	rsync.registerInstance()
 
@@ -105,16 +107,14 @@ func TestRedisSync_calculateOffset_client_3(t *testing.T) {
 func TestRedisSync_calculateOffset_client_n(t *testing.T) {
 	N := 59
 	for i := 0; i < N; i++ {
-		rsync := setup(1 * time.Minute, "test" + strconv.Itoa(i))
+		rsync := setup(1*time.Minute, "test"+strconv.Itoa(i))
 		rsync.ping()
 		rsync.registerInstance()
 	}
 
-	rsync := setup(1 * time.Minute, "last")
+	rsync := setup(1*time.Minute, "last")
 	rsync.ping()
 	rsync.registerInstance()
-
-
 
 	expected := int64(59)
 
@@ -130,27 +130,27 @@ func TestRedisSync_Sync(t *testing.T) {
 	go func() {
 		time.Sleep(0 * time.Second)
 
-		rsync := setup(1 * time.Minute, "test1")
+		rsync := setup(1*time.Minute, "test1")
 
-		for range rsync.Sync(make(chan bool)) {
-
+		for offset := range rsync.Sync(make(chan bool)) {
+			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test1")
 		}
 	}()
 
 	go func() {
 		time.Sleep(3 * time.Second)
 
-		rsync := setup(1 * time.Minute, "test2")
+		rsync := setup(1*time.Minute, "test2")
 
-		for range rsync.Sync(make(chan bool)) {
-
+		for offset := range rsync.Sync(make(chan bool)) {
+			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test2")
 		}
 	}()
 
 	go func() {
 		time.Sleep(5 * time.Second)
 
-		rsync := setup(1 * time.Minute, "test3")
+		rsync := setup(1*time.Minute, "test3")
 		channel := make(chan bool)
 		go func() {
 			time.Sleep(10 * time.Second)
@@ -158,23 +158,21 @@ func TestRedisSync_Sync(t *testing.T) {
 			log.Println("BOOM!!! TEST3")
 		}()
 
-		for range rsync.Sync(channel) {
-
+		for offset := range rsync.Sync(channel) {
+			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test3")
 		}
 
 	}()
 
-
 	go func() {
 		time.Sleep(9 * time.Second)
 
-		rsync := setup(1 * time.Minute, "test4")
-		log.Println("TEST4")
+		rsync := setup(1*time.Minute, "test4")
 
 		channel := make(chan bool)
 
-		for range rsync.Sync(channel) {
-
+		for offset := range rsync.Sync(channel) {
+			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test4")
 		}
 	}()
 

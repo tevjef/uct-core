@@ -1,9 +1,9 @@
 syntax = "proto2";
 
-package common;
+package model;
 import "gogo.proto";
 
-option go_package = "common";
+option go_package = "model";
 option (gogoproto.gostring_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.verbose_equal_all) = true;

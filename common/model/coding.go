@@ -1,14 +1,14 @@
-package common
+package model
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"bytes"
-	"github.com/pquerna/ffjson/ffjson"
-	"io/ioutil"
-	"fmt"
-	"strconv"
 	"encoding/json"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/pquerna/ffjson/ffjson"
 	"io"
+	"io/ioutil"
+	"strconv"
 )
 
 func MarshalMessage(format string, m University) *bytes.Reader {

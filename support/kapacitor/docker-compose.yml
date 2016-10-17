@@ -1,0 +1,16 @@
+version: '2'
+  kapacitor:
+    image: kapacitor
+    posts:
+     - "9092:9092"
+    links:
+      - influxdb
+    environment:
+     - KAPACITOR_INFLUXDB_0_URLS_0=http://influxdb:8086
+     - KAPACITOR_INFLUXDB_USERNAME=${INFLUXDB_ADMIN_USER}
+     - KAPACITOR_INFLUXDB_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+     - KAPACITOR_SLACK_URL=https://hooks.slack.com/services/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
+     - KAPACITOR_SLACK_CHANNEL=coursetrakr
+     - KAPACITOR_SLACK_ENABLED=true
+    volumes:
+     - /var/lib/kapacitor:/var/lib/kapacitor

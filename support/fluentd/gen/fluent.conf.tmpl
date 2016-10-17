@@ -51,6 +51,7 @@ time_format %Y-%m-%dT%H:%M:%S%z
     <match docker.{{$service}}>
         @type copy
         deep_copy true
+        {{if or $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
         <store>
             @type s3
             @log_level debug
@@ -65,11 +66,12 @@ time_format %Y-%m-%dT%H:%M:%S%z
             include_time_key true
             time_key time
             include_tag_key true
-            time_slice_format %Y%m%d%H
+            time_slice_format %Y%m%d
             time_slice_wait 1m
             utc
         </store>
-
+        {{end}}
+        {{if or $GenContainer.Env.AWS_KEY_ID $GenContainer.Env.AWS_SECRET_KEY $GenContainer.Env.AWS_REGION}}
          <store>
              @type cloudwatch_logs
              @log_level debug
@@ -79,10 +81,13 @@ time_format %Y-%m-%dT%H:%M:%S%z
              log_group_name {{$project}}
              log_stream_name {{$service}}
              auto_create_stream true
+             include_time_key true
              {{if or $isCoreService (eq $service "nginx")}}#{{end}}message_keys log
          </store>
+         {{end}}
 
          {{if index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
+         {{if or $GenContainer.Env.INFLUXDB_DATABASE $GenContainer.Env.INFLUXDB_ADMIN_USER $GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
          <store>
              @type influxdb
              @log_level debug
@@ -91,11 +96,11 @@ time_format %Y-%m-%dT%H:%M:%S%z
              dbname {{$GenContainer.Env.INFLUXDB_DATABASE}}
              user {{$GenContainer.Env.INFLUXDB_ADMIN_USER}}
              password {{$GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
-             time_precision {{index $CurrentContainer.Labels "fluentd.influxdb.precision"}}
+             time_precision s
              tag_keys {{index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
           </store>
          {{end}}
-
+         {{end}}
          {{if $CurrentContainer.Env.FLUENTD_STDOUT}}
          <store>
             @type stdout
