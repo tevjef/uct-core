@@ -272,6 +272,8 @@ func getSubjects(semester *model.Semester, campus string) (subjects []rutgers.RS
 
 	for i := 0; i < 3; i++ {
 		log.WithFields(log.Fields{"season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Subject Request")
+		startTime := time.Now()
+
 		resp, err := httpClient.Get(url)
 		if err != nil {
 			log.Errorf("Retrying %d after error: %s\n", i, err)
@@ -286,7 +288,7 @@ func getSubjects(semester *model.Semester, campus string) (subjects []rutgers.RS
 		}
 
 		log.WithFields(log.Fields{"content-length": len(data), "status": resp.Status, "season": semester.Season,
-			"year": semester.Year, "campus": campus, "url": url}).Debugln("Subject Reponse")
+			"year": semester.Year, "campus": campus, "url": url, "subject_response_time": time.Since(startTime).Seconds()}).Debugln("Subject Reponse")
 
 		resp.Body.Close()
 		break
@@ -304,7 +306,7 @@ func getCourses(subject, campus string, semester *model.Semester) (courses []rut
 	var url = fmt.Sprintf("%s/courses.json?subject=%s&semester=%s&campus=%s&level=U%sG", host, subject, getRutgersSemester(semester), campus, "%2C")
 	for i := 0; i < 3; i++ {
 		log.WithFields(log.Fields{"subject": subject, "season": semester.Season, "year": semester.Year, "campus": campus, "retry": i, "url": url}).Debug("Course Request")
-
+		startTime := time.Now()
 		resp, err := httpClient.Get(url)
 		if err != nil {
 			log.Errorf("Retrying %d after error: %s\n", i, err)
@@ -319,7 +321,7 @@ func getCourses(subject, campus string, semester *model.Semester) (courses []rut
 		}
 
 		log.WithFields(log.Fields{"content-length": len(data), "subject": subject, "status": resp.Status, "season": semester.Season,
-			"year": semester.Year, "campus": campus, "url": url}).Debugln("Course Response")
+			"year": semester.Year, "campus": campus, "url": url, "course_response_time": time.Since(startTime).Seconds()}).Debugln("Course Response")
 
 		resp.Body.Close()
 		break
