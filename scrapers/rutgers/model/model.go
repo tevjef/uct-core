@@ -369,12 +369,13 @@ func (meeting MeetingByClass) Less(i, j int) bool {
 
 	if left.dayRank() < right.dayRank() {
 		return true
-	} else if left.dayRank() == right.dayRank() {
+	} else if left.dayRank() == right.dayRank()  && left.StartTime != "" && right.StartTime != "" {
 		return IsAfter(left.StartTime, right.StartTime)
 	}
 
 	if left.MeetingDay == "" || right.MeetingDay == "" {
-		return left.classRank() < right.classRank()
+		b := left.classRank() < right.classRank()
+		return b
 	}
 
 	return false
