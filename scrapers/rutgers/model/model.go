@@ -367,15 +367,25 @@ func (meeting MeetingByClass) Swap(i, j int) {
 func (meeting MeetingByClass) Less(i, j int) bool {
 	left, right := meeting[i], meeting[j]
 
-	if left.dayRank() < right.dayRank() {
-		return true
-	} else if left.dayRank() == right.dayRank()  && left.StartTime != "" && right.StartTime != "" {
-		return IsAfter(left.StartTime, right.StartTime)
+	// Both have a day
+	if left.MeetingDay != "" && right.MeetingDay != "" {
+		if left.dayRank() < right.dayRank() {
+			return true
+		} else if left.dayRank() == right.dayRank()  && left.StartTime != "" && right.StartTime != "" {
+			return IsAfter(left.StartTime, right.StartTime)
+		}
 	}
 
-	if left.MeetingDay == "" || right.MeetingDay == "" {
-		b := left.classRank() < right.classRank()
-		return b
+	// Neither have a day
+	if left.MeetingDay == "" && right.MeetingDay == "" {
+		return left.classRank() < right.classRank()
+	}
+
+	// One is missing their day
+	if left.dayRank() < right.dayRank() {
+		return true
+	} else if left.dayRank() == right.dayRank() {
+		return left.classRank() < right.classRank()
 	}
 
 	return false

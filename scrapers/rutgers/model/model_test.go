@@ -9,14 +9,14 @@ import (
 
 func TestMeetingSort(t *testing.T) {
 	meetings := []RMeetingTime{
-		{StartTime: "6:34 PM", EndTime: "6:35 PM", MeetingDay: "Monday", MeetingModeCode: "03"},
+		{StartTime: "6:34 PM", EndTime: "6:35 PM", MeetingDay: "Monday", MeetingModeCode: "90"},
 		{StartTime: "", EndTime: "", MeetingDay: "", MeetingModeCode: "91"},
 		{StartTime: "", EndTime: "", MeetingDay: "", MeetingModeCode: "90"},
-		{StartTime: "8:30 PM", EndTime: "12:35 PM", MeetingDay: "Saturday", MeetingModeCode: "02"},
+		{StartTime: "8:30 PM", EndTime: "12:35 PM", MeetingDay: "Saturday", MeetingModeCode: "90"},
 		{StartTime: "", EndTime: "", MeetingDay: "", MeetingModeCode: "02"},
-		{StartTime: "4:30 AM", EndTime: "6:35 PM", MeetingDay: "Monday", MeetingModeCode: "03"},
-		{StartTime: "1:30 PM", EndTime: "4:35 PM", MeetingDay: "Tuesday", MeetingModeCode: "07"},
-		{StartTime: "11:30 AM", EndTime: "12:35 PM", MeetingDay: "Monday", MeetingModeCode: "02"},
+		{StartTime: "4:30 AM", EndTime: "6:35 PM", MeetingDay: "Monday", MeetingModeCode: "90"},
+		{StartTime: "1:30 PM", EndTime: "4:35 PM", MeetingDay: "Tuesday", MeetingModeCode: "90"},
+		{StartTime: "11:30 AM", EndTime: "12:35 PM", MeetingDay: "Monday", MeetingModeCode: "90"},
 		{StartTime: "", EndTime: "", MeetingDay: "", MeetingModeCode: "03"},
 	}
 
