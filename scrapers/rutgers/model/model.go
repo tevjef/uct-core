@@ -172,6 +172,12 @@ func (meeting *RMeetingTime) Clean() {
 	meeting.StartTime = meeting.getMeetingHourBegin()
 	meeting.EndTime = meeting.getMeetingHourEnd()
 
+	// Some meetings may not have a type, default to lecture
+	if meeting.MeetingModeCode == "" {
+		meeting.MeetingModeCode = "02"
+		meeting.MeetingModeDesc = "LEC"
+	}
+
 	if meeting.StartTime != "" {
 		t := meeting.StartTime
 		meeting.PStartTime = &t
