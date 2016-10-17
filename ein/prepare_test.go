@@ -1,13 +1,10 @@
 package main
 
+import ()
 import (
-
-
-)
-import (
-	"testing"
 	"fmt"
 	"reflect"
+	"testing"
 )
 
 func BenchmarkGetTypeSprint(b *testing.B) {
@@ -23,7 +20,6 @@ func BenchmarkGetTypeSprint(b *testing.B) {
 		fmt.Sprintf("%T", getType())
 	}
 }
-
 
 func BenchmarkGetTypeReflect(b *testing.B) {
 	b.StopTimer()

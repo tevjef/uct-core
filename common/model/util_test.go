@@ -1,8 +1,8 @@
 package model
 
 import (
-	"testing"
 	"log"
+	"testing"
 )
 
 func TestTrimAll(t *testing.T) {
@@ -11,7 +11,6 @@ func TestTrimAll(t *testing.T) {
 }
 
 func BenchmarkTrimAll(b *testing.B) {
-
 
 	b.ReportAllocs()
 	b.ResetTimer()

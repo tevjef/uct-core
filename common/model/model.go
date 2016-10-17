@@ -2,7 +2,7 @@ package model
 
 import (
 	log "github.com/Sirupsen/logrus"
-//	"golang.org/x/exp/utf8string"
+	//	"golang.org/x/exp/utf8string"
 	"hash/fnv"
 	"net/url"
 	"regexp"
@@ -680,7 +680,7 @@ func logSection(section []*Section, prepend string) log.Fields {
 		}
 	}
 	return log.Fields{
-		prepend + "_open_count": openCount,
+		prepend + "_open_count":   openCount,
 		prepend + "_closed_count": closedCount,
 	}
 }
@@ -703,7 +703,6 @@ func (a SemesterSorter) Less(i, j int) bool {
 	}
 	return false
 }
-
 
 func rankSeason(seasonStr string) int {
 	seasonStr = strings.ToLower(seasonStr)

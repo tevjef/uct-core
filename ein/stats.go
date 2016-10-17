@@ -1,8 +1,8 @@
 package main
 
 import (
-	"time"
 	log "github.com/Sirupsen/logrus"
+	"time"
 )
 
 func audit(university string) {
@@ -27,7 +27,7 @@ func audit(university string) {
 	var serialSection int
 	var serialSubject int
 
-	Outerloop:
+Outerloop:
 	for {
 		select {
 		case count := <-insertionsCh:
@@ -58,19 +58,19 @@ func audit(university string) {
 
 			log.WithFields(log.Fields{
 				"university_name": university,
-				"insertions":    insertions,
-				"updates":       updates,
-				"upserts":       upserts,
-				"existential":   existential,
-				"subjectCount":  subjectCount,
-				"courseCount":   courseCount,
-				"sectionCount":  sectionCount,
-				"meetingCount":  meetingCount,
-				"metadataCount": metadataCount,
-				"serialSubject": serialSubject,
-				"serialCourse":  serialCourse,
-				"serialSection": serialSection,
-				"elapsed":       time.Since(start).Seconds(),
+				"insertions":      insertions,
+				"updates":         updates,
+				"upserts":         upserts,
+				"existential":     existential,
+				"subjectCount":    subjectCount,
+				"courseCount":     courseCount,
+				"sectionCount":    sectionCount,
+				"meetingCount":    meetingCount,
+				"metadataCount":   metadataCount,
+				"serialSubject":   serialSubject,
+				"serialCourse":    serialCourse,
+				"serialSection":   serialSection,
+				"elapsed":         time.Since(start).Seconds(),
 			}).Info("done!")
 
 			doneAudit <- true

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"sort"
 	"strconv"
 	"time"
 	"uct/common/model"
 	"uct/servers"
-	"sort"
 )
 
 var (
@@ -156,7 +156,7 @@ func SelectCourses(subjectTopicName string) (courses []*model.Course, err error)
 	return
 }
 
-func SelectSection(sectionTopicName string) (section model.Section,  b []byte, err error) {
+func SelectSection(sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
 	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
@@ -262,7 +262,6 @@ var (
 
 	SelectResolvedSemestersQuery = `SELECT current_season, current_year, last_season, last_year, next_season, next_year FROM semester JOIN university ON university.id = semester.university_id
 	WHERE university.topic_name = :topic_name`
-
 
 	SelectProtoSubjectQuery = `SELECT data FROM subject WHERE topic_name = :topic_name`
 

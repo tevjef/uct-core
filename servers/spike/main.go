@@ -2,25 +2,25 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/contrib/cache"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/tevjef/contrib/cache"
 	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
+	"uct/common/conf"
 	"uct/common/model"
 	"uct/servers"
-	"uct/common/conf"
 )
 
 var (
-	app      = kingpin.New("spike", "A command-line application to serve university course information")
-	port     = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
-	logLevel = app.Flag("log-level", "Log level").Short('l').Default("info").String()
-	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config = conf.Config{}
+	app        = kingpin.New("spike", "A command-line application to serve university course information")
+	port       = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
+	logLevel   = app.Flag("log-level", "Log level").Short('l').Default("info").String()
+	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
+	config     = conf.Config{}
 )
 
 const CacheDuration = 10 * time.Second

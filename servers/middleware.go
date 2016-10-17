@@ -1,12 +1,12 @@
 package servers
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
-	"uct/common/model"
 	"time"
-	"github.com/Sirupsen/logrus"
+	"uct/common/model"
 )
 
 const (
@@ -14,8 +14,8 @@ const (
 	protobufContentType = "application/x-protobuf"
 
 	ServingFromCache = "servingFromCache"
-	ResponseKey = "response"
-	MetaKey = "meta"
+	ResponseKey      = "response"
+	MetaKey          = "meta"
 
 	contentTypeHeader   = "Content-Type"
 	contentLengthHeader = "Content-Length"
@@ -123,7 +123,7 @@ func Ginrus(logger *logrus.Logger, timeFormat string, utc bool) gin.HandlerFunc 
 			"method":     c.Request.Method,
 			"path":       path,
 			"ip":         c.ClientIP(),
-			"elapsed":    latency.Seconds()*1e3,
+			"elapsed":    latency.Seconds() * 1e3,
 			"latency":    latency,
 			"user-agent": c.Request.UserAgent(),
 			"time":       end.Format(timeFormat),

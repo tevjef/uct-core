@@ -1,12 +1,11 @@
 package main
 
 import (
-	"github.com/jmoiron/sqlx"
-	log "github.com/Sirupsen/logrus"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
-
 
 func acknowledgeNotification(notificationId, messageId int64) (id int64) {
 	args := map[string]interface{}{"notification_id": notificationId, "message_id": messageId}

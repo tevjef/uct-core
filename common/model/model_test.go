@@ -284,25 +284,25 @@ func TestTopicName(t *testing.T) {
 
 func TestSemesterSorter(t *testing.T) {
 	semesters := []*Semester{
-		{Year:2016, Season: WINTER},
-		{Year:2015, Season: WINTER},
-		{Year:2016, Season: SPRING},
-		{Year:2016, Season: SUMMER},
-		{Year:2017, Season: FALL},
-		{Year:2015, Season: FALL},
-		{Year:2015, Season: SPRING},
-		{Year:2015, Season: SUMMER},
+		{Year: 2016, Season: WINTER},
+		{Year: 2015, Season: WINTER},
+		{Year: 2016, Season: SPRING},
+		{Year: 2016, Season: SUMMER},
+		{Year: 2017, Season: FALL},
+		{Year: 2015, Season: FALL},
+		{Year: 2015, Season: SPRING},
+		{Year: 2015, Season: SUMMER},
 	}
 
 	expected := []*Semester{
-		{Year:2017, Season: FALL},
-		{Year:2016, Season: SUMMER},
-		{Year:2016, Season: SPRING},
-		{Year:2016, Season: WINTER},
-		{Year:2015, Season: FALL},
-		{Year:2015, Season: SUMMER},
-		{Year:2015, Season: SPRING},
-		{Year:2015, Season: WINTER},
+		{Year: 2017, Season: FALL},
+		{Year: 2016, Season: SUMMER},
+		{Year: 2016, Season: SPRING},
+		{Year: 2016, Season: WINTER},
+		{Year: 2015, Season: FALL},
+		{Year: 2015, Season: SUMMER},
+		{Year: 2015, Season: SPRING},
+		{Year: 2015, Season: WINTER},
 	}
 
 	sort.Sort(SemesterSorter(semesters))
@@ -311,11 +311,11 @@ func TestSemesterSorter(t *testing.T) {
 
 func seasonEqu(a, b []*Semester) bool {
 	if a == nil && b == nil {
-		return true;
+		return true
 	}
 
 	if a == nil || b == nil {
-		return false;
+		return false
 	}
 
 	if len(a) != len(b) {

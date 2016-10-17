@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"uct/common/model"
 	"uct/common/conf"
+	"uct/common/model"
 	"uct/redis"
 
 	log "github.com/Sirupsen/logrus"
@@ -139,7 +139,6 @@ func main() {
 					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
 						log.WithError(err).Panic("Error updating old data")
 					}
-
 
 					// Start logging with influx
 					go audit(university.TopicName)

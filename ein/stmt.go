@@ -1,14 +1,12 @@
 package main
 
 import (
-	"github.com/jmoiron/sqlx"
 	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
 	"uct/common/model"
-
 )
 
 var preparedStmts = make(map[string]*sqlx.NamedStmt)
-
 
 func GetCachedStmt(key string) *sqlx.NamedStmt {
 	return preparedStmts[key]
@@ -70,4 +68,3 @@ func (dbHandler DatabaseHandlerImpl) PrepareAllStmts() {
 		preparedStmts[query] = dbHandler.prepare(query)
 	}
 }
-

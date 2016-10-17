@@ -14,17 +14,17 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"uct/common/model"
 	"uct/common/conf"
+	"uct/common/model"
 	rutgers "uct/scrapers/rutgers/model"
 
 	"uct/redis"
 	"uct/redis/harmony"
 
+	"crypto/md5"
 	log "github.com/Sirupsen/logrus"
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"crypto/md5"
 )
 
 var (

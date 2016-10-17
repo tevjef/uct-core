@@ -1,7 +1,6 @@
 package main
 
 import (
-	"uct/servers"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
@@ -11,6 +10,7 @@ import (
 	"strconv"
 	"time"
 	"uct/common/model"
+	"uct/servers"
 )
 
 var (
@@ -49,8 +49,6 @@ func main() {
 	v2 := r.Group("/v2")
 	v2.Use(servers.ProtobufWriter())
 	v2.Use(servers.ErrorWriter())
-
-
 
 	v1.POST("/notification", notificationHandler)
 

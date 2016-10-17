@@ -104,7 +104,7 @@ func TimeTrack(start time.Time, name string) {
 
 func TimeTrackWithLog(start time.Time, logger *log.Logger, name string) {
 	elapsed := time.Since(start)
-	logger.WithFields(log.Fields{"elapsed": elapsed.Seconds()*1e3, "name": name}).Info()
+	logger.WithFields(log.Fields{"elapsed": elapsed.Seconds() * 1e3, "name": name}).Info()
 }
 
 var (

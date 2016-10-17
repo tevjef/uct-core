@@ -20,7 +20,7 @@ func DaemonScraper(wrapper *redishelper.RedisWrapper, interval time.Duration, st
 			select {
 			case instance := <-newInstanceConfig:
 				log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": instance.count,
-					"position": instance.position, "guid":instance.guid}).Debugln("new offset recieved")
+					"position": instance.position, "guid": instance.guid}).Debugln("new offset recieved")
 
 				// No need to cancel the previous go routine, there isn't one
 				if cancelSync != nil {

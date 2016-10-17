@@ -10,7 +10,7 @@ import (
 )
 
 type RedisSync struct {
-	instance Instance
+	instance       Instance
 	uctRedis       *redishelper.RedisWrapper
 	syncInterval   time.Duration
 	syncExpiration time.Duration
@@ -44,12 +44,12 @@ func New(uctRedis *redishelper.RedisWrapper, timeQuantum time.Duration, appId st
 
 	rs := &RedisSync{
 		instance: Instance{
-			guid:           appId,
-			timeQuantum:    timeQuantum,
-			position:       -1,
-			offset:         -1,
-			id:     nsHealth + ":" + appId,
-	},
+			guid:        appId,
+			timeQuantum: timeQuantum,
+			position:    -1,
+			offset:      -1,
+			id:          nsHealth + ":" + appId,
+		},
 		uctRedis:       uctRedis,
 		syncInterval:   2 * time.Second,
 		syncExpiration: 4 * time.Second,

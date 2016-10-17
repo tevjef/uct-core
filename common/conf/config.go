@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
+	"github.com/kelseyhightower/envconfig"
 	"net"
 	"os"
-	"strings"
-	"github.com/kelseyhightower/envconfig"
 	"strconv"
+	"strings"
 )
 
 type Env int
-
 
 const (
 	UCT_SCRAPER_RUTGERS_INTERVAL = "UCT_SCRAPER_RUTGERS_INTERVAL"
@@ -26,7 +25,7 @@ type Config struct {
 	Postgres Postgres `toml:"postgres"`
 	Redis    Redis    `toml:"redis"`
 	Pprof    pprof    `toml:"pprof"`
-	InfluxDb InfluxDb   `toml:"influxdb"`
+	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
 	Hermes   hermes   `toml:"hermes"`
 	Scrapers scrapers `toml:"scrapers"`
@@ -45,11 +44,9 @@ type server struct {
 	Enabled  bool
 }
 
-
 type scraper struct {
 	Interval string `toml:"interval"`
 }
-
 
 type Postgres struct {
 	User     string `toml:"user" envconfig:"POSTGRES_USER"`
@@ -64,7 +61,7 @@ type Redis struct {
 	Host     string `toml:"host" envconfig:"REDIS_PORT_6379_TCP_ADDR"`
 	Port     string `toml:"port" envconfig:"REDIS_PORT_6379_TCP_PORT"`
 	Password string `toml:"password" envconfig:"REDIS_PASSWORD"`
-	Db   int `toml:"db" envconfig:"REDIS_DB"`
+	Db       int    `toml:"db" envconfig:"REDIS_DB"`
 }
 
 type InfluxDb struct {
@@ -127,7 +124,7 @@ func (c *Config) fromEnvironment() {
 	}
 
 	// bind env for rutgers
-	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != ""{
+	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != "" {
 		for key := range c.Scrapers {
 			if strings.Contains(key, "rutgers") {
 				log.Debugln(c.Scrapers[key])

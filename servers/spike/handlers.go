@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"strings"
 	"uct/common/model"
 	"uct/servers"
-	"strings"
 )
 
 func universityHandler(c *gin.Context) {

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"uct/servers"
 	"errors"
+	"github.com/gin-gonic/gin"
 	"uct/common/model"
+	"uct/servers"
 )
 
 func notificationHandler(c *gin.Context) {

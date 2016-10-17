@@ -244,11 +244,11 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 		sort.Strings(majors)
 		sort.Strings(schools)
 		if len(majors) > 0 {
-			openTo = append(openTo, "Majors: " + strings.Join(majors, ", "))
+			openTo = append(openTo, "Majors: "+strings.Join(majors, ", "))
 		}
 
 		if len(schools) > 0 {
-			openTo = append(openTo, "Schools: " + strings.Join(schools, ", "))
+			openTo = append(openTo, "Schools: "+strings.Join(schools, ", "))
 		}
 
 		if len(openTo) > 0 {

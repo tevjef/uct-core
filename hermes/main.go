@@ -5,8 +5,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"time"
-	"uct/common/model"
 	"uct/common/conf"
+	"uct/common/model"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
@@ -127,8 +127,8 @@ func sendGcmNotification(rawNotification string, pgNotification model.UCTNotific
 		return
 	}
 
-	log.WithFields(log.Fields{"success": httpResponse.Success, "topic": httpMessage.To, 
-		"message_id": httpResponse.MessageId, "error": httpResponse.Error, 
+	log.WithFields(log.Fields{"success": httpResponse.Success, "topic": httpMessage.To,
+		"message_id": httpResponse.MessageId, "error": httpResponse.Error,
 		"failure": httpResponse.Failure}).Infoln("fcm_response")
 	// Print FCM errors, but don't panic
 	if httpResponse.Error != "" {

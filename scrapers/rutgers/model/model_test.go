@@ -1,10 +1,10 @@
 package model
 
 import (
-	"testing"
-	"sort"
-	"fmt"
 	"bytes"
+	"fmt"
+	"sort"
+	"testing"
 )
 
 func TestMeetingSort(t *testing.T) {
