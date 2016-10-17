@@ -89,7 +89,6 @@ func main() {
 					}
 				}()
 
-				log.Panicln("Some shit is going on")
 				val := data[1]
 
 				latestData := val + ":data:latest"
