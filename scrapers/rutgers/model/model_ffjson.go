@@ -1682,14 +1682,62 @@ func (mj *RCrossListedSections) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{}`)
+	buf.WriteString(`{"courseNumber":`)
+	fflib.WriteJsonString(buf, string(mj.CourseNumber))
+	buf.WriteString(`,"supplementCode":`)
+	fflib.WriteJsonString(buf, string(mj.SupplementCode))
+	buf.WriteString(`,"sectionNumber":`)
+	fflib.WriteJsonString(buf, string(mj.SectionNumber))
+	buf.WriteString(`,"offeringUnitCampus":`)
+	fflib.WriteJsonString(buf, string(mj.OfferingUnitCampus))
+	buf.WriteString(`,"primaryRegistrationIndex":`)
+	fflib.WriteJsonString(buf, string(mj.PrimaryRegistrationIndex))
+	buf.WriteString(`,"offeringUnitCode":`)
+	fflib.WriteJsonString(buf, string(mj.OfferingUnitCode))
+	buf.WriteString(`,"registrationIndex":`)
+	fflib.WriteJsonString(buf, string(mj.RegistrationIndex))
+	buf.WriteString(`,"subjectCode":`)
+	fflib.WriteJsonString(buf, string(mj.SubjectCode))
+	buf.WriteByte('}')
 	return nil
 }
 
 const (
 	ffj_t_RCrossListedSectionsbase = iota
 	ffj_t_RCrossListedSectionsno_such_key
+
+	ffj_t_RCrossListedSections_CourseNumber
+
+	ffj_t_RCrossListedSections_SupplementCode
+
+	ffj_t_RCrossListedSections_SectionNumber
+
+	ffj_t_RCrossListedSections_OfferingUnitCampus
+
+	ffj_t_RCrossListedSections_PrimaryRegistrationIndex
+
+	ffj_t_RCrossListedSections_OfferingUnitCode
+
+	ffj_t_RCrossListedSections_RegistrationIndex
+
+	ffj_t_RCrossListedSections_SubjectCode
 )
+
+var ffj_key_RCrossListedSections_CourseNumber = []byte("courseNumber")
+
+var ffj_key_RCrossListedSections_SupplementCode = []byte("supplementCode")
+
+var ffj_key_RCrossListedSections_SectionNumber = []byte("sectionNumber")
+
+var ffj_key_RCrossListedSections_OfferingUnitCampus = []byte("offeringUnitCampus")
+
+var ffj_key_RCrossListedSections_PrimaryRegistrationIndex = []byte("primaryRegistrationIndex")
+
+var ffj_key_RCrossListedSections_OfferingUnitCode = []byte("offeringUnitCode")
+
+var ffj_key_RCrossListedSections_RegistrationIndex = []byte("registrationIndex")
+
+var ffj_key_RCrossListedSections_SubjectCode = []byte("subjectCode")
 
 func (uj *RCrossListedSections) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -1750,6 +1798,109 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'c':
+
+					if bytes.Equal(ffj_key_RCrossListedSections_CourseNumber, kn) {
+						currentKey = ffj_t_RCrossListedSections_CourseNumber
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'o':
+
+					if bytes.Equal(ffj_key_RCrossListedSections_OfferingUnitCampus, kn) {
+						currentKey = ffj_t_RCrossListedSections_OfferingUnitCampus
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_RCrossListedSections_OfferingUnitCode, kn) {
+						currentKey = ffj_t_RCrossListedSections_OfferingUnitCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'p':
+
+					if bytes.Equal(ffj_key_RCrossListedSections_PrimaryRegistrationIndex, kn) {
+						currentKey = ffj_t_RCrossListedSections_PrimaryRegistrationIndex
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'r':
+
+					if bytes.Equal(ffj_key_RCrossListedSections_RegistrationIndex, kn) {
+						currentKey = ffj_t_RCrossListedSections_RegistrationIndex
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 's':
+
+					if bytes.Equal(ffj_key_RCrossListedSections_SupplementCode, kn) {
+						currentKey = ffj_t_RCrossListedSections_SupplementCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_RCrossListedSections_SectionNumber, kn) {
+						currentKey = ffj_t_RCrossListedSections_SectionNumber
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_RCrossListedSections_SubjectCode, kn) {
+						currentKey = ffj_t_RCrossListedSections_SubjectCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_SubjectCode, kn) {
+					currentKey = ffj_t_RCrossListedSections_SubjectCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_RegistrationIndex, kn) {
+					currentKey = ffj_t_RCrossListedSections_RegistrationIndex
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_RCrossListedSections_OfferingUnitCode, kn) {
+					currentKey = ffj_t_RCrossListedSections_OfferingUnitCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_PrimaryRegistrationIndex, kn) {
+					currentKey = ffj_t_RCrossListedSections_PrimaryRegistrationIndex
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_OfferingUnitCampus, kn) {
+					currentKey = ffj_t_RCrossListedSections_OfferingUnitCampus
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_SectionNumber, kn) {
+					currentKey = ffj_t_RCrossListedSections_SectionNumber
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_SupplementCode, kn) {
+					currentKey = ffj_t_RCrossListedSections_SupplementCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RCrossListedSections_CourseNumber, kn) {
+					currentKey = ffj_t_RCrossListedSections_CourseNumber
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				currentKey = ffj_t_RCrossListedSectionsno_such_key
@@ -1769,6 +1920,30 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
+				case ffj_t_RCrossListedSections_CourseNumber:
+					goto handle_CourseNumber
+
+				case ffj_t_RCrossListedSections_SupplementCode:
+					goto handle_SupplementCode
+
+				case ffj_t_RCrossListedSections_SectionNumber:
+					goto handle_SectionNumber
+
+				case ffj_t_RCrossListedSections_OfferingUnitCampus:
+					goto handle_OfferingUnitCampus
+
+				case ffj_t_RCrossListedSections_PrimaryRegistrationIndex:
+					goto handle_PrimaryRegistrationIndex
+
+				case ffj_t_RCrossListedSections_OfferingUnitCode:
+					goto handle_OfferingUnitCode
+
+				case ffj_t_RCrossListedSections_RegistrationIndex:
+					goto handle_RegistrationIndex
+
+				case ffj_t_RCrossListedSections_SubjectCode:
+					goto handle_SubjectCode
+
 				case ffj_t_RCrossListedSectionsno_such_key:
 					err = fs.SkipField(tok)
 					if err != nil {
@@ -1782,6 +1957,214 @@ mainparse:
 			}
 		}
 	}
+
+handle_CourseNumber:
+
+	/* handler: uj.CourseNumber type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.CourseNumber = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SupplementCode:
+
+	/* handler: uj.SupplementCode type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.SupplementCode = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SectionNumber:
+
+	/* handler: uj.SectionNumber type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.SectionNumber = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_OfferingUnitCampus:
+
+	/* handler: uj.OfferingUnitCampus type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.OfferingUnitCampus = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_PrimaryRegistrationIndex:
+
+	/* handler: uj.PrimaryRegistrationIndex type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.PrimaryRegistrationIndex = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_OfferingUnitCode:
+
+	/* handler: uj.OfferingUnitCode type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.OfferingUnitCode = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_RegistrationIndex:
+
+	/* handler: uj.RegistrationIndex type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.RegistrationIndex = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SubjectCode:
+
+	/* handler: uj.SubjectCode type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.SubjectCode = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
 
 wantedvalue:
 	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
@@ -2009,14 +2392,38 @@ func (mj *RMajor) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{}`)
+	if mj.IsMajorCode {
+		buf.WriteString(`{"isMajorCode":true`)
+	} else {
+		buf.WriteString(`{"isMajorCode":false`)
+	}
+	if mj.IsUnitCode {
+		buf.WriteString(`,"isUnitCode":true`)
+	} else {
+		buf.WriteString(`,"isUnitCode":false`)
+	}
+	buf.WriteString(`,"code":`)
+	fflib.WriteJsonString(buf, string(mj.Code))
+	buf.WriteByte('}')
 	return nil
 }
 
 const (
 	ffj_t_RMajorbase = iota
 	ffj_t_RMajorno_such_key
+
+	ffj_t_RMajor_IsMajorCode
+
+	ffj_t_RMajor_IsUnitCode
+
+	ffj_t_RMajor_Code
 )
+
+var ffj_key_RMajor_IsMajorCode = []byte("isMajorCode")
+
+var ffj_key_RMajor_IsUnitCode = []byte("isUnitCode")
+
+var ffj_key_RMajor_Code = []byte("code")
 
 func (uj *RMajor) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -2077,6 +2484,45 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'c':
+
+					if bytes.Equal(ffj_key_RMajor_Code, kn) {
+						currentKey = ffj_t_RMajor_Code
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'i':
+
+					if bytes.Equal(ffj_key_RMajor_IsMajorCode, kn) {
+						currentKey = ffj_t_RMajor_IsMajorCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_RMajor_IsUnitCode, kn) {
+						currentKey = ffj_t_RMajor_IsUnitCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_RMajor_Code, kn) {
+					currentKey = ffj_t_RMajor_Code
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RMajor_IsUnitCode, kn) {
+					currentKey = ffj_t_RMajor_IsUnitCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_RMajor_IsMajorCode, kn) {
+					currentKey = ffj_t_RMajor_IsMajorCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				currentKey = ffj_t_RMajorno_such_key
@@ -2096,6 +2542,15 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
+				case ffj_t_RMajor_IsMajorCode:
+					goto handle_IsMajorCode
+
+				case ffj_t_RMajor_IsUnitCode:
+					goto handle_IsUnitCode
+
+				case ffj_t_RMajor_Code:
+					goto handle_Code
+
 				case ffj_t_RMajorno_such_key:
 					err = fs.SkipField(tok)
 					if err != nil {
@@ -2109,6 +2564,102 @@ mainparse:
 			}
 		}
 	}
+
+handle_IsMajorCode:
+
+	/* handler: uj.IsMajorCode type=bool kind=bool quoted=false*/
+
+	{
+		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
+		}
+	}
+
+	{
+		if tok == fflib.FFTok_null {
+
+		} else {
+			tmpb := fs.Output.Bytes()
+
+			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
+
+				uj.IsMajorCode = true
+
+			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
+
+				uj.IsMajorCode = false
+
+			} else {
+				err = errors.New("unexpected bytes for true/false value")
+				return fs.WrapErr(err)
+			}
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_IsUnitCode:
+
+	/* handler: uj.IsUnitCode type=bool kind=bool quoted=false*/
+
+	{
+		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
+		}
+	}
+
+	{
+		if tok == fflib.FFTok_null {
+
+		} else {
+			tmpb := fs.Output.Bytes()
+
+			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
+
+				uj.IsUnitCode = true
+
+			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
+
+				uj.IsUnitCode = false
+
+			} else {
+				err = errors.New("unexpected bytes for true/false value")
+				return fs.WrapErr(err)
+			}
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Code:
+
+	/* handler: uj.Code type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.Code = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
 
 wantedvalue:
 	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
@@ -5516,6 +6067,145 @@ mainparse:
 				switch currentKey {
 
 				case ffj_t_commentSorterno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+	return nil
+}
+
+func (mj *instructorSorter) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *instructorSorter) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{}`)
+	return nil
+}
+
+const (
+	ffj_t_instructorSorterbase = iota
+	ffj_t_instructorSorterno_such_key
+)
+
+func (uj *instructorSorter) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *instructorSorter) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_instructorSorterbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_instructorSorterno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				}
+
+				currentKey = ffj_t_instructorSorterno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_instructorSorterno_such_key:
 					err = fs.SkipField(tok)
 					if err != nil {
 						return fs.WrapErr(err)

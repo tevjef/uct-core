@@ -20,11 +20,44 @@ pipeline:
       - go install -v uct/hermes
       - go install -v uct/scrapers/rutgers
       - go install -v uct/servers/spike
-
   image:
     image: library/docker:dind
     commands:
       - cd /go/src/uct
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+      - docker build -t tevjef/uct-core:ein -f Dockerfile-ein .
+      - docker build -t tevjef/uct-core:spike -f Dockerfile-spike .
+      - docker build -t tevjef/uct-core:hermes -f Dockerfile-hermes .
+      - docker build -t tevjef/uct-core:rutgers-cm -f Dockerfile-rutgers-cm .
+      - docker build -t tevjef/uct-core:rutgers-nb -f Dockerfile-rutgers-nb .
+      - docker build -t tevjef/uct-core:rutgers-nk -f Dockerfile-rutgers-nk .
+      - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
+      - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
+      - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
+      - docker build -t tevjef/uct-core:nginx-gen -f support/nginx/gen/Dockerfile support/nginx/gen
+      - docker build -t tevjef/uct-core:postgresql -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/uct-core:telegraf -f support/telegraf/Dockerfile support/telegraf
+
+      - docker push tevjef/uct-core:ein
+      - docker push tevjef/uct-core:spike
+      - docker push tevjef/uct-core:hermes
+      - docker push tevjef/uct-core:rutgers-cm
+      - docker push tevjef/uct-core:rutgers-nb
+      - docker push tevjef/uct-core:rutgers-nk
+      - docker push tevjef/uct-core:fluentd
+      - docker push tevjef/uct-core:fluentd-gen
+      - docker push tevjef/uct-core:nginx
+      - docker push tevjef/uct-core:nginx-gen
+      - docker push tevjef/uct-core:postgresql
+      - docker push tevjef/uct-core:telegraf
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+        branch: master
+
+  image:
+    image: library/docker:dind
+    commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
       - docker build -t tevjef/uct-core:staging-ein -f Dockerfile-ein .
       - docker build -t tevjef/uct-core:staging-spike -f Dockerfile-spike .
@@ -53,6 +86,8 @@ pipeline:
       - docker push tevjef/uct-core:staging-telegraf
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    when:
+        branch: staging
 
   slack:
     webhook: https://hooks.slack.com/services/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
