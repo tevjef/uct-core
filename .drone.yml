@@ -20,7 +20,7 @@ pipeline:
       - go install -v uct/hermes
       - go install -v uct/scrapers/rutgers
       - go install -v uct/servers/spike
-  image:
+  production:
     image: library/docker:dind
     commands:
       - cd /go/src/uct
@@ -55,7 +55,7 @@ pipeline:
     when:
         branch: master
 
-  image:
+  staging:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
