@@ -6,8 +6,8 @@ ENV PATH /uct:$PATH
 
 COPY config.toml /uct
 
+COPY rutgers /uct
+
 EXPOSE 13301
 
-ENTRYPOINT ["rutgers"]
-
-CMD ["--campus", "NK", "--daemon", "2m", "--latest", "-f" , "protobuf", "-c" , "/uct/config.toml"]
+CMD ["rutgers", "--campus", "NK", "--daemon", "2m", "--latest", "-f" , "protobuf", "-c" , "/uct/config.toml"]

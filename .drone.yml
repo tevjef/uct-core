@@ -5,11 +5,17 @@ workspace:
 
 pipeline:
   core:
-    image: golang:1.7
+    image: golang:1.6.3-alpine
     environment:
       - GOPATH=/go
     commands:
+      - go version
+      - export GOOS=linux
+      - export GOARCH=amd64
       - cd /go/src/uct
+      - apk update
+      - apk --no-cache add ca-certificates openssl git
+      - update-ca-certificates
       - export PATH=$PATH:$GOPATH/bin
       - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz
       - tar -xzf glide-v0.12.1-linux-amd64.tar.gz
@@ -20,6 +26,7 @@ pipeline:
       - go install -v uct/hermes
       - go install -v uct/scrapers/rutgers
       - go install -v uct/servers/spike
+
   production:
     image: library/docker:dind
     commands:
@@ -89,7 +96,7 @@ pipeline:
     when:
         branch: staging
 
-  build:
+  buildtest:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
@@ -108,10 +115,17 @@ pipeline:
 
       - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:staging-hermes -f /docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
       - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
       - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+
+      - docker run --rm tevjef/uct-core:staging-rutgers-nk || true
+      - docker run --rm tevjef/uct-core:staging-rutgers-nb || true
+      - docker run --rm tevjef/uct-core:staging-rutgers-cm || true
+      - docker run --rm tevjef/uct-core:staging-hermes || true
+      - docker run --rm tevjef/uct-core:staging-spike || true
+      - docker run --rm tevjef/uct-core:staging-ein || true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:

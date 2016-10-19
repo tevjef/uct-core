@@ -6,8 +6,8 @@ ENV PATH /uct:$PATH
 
 COPY config.toml /uct
 
-ENTRYPOINT ["hermes"]
+COPY hermes /uct
 
 EXPOSE 13200
 
-CMD ["-c" , "/uct/config.toml", "-d"]
+CMD ["hermes", "-c" , "/uct/config.toml", "-d"]

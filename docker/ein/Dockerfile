@@ -6,7 +6,8 @@ ENV PATH /uct:$PATH
 
 COPY config.toml /uct
 
-ENTRYPOINT ["ein"]
+COPY ein /uct
+
 EXPOSE 13100
 
-CMD ["-c" , "/uct/config.toml", "-f", "protobuf"]
+CMD ["ein", "-c" , "/uct/config.toml", "-f", "protobuf"]
