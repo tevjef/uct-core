@@ -89,6 +89,34 @@ pipeline:
     when:
         branch: staging
 
+  build:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+      - cp /go/bin/ein /go/src/uct/docker/ein/
+      - cp /go/bin/spike /go/src/uct/docker/spike/
+      - cp /go/bin/hermes /go/src/uct/docker/hermes/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
+
+      - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/uct-core:staging-hermes -f /docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
+      - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+        branch: buildtest
+
   slack:
     webhook: https://hooks.slack.com/services/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
     channel: ci
