@@ -1,7 +1,7 @@
 package servers
 
 import (
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
@@ -21,11 +21,23 @@ const (
 	contentLengthHeader = "Content-Length"
 )
 
-func ProtobufWriter() gin.HandlerFunc {
+func ContentNegotiationWriter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 		if _, exists := c.Get(ServingFromCache); exists {
 			return
+		}
+
+		var responseType string
+
+		for _, val := range c.Request.Header["Accept"] {
+			if val == protobufContentType {
+				responseType = protobufContentType
+			}
+		}
+
+		if responseType == "" {
+			responseType = jsonContentType
 		}
 
 		if value, exists := c.Get(ResponseKey); exists {
@@ -33,16 +45,23 @@ func ProtobufWriter() gin.HandlerFunc {
 				// Write status header
 				c.Writer.WriteHeader(int(*response.Meta.Code))
 
-				// Serialize response
-				b, err := response.Marshal()
-				model.LogError(err)
+				var responseData []byte
+				var err error
+
+				if responseType == protobufContentType {
+					responseData, err = response.Marshal()
+					log.WithError(err).Errorln("error while parsing protobuf response")
+				} else {
+					responseData, err = ffjson.Marshal(response)
+					log.WithError(err).Errorln("error while parsing json response")
+				}
 
 				// Write Headers
-				c.Header(contentLengthHeader, strconv.Itoa(len(b)))
-				c.Header(contentTypeHeader, protobufContentType)
+				c.Header(contentLengthHeader, strconv.Itoa(len(responseData)))
+				c.Header(contentTypeHeader, responseType)
 
 				// Write data and flush
-				c.Writer.Write(b)
+				c.Writer.Write(responseData)
 				c.Writer.Flush()
 			}
 		}
@@ -105,7 +124,7 @@ func ErrorWriter() gin.HandlerFunc {
 	}
 }
 
-func Ginrus(logger *logrus.Logger, timeFormat string, utc bool) gin.HandlerFunc {
+func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		// some evil middlewares modify this values
@@ -118,7 +137,7 @@ func Ginrus(logger *logrus.Logger, timeFormat string, utc bool) gin.HandlerFunc 
 			end = end.UTC()
 		}
 
-		entry := logger.WithFields(logrus.Fields{
+		entry := logger.WithFields(log.Fields{
 			"status":     c.Writer.Status(),
 			"method":     c.Request.Method,
 			"path":       path,

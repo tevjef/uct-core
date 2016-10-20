@@ -60,25 +60,15 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(servers.Ginrus(log.StandardLogger(), time.RFC3339, true))
 
-	// Json
+	// Json (caching)
 	v1 := r.Group("/v1")
-	v1.Use(servers.JsonWriter())
+	v1.Use(servers.ContentNegotiationWriter())
 	v1.Use(servers.ErrorWriter())
 
-	// Protocol Buffers
-	v2 := r.Group("/v2")
-	v2.Use(servers.ProtobufWriter())
-	v2.Use(servers.ErrorWriter())
-
-	// Json (caching)
-	v3 := r.Group("/v3")
-	v3.Use(servers.JsonWriter())
-	v3.Use(servers.ErrorWriter())
-
 	// Protocol Buffers (caching)
-	v4 := r.Group("/v4")
-	v4.Use(servers.ProtobufWriter())
-	v4.Use(servers.ErrorWriter())
+	v2 := r.Group("/v2")
+	v2.Use(servers.ContentNegotiationWriter())
+	v2.Use(servers.ErrorWriter())
 
 	v1.GET("/universities", universitiesHandler)
 	v1.GET("/university/:topic", universityHandler)
@@ -88,29 +78,13 @@ func main() {
 	v1.GET("/course/:topic", courseHandler)
 	v1.GET("/section/:topic", sectionHandler)
 
-	v2.GET("/universities", universitiesHandler)
-	v2.GET("/university/:topic", universityHandler)
-	v2.GET("/subjects/:topic/:season/:year", subjectsHandler)
-	v2.GET("/subject/:topic", subjectHandler)
-	v2.GET("/courses/:topic", coursesHandler)
-	v2.GET("/course/:topic", courseHandler)
-	v2.GET("/section/:topic", sectionHandler)
-
-	v3.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
-	v3.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
-	v3.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
-	v3.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
-	v3.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
-	v3.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
-	v3.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
-
-	v4.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
-	v4.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
-	v4.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
-	v4.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
-	v4.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
-	v4.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
-	v4.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
+	v2.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
+	v2.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
+	v2.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
+	v2.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
+	v2.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
+	v2.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
+	v2.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
