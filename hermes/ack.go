@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -40,7 +39,7 @@ func getCachedStmt(query string) *sqlx.NamedStmt {
 
 func prepare(query string) *sqlx.NamedStmt {
 	if named, err := database.PrepareNamed(query); err != nil {
-		log.Panicln(fmt.Errorf("Error: %s Query: %s", query, err))
+		log.WithError(errors.New("error while attempting to prepare statement")).Fatalf("Error: %s Query: %s", query, err)
 		return nil
 	} else {
 		return named
