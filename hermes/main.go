@@ -38,6 +38,7 @@ func main() {
 	config.AppName = app.Name
 
 	if enableFcm, _ := strconv.ParseBool(os.Getenv("ENABLE_FCM")); enableFcm {
+		log.Infoln("Enabling FCM in production mode")
 		*dryRun = false
 	}
 
