@@ -650,10 +650,11 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							break
 						}
 						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
+							fullSection := log.Fields{"old_full_section":oldSections[e].String(), "new_full_section":newSections[e].String()}
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber, "old_status": oldSections[e].Status,
 								"new_call_number": newSections[e].CallNumber, "new_status": newSections[e].Status,
-							}).WithFields(oldSectionFields).WithFields(newSectionFields).WithFields(log.Fields{"old_section": oldSections[e].TopicName, "new_section": newSections[e].TopicName}).Info("diff")
+							}).WithFields(oldSectionFields).WithFields(newSectionFields).WithFields(fullSection).WithFields(log.Fields{"old_section": oldSections[e].TopicName, "new_section": newSections[e].TopicName}).Info("diff")
 							filteredSections = append(filteredSections, newSections[e])
 						}
 					}

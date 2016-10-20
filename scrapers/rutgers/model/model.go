@@ -172,6 +172,12 @@ func (meeting *RMeetingTime) Clean() {
 	meeting.StartTime = meeting.getMeetingHourBegin()
 	meeting.EndTime = meeting.getMeetingHourEnd()
 
+	// Some meetings may not have a type, default to lecture
+	if meeting.MeetingModeCode == "" {
+		meeting.MeetingModeCode = "02"
+		meeting.MeetingModeDesc = "LEC"
+	}
+
 	if meeting.StartTime != "" {
 		t := meeting.StartTime
 		meeting.PStartTime = &t
@@ -367,14 +373,25 @@ func (meeting MeetingByClass) Swap(i, j int) {
 func (meeting MeetingByClass) Less(i, j int) bool {
 	left, right := meeting[i], meeting[j]
 
-	if left.MeetingDay == "" || right.MeetingDay == "" {
+	// Both have a day
+	if left.MeetingDay != "" && right.MeetingDay != "" {
+		if left.dayRank() < right.dayRank() {
+			return true
+		} else if left.dayRank() == right.dayRank()  && left.StartTime != "" && right.StartTime != "" {
+			return IsAfter(left.StartTime, right.StartTime)
+		}
+	}
+
+	// Neither have a day
+	if left.MeetingDay == "" && right.MeetingDay == "" {
 		return left.classRank() < right.classRank()
 	}
 
+	// One is missing their day
 	if left.dayRank() < right.dayRank() {
 		return true
 	} else if left.dayRank() == right.dayRank() {
-		return IsAfter(left.StartTime, right.StartTime)
+		return left.classRank() < right.classRank()
 	}
 
 	return false
