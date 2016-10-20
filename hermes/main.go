@@ -14,6 +14,7 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/go-gcm"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"strconv"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 
 var (
 	app           = kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	debug         = app.Flag("debug", "enable debug mode").Short('d').Bool()
+	dryRun        = app.Flag("dry-run", "enable dry-run").Short('d').Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
 	config        = conf.Config{}
 	database      *sqlx.DB
@@ -35,6 +36,10 @@ func main() {
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
+
+	if enableFcm, _ := strconv.ParseBool(os.Getenv("ENABLE_FCM")); enableFcm {
+		*dryRun = false
+	}
 
 	// Start profiling
 	go model.StartPprof(config.GetDebugSever(app.Name))
@@ -119,7 +124,7 @@ func sendGcmNotification(rawNotification string, pgNotification model.UCTNotific
 		Data:             map[string]interface{}{"message": rawNotification},
 		ContentAvailable: true,
 		Priority:         "high",
-		DryRun:           *debug,
+		DryRun:           *dryRun,
 	}
 
 	var httpResponse *gcm.HttpResponse
