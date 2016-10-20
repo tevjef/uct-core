@@ -32,12 +32,25 @@ pipeline:
     commands:
       - cd /go/src/uct
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-      - docker build -t tevjef/uct-core:ein -f Dockerfile-ein .
-      - docker build -t tevjef/uct-core:spike -f Dockerfile-spike .
-      - docker build -t tevjef/uct-core:hermes -f Dockerfile-hermes .
-      - docker build -t tevjef/uct-core:rutgers-cm -f Dockerfile-rutgers-cm .
-      - docker build -t tevjef/uct-core:rutgers-nb -f Dockerfile-rutgers-nb .
-      - docker build -t tevjef/uct-core:rutgers-nk -f Dockerfile-rutgers-nk .
+      - cp /go/bin/ein /go/src/uct/docker/ein/
+      - cp /go/bin/spike /go/src/uct/docker/spike/
+      - cp /go/bin/hermes /go/src/uct/docker/hermes/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
+
+      - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
+      - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
@@ -66,12 +79,26 @@ pipeline:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-      - docker build -t tevjef/uct-core:staging-ein -f Dockerfile-ein .
-      - docker build -t tevjef/uct-core:staging-spike -f Dockerfile-spike .
-      - docker build -t tevjef/uct-core:staging-hermes -f Dockerfile-hermes .
-      - docker build -t tevjef/uct-core:staging-rutgers-cm -f Dockerfile-rutgers-cm .
-      - docker build -t tevjef/uct-core:staging-rutgers-nb -f Dockerfile-rutgers-nb .
-      - docker build -t tevjef/uct-core:staging-rutgers-nk -f Dockerfile-rutgers-nk .
+      - cp /go/bin/ein /go/src/uct/docker/ein/
+      - cp /go/bin/spike /go/src/uct/docker/spike/
+      - cp /go/bin/hermes /go/src/uct/docker/hermes/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
+      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
+
+      - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
+      - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+
       - docker build -t tevjef/uct-core:staging-fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:staging-fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:staging-nginx -f support/nginx/Dockerfile support/nginx
@@ -95,41 +122,6 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
         branch: staging
-
-  buildtest:
-    image: library/docker:dind
-    commands:
-      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-      - cp /go/bin/ein /go/src/uct/docker/ein/
-      - cp /go/bin/spike /go/src/uct/docker/spike/
-      - cp /go/bin/hermes /go/src/uct/docker/hermes/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
-
-      - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
-      - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-
-      - docker run --rm tevjef/uct-core:staging-rutgers-nk || true
-      - docker run --rm tevjef/uct-core:staging-rutgers-nb || true
-      - docker run --rm tevjef/uct-core:staging-rutgers-cm || true
-      - docker run --rm tevjef/uct-core:staging-hermes || true
-      - docker run --rm tevjef/uct-core:staging-spike || true
-      - docker run --rm tevjef/uct-core:staging-ein || true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-        branch: buildtest
 
   slack:
     webhook: https://hooks.slack.com/services/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
