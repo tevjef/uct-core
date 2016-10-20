@@ -49,8 +49,8 @@ pipeline:
       - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
       - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
       - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
@@ -96,8 +96,8 @@ pipeline:
       - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
       - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nk/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nb/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
 
       - docker build -t tevjef/uct-core:staging-fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:staging-fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
