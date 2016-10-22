@@ -21,7 +21,8 @@ import (
 	"uct/redis"
 	"uct/redis/harmony"
 
-	"crypto/md5"
+	"hash/fnv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -120,7 +121,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		model.CheckError(err)
 	} else {
-		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": hash(data)}).Info()
 		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
@@ -129,6 +130,12 @@ func pushToRedis(reader *bytes.Reader) {
 			log.Panicln(errors.New("failed to queue univeristiy for upload"))
 		}
 	}
+}
+
+func hash(s []byte) uint32 {
+	h := fnv.New32a()
+	h.Write(s)
+	return h.Sum32()
 }
 
 func entryPoint(result chan model.University) {
@@ -178,7 +185,7 @@ func getCampus(campus string) model.University {
 
 	for _, ThisSemester := range Semesters {
 		if ThisSemester.Season == model.WINTER {
-			ThisSemester.Year += 1
+			ThisSemester.Year++
 		}
 
 		// Shadow copy variable
