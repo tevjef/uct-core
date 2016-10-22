@@ -121,7 +121,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		model.CheckError(err)
 	} else {
-		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": strconv.Itoa(int(hash(data)))}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": hash(data)}).Info()
 		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
@@ -132,10 +132,10 @@ func pushToRedis(reader *bytes.Reader) {
 	}
 }
 
-func hash(s []byte) uint32 {
+func hash(s []byte) string {
 	h := fnv.New32a()
 	h.Write(s)
-	return h.Sum32()
+	return strconv.Itoa(int(h.Sum32()))
 }
 
 func entryPoint(result chan model.University) {
