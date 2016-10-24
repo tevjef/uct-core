@@ -130,6 +130,11 @@ func TestUnmarshalProtoEqualUniversity(t *testing.T) {
 	model.CheckError(err)
 }
 
+func TestHash(t *testing.T) {
+	test := "Test string"
+	log.Println(hash([]byte(test)))
+}
+
 func BenchmarkMarshalJsonUniversity(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

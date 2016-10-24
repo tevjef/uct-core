@@ -143,6 +143,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "127.0.0.1:8090:8090"
     volumes:
       - /etc/nginx/certs:/etc/nginx/certs:ro
       - /etc/nginx/vhost.d
@@ -282,7 +283,7 @@ services:
       - GIN_MODE=release
       - VIRTUAL_HOST=api.${BASE_URL}
       - VIRTUAL_PORT=9876
-      - LETSENCRYPT_HOST=api.${BASE_URL}
+      - LETSENCRYPT_HOST=api.${BASE_URL},uct.tevindev.me
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
