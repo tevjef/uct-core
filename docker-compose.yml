@@ -22,7 +22,7 @@ services:
       fluentd.tag: "blog"
 
   postgresql:
-    image: tevjef/uct-core:postgres${ENV}
+    image: tevjef/uct-core:postgresql${ENV}
     restart: always
     ports:
       - "5432:5432"
