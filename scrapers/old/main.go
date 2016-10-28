@@ -62,51 +62,51 @@ func getUniversity() (university model.University) {
 		RegistrationPage: "https://www.njit.edu/cp/login.php",
 		Registrations: []model.Registration{
 			model.Registration{
-				Period:     model.SEM_FALL.String(),
+				Period:     model.InFall.String(),
 				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.SEM_SPRING.String(),
+				Period:     model.InSpring.String(),
 				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.SEM_SUMMER.String(),
+				Period:     model.InSummer.String(),
 				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.SEM_WINTER.String(),
+				Period:     model.InWinter.String(),
 				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.START_FALL.String(),
+				Period:     model.StartFall.String(),
 				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.START_SPRING.String(),
+				Period:     model.StartSpring.String(),
 				PeriodDate: time.Date(2000, time.October, 18, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.START_SUMMER.String(),
+				Period:     model.StartSummer.String(),
 				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.START_WINTER.String(),
+				Period:     model.StartWinter.String(),
 				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.END_FALL.String(),
+				Period:     model.EndFall.String(),
 				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.END_SPRING.String(),
+				Period:     model.EndSpring.String(),
 				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.END_SUMMER.String(),
+				Period:     model.EndSummer.String(),
 				PeriodDate: time.Date(2000, time.August, 15, 0, 0, 0, 0, time.UTC),
 			},
 			model.Registration{
-				Period:     model.END_WINTER.String(),
+				Period:     model.EndWinter.String(),
 				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC),
 			},
 		},
@@ -120,7 +120,7 @@ func getUniversity() (university model.University) {
 	res := model.ResolveSemesters(time.Now(), university.Registrations)
 	Semesters := [3]model.Semester{res.Last, res.Current, res.Next}
 	for _, ThisSemester := range Semesters {
-		if ThisSemester.Season == model.WINTER {
+		if ThisSemester.Season == model.Winter {
 			ThisSemester.Year += 1
 		}
 		subjects := getSubjectList(uctToNjitSeason(ThisSemester))
@@ -575,13 +575,13 @@ func (s NSeason) FullString() string {
 func uctToNjitSeason(sem model.Semester) NSemester {
 	var season NSeason
 	switch sem.Season {
-	case model.FALL:
+	case model.Fall:
 		season = FALL
-	case model.SPRING:
+	case model.Spring:
 		season = SPRING
-	case model.SUMMER:
+	case model.Summer:
 		season = SUMMER
-	case model.WINTER:
+	case model.Winter:
 		season = WINTER
 	}
 

@@ -177,7 +177,7 @@ func getCampus(campus string) model.University {
 	}
 
 	for _, ThisSemester := range Semesters {
-		if ThisSemester.Season == model.WINTER {
+		if ThisSemester.Season == model.Winter {
 			ThisSemester.Year += 1
 		}
 
@@ -345,13 +345,13 @@ func getCourses(subject, campus string, semester *model.Semester) (courses []rut
 }
 
 func getRutgersSemester(semester *model.Semester) string {
-	if semester.Season == model.FALL {
+	if semester.Season == model.Fall {
 		return "9" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == model.SUMMER {
+	} else if semester.Season == model.Summer {
 		return "7" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == model.SPRING {
+	} else if semester.Season == model.Spring {
 		return "1" + strconv.Itoa(int(semester.Year))
-	} else if semester.Season == model.WINTER {
+	} else if semester.Season == model.Winter {
 		return "0" + strconv.Itoa(int(semester.Year))
 	}
 	return ""
