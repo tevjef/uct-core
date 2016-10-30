@@ -40,18 +40,18 @@ const (
 )
 
 const (
-	SEM_FALL Period = iota
-	SEM_SPRING
-	SEM_SUMMER
-	SEM_WINTER
-	START_FALL
-	START_SPRING
-	START_SUMMER
-	START_WINTER
-	END_FALL
-	END_SPRING
-	END_SUMMER
-	END_WINTER
+	InFall Period = iota
+	InSpring
+	InSummer
+	InWinter
+	StartFall
+	StartSpring
+	StartSummer
+	StartWinter
+	EndFall
+	EndSpring
+	EndSummer
+	EndWinter
 )
 
 var period = [...]string{
@@ -74,16 +74,16 @@ func (s Period) String() string {
 }
 
 const (
-	FALL   = "fall"
-	SPRING = "spring"
-	SUMMER = "summer"
-	WINTER = "winter"
+	Fall = "fall"
+	Spring = "spring"
+	Summer = "summer"
+	Winter = "winter"
 )
 
 const (
-	OPEN Status = 1 + iota
-	CLOSED
-	CANCELLED
+	Open Status = 1 + iota
+	Closed
+	Cancelled
 )
 
 var status = [...]string{
@@ -284,7 +284,7 @@ func (section *Section) Validate(course *Course) {
 	// Max
 	if section.Max == 0 {
 		section.Max = 1
-		if section.Status == OPEN.String() {
+		if section.Status == Open.String() {
 			section.Now = 1
 		} else {
 			section.Now = 0
@@ -381,16 +381,16 @@ func (r Registration) dayOfYear() int {
 
 func (r Registration) season() string {
 	switch r.Period {
-	case SEM_FALL.String():
-		return FALL
-	case SEM_SPRING.String():
-		return SPRING
-	case SEM_SUMMER.String():
-		return SUMMER
-	case SEM_WINTER.String():
-		return WINTER
+	case InFall.String():
+		return Fall
+	case InSpring.String():
+		return Spring
+	case InSummer.String():
+		return Summer
+	case InWinter.String():
+		return Winter
 	default:
-		return SUMMER
+		return Summer
 	}
 }
 
@@ -402,29 +402,29 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 	yearDay := t.YearDay()
 
 	//var springReg = registration[SEM_SPRING];
-	var winterReg = registration[SEM_WINTER]
+	var winterReg = registration[InWinter]
 	//var summerReg = registration[SEM_SUMMER];
 	//var fallReg  = registration[SEM_FALL];
-	var startFallReg = registration[START_FALL]
-	var startSpringReg = registration[START_SPRING]
-	var endSummerReg = registration[END_SUMMER]
+	var startFallReg = registration[StartFall]
+	var startSpringReg = registration[StartSpring]
+	var endSummerReg = registration[EndSummer]
 	//var startSummerReg  = registration[START_SUMMER];
 
 	fall := &Semester{
 		Year:   int32(year),
-		Season: FALL}
+		Season: Fall}
 
 	winter := &Semester{
 		Year:   int32(year),
-		Season: WINTER}
+		Season: Winter}
 
 	spring := &Semester{
 		Year:   int32(year),
-		Season: SPRING}
+		Season: Spring}
 
 	summer := &Semester{
 		Year:   int32(year),
-		Season: SUMMER}
+		Season: Summer}
 
 	// Spring: Winter - StartFall
 	if (month >= winterReg.month() && day >= winterReg.day()) || (month <= startFallReg.month() && day < startFallReg.day()) {

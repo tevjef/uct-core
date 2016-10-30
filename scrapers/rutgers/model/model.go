@@ -194,9 +194,9 @@ func (meeting *RMeetingTime) Clean() {
 
 func (section *RSection) Status() string {
 	if section.OpenStatus {
-		return model.OPEN.String()
+		return model.Open.String()
 	} else {
-		return model.CLOSED.String()
+		return model.Closed.String()
 	}
 }
 
