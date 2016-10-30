@@ -61,7 +61,17 @@ var njit = model.University{
 			},
 		},
 		Metadata: []*model.Metadata{{
-			Title: "About", Content: "",
+			Title: "About", Content: `The New Jersey Institute of Technology (NJIT) is a public research university in 
+			the University Heights neighborhood of Newark, New Jersey. NJIT is New Jersey's Science & Technology University.
+			 Centrally located in the New York metropolitan area its campus is within walking distance of downtown Newark.
+			 New York City, 9 miles (14.5 km) and under 30 minutes away, is directly accessible from campus via public transit.
+Founded in 1881 with the support of local industrialists and inventors, especially Edward Weston (334 US Patents), 
+NJIT opened as Newark Technical School in 1884.[b] Application oriented from inception the school grew into a classic engineering college 
+– Newark College of Engineering (NCE) – and then, with the addition of a School of Architecture in 1973, into a polytechnic university
+that is now home to five colleges and one school. NJIT opened with 88 students.[c] As of fall 2015, the university enrolls over 11,300 students, 2,200 of whom live on campus.
+ Architecturally significant buildings include Eberhardt Hall, the Campus Center, and the Central King Building – in the 
+Collegiate Gothic style – which is being renovated into a STEM center. Facilities under construction include a Wellness and 
+Events Center that will house a 3,500-seat venue for social and sporting events.`,
 		},
 		},
 	}

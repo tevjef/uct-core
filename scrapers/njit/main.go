@@ -1,14 +1,11 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"strconv"
 	"strings"
@@ -17,6 +14,8 @@ import (
 	"uct/common/model"
 	"io"
 	"os"
+	"uct/scrapers/njit/cookie"
+	"uct/common/try"
 )
 
 func main() {
@@ -31,18 +30,27 @@ func main() {
 	semesters := []*model.Semester{
 		university.ResolvedSemesters.Last,
 		university.ResolvedSemesters.Current,
-		university.ResolvedSemesters.Next}[:1]
+		university.ResolvedSemesters.Next}
 
 	for _, semester := range semesters {
-		jar, _ = cookiejar.New(nil)
+		CreateCookieQueue(parseSemester(*semester))
 
 		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 20}}
 		subjects := subjectRequest.requestSubjects()
 
+		var wg sync.WaitGroup
+		control := make(chan struct{}, 20)
+		wg.Add(len(subjects))
 		for i := range subjects {
-			courseRequest := courseRequest{semester: *semester, subject: subjects[i].Code, paginated: paginated{offset: 0, max: 20}}
-			subjects[i].courses = courseRequest.requestSearch()
+			control <- struct{}{}
+			go func(subjects *NSubject) {
+				defer func() { wg.Done() }()
+				courseRequest := courseRequest{semester: *semester, subject: subjects.Code, paginated: paginated{offset: 0, max: 20}}
+				subjects.courses = courseRequest.requestSearch()
+				<-control
+			}(subjects[i])
 		}
+		wg.Wait()
 
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}
@@ -88,9 +96,10 @@ func (sr *subjectRequest) requestSubjects() (subjects []*NSubject) {
 
 	for firstPage := true; len(page) == sr.max || firstPage; {
 		page = []*NSubject{}
-		if err := getData(url, parseSemester(sr.semester), &page); err == nil {
-			for i := range subjects {
-				subject := subjects[i]
+		if err := getData(url, &page); err == nil {
+			for i := range page {
+				subject := page[i]
+				subject.clean()
 				subject.season = sr.semester.Season
 				subject.year = int(sr.semester.Year)
 			}
@@ -132,15 +141,13 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 	for firstPage := true; len(page.Data) >= cr.max || firstPage; {
 
 		page = NSearch{}
-		if err := getData(url, parseSemester(cr.semester), &page); err == nil {
+		if err := getData(url, &page); err == nil {
 			courses = append(courses, page.Data...)
 		}
 
 		firstPage = false
 		cr.paginate()
 		url = cr.buildUrl()
-
-		log.Debugf("%s len in loop=%d offser=%d max=%d\n", cr.subject, len(page.Data), cr.offset, cr.max )
 	}
 
 	courses = cleanCourseList(courses)
@@ -152,64 +159,31 @@ var proxyUrl, _ = url.Parse("http://localhost:8888")
 
 var httpClient = &http.Client{
 	Timeout:   15 * time.Second,
-	Jar:       jar,
-	Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+	//Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
-var jar, _ = cookiejar.New(nil)
-
-var token = uuid.NewV4().String()
-
-func doRequest(rawUrl string) (*http.Response, error) {
-	req, _ := http.NewRequest(http.MethodGet, rawUrl, nil)
-
-	req.Header.Set("Accept", "application/json, text/javascript, */*; 0.01")
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("X-Synchronizer-Token", token)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36")
-	req.Header.Set("Origin", "https://myhub.njit.edu")
-	if strings.Contains(rawUrl, "searchResults") || strings.Contains(rawUrl, "classSearch") {
-		req.Header.Set("Referer", "https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/classSearch")
-	}
-
-	return httpClient.Do(req)
-}
-
-var cookieMap = make(map[string]*http.Cookie)
-
-func getCookie(term string) *http.Cookie {
-	if cookieMap[term] == nil {
-		cookie := &http.Cookie{
-			Name:   "JSESSIONID",
-			Path:   "/StudentRegistrationSsb/",
-			Domain: "myhub.njit.edu",
-		}
-
-		resp, _ := httpClient.PostForm("https://myhub.njit.edu/StudentRegistrationSsb/ssb/term/search?mode=search", url.Values{"term": []string{term}})
-		if len(resp.Cookies()) > 0 && cookie.Value == "" {
-			cookie.Value = resp.Cookies()[0].Value
-			resp, _ = doRequest("https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/classSearch")
-		}
-
-		cookieMap[term] = cookie
-
-	}
-
-	return cookieMap[term]
-}
-
-func getData(rawUrl string, term string, model interface{}) error {
+func getData(rawUrl string, model interface{}) error {
 	var success bool
 	modeType := fmt.Sprintf("%T", model)
-
-	u, _ := url.Parse(rawUrl)
-	jar.SetCookies(u, []*http.Cookie{getCookie(term)})
+	req, _ := http.NewRequest(http.MethodGet, rawUrl, nil)
 
 	for i := 0; i < 3; i++ {
+		// Get cookie
+		bc := cookieCutter.Pop(nil)
+		req.AddCookie(bc.Get())
+
+
 		startTime := time.Now()
 		log.WithFields(log.Fields{"retry": i, "url": rawUrl}).Debug(modeType + " request")
 		time.Sleep(time.Duration(i*2) * time.Second)
-		resp, err := doRequest(rawUrl)
+		resp, err := httpClient.Do(req)
+
+		// Put cookie back on queue
+		cookieCutter.Push(bc, func(baked *cookie.BakedCookie) error {
+			resetCookie(*bc.Get())
+			return nil
+		})
+
 		if err != nil {
 			log.Errorf("Retrying %d after error: %s\n", i, err)
 			continue
@@ -224,7 +198,6 @@ func getData(rawUrl string, term string, model interface{}) error {
 			success = true
 			break
 		}
-
 	}
 
 	if !success {
@@ -235,7 +208,6 @@ func getData(rawUrl string, term string, model interface{}) error {
 }
 
 func buildSubjects(njitSubjects []*NSubject) (s []*model.Subject) {
-
 	for _, subject := range njitSubjects {
 		newSubject := &model.Subject{
 			Name:    subject.Description,
@@ -268,7 +240,7 @@ func buildSections(njitCourses []*NCourse) (s []*model.Section) {
 		newSection.Number = course.SequenceNumber
 		newSection.Status = course.status
 		newSection.CallNumber = course.CourseReferenceNumber
-		newSection.Credits = strconv.Itoa(course.CreditHours)
+		newSection.Credits = fmt.Sprintf("%.1f", course.CreditHours)
 		newSection.Now = int64(course.Enrollment)
 		newSection.Max = int64(course.MaximumEnrollment)
 		// Instructors
@@ -321,4 +293,79 @@ func parseSemester(semester model.Semester) string {
 		return year + "95"
 	}
 	return ""
+}
+
+var cookieCutter *cookie.CookieCutter
+
+func CreateCookieQueue(term string) {
+	var queueSize = 30
+	var cookies []*http.Cookie
+	for i := 0; i < queueSize; i++ {
+		cookies = append(cookies, &http.Cookie{
+			Name:   "JSESSIONID",
+			Path:   "/StudentRegistrationSsb/",
+			Domain: "myhub.njit.edu",
+		})
+	}
+
+	cc := cookie.New(cookies, func(bc *cookie.BakedCookie) error {
+		bc.SetValue(prepareCookie(term))
+		return nil
+	})
+
+	cookieCutter = cc
+}
+
+func resetCookie(cookie http.Cookie) {
+	err := try.Do(func(attempt int) (retry bool, err error) {
+		req, _ := http.NewRequest(http.MethodPost, "https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/classSearch", strings.NewReader(url.Values{}.Encode()))
+		req.AddCookie(&cookie)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		_, err = httpClient.Do(req)
+
+		if err != nil {
+			log.WithError(err).Errorln("Failed to validate cookie", attempt)
+			return true, err
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		log.WithError(err).Fatalln("Failed to reset cookie")
+	}
+}
+
+
+func prepareCookie(term string) (value string) {
+	err := try.Do(func(attempt int) (retry bool, err error) {
+		resp, err := httpClient.PostForm("https://myhub.njit.edu/StudentRegistrationSsb/ssb/term/search?mode=search", url.Values{"term": []string{term}})
+
+		if err != nil {
+			log.WithError(err).Errorln("Failed get cookie", attempt)
+			return true, err
+		}
+
+		if len(resp.Cookies()) > 0 {
+			cookie := resp.Cookies()[0]
+			req, _ := http.NewRequest(http.MethodGet, "https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/classSearch", nil)
+			req.AddCookie(cookie)
+			_, err := httpClient.Do(req)
+
+			if err != nil {
+				log.WithError(err).Errorln("Failed to validate cookie", attempt)
+				return true, err
+			}
+
+			value = cookie.Value
+		}
+
+		return false, nil
+	})
+
+	if err != nil {
+		log.WithError(err).Fatalln("Failed to prepare cookie")
+	}
+
+	return
 }

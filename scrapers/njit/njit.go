@@ -1,11 +1,12 @@
 package main
 
 import (
-	"time"
-	"strconv"
-	"uct/common/model"
 	"github.com/Sirupsen/logrus"
 	"sort"
+	"strconv"
+	"time"
+	"uct/common/model"
+	"strings"
 )
 
 type NSemesters struct {
@@ -22,42 +23,42 @@ type NSubject struct {
 }
 
 type NSearch struct {
-	Success              bool      `json:"success"`
-	TotalCount           int       `json:"totalCount"`
+	Success              bool       `json:"success"`
+	TotalCount           int        `json:"totalCount"`
 	Data                 []*NCourse `json:"data"`
-	PageOffset           int       `json:"pageOffset"`
-	PageMaxSize          int       `json:"pageMaxSize"`
-	SectionsFetchedCount int       `json:"sectionsFetchedCount"`
-	PathMode             string    `json:"pathMode"`
+	PageOffset           int        `json:"pageOffset"`
+	PageMaxSize          int        `json:"pageMaxSize"`
+	SectionsFetchedCount int        `json:"sectionsFetchedCount"`
+	PathMode             string     `json:"pathMode"`
 }
 
 type NCourse struct {
-	ID                      int    `json:"id"`
-	Term                    string `json:"term"`
-	TermDesc                string `json:"termDesc"`
-	CourseReferenceNumber   string `json:"courseReferenceNumber"`
-	PartOfTerm              string `json:"partOfTerm"`
-	CourseNumber            string `json:"courseNumber"`
-	Subject                 string `json:"subject"`
-	SubjectDescription      string `json:"subjectDescription"`
-	SequenceNumber          string `json:"sequenceNumber"`
-	CampusDescription       string `json:"campusDescription"`
-	ScheduleTypeDescription string `json:"scheduleTypeDescription"`
-	CourseTitle             string `json:"courseTitle"`
-	CreditHours             int    `json:"creditHours"`
-	MaximumEnrollment       int    `json:"maximumEnrollment"`
-	Enrollment              int    `json:"enrollment"`
-	SeatsAvailable          int    `json:"seatsAvailable"`
-	WaitCapacity            int    `json:"waitCapacity"`
-	WaitCount               int    `json:"waitCount"`
-	WaitAvailable           int    `json:"waitAvailable"`
-	OpenSection             bool   `json:"openSection"`
+	ID                      int               `json:"id"`
+	Term                    string            `json:"term"`
+	TermDesc                string            `json:"termDesc"`
+	CourseReferenceNumber   string            `json:"courseReferenceNumber"`
+	PartOfTerm              string            `json:"partOfTerm"`
+	CourseNumber            string            `json:"courseNumber"`
+	Subject                 string            `json:"subject"`
+	SubjectDescription      string            `json:"subjectDescription"`
+	SequenceNumber          string            `json:"sequenceNumber"`
+	CampusDescription       string            `json:"campusDescription"`
+	ScheduleTypeDescription string            `json:"scheduleTypeDescription"`
+	CourseTitle             string            `json:"courseTitle"`
+	CreditHours             float64           `json:"creditHours"`
+	MaximumEnrollment       int               `json:"maximumEnrollment"`
+	Enrollment              int               `json:"enrollment"`
+	SeatsAvailable          int               `json:"seatsAvailable"`
+	WaitCapacity            int               `json:"waitCapacity"`
+	WaitCount               int               `json:"waitCount"`
+	WaitAvailable           int               `json:"waitAvailable"`
+	OpenSection             bool              `json:"openSection"`
 	IsSectionLinked         bool              `json:"isSectionLinked"`
 	SubjectCourse           string            `json:"subjectCourse"`
 	Faculty                 []Faculty         `json:"faculty"`
 	MeetingsFaculty         []MeetingsFaculty `json:"meetingsFaculty"`
 	status                  string
-	meetingTimes []*MeetingTime
+	meetingTimes            []*MeetingTime
 }
 
 type MeetingsFaculty struct {
@@ -93,7 +94,7 @@ type MeetingTime struct {
 	Thursday              bool    `json:"thursday"`
 	Tuesday               bool    `json:"tuesday"`
 	Wednesday             bool    `json:"wednesday"`
-	day string
+	day                   string
 }
 
 type Faculty struct {
@@ -107,10 +108,15 @@ type Faculty struct {
 	Term                  string      `json:"term"`
 }
 
+func (s *NSubject) clean() {
+	s.Description = strings.NewReplacer("&amp;", "&", "&#39;", "'").Replace(s.Description)
+}
+
 func (c *NCourse) clean() {
+	c.CourseTitle = strings.NewReplacer("&amp;", "&", "&#39;", "'").Replace(c.CourseTitle)
 	c.status = parseStatus(*c)
 	c.meetingTimes = c.parseMeetingFaculty(c.MeetingsFaculty)
-	for i := range  c.meetingTimes {
+	for i := range c.meetingTimes {
 		c.meetingTimes[i].clean()
 	}
 
@@ -301,8 +307,14 @@ func cleanCourseList(njitCourses []*NCourse) (courses []*NCourse) {
 
 	var courseMap = make(map[string]*NCourse)
 
+	// Find duplicate courses
 	for i := range njitCourses {
 		c := njitCourses[i]
+
+		// Clean
+		c.clean()
+
+		// Create hash
 		h := hash(*c)
 		if courseMap[h] == nil {
 			courseMap[h] = c
@@ -312,7 +324,6 @@ func cleanCourseList(njitCourses []*NCourse) (courses []*NCourse) {
 	}
 
 	for _, v := range courseMap {
-		v.clean()
 		courses = append(courses, v)
 	}
 
@@ -367,7 +378,6 @@ func (a multiCourse) Less(i, j int) bool {
 	return hash(c1) < hash(c2)
 }
 
-
 type meetingByClass struct {
 	Meeting []*MeetingTime
 }
@@ -381,7 +391,7 @@ func (meeting meetingByClass) Swap(i, j int) {
 }
 
 func (meeting meetingByClass) Less(i, j int) bool {
-	left, right := meeting.Meeting[i],  meeting.Meeting[j]
+	left, right := meeting.Meeting[i], meeting.Meeting[j]
 
 	// Both have a day
 	if left.day != "" && right.day != "" {
