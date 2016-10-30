@@ -79,7 +79,7 @@ func main() {
 
 	for {
 		log.Infoln("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(5*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
+		if data, err := wrapper.Client.BRPop(10*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
 			model.CheckError(err)
 		} else {
 			func() {

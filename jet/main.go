@@ -15,11 +15,11 @@ import (
 	"uct/redis"
 	"uct/redis/harmony"
 
-	"crypto/md5"
 	"os/exec"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"hash/fnv"
 )
 
 var (
@@ -108,15 +108,21 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		model.CheckError(err)
 	} else {
-		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": hash(data)}).Info()
 		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
-			log.Panicln(errors.New("failed to connect to redis server"))
+			log.Fatalln(errors.New("failed to connect to redis server"))
 		}
 
 		if _, err := redisWrapper.LPushNotExist(redishelper.BaseNamespace+":queue", redisWrapper.NameSpace); err != nil {
-			log.Panicln(errors.New("failed to queue univeristiy for upload"))
+			log.Fatalln(errors.New("failed to queue univeristiy for upload"))
 		}
 	}
+}
+
+func hash(s []byte) string {
+	h := fnv.New32a()
+	h.Write(s)
+	return strconv.Itoa(int(h.Sum32()))
 }
 
 func entryPoint(result chan model.University) {
@@ -139,6 +145,7 @@ func entryPoint(result chan model.University) {
 		log.Fatal(err)
 	}
 
+	// DATA RACE!!!
 	go io.Copy(os.Stderr, stderr)
 
 	err = model.UnmarshallMessage(*inputFormat, stdout, &school)
