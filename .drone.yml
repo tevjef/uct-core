@@ -99,7 +99,7 @@ pipeline:
       - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
-      - docker build -t tevjef/uct-core:njit-staging -f docker/rutgers-nk/Dockerfile docker/njit
+      - docker build -t tevjef/uct-core:njit-staging -f docker/njit/Dockerfile docker/njit
       - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:nginx-staging -f support/nginx/Dockerfile support/nginx
