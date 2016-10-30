@@ -124,8 +124,3 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: staging
-
-  slack:
-    webhook: https://hooks.slack.com/services/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
-    channel: ci
-    username: drone

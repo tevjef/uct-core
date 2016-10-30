@@ -34,7 +34,7 @@ api_key = ""
     host = "0.0.0.0:13100"
     enabled = true
 
-    [pprof.jet]
+    [pprof.njit]
     host = "0.0.0.0:13304"
     enabled = true
 
