@@ -24,23 +24,23 @@ import (
 
 var (
 	app            = kingpin.New("jet", "A program the wraps a uct scraper and collect it's output")
-	format         = app.Flag("format", "Choose output format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	outputFormat   = app.Flag("output-format", "Choose output format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	inputFormat    = app.Flag("input-format", "Choose input format").HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
 	daemonFile     = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
 	configFile     = app.Flag("config", "configuration file for the application").Short('c').File()
-	scraperName        = app.Flag("scraper-name", "The scraper name, used in logging").Required().String()
+	scraperName    = app.Flag("scraper-name", "The scraper name, used in logging").Required().String()
 	command        = app.Flag("scraper", "The scraper this program wraps, the name of the executable").Required().String()
 	config         conf.Config
 	redisWrapper   *redishelper.RedisWrapper
 )
 
 func main() {
-	log.Println(os.Args)
 	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
 	app.Name = *scraperName
-	
-	if *format != model.JSON && *format != model.PROTOBUF {
-		log.Fatalln("Invalid format:", *format)
+
+	if *outputFormat != model.JSON && *outputFormat != model.PROTOBUF {
+		log.Fatalln("Invalid format:", *outputFormat)
 	}
 
 	isDaemon := *daemonInterval > 0
@@ -77,14 +77,14 @@ func main() {
 
 	// block as it waits for results to come in
 	for school := range resultChan {
-		reader := model.MarshalMessage(*format, school)
+		reader := model.MarshalMessage(*outputFormat, school)
 
 		// Write to file
 		if *daemonFile != "" {
 			if data, err := ioutil.ReadAll(reader); err != nil {
 				model.CheckError(err)
 			} else {
-				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
+				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *outputFormat
 				log.Debugln("Writing file", fileName)
 				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
 					model.CheckError(err)
@@ -141,7 +141,7 @@ func entryPoint(result chan model.University) {
 
 	go io.Copy(os.Stderr, stderr)
 
-	err = model.UnmarshallMessage(*format, stdout, &school)
+	err = model.UnmarshallMessage(*inputFormat, stdout, &school)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -149,8 +149,6 @@ func entryPoint(result chan model.University) {
 	if err := cmd.Wait(); err != nil {
 		log.Fatal(err)
 	}
-
-
 
 	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
 

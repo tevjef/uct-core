@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"uct/common/model"
-	"io"
-	"os"
-	"uct/scrapers/njit/cookie"
 	"uct/common/try"
+	"uct/scrapers/njit/cookie"
 )
 
 func main() {
@@ -131,7 +131,7 @@ func (cr *courseRequest) buildUrl() string {
 func (cr *courseRequest) paginate() {
 	cr.Lock()
 	defer cr.Unlock()
-	cr.offset+=cr.max
+	cr.offset += cr.max
 	httpClient.PostForm("https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/resetDataForm", url.Values{})
 }
 
@@ -158,7 +158,7 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 var proxyUrl, _ = url.Parse("http://localhost:8888")
 
 var httpClient = &http.Client{
-	Timeout:   15 * time.Second,
+	Timeout: 15 * time.Second,
 	//Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
@@ -171,7 +171,6 @@ func getData(rawUrl string, model interface{}) error {
 		// Get cookie
 		bc := cookieCutter.Pop(nil)
 		req.AddCookie(bc.Get())
-
 
 		startTime := time.Now()
 		log.WithFields(log.Fields{"retry": i, "url": rawUrl}).Debug(modeType + " request")
@@ -335,7 +334,6 @@ func resetCookie(cookie http.Cookie) {
 		log.WithError(err).Fatalln("Failed to reset cookie")
 	}
 }
-
 
 func prepareCookie(term string) (value string) {
 	err := try.Do(func(attempt int) (retry bool, err error) {
