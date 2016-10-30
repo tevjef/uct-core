@@ -37,7 +37,8 @@ var (
 func main() {
 	log.Println(os.Args)
 	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
-
+	app.Name = *scraperName
+	
 	if *format != model.JSON && *format != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *format)
 	}
@@ -46,9 +47,6 @@ func main() {
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
-
-	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	// Channel to send scraped data on
 	resultChan := make(chan model.University)
@@ -64,7 +62,7 @@ func main() {
 			}
 		}
 
-		redisWrapper = redishelper.New(config, *scraperName)
+		redisWrapper = redishelper.New(config, app.Name)
 
 		harmony.DaemonScraper(redisWrapper, *daemonInterval, func(cancel chan bool) {
 			entryPoint(resultChan)
@@ -86,7 +84,7 @@ func main() {
 			if data, err := ioutil.ReadAll(reader); err != nil {
 				model.CheckError(err)
 			} else {
-				fileName := *daemonFile + "/" + *scraperName + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
+				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *format
 				log.Debugln("Writing file", fileName)
 				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
 					model.CheckError(err)
@@ -110,7 +108,7 @@ func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		model.CheckError(err)
 	} else {
-		log.WithFields(log.Fields{"scraper_name": *scraperName, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
+		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": md5.New().Sum(data)[:8]}).Info()
 		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Panicln(errors.New("failed to connect to redis server"))
 		}
@@ -154,7 +152,7 @@ func entryPoint(result chan model.University) {
 
 
 
-	log.WithFields(log.Fields{"scraper_name": *scraperName, "elapsed": time.Since(starTime).Seconds()}).Info()
+	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
 
 	result <- school
 }
