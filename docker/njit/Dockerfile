@@ -6,7 +6,8 @@ ENV PATH /uct:$PATH
 
 COPY config.toml /uct
 
-COPY rutgers /uct
+COPY njit /uct
+COPY jet /uct
 
 RUN apk --no-cache add ca-certificates && update-ca-certificates
 
