@@ -22,7 +22,6 @@ func main() {
 
 	var university model.University
 
-	log.SetFormatter(&log.TextFormatter{})
 	university = njit
 
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
