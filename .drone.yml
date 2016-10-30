@@ -24,7 +24,8 @@ pipeline:
       - go install -v uct/ein
       - go install -v uct/hermes
       - go install -v uct/scrapers/rutgers
-      - go install -v uct/njit
+      - go install -v uct/scrapers/njit
+      - go install -v uct/jet
       - go install -v uct/servers/spike
 
   common:
