@@ -90,6 +90,10 @@ func main() {
 
 	// block as it waits for results to come in
 	for school := range resultChan {
+		if school.Name == ""{
+			continue
+		}
+		
 		reader := model.MarshalMessage(*format, school)
 
 		// Write to redis
@@ -167,7 +171,7 @@ func getCampus(campus string) model.University {
 	// Rutgers servers go down for maintenance between 3 and 5 AM UTC every day.
 	// Data scraped from this time would be inaccurate and may lead to unforeseen errors
 	if currentHour := time.Now().UTC().Hour(); currentHour >= 7 && currentHour < 9 {
-		return university
+		return model.University{}
 	}
 
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
