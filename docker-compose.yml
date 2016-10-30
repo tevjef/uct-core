@@ -22,7 +22,7 @@ services:
       fluentd.tag: "blog"
 
   postgresql:
-    image: tevjef/uct-core:postgres${ENV}
+    image: tevjef/uct-core:postgresql${ENV}
     restart: always
     ports:
       - "5432:5432"
@@ -101,6 +101,7 @@ services:
     links:
       - postgresql
     environment:
+      - ENABLE_FCM=${ENABLE_FCM}
       - FCM_API_KEY=${FCM_API_KEY}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -143,6 +144,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "127.0.0.1:8090:8090"
     volumes:
       - /etc/nginx/certs:/etc/nginx/certs:ro
       - /etc/nginx/vhost.d

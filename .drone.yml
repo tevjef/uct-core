@@ -92,32 +92,32 @@ pipeline:
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
 
-      - docker build -t tevjef/uct-core:staging-ein -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:staging-spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:staging-hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:staging-rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:staging-rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:staging-rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:ein-staging -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
+      - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
+      - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
 
-      - docker build -t tevjef/uct-core:staging-fluentd -f support/fluentd/Dockerfile support/fluentd
-      - docker build -t tevjef/uct-core:staging-fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
-      - docker build -t tevjef/uct-core:staging-nginx -f support/nginx/Dockerfile support/nginx
-      - docker build -t tevjef/uct-core:staging-nginx-gen -f support/nginx/gen/Dockerfile support/nginx/gen
-      - docker build -t tevjef/uct-core:staging-postgresql -f support/postgresql/Dockerfile support/postgresql
-      - docker build -t tevjef/uct-core:staging-telegraf -f support/telegraf/Dockerfile support/telegraf
+      - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
+      - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
+      - docker build -t tevjef/uct-core:nginx-staging -f support/nginx/Dockerfile support/nginx
+      - docker build -t tevjef/uct-core:nginx-gen-staging -f support/nginx/gen/Dockerfile support/nginx/gen
+      - docker build -t tevjef/uct-core:postgresql-staging -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/uct-core:telegraf-staging -f support/telegraf/Dockerfile support/telegraf
 
-      - docker push tevjef/uct-core:staging-ein
-      - docker push tevjef/uct-core:staging-spike
-      - docker push tevjef/uct-core:staging-hermes
-      - docker push tevjef/uct-core:staging-rutgers-cm
-      - docker push tevjef/uct-core:staging-rutgers-nb
-      - docker push tevjef/uct-core:staging-rutgers-nk
-      - docker push tevjef/uct-core:staging-fluentd
-      - docker push tevjef/uct-core:staging-fluentd-gen
-      - docker push tevjef/uct-core:staging-nginx
-      - docker push tevjef/uct-core:staging-nginx-gen
-      - docker push tevjef/uct-core:staging-postgresql
-      - docker push tevjef/uct-core:staging-telegraf
+      - docker push tevjef/uct-core:ein-staging
+      - docker push tevjef/uct-core:spike-staging
+      - docker push tevjef/uct-core:hermes-staging
+      - docker push tevjef/uct-core:rutgers-cm-staging
+      - docker push tevjef/uct-core:rutgers-nb-staging
+      - docker push tevjef/uct-core:rutgers-nk-staging
+      - docker push tevjef/uct-core:fluentd-staging
+      - docker push tevjef/uct-core:fluentd-gen-staging
+      - docker push tevjef/uct-core:nginx-staging
+      - docker push tevjef/uct-core:nginx-gen-staging
+      - docker push tevjef/uct-core:postgresql-staging
+      - docker push tevjef/uct-core:telegraf-staging
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:

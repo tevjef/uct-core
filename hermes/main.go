@@ -93,7 +93,6 @@ func waitForNotification(l *pq.Listener) {
 			}
 		// Received no notification from the database for 60 seconds.
 		case <-time.After(1 * time.Minute):
-			log.Infoln("Received no events 1 minute, checking connection")
 			go func() {
 				l.Ping()
 			}()
