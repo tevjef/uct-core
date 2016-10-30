@@ -2,7 +2,6 @@ workspace:
   base: /go
   path: src/uct
 
-
 pipeline:
   core:
     image: golang:1.6.3-alpine
