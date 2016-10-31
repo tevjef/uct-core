@@ -93,7 +93,7 @@ func main() {
 		if school.Name == ""{
 			continue
 		}
-		
+
 		reader := model.MarshalMessage(*format, school)
 
 		// Write to redis

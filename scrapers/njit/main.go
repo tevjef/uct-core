@@ -16,6 +16,7 @@ import (
 	"uct/common/model"
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
+	"github.com/pkg/errors"
 )
 
 func main() {
@@ -162,18 +163,15 @@ var httpClient = &http.Client{
 }
 
 func getData(rawUrl string, model interface{}) error {
-	var success bool
 	modeType := fmt.Sprintf("%T", model)
 	req, _ := http.NewRequest(http.MethodGet, rawUrl, nil)
+	startTime := time.Now()
 
-	for i := 0; i < 3; i++ {
+	err := try.Do(func(attempt int) (retry bool, err error) {
 		// Get cookie
 		bc := cookieCutter.Pop(nil)
 		req.AddCookie(bc.Get())
 
-		startTime := time.Now()
-		log.WithFields(log.Fields{"retry": i, "url": rawUrl}).Debug(modeType + " request")
-		time.Sleep(time.Duration(i*2) * time.Second)
 		resp, err := httpClient.Do(req)
 
 		// Put cookie back on queue
@@ -182,27 +180,31 @@ func getData(rawUrl string, model interface{}) error {
 			return nil
 		})
 
+		var data []byte
+
 		if err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else if data, err := ioutil.ReadAll(resp.Body); err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else if err := json.Unmarshal(data, model); err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else {
-			log.WithFields(log.Fields{"content-length": len(data), "response_status": resp.StatusCode, "url": rawUrl, "response_time": time.Since(startTime).Seconds()}).Debug(modeType + " response")
-			success = true
-			break
+			return true, err
+		} else if data, err = ioutil.ReadAll(resp.Body); err != nil {
+			return true, err
+		} else if err = json.Unmarshal(data, model); err != nil {
+			return true, err
 		}
-	}
 
-	if !success {
-		return fmt.Errorf("Unable to retrieve resource at %s", rawUrl)
-	}
+		log.WithFields(log.Fields{"content-length": len(data),
+			"response_status": resp.StatusCode,
+			"url": rawUrl,
+			"response_time": time.Since(startTime).Seconds(),
+		}).Debug(modeType + " response")
 
-	return nil
+		return false, nil
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "Unable to retrieve resource at "+ rawUrl)
+	} else {
+		return nil
+
+	}
 }
 
 func buildSubjects(njitSubjects []*NSubject) (s []*model.Subject) {

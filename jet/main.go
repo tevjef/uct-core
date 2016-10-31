@@ -77,6 +77,10 @@ func main() {
 
 	// block as it waits for results to come in
 	for school := range resultChan {
+		if school.Name == "" {
+			continue
+		}
+
 		reader := model.MarshalMessage(*outputFormat, school)
 
 		// Write to file
@@ -148,9 +152,8 @@ func entryPoint(result chan model.University) {
 	// DATA RACE!!!
 	go io.Copy(os.Stderr, stderr)
 
-	err = model.UnmarshallMessage(*inputFormat, stdout, &school)
-	if err != nil {
-		log.Fatal(err)
+	if err = model.UnmarshallMessage(*inputFormat, stdout, &school); err != nil {
+		school = model.University{}
 	}
 
 	if err := cmd.Wait(); err != nil {
