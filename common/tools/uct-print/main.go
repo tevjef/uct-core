@@ -5,7 +5,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"uct/common/model"
 )
@@ -33,7 +33,9 @@ func main() {
 
 	var university model.University
 
-	model.UnmarshallMessage(*format, input, &university)
+	if err := model.UnmarshallMessage(*format, input, &university); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	if *format == model.JSON {
 		if *out != "" {

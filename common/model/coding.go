@@ -32,12 +32,12 @@ func UnmarshallMessage(format string, r io.Reader, m *University) error {
 	if format == JSON {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(r, &*m); err != nil {
-			log.Fatalln("Failed to unmarshal message:", err)
+			return err
 		}
 	} else if format == PROTOBUF {
 		data, err := ioutil.ReadAll(r)
 		if err = m.Unmarshal(data); err != nil {
-			log.Fatalln("Failed to unmarshal message:", err)
+			return err
 		}
 	}
 	if m.Equal(University{}) {

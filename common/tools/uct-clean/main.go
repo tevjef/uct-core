@@ -36,9 +36,14 @@ func main() {
 	}
 
 	var university model.University
-	model.UnmarshallMessage(*format, input, &university)
 
-	model.ValidateAll(&university)
+	if err := model.UnmarshallMessage(*format, input, &university); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
+
+	if err := model.ValidateAll(&university); err != nil {
+		log.WithError(err).Fatalf("Failed to validate message")
+	}
 
 	if *out != "" {
 		output := model.MarshalMessage(*out, university)
