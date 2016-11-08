@@ -17,6 +17,8 @@ import (
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
 	"github.com/pkg/errors"
+	"crypto/tls"
+	"uct/common/proxy"
 )
 
 func main() {
