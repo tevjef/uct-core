@@ -200,6 +200,11 @@ services:
       - fluentd
     links:
       - redis
+    environment:
+      - HTTP_PROXY_URL=${HTTP_PROXY_URL}
+      - HTTP_PROXY_USER=${HTTP_PROXY_USER}
+      - HTTP_PROXY_PASS=${HTTP_PROXY_PASS}
+
     logging:
       driver: fluentd
       options:

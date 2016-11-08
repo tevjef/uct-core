@@ -35,11 +35,11 @@ func main() {
 	for _, semester := range semesters {
 		CreateCookieQueue(parseSemester(*semester))
 
-		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 20}}
+		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 3}}
 		subjects := subjectRequest.requestSubjects()
 
 		var wg sync.WaitGroup
-		control := make(chan struct{}, 20)
+		control := make(chan struct{}, 3)
 		wg.Add(len(subjects))
 		for i := range subjects {
 			control <- struct{}{}
@@ -155,11 +155,9 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 	return
 }
 
-var proxyUrl, _ = url.Parse("http://localhost:8888")
-
 var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
-	//Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+	Transport: &http.Transport{Proxy: proxy.GetProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
 func getData(rawUrl string, model interface{}) error {
