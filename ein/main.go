@@ -80,7 +80,8 @@ func main() {
 	for {
 		log.Infoln("Waiting on queue...")
 		if data, err := wrapper.Client.BRPop(10*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
-			model.CheckError(err)
+			log.WithError(err).Warningln("Queue blocking exceeded timeout")
+			continue
 		} else {
 			func() {
 				defer func() {
