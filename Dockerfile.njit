@@ -20,4 +20,4 @@ RUN go install -v ${APP_PACKAGE}
 WORKDIR /go/src/uct
 EXPOSE 13304
 
-CMD ["jet", "--input-format", "json", "--output-format", "protobuf", "--daemon", "10m", "-c", "/go/src/uct/common/conf/config.toml", "--scraper-name", "njit", "--scraper", "njit", "-c", "/go/src/uct/common/conf/config.toml"]
+CMD ["jet", "--input-format", "json", "--output-format", "protobuf", "--daemon", "5m", "-c", "/go/src/uct/common/conf/config.toml", "--scraper-name", "njit", "--scraper", "njit", "-c", "/go/src/uct/common/conf/config.toml"]

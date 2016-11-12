@@ -37,11 +37,11 @@ func main() {
 	for _, semester := range semesters {
 		CreateCookieQueue(parseSemester(*semester))
 
-		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 3}}
+		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 10}}
 		subjects := subjectRequest.requestSubjects()
 
 		var wg sync.WaitGroup
-		control := make(chan struct{}, 3)
+		control := make(chan struct{}, 10)
 		wg.Add(len(subjects))
 		for i := range subjects {
 			control <- struct{}{}
