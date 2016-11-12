@@ -17,11 +17,30 @@ import (
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
 	"github.com/pkg/errors"
+	"uct/common/conf"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"crypto/tls"
 	"uct/common/proxy"
 )
 
+var (
+	app        = kingpin.New("njit", "A program for scraping information from NJIT serrvers.")
+	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
+	config     = conf.Config{}
+)
+
 func main() {
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	log.SetLevel(log.DebugLevel)
+
+	// Parse configuration file
+	config = conf.OpenConfig(*configFile)
+	config.AppName = app.Name
+
+	// Start profiling
+	go model.StartPprof(config.GetDebugSever(app.Name))
+
 
 	var university model.University
 
