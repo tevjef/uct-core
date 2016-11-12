@@ -59,7 +59,7 @@ func main() {
 
 			if b, err := uctNotification.Marshal(); err != nil {
 				log.WithError(err).Fatalln()
-			} else if _, err := redisWrapper.Client.Set(notification.MainQueueData + uctNotification.TopicName, b, 0).Result(); err != nil {
+			} else if _, err := redisWrapper.Client.Set(notification.MainQueueData + uctNotification.TopicName, b, 5 * time.Minute).Result(); err != nil {
 				log.WithError(err).Fatalln()
 			} else if redisWrapper.RPush(notification.MainQueue, uctNotification.TopicName); err != nil {
 				log.WithError(err).Fatalln()
