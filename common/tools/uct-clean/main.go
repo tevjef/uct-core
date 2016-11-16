@@ -46,10 +46,16 @@ func main() {
 	}
 
 	if *out != "" {
-		output := model.MarshalMessage(*out, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*out, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	} else {
-		output := model.MarshalMessage(*format, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*format, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	}
 }

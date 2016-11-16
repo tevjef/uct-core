@@ -94,7 +94,10 @@ func main() {
 			continue
 		}
 
-		reader := model.MarshalMessage(*format, school)
+		reader, err := model.MarshalMessage(*format, school)
+		if err != nil {
+			log.WithError(err).Fatal()
+		}
 
 		// Write to redis
 		if isDaemon {

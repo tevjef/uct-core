@@ -9,23 +9,25 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+	"github.com/pkg/errors"
+	"github.com/gogo/protobuf/proto"
 )
 
-func MarshalMessage(format string, m University) *bytes.Reader {
+func MarshalMessage(format string, m University) (*bytes.Reader, error) {
 	var out []byte
 	var err error
 	if format == JSON {
 		out, err = json.Marshal(m)
 		if err != nil {
-			log.Fatalln("Failed to encode message:", err)
+			return nil, errors.Wrap(err, "failed to encode message")
 		}
 	} else if format == PROTOBUF {
 		out, err = m.Marshal()
 		if err != nil {
-			log.Fatalln("Failed to encode message:", err)
+			return nil, errors.Wrap(err, "failed to encode message")
 		}
 	}
-	return bytes.NewReader(out)
+	return bytes.NewReader(out), nil
 }
 
 func UnmarshallMessage(format string, r io.Reader, m *University) error {

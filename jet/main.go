@@ -81,7 +81,10 @@ func main() {
 			continue
 		}
 
-		reader := model.MarshalMessage(*outputFormat, school)
+		reader, err := model.MarshalMessage(*outputFormat, school)
+		if err != nil {
+			log.WithError(err).Fatal()
+		}
 
 		// Write to file
 		if *daemonFile != "" {

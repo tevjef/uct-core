@@ -53,7 +53,9 @@ func main() {
 
 	filteredUniversity := model.DiffAndFilter(oldUniversity, newUniversity)
 
-	buf := model.MarshalMessage(*format, filteredUniversity)
-
-	io.Copy(os.Stdout, buf)
+	if reader, err := model.MarshalMessage(*format, filteredUniversity); err != nil {
+		log.WithError(err).Fatal()
+	} else {
+		io.Copy(os.Stdout, reader)
+	}
 }

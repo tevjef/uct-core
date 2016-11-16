@@ -76,8 +76,9 @@ func main() {
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}
 
-	reader := model.MarshalMessage(model.JSON, university)
-	io.Copy(os.Stdout, reader)
+	if reader, err := model.MarshalMessage(model.JSON, university); err != nil {
+		io.Copy(os.Stdout, reader)
+	}
 }
 
 const baseUrl = "https://myhub.njit.edu/StudentRegistrationSsb/ssb/"
