@@ -12,11 +12,11 @@ type RedisWrapper struct {
 }
 
 const (
-	BaseNamespace = "uct:scraper"
+	BaseNamespace = "uct:"
 )
 
 func nameSpaceForApp(appName string) string {
-	return BaseNamespace + ":" + appName
+	return BaseNamespace + appName
 }
 
 func New(config conf.Config, appName string) *RedisWrapper {
