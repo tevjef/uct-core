@@ -5,6 +5,7 @@ import (
 	"uct/common/model"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"encoding/json"
 )
 
 func Test_waitForNotification(t *testing.T) {
@@ -23,4 +24,27 @@ func Test_waitForNotification(t *testing.T) {
 			close(ch)
 		}
 	})
+}
+
+type MockNotifier struct {
+	notifications []string
+	ch chan string
+}
+
+func (pg *MockNotifier) send() {
+	go func() {
+		for _, val := range pg.notifications {
+			fakeNoti := model.UCTNotification{TopicName:val}
+			b, _ := json.Marshal(fakeNoti)
+			pg.ch <- string(b)
+		}
+	}()
+}
+
+func (pg *MockNotifier) Notify() <-chan string {
+	return pg.ch
+}
+
+func (pg *MockNotifier) Ping() {
+	log.Debugln("Pinging notifier")
 }

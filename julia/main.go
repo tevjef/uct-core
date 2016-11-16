@@ -12,7 +12,6 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"uct/redis"
-	"encoding/json"
 	"uct/notification"
 )
 
@@ -73,7 +72,9 @@ var sem = make(chan int, 10)
 func waitForNotification(l Notifier, onNotify func (notification *model.UCTNotification)) {
 	for {
 		select {
-		case message := <-l.Notify():
+		case message, ok := <-l.Notify():
+			log.Debugln(ok)
+
 			if message == "" {
 				continue
 			}
@@ -122,29 +123,6 @@ func (pg *pgNotifier) Ping() {
 	if err := pg.l.Ping(); err != nil {
 		log.WithError(err).Fatalln("Failed to ping server")
 	}
-}
-
-type MockNotifier struct {
-	notifications []string
-	ch chan string
-}
-
-func (pg *MockNotifier) send() {
-	go func() {
-		for _, val := range pg.notifications {
-			fakeNoti := model.UCTNotification{TopicName:val}
-			b, _ := json.Marshal(fakeNoti)
-			pg.ch <- string(b)
-		}
-	}()
-}
-
-func (pg *MockNotifier) Notify() <-chan string {
-	return pg.ch
-}
-
-func (pg *MockNotifier) Ping() {
-	log.Debugln("Pinging notifier")
 }
 
 type Notifier interface {
