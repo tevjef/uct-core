@@ -167,7 +167,7 @@ func (section *RSection) clean() {
 	if section.OpenStatus {
 		section.status = model.Open.String()
 	} else {
-		section.status = model.Open.String()
+		section.status = model.Closed.String()
 	}
 
 	section.creditsFloat = fmt.Sprintf("%.1f", section.course.Credits)

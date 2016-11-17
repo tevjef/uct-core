@@ -135,12 +135,11 @@ func main() {
 						university = *newUniversity
 					}
 
-					// Set old data as the new data we just recieved. Important that this is after validating the new raw data
+					// Set old data as the new data we just received. Important that this is after validating the new raw data
 					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
 						log.WithError(err).Panic("Error updating old data")
 					}
 
-					// Start logging with influx
 					go audit(university.TopicName)
 
 					app.insertUniversity(&university)
