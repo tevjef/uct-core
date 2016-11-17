@@ -17,12 +17,15 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"uct/common/conf"
 )
 
 var (
 	app        = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
 	campusFlag = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
+	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
 	latest     = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
+	config     = conf.Config{}
 )
 
 type rutgersRequest struct {
@@ -44,7 +47,14 @@ func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	*campusFlag = strings.ToUpper(*campusFlag)
 	app.Name = app.Name + "-" + strings.ToLower(*campusFlag)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
+
+	// Parse configuration file
+	config = conf.OpenConfig(*configFile)
+	config.AppName = app.Name
+
+	// Start profiling
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	if reader, err := model.MarshalMessage(model.JSON, getCampus(*campusFlag)); err != nil {
 		log.WithError(err).Fatal()
