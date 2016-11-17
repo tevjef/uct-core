@@ -1,10 +1,7 @@
 package redishelper
 
-import (
-	"gopkg.in/redis.v4"
-	//log "github.com/Sirupsen/logrus"
-	"uct/common/conf"
-)
+//log "github.com/Sirupsen/logrus"
+import "uct/common/conf"
 
 type RedisWrapper struct {
 	NameSpace string
@@ -33,7 +30,6 @@ func (r RedisWrapper) Find(key string) ([]string, error) {
 	if keys, err := r.Client.Keys(key).Result(); err != nil {
 		return nil, err
 	} else {
-		//log.WithFields(log.Fields{"key":key, "result": keys}).Debugln("Find")
 		return keys, nil
 	}
 }

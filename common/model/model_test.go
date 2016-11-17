@@ -209,31 +209,31 @@ func TestToTitle(t *testing.T) {
 	str := "ART APPRECIATION VIIIII"
 	expect := "Art Appreciation VIIIII"
 
-	result := toTitle(str)
+	result := ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION V"
 	expect = "Art Appreciation V"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION VI"
 	expect = "Art Appreciation VI"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION II"
 	expect = "Art Appreciation II"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION I"
 	expect = "Art Appreciation I"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 }

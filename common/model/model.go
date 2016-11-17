@@ -129,7 +129,7 @@ func ToTopicId(str string) string {
 	return strconv.FormatUint(topicHash.Sum64(), 10)
 }
 
-func toTitle(str string) string {
+func ToTitle(str string) string {
 	str = strings.Title(strings.ToLower(str))
 
 	for i := len(str) - 1; i != 0; i-- {
@@ -213,7 +213,7 @@ func (sub *Subject) Validate(uni *University) {
 	}
 
 	sub.Name = TrimAll(sub.Name)
-	sub.Name = toTitle(sub.Name)
+	sub.Name = ToTitle(sub.Name)
 
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
@@ -234,7 +234,7 @@ func (course *Course) Validate(subject *Subject) {
 	}
 
 	course.Name = TrimAll(course.Name)
-	course.Name = toTitle(course.Name)
+	course.Name = ToTitle(course.Name)
 
 	// Number
 	if course.Number == "" {

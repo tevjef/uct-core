@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"strconv"
 	"github.com/pkg/errors"
-	"github.com/gogo/protobuf/proto"
 )
 
 func MarshalMessage(format string, m University) (*bytes.Reader, error) {
