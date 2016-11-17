@@ -120,7 +120,7 @@ func pushToRedis(reader *bytes.Reader) {
 			log.Fatalln(errors.New("failed to connect to redis server"))
 		}
 
-		if _, err := redisWrapper.LPushNotExist(redishelper.BaseNamespace+":queue", redisWrapper.NameSpace); err != nil {
+		if _, err := redisWrapper.LPushNotExist(redishelper.ScraperQueue, redisWrapper.NameSpace); err != nil {
 			log.Fatalln(errors.New("failed to queue univeristiy for upload"))
 		}
 	}

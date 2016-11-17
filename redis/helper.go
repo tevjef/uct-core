@@ -13,6 +13,7 @@ type RedisWrapper struct {
 
 const (
 	BaseNamespace = "uct:"
+	ScraperQueue = BaseNamespace + "scraper:queue"
 )
 
 func nameSpaceForApp(appName string) string {

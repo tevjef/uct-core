@@ -79,7 +79,7 @@ func main() {
 
 	for {
 		log.Infoln("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(10*time.Minute, redishelper.BaseNamespace+":queue").Result(); err != nil {
+		if data, err := wrapper.Client.BRPop(10*time.Minute, redishelper.ScraperQueue).Result(); err != nil {
 			log.WithError(err).Warningln("Queue blocking exceeded timeout")
 			continue
 		} else {
