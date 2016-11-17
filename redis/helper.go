@@ -1,7 +1,10 @@
 package redishelper
 
 //log "github.com/Sirupsen/logrus"
-import "uct/common/conf"
+import (
+	"uct/common/conf"
+	"gopkg.in/redis.v4"
+)
 
 type RedisWrapper struct {
 	NameSpace string
