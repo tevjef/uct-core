@@ -42,7 +42,9 @@ pipeline:
       - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
       - cp /go/bin/njit /go/src/uct/docker/njit/
       - cp /go/bin/jet /go/src/uct/docker/njit/
+
       - cp /go/bin/rutgers-scraper /go/src/uct/docker/rutgers-nk/
+      - cp /go/bin/jet /go/src/uct/docker/rutgers-nk/
 
 
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
