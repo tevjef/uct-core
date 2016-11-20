@@ -15,7 +15,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"uct/common/copier"
+	"bytes"
 )
 
 type App struct {
@@ -98,7 +98,7 @@ func main() {
 
 				log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
 
-				if raw, err := wrapper.Client.Get(latestData).Result(); err != nil {
+				if raw, err := wrapper.Client.Get(latestData).Bytes(); err != nil {
 					log.WithError(err).Panic("Error getting latest data")
 				} else {
 					var university model.University
@@ -111,7 +111,7 @@ func main() {
 
 					// Decode new data
 					newUniversity := new(model.University)
-					if err := model.UnmarshallMessage(*format, strings.NewReader(raw), newUniversity); err != nil {
+					if err := model.UnmarshallMessage(*format, bytes.NewReader(raw), newUniversity); err != nil {
 						log.WithError(err).Panic("Error while unmarshalling new data")
 					}
 
@@ -119,9 +119,6 @@ func main() {
 					if err := model.ValidateAll(newUniversity); err != nil {
 						log.WithError(err).Panic("Error while validating newUniversity")
 					}
-
-					newUniversityCopy := model.University{}
-					copier.Copy(&newUniversityCopy, newUniversity)
 
 					// Decode old data if have some
 					if oldRaw != "" && !*noDiff {
@@ -148,7 +145,7 @@ func main() {
 
 					app.insertUniversity(&university)
 					//app.insertUniversity(newUniversity)
-					app.updateSerial(newUniversityCopy)
+					app.updateSerial(raw)
 
 					// Log bytes received
 					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
@@ -164,12 +161,23 @@ func main() {
 	}
 }
 
-func (app App) updateSerial(full model.University) {
+func (app App) updateSerial(raw []byte) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
+	// Decode new data
+	newUniversity := new(model.University)
+	if err := model.UnmarshallMessage(*format, bytes.NewReader(raw), newUniversity); err != nil {
+		log.WithError(err).Panic("Error while unmarshalling new data")
+	}
+
+	// Make sure the data received is primed for the database
+	if err := model.ValidateAll(newUniversity); err != nil {
+		log.WithError(err).Panic("Error while validating newUniversity")
+	}
+
 	sem := make(chan bool, multiProgramming)
-	for subjectIndex := range full.Subjects {
-		subject := full.Subjects[subjectIndex]
+	for subjectIndex := range newUniversity.Subjects {
+		subject := newUniversity.Subjects[subjectIndex]
 
 		app.updateSerialSubject(subject)
 
