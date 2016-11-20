@@ -15,6 +15,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"uct/common/copier"
 )
 
 type App struct {
@@ -119,6 +120,9 @@ func main() {
 						log.WithError(err).Panic("Error while validating newUniversity")
 					}
 
+					newUniversityCopy := new(model.University)
+					copier.Copy(newUniversity, newUniversityCopy)
+
 					// Decode old data if have some
 					if oldRaw != "" && !*noDiff {
 						oldUniversity := new(model.University)
@@ -144,7 +148,7 @@ func main() {
 
 					app.insertUniversity(&university)
 					//app.insertUniversity(newUniversity)
-					app.updateSerial(*newUniversity)
+					app.updateSerial(*newUniversityCopy)
 
 					// Log bytes received
 					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
@@ -160,12 +164,12 @@ func main() {
 	}
 }
 
-func (app App) updateSerial(uni model.University) {
+func (app App) updateSerial(full model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
 	sem := make(chan bool, multiProgramming)
-	for subjectIndex := range uni.Subjects {
-		subject := uni.Subjects[subjectIndex]
+	for subjectIndex := range full.Subjects {
+		subject := full.Subjects[subjectIndex]
 
 		app.updateSerialSubject(subject)
 
