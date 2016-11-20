@@ -120,8 +120,8 @@ func main() {
 						log.WithError(err).Panic("Error while validating newUniversity")
 					}
 
-					newUniversityCopy := new(model.University)
-					copier.Copy(newUniversity, newUniversityCopy)
+					newUniversityCopy := model.University{}
+					copier.Copy(&newUniversityCopy, newUniversity)
 
 					// Decode old data if have some
 					if oldRaw != "" && !*noDiff {
@@ -148,7 +148,7 @@ func main() {
 
 					app.insertUniversity(&university)
 					//app.insertUniversity(newUniversity)
-					app.updateSerial(*newUniversityCopy)
+					app.updateSerial(newUniversityCopy)
 
 					// Log bytes received
 					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
