@@ -66,7 +66,7 @@ pipeline:
       - docker build -t tevjef/uct-core:ein -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia -f docker/hermes/Dockerfile docker/julia
+      - docker build -t tevjef/uct-core:julia -f docker/julia/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
@@ -105,7 +105,7 @@ pipeline:
       - docker build -t tevjef/uct-core:ein-staging -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia-staging -f docker/hermes/Dockerfile docker/julia
+      - docker build -t tevjef/uct-core:julia-staging -f docker/julia/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
