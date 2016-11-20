@@ -30,7 +30,7 @@ func New(config conf.Config, appName string) *RedisWrapper {
 	}
 }
 
-func (r RedisWrapper) Find(key string) ([]string, error) {
+func (r RedisWrapper) FindAll(key string) ([]string, error) {
 	if keys, err := r.Client.Keys(key).Result(); err != nil {
 		return nil, err
 	} else {
@@ -39,7 +39,7 @@ func (r RedisWrapper) Find(key string) ([]string, error) {
 }
 
 func (r RedisWrapper) Count(key string) (int64, error) {
-	if keys, err := r.Find(key); err != nil {
+	if keys, err := r.FindAll(key); err != nil {
 		return -1, err
 	} else {
 		//log.WithFields(log.Fields{"key":key, "result": len(keys)}).Debugln("Count")

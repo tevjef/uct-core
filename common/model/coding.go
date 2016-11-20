@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"io"
 	"io/ioutil"
 	"strconv"
-	"github.com/pkg/errors"
 )
 
 func MarshalMessage(format string, m University) (*bytes.Reader, error) {

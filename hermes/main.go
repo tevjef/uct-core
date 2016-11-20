@@ -11,7 +11,10 @@ import (
 	"uct/common/try"
 	"uct/notification"
 	"uct/redis"
+
 	_ "github.com/lib/pq"
+
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
@@ -19,12 +22,11 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/go-gcm"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"fmt"
 )
 
 var (
 	app           = kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	dryRun        = app.Flag("dry-run", "enable dry-run").Short('d').Bool()
+	dryRun        = app.Flag("dry-run", "enable dry-run").Short('d').Default("true").Bool()
 	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
 	config        = conf.Config{}
 	database      *sqlx.DB
@@ -56,9 +58,10 @@ func main() {
 	model.CheckError(err)
 	prepareAllStmts()
 
+	resultChan := waitForPop()
 	for {
 		select {
-		case pair := <-waitForPop():
+		case pair := <-resultChan:
 			go recvNotification(pair)
 		}
 	}
@@ -101,7 +104,6 @@ func waitForPop() chan notificationPair {
 func popNotification() (*notificationPair, error) {
 	if topic, err := redisWrapper.Client.BRPopLPush(notification.MainQueue, notification.DoneQueue, 0).Result(); err == nil {
 		dataNamespace := notification.MainQueueData + topic
-		log.Debugln(dataNamespace)
 		if b, err := redisWrapper.Client.Get(dataNamespace).Bytes(); err != nil {
 			return nil, errors.Wrap(err, "error getting notification data")
 		} else {
@@ -110,8 +112,11 @@ func popNotification() (*notificationPair, error) {
 				return nil, err
 			} else if jsonBytes, err := ffjson.Marshal(uctNotification); err != nil {
 				return nil, err
+			} else if _, err := redisWrapper.Client.Del(topic).Result(); err != nil {
+				log.WithError(err).Warningln("failed to del topic data")
+				return &notificationPair{n: uctNotification, raw: string(jsonBytes)}, nil
 			} else {
-				return &notificationPair{n: uctNotification, raw:string(jsonBytes)}, err
+				return &notificationPair{n: uctNotification, raw: string(jsonBytes)}, nil
 			}
 		}
 	} else {
