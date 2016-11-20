@@ -60,7 +60,6 @@ func main() {
 
 	go process.Run(func(uctNotification model.UCTNotification) {
 		log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("queueing")
-
 		if b, err := uctNotification.Marshal(); err != nil {
 			log.WithError(err).Fatalln("failed to marshall notification")
 		} else if _, err := redisWrapper.Client.Set(notification.MainQueueData+uctNotification.TopicName, b, 0).Result(); err != nil {

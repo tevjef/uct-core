@@ -35,7 +35,7 @@ api_key = ""
     enabled = true
 
     [pprof.julia]
-    host = "0.0.0.0:13101"
+    host = "0.0.0.0:13201"
     enabled = true
 
     [pprof.njit]
@@ -47,7 +47,7 @@ api_key = ""
     interval = "1m"
 
     [scrapers.rutgers-nb]
-    interval = "2m"
+    interval = "1m"
 
     [scrapers.rutgers-nk]
     interval = "1m"

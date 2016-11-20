@@ -23,6 +23,7 @@ pipeline:
       - export PATH=$PATH:$GOPATH/bin
       - go install -v uct/ein
       - go install -v uct/hermes
+      - go install -v uct/julia
       - go install -v uct/scrapers/rutgers
       - go install -v uct/scrapers/njit
       - go install -v uct/jet
@@ -35,6 +36,7 @@ pipeline:
       - cp /go/bin/ein /go/src/uct/docker/ein/
       - cp /go/bin/spike /go/src/uct/docker/spike/
       - cp /go/bin/hermes /go/src/uct/docker/hermes/
+      - cp /go/bin/julia /go/src/uct/docker/julia/
       - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
       - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
       - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
@@ -47,6 +49,7 @@ pipeline:
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
+      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/julia/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
@@ -63,6 +66,7 @@ pipeline:
       - docker build -t tevjef/uct-core:ein -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:julia -f docker/hermes/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
@@ -77,6 +81,7 @@ pipeline:
       - docker push tevjef/uct-core:ein
       - docker push tevjef/uct-core:spike
       - docker push tevjef/uct-core:hermes
+      - docker push tevjef/uct-core:julia
       - docker push tevjef/uct-core:rutgers-cm
       - docker push tevjef/uct-core:rutgers-nb
       - docker push tevjef/uct-core:rutgers-nk
@@ -100,6 +105,7 @@ pipeline:
       - docker build -t tevjef/uct-core:ein-staging -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/uct-core:julia-staging -f docker/hermes/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
       - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
       - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
@@ -114,6 +120,7 @@ pipeline:
       - docker push tevjef/uct-core:ein-staging
       - docker push tevjef/uct-core:spike-staging
       - docker push tevjef/uct-core:hermes-staging
+      - docker push tevjef/uct-core:julia-staging
       - docker push tevjef/uct-core:rutgers-cm-staging
       - docker push tevjef/uct-core:rutgers-nb-staging
       - docker push tevjef/uct-core:rutgers-nk-staging
