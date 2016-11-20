@@ -159,5 +159,4 @@ const (
 							="#cite_note-3"><span>[</span>3<span>]</span></a></sup> The city of Camden is located on the <a href="/w
 							iki/Delaware_River" title="Delaware River">Delaware River</a> east of <a href="/wiki/Philadelphia,_Penn
 							sylvania" title="Philadelphia, Pennsylvania" class="mw-redirect">Philadelphia</a>.</p>`
-
 )

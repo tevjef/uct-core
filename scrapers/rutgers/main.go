@@ -15,12 +15,12 @@ import (
 	"sync"
 	"uct/common/model"
 
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"io/ioutil"
 	"uct/common/conf"
 	"uct/common/try"
-	"io/ioutil"
-	"net"
+
+	log "github.com/Sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -232,7 +232,7 @@ func getData(url string, model interface{}) error {
 
 	err := try.Do(func(attempt int) (retry bool, err error) {
 		startTime := time.Now()
-		time.Sleep(time.Duration((attempt - 1 )*2) * time.Second)
+		time.Sleep(time.Duration((attempt-1)*2) * time.Second)
 		resp, err := httpClient.Do(req)
 
 		var data []byte
@@ -245,9 +245,9 @@ func getData(url string, model interface{}) error {
 		}
 
 		fields.WithFields(log.Fields{
-			"content-length": len(data),
+			"content-length":  len(data),
 			"response_status": resp.StatusCode,
-			"response_time": time.Since(startTime).Seconds()}).Debugln()
+			"response_time":   time.Since(startTime).Seconds()}).Debugln()
 
 		return false, nil
 	})
