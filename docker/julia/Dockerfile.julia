@@ -2,8 +2,8 @@ FROM golang:1.6.3-alpine
 
 COPY . /go/src/uct
 
-ENV APP_PACKAGE="uct/hermes"
-ENV APP_NAME="hermes"
+ENV APP_PACKAGE="uct/julia"
+ENV APP_NAME="julia"
 
 RUN apk --no-cache add ca-certificates openssl git && \
     update-ca-certificates && \
@@ -22,4 +22,4 @@ WORKDIR /go/src/uct
 ENTRYPOINT ["julia"]
 EXPOSE 13201
 
-CMD ["-c" , "/go/src/uct/common/conf/config.toml", "-d"]
+CMD ["-c" , "/go/src/uct/common/conf/config.toml"]

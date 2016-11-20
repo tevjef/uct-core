@@ -6,7 +6,7 @@ ENV PATH /uct:$PATH
 
 COPY config.toml /uct
 
-COPY hermes /uct
+COPY julia /uct
 
 RUN apk --no-cache add ca-certificates && update-ca-certificates
 
