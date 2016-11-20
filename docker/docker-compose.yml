@@ -116,7 +116,7 @@ services:
       fluentd.tag: "influxdb"
 
   julia:
-    image: tevjef/uct-core:julia{ENV}
+    image: tevjef/uct-core:julia${ENV}
     restart: always
     ports:
       - '13200'
