@@ -20,6 +20,7 @@ import (
 	"uct/common/conf"
 	"uct/common/try"
 	"io/ioutil"
+	"net"
 )
 
 var (
@@ -123,6 +124,17 @@ func getCampus(campus string) model.University {
 
 var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			//KeepAlive: 30 * time.Second,
+
+		}).Dial,
+		DisableKeepAlives: true,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
 }
 
 func (sr subjectRequest) requestSubjects() (subjects []*RSubject) {
