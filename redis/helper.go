@@ -2,8 +2,8 @@ package redishelper
 
 //log "github.com/Sirupsen/logrus"
 import (
-	"uct/common/conf"
 	"gopkg.in/redis.v4"
+	"uct/common/conf"
 )
 
 type RedisWrapper struct {
@@ -13,7 +13,7 @@ type RedisWrapper struct {
 
 const (
 	BaseNamespace = "uct:"
-	ScraperQueue = BaseNamespace + "scraper:queue"
+	ScraperQueue  = BaseNamespace + "scraper:queue"
 )
 
 func nameSpaceForApp(appName string) string {

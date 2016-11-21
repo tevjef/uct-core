@@ -1,15 +1,15 @@
 package cookie
 
 import (
-	"net/http"
-	"reflect"
-	"testing"
-	log "github.com/Sirupsen/logrus"
-	"net/url"
-	"time"
 	"crypto/tls"
-	"strings"
+	log "github.com/Sirupsen/logrus"
 	"math/rand"
+	"net/http"
+	"net/url"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
 )
 
 func init() {
@@ -65,14 +65,11 @@ func TestNew(t *testing.T) {
 		return nil
 	})
 
-
-
 	for i := 0; i < 200; i++ {
 		go func() {
 			bc := cc.Pop(nil)
 
 			time.Sleep(time.Second * time.Duration(rand.Intn(4)))
-
 
 			cc.Push(bc, func(baked *BakedCookie) error {
 				resetCookie(*baked.Get())
@@ -98,7 +95,6 @@ func resetCookie(cookie http.Cookie) {
 
 	log.Debugln("Resetting cookie", cookie.Value, cookie.Domain)
 }
-
 
 func prepareCookie(term string) string {
 	resp, err := httpClient.PostForm("https://myhub.njit.edu/StudentRegistrationSsb/ssb/term/search?mode=search", url.Values{"term": []string{term}})

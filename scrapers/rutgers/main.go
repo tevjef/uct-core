@@ -124,11 +124,6 @@ func getCampus(campus string) model.University {
 
 var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
-	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		//TLSHandshakeTimeout:   10 * time.Second,
-		//ExpectContinueTimeout: 1 * time.Second,
-	},
 }
 
 func (sr subjectRequest) requestSubjects() (subjects []*RSubject) {
@@ -225,7 +220,7 @@ func buildSections(rutgerSections []*RSection) (s []*model.Section) {
 
 func getData(url string, model interface{}) error {
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
-	req.Header.Add("User-Agent", "Go/rutgers-scraper")
+	//req.Header.Add("User-Agent", "Go/rutgers-scrape")
 
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})
 	fields.Debugln()

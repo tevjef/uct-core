@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 	"uct/common/model"
+	"unicode"
 )
 
 var toTitle = model.ToTitle
@@ -115,7 +115,7 @@ type (
 		EndTime         string `json:"endTime"`
 		MeetingModeDesc string `json:"meetingModeDesc"`
 		MeetingModeCode string `json:"meetingModeCode"`
-		ClassType string
+		ClassType       string
 	}
 )
 

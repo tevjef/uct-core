@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,14 +16,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"uct/common/conf"
 	"uct/common/model"
+	"uct/common/proxy"
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
-	"github.com/pkg/errors"
-	"uct/common/conf"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"crypto/tls"
-	"uct/common/proxy"
 )
 
 var (
@@ -40,7 +40,6 @@ func main() {
 
 	// Start profiling
 	go model.StartPprof(config.GetDebugSever(app.Name))
-
 
 	var university model.University
 
@@ -178,7 +177,7 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 }
 
 var httpClient = &http.Client{
-	Timeout: 15 * time.Second,
+	Timeout:   15 * time.Second,
 	Transport: &http.Transport{Proxy: proxy.GetProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
@@ -212,15 +211,15 @@ func getData(rawUrl string, model interface{}) error {
 
 		log.WithFields(log.Fields{"content-length": len(data),
 			"response_status": resp.StatusCode,
-			"url": rawUrl,
-			"response_time": time.Since(startTime).Seconds(),
+			"url":             rawUrl,
+			"response_time":   time.Since(startTime).Seconds(),
 		}).Debug(modeType + " response")
 
 		return false, nil
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "Unable to retrieve resource at "+ rawUrl)
+		return errors.Wrap(err, "Unable to retrieve resource at "+rawUrl)
 	} else {
 		return nil
 

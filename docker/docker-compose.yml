@@ -70,7 +70,7 @@ services:
     image: tevjef/uct-core:hermes${ENV}
     restart: always
     ports:
-      - '13200:13200'
+      - '13200'
     depends_on:
       - postgresql
       - redis
