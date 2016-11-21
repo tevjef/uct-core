@@ -614,10 +614,10 @@ func (a SubjectByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
 }
 
-func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
-	filteredUniversity = uni2
-	oldSubjects := uni.Subjects
-	newSubjects := uni2.Subjects
+func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
+	filteredUniversity = newUni
+	oldSubjects := oldUni.Subjects
+	newSubjects := newUni.Subjects
 
 	var filteredSubjects []*Subject
 	// For each newer subject
