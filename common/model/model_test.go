@@ -259,7 +259,7 @@ func TestSwapChar(t *testing.T) {
 func TestTopicName(t *testing.T) {
 	topic1 := "Rutgers University–New Brunswick"
 	topic2 := "AFRICAN, M. EAST. & S. ASIAN LANG & LIT $ __ "
-	topic3 := "Res Proposal In A....H.!@#$%^&*()_?><.02.87ASDA"
+	topic3 := "Res Proposal In A....H.!@#$%[]^&*()_?><.02.87A\u0000SDA"
 
 	fmt.Printf("%s\n", ToTopicName(topic1))
 	fmt.Printf("%s\n", ToTopicName(topic1))
@@ -271,15 +271,6 @@ func TestTopicName(t *testing.T) {
 	fmt.Printf("%s\n", ToTopicName(topic3))
 
 	fmt.Println("\n")
-
-	fmt.Printf("%s\n", toTopicName(topic1))
-	fmt.Printf("%s\n", toTopicName(topic1))
-
-	fmt.Printf("%s\n", toTopicName(topic2))
-	fmt.Printf("%s\n", toTopicName(topic2))
-
-	fmt.Printf("%s\n", toTopicName(topic3))
-	fmt.Printf("%s\n", toTopicName(topic3))
 }
 
 func TestSemesterSorter(t *testing.T) {

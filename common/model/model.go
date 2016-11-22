@@ -96,12 +96,24 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
-var topicRegex, err = regexp.Compile("[^A-Za-z0-9-_.~% ]+")
+func isValidTopicRune(char rune) bool {
+	isDash := char == rune('-')
+	isUnderscore := char == rune('_')
+	isDot := char == rune('.')
+	isTilde := char == rune('~')
+	isPercent := char == rune('%')
+	return unicode.IsLetter(char) || unicode.IsNumber(char) || unicode.IsSpace(char) || isDash || isUnderscore || isDot || isTilde || isPercent
+}
 
 func ToTopicName(str string) string {
-	topicRegex := topicRegex.Copy()
-	str = trim(topicRegex.ReplaceAllString(str, ""))
+	str = strings.Map(func(r rune) rune {
+		if isValidTopicRune(r) {
+			return r
+		}
+		return -1
+	}, str)
 
+	// replaces spaces with dots
 	var lastRune rune
 	dot := rune('.')
 	str = strings.Map(func(r rune) rune {
@@ -628,7 +640,7 @@ func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
 			break
 		}
 
-		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
+		if !newSubjects[s].Equal(oldSubjects[s]) {
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -638,7 +650,7 @@ func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
 					break
 				}
 
-				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
+				if !newCourses[c].Equal(oldCourses[c]) {
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					oldSectionFields := logSection(oldSections, "old")
@@ -649,7 +661,7 @@ func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
 							filteredSections = newSections
 							break
 						}
-						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
+						if !newSections[e].Equal(oldSections[e]) {
 							fullSection := log.Fields{"old_full_section": oldSections[e].String(), "new_full_section": newSections[e].String()}
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber, "old_status": oldSections[e].Status,

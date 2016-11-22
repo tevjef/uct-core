@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	_ "net/http/pprof"
+	_ "expvar"
 	"os"
 	"strconv"
 	"strings"
