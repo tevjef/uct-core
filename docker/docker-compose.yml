@@ -136,6 +136,8 @@ services:
         tag: "docker.core.julia"
     labels:
       fluentd.tag: "core.julia"
+      fluentd.influxdb.tags: "[]"
+
 
   nginx:
     container_name: nginx

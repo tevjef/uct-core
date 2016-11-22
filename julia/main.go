@@ -26,6 +26,7 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
+	log.SetLevel(log.InfoLevel)
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
@@ -34,8 +35,6 @@ func main() {
 
 	// Start profiling
 	go model.StartPprof(config.GetDebugSever(app.Name))
-
-	log.Debugln(config)
 
 	// Open connection to postgresql
 	listener := pq.NewListener(config.GetDbConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {

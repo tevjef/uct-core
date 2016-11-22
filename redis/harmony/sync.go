@@ -194,7 +194,7 @@ func calculateOffset(interval, instances, position int64) int64 {
 	offset := int64((n / d))
 
 	if offset > interval {
-		log.WithFields(log.Fields{"offset": offset, "interval": interval}).Warnln("offset is more than interval")
+		log.WithFields(log.Fields{"offset": offset, "interval": interval, "instances": instances, "position": position}).Warnln("offset is more than interval")
 		offset = interval
 	}
 
