@@ -106,17 +106,14 @@ func isValidTopicRune(char rune) bool {
 }
 
 func ToTopicName(str string) string {
-	str = strings.Map(func(r rune) rune {
-		if isValidTopicRune(r) {
-			return r
-		}
-		return -1
-	}, str)
-
 	// replaces spaces with dots
 	var lastRune rune
 	dot := rune('.')
 	str = strings.Map(func(r rune) rune {
+		if !isValidTopicRune(r) {
+			return -1
+		}
+
 		if unicode.IsSpace(r) || r == dot {
 			if unicode.IsSpace(lastRune) || lastRune == dot {
 				return -1

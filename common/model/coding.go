@@ -51,7 +51,7 @@ func CheckUniqueSubject(subjects []*Subject) {
 	m := make(map[string]int)
 	for subjectIndex := range subjects {
 		subject := subjects[subjectIndex]
-		key := subject.Season + subject.Year + subject.Name
+		key := subject.Season + subject.Year + subject.Name + subject.Number
 		m[key]++
 		if m[key] > 1 {
 			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")
