@@ -43,9 +43,9 @@ func TestClientConnection(t *testing.T) {
 func TestRedisSync_ClaimPosition_Same_Result_Same_Id(t *testing.T) {
 	rsync := setup(0, "test")
 	rsync.registerInstance()
-	expected := rsync.position
+	expected := rsync.instance.position
 	rsync.registerInstance()
-	result := rsync.position
+	result := rsync.instance.position
 
 	assert.Equal(t, expected, result)
 
@@ -56,12 +56,12 @@ func TestRedisSync_ClaimPosition_Different_Result_Different_Id(t *testing.T) {
 	rsync := setup(0, "test")
 
 	rsync.registerInstance()
-	expected := rsync.position + 1
+	expected := rsync.instance.position + 1
 
 	rsync = setup(0, "test2")
 	rsync.registerInstance()
 
-	result := rsync.position
+	result := rsync.instance.position
 
 	assert.Equal(t, expected, result)
 
@@ -132,8 +132,8 @@ func TestRedisSync_Sync(t *testing.T) {
 
 		rsync := setup(1*time.Minute, "test1")
 
-		for offset := range rsync.Sync(make(chan bool)) {
-			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test1")
+		for instance := range rsync.Sync(make(chan bool)) {
+			log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": rsync.instance.count, "position": rsync.instance.count}).Println("test1")
 		}
 	}()
 
@@ -142,8 +142,8 @@ func TestRedisSync_Sync(t *testing.T) {
 
 		rsync := setup(1*time.Minute, "test2")
 
-		for offset := range rsync.Sync(make(chan bool)) {
-			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test2")
+		for instance := range rsync.Sync(make(chan bool)) {
+			log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": rsync.instance.count, "position": rsync.instance.count}).Println("test2")
 		}
 	}()
 
@@ -158,8 +158,8 @@ func TestRedisSync_Sync(t *testing.T) {
 			log.Println("BOOM!!! TEST3")
 		}()
 
-		for offset := range rsync.Sync(channel) {
-			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test3")
+		for instance := range rsync.Sync(channel) {
+			log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": rsync.instance.count, "position": rsync.instance.count}).Println("test3")
 		}
 
 	}()
@@ -171,8 +171,8 @@ func TestRedisSync_Sync(t *testing.T) {
 
 		channel := make(chan bool)
 
-		for offset := range rsync.Sync(channel) {
-			log.WithFields(log.Fields{"offset": offset.Seconds(), "instances": rsync.Instances, "position": rsync.position}).Println("test4")
+		for instance := range rsync.Sync(channel) {
+			log.WithFields(log.Fields{"offset": instance.offset.Seconds(), "instances": rsync.instance.count, "position": rsync.instance.count}).Println("test4")
 		}
 	}()
 

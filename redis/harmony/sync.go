@@ -76,7 +76,6 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan Instance {
 	go rsync.beginSync(instanceConfigChan, cancel)
 
 	return instanceConfigChan
-
 }
 
 func (rsync *RedisSync) beginSync(instanceConfig chan<- Instance, cancel <-chan bool) {
