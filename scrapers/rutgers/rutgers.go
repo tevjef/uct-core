@@ -1,21 +1,23 @@
-package model
+package main
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"uct/common/model"
+	"unicode"
 )
 
-type (
-	MeetingByClass []RMeetingTime
+var toTitle = model.ToTitle
+var trim = strings.TrimSpace
 
+type (
 	RSubject struct {
-		Name    string    `json:"description,omitempty"`
-		Number  string    `json:"code,omitempty"`
-		Courses []RCourse `json:"courses,omitempty"`
+		Name    string     `json:"description,omitempty"`
+		Number  string     `json:"code,omitempty"`
+		Courses []*RCourse `json:"courses,omitempty"`
 		Season  string
 		Year    int
 	}
@@ -33,7 +35,7 @@ type (
 		Title             string        `json:"title"`
 		CourseDescription string        `json:"courseDescription"`
 		PreReqNotes       string        `json:"preReqNotes"`
-		Sections          []RSection    `json:"sections"`
+		Sections          []*RSection   `json:"sections"`
 		SupplementCode    string        `json:"supplementCode"`
 		Credits           float64       `json:"credits"`
 		UnitNotes         string        `json:"unitNotes"`
@@ -69,6 +71,9 @@ type (
 		MeetingTimes                         []RMeetingTime         `json:"meetingTimes"`
 		LegendKey                            string                 `json:"legendKey"`
 		HonorPrograms                        []interface{}          `json:"honorPrograms"`
+		status                               string
+		creditsFloat                         string
+		course                               RCourse
 	}
 
 	RInstructor struct {
@@ -98,79 +103,87 @@ type (
 	}
 
 	RMeetingTime struct {
-		CampusLocation  string  `json:"campusLocation"`
-		BaClassHours    string  `json:"baClassHours"`
-		RoomNumber      string  `json:"roomNumber"`
-		PmCode          string  `json:"pmCode"`
-		CampusAbbrev    string  `json:"campusAbbrev"`
-		CampusName      string  `json:"campusName"`
-		MeetingDay      string  `json:"meetingDay"`
-		BuildingCode    string  `json:"buildingCode"`
-		StartTime       string  `json:"startTime"`
-		EndTime         string  `json:"endTime"`
-		PStartTime      *string `json:"-"`
-		PEndTime        *string `json:"-"`
-		MeetingModeDesc string  `json:"meetingModeDesc"`
-		MeetingModeCode string  `json:"meetingModeCode"`
+		CampusLocation  string `json:"campusLocation"`
+		BaClassHours    string `json:"baClassHours"`
+		RoomNumber      string `json:"roomNumber"`
+		PmCode          string `json:"pmCode"`
+		CampusAbbrev    string `json:"campusAbbrev"`
+		CampusName      string `json:"campusName"`
+		MeetingDay      string `json:"meetingDay"`
+		BuildingCode    string `json:"buildingCode"`
+		StartTime       string `json:"startTime"`
+		EndTime         string `json:"endTime"`
+		MeetingModeDesc string `json:"meetingModeDesc"`
+		MeetingModeCode string `json:"meetingModeCode"`
+		ClassType       string
 	}
 )
 
-func (course *RCourse) Clean() {
-	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
-		return section.Printed == "Y"
-	})
+func (subject *RSubject) clean() {
+	subject.Name = toTitle(subject.Name)
+}
 
+func (course *RCourse) clean() {
 	m := map[string]int{}
 
-	// Filter duplicate sections, yes it happens e.g Fall 2016 NB Biochem Engin SR DESIGN I PROJECTS
-	course.Sections = FilterSections(course.Sections, func(section RSection) bool {
+	// Filter duplicate sections
+	course.Sections = filterSections(course.Sections, func(section *RSection) bool {
 		key := section.Index + section.Number
 		m[key]++
-		return m[key] <= 1
+		return m[key] <= 1 && section.Printed == "Y"
 	})
 
-	course.Title = model.TrimAll(course.Title)
+	for j := range course.Sections {
+		course.Sections[j].course = *course
+		course.Sections[j].clean()
+	}
 
-	course.CourseNumber = model.TrimAll(course.CourseNumber)
+	sort.Sort(SectionSorter{course.Sections})
 
-	course.CourseDescription = model.TrimAll(course.CourseDescription)
-
-	course.CourseNotes = model.TrimAll(course.CourseNotes)
-
-	course.SubjectNotes = model.TrimAll(course.SubjectNotes)
-
-	course.SynopsisURL = model.TrimAll(course.SynopsisURL)
-
-	course.PreReqNotes = model.TrimAll(course.PreReqNotes)
-
-	course.ExpandedTitle = model.TrimAll(course.ExpandedTitle)
+	course.Title = toTitle(trimAll(course.Title))
+	course.CourseNumber = trimAll(course.CourseNumber)
+	course.CourseDescription = trimAll(course.CourseDescription)
+	course.CourseNotes = trimAll(course.CourseNotes)
+	course.SubjectNotes = trimAll(course.SubjectNotes)
+	course.SynopsisURL = trimAll(course.SynopsisURL)
+	course.PreReqNotes = trimAll(course.PreReqNotes)
+	course.ExpandedTitle = trimAll(course.ExpandedTitle)
 
 	if len(course.ExpandedTitle) == 0 {
 		course.ExpandedTitle = course.Title
 	}
 }
 
-func (section *RSection) Clean() {
-	section.Subtitle = model.TrimAll(section.Subtitle)
-	section.SectionNotes = model.TrimAll(section.SectionNotes)
-	section.CampusCode = model.TrimAll(section.CampusCode)
-	section.SpecialPermissionAddCodeDescription = model.TrimAll(section.SpecialPermissionAddCodeDescription)
+func (section *RSection) clean() {
+	section.Subtitle = trimAll(section.Subtitle)
+	section.SectionNotes = trimAll(section.SectionNotes)
+	section.CampusCode = trimAll(section.CampusCode)
+	section.SpecialPermissionAddCodeDescription = trimAll(section.SpecialPermissionAddCodeDescription)
 
 	for i := range section.MeetingTimes {
-		section.MeetingTimes[i].Clean()
+		section.MeetingTimes[i].clean()
 	}
+
+	if section.OpenStatus {
+		section.status = model.Open.String()
+	} else {
+		section.status = model.Closed.String()
+	}
+
+	section.creditsFloat = fmt.Sprintf("%.1f", section.course.Credits)
 
 	sort.Sort(MeetingByClass(section.MeetingTimes))
 	sort.Sort(instructorSorter{section.Instructor})
 }
 
-func (meeting *RMeetingTime) Clean() {
-	meeting.StartTime = model.TrimAll(meeting.StartTime)
-	meeting.EndTime = model.TrimAll(meeting.EndTime)
+func (meeting *RMeetingTime) clean() {
+	meeting.StartTime = trimAll(meeting.StartTime)
+	meeting.EndTime = trimAll(meeting.EndTime)
 
 	meeting.MeetingDay = meeting.day()
-	meeting.StartTime = meeting.getMeetingHourBegin()
+	meeting.StartTime = meeting.getMeetingHourStart()
 	meeting.EndTime = meeting.getMeetingHourEnd()
+	meeting.ClassType = meeting.classType()
 
 	// Some meetings may not have a type, default to lecture
 	if meeting.MeetingModeCode == "" {
@@ -178,25 +191,10 @@ func (meeting *RMeetingTime) Clean() {
 		meeting.MeetingModeDesc = "LEC"
 	}
 
-	if meeting.StartTime != "" {
-		t := meeting.StartTime
-		meeting.PStartTime = &t
+	if meeting.BuildingCode != "" {
+		meeting.RoomNumber = meeting.BuildingCode + "-" + meeting.RoomNumber
 	} else {
-		meeting.PStartTime = nil
-	}
-	if meeting.EndTime != "" {
-		t := meeting.EndTime
-		meeting.PEndTime = &t
-	} else {
-		meeting.PEndTime = nil
-	}
-}
-
-func (section *RSection) Status() string {
-	if section.OpenStatus {
-		return model.Open.String()
-	} else {
-		return model.Closed.String()
+		meeting.RoomNumber = ""
 	}
 }
 
@@ -207,7 +205,7 @@ func (section RSection) instructor() (instructors []*model.Instructor) {
 	return
 }
 
-func (section RSection) Metadata() (metadata []*model.Metadata) {
+func (section RSection) metadata() (metadata []*model.Metadata) {
 
 	if len(section.CrossListedSections) > 0 {
 		crossListedSections := []string{}
@@ -249,6 +247,7 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 
 		sort.Strings(majors)
 		sort.Strings(schools)
+
 		if len(majors) > 0 {
 			openTo = append(openTo, "Majors: "+strings.Join(majors, ", "))
 		}
@@ -304,7 +303,7 @@ func (section RSection) Metadata() (metadata []*model.Metadata) {
 }
 
 type SectionSorter struct {
-	Sections []RSection
+	Sections []*RSection
 }
 
 func (a SectionSorter) Len() int {
@@ -320,7 +319,7 @@ func (a SectionSorter) Less(i, j int) bool {
 }
 
 type CourseSorter struct {
-	Courses []RCourse
+	Courses []*RCourse
 }
 
 func (a CourseSorter) Len() int {
@@ -334,7 +333,7 @@ func (a CourseSorter) Swap(i, j int) {
 func (a CourseSorter) Less(i, j int) bool {
 	c1 := a.Courses[i]
 	c2 := a.Courses[j]
-	var hash = func(s []RSection) string {
+	var hash = func(s []*RSection) string {
 		var buffer bytes.Buffer
 		for i := range s {
 			buffer.WriteString(s[i].Index)
@@ -362,6 +361,8 @@ func (a commentSorter) Less(i, j int) bool {
 	return a.comments[i].Code < a.comments[j].Code
 }
 
+type MeetingByClass []RMeetingTime
+
 func (meeting MeetingByClass) Len() int {
 	return len(meeting)
 }
@@ -377,8 +378,8 @@ func (meeting MeetingByClass) Less(i, j int) bool {
 	if left.MeetingDay != "" && right.MeetingDay != "" {
 		if left.dayRank() < right.dayRank() {
 			return true
-		} else if left.dayRank() == right.dayRank()  && left.StartTime != "" && right.StartTime != "" {
-			return IsAfter(left.StartTime, right.StartTime)
+		} else if left.dayRank() == right.dayRank() && left.StartTime != "" && right.StartTime != "" {
+			return isAfter(left.StartTime, right.StartTime)
 		}
 	}
 
@@ -457,16 +458,8 @@ func (meeting RMeetingTime) dayRank() int {
 	return 8
 }
 
-func (meeting RMeetingTime) Room() *string {
-	if meeting.BuildingCode != "" {
-		room := meeting.BuildingCode + "-" + meeting.RoomNumber
-		return &room
-	}
-	return nil
-}
-
-func (meetingTime RMeetingTime) getMeetingHourBegin() string {
-	if len(meetingTime.StartTime) > 1 || len(meetingTime.EndTime) > 1 {
+func (meetingTime RMeetingTime) getMeetingHourStart() string {
+	if len(meetingTime.StartTime) > 3 || len(meetingTime.EndTime) > 3 {
 
 		meridian := ""
 
@@ -477,13 +470,13 @@ func (meetingTime RMeetingTime) getMeetingHourBegin() string {
 				meridian = "PM"
 			}
 		}
-		return FormatMeetingHours(meetingTime.StartTime) + " " + meridian
+		return formatMeetingHours(meetingTime.StartTime) + " " + meridian
 	}
 	return ""
 }
 
 func (meetingTime RMeetingTime) getMeetingHourEnd() string {
-	if len(meetingTime.StartTime) > 1 && len(meetingTime.EndTime) > 1 {
+	if len(meetingTime.StartTime) > 3 && len(meetingTime.EndTime) > 3 {
 		var meridian string
 		starttime := meetingTime.StartTime
 		endtime := meetingTime.EndTime
@@ -502,47 +495,23 @@ func (meetingTime RMeetingTime) getMeetingHourEnd() string {
 			meridian = "AM"
 		}
 
-		return FormatMeetingHours(meetingTime.EndTime) + " " + meridian
+		return formatMeetingHours(meetingTime.EndTime) + " " + meridian
 	}
 
 	return ""
 }
 
-func (meetingTime RMeetingTime) getMeetingHourBeginTime() time.Time {
-	if len(model.TrimAll(meetingTime.StartTime)) > 1 || len(model.TrimAll(meetingTime.EndTime)) > 1 {
-
-		meridian := ""
-
-		if meetingTime.PmCode != "" {
-			if meetingTime.PmCode == "A" {
-				meridian = "AM"
-			} else {
-				meridian = "PM"
-			}
+func formatMeetingHours(time string) string {
+	if len(time) == 4 {
+		if time[:1] == "0" {
+			return time[1:2] + ":" + time[2:]
 		}
-
-		kitchenTime := model.TrimAll(FormatMeetingHours(meetingTime.StartTime) + meridian)
-		time, err := time.Parse(time.Kitchen, kitchenTime)
-		model.CheckError(err)
-		return time
+		return time[:2] + ":" + time[2:]
 	}
-	return time.Unix(0, 0)
+	return ""
 }
 
-func (meeting RMeetingTime) Metadata() (metadata []*model.Metadata) {
-
-	return
-}
-
-func (course RCourse) Synopsis() *string {
-	if course.CourseDescription == "" {
-		return nil
-	} else {
-		return &course.CourseDescription
-	}
-}
-
-func (course RCourse) Metadata() (metadata []*model.Metadata) {
+func (course RCourse) metadata() (metadata []*model.Metadata) {
 
 	if course.UnitNotes != "" {
 		metadata = append(metadata, &model.Metadata{
@@ -581,8 +550,8 @@ func (course RCourse) Metadata() (metadata []*model.Metadata) {
 	return metadata
 }
 
-func FilterSubjects(vs []RSubject, f func(RSubject) bool) []RSubject {
-	vsf := make([]RSubject, 0)
+func filterSubjects(vs []*RSubject, f func(*RSubject) bool) []*RSubject {
+	vsf := make([]*RSubject, 0)
 	for _, v := range vs {
 		if f(v) {
 			vsf = append(vsf, v)
@@ -591,8 +560,8 @@ func FilterSubjects(vs []RSubject, f func(RSubject) bool) []RSubject {
 	return vsf
 }
 
-func FilterCourses(vs []RCourse, f func(RCourse) bool) []RCourse {
-	vsf := make([]RCourse, 0)
+func filterCourses(vs []*RCourse, f func(*RCourse) bool) []*RCourse {
+	vsf := make([]*RCourse, 0)
 	for _, v := range vs {
 		if f(v) {
 			vsf = append(vsf, v)
@@ -601,58 +570,14 @@ func FilterCourses(vs []RCourse, f func(RCourse) bool) []RCourse {
 	return vsf
 }
 
-func FilterSections(vs []RSection, f func(RSection) bool) []RSection {
-	vsf := make([]RSection, 0)
+func filterSections(vs []*RSection, f func(*RSection) bool) []*RSection {
+	vsf := make([]*RSection, 0)
 	for _, v := range vs {
 		if f(v) {
 			vsf = append(vsf, v)
 		}
 	}
 	return vsf
-}
-
-func AppendRSubjects(subjects []RSubject, toAppend []RSubject) []RSubject {
-	for _, val := range toAppend {
-		subjects = append(subjects, val)
-	}
-	return subjects
-}
-
-func FormatMeetingHours(time string) string {
-	if len(time) > 1 {
-		if time[:1] == "0" {
-			return time[1:2] + ":" + time[2:]
-		}
-		return time[:2] + ":" + time[2:]
-	}
-	return ""
-}
-
-func (meetingTime RMeetingTime) getMeetingHourEndTime() time.Time {
-	if len(model.TrimAll(meetingTime.StartTime)) > 1 || len(model.TrimAll(meetingTime.EndTime)) > 1 {
-		var meridian string
-		starttime := meetingTime.StartTime
-		endtime := meetingTime.EndTime
-		pmcode := meetingTime.PmCode
-
-		end, _ := strconv.Atoi(endtime[:2])
-		start, _ := strconv.Atoi(starttime[:2])
-
-		if pmcode != "A" {
-			meridian = "PM"
-		} else if end < start {
-			meridian = "PM"
-		} else if endtime[:2] == "12" {
-			meridian = "AM"
-		} else {
-			meridian = "AM"
-		}
-
-		time, err := time.Parse(time.Kitchen, FormatMeetingHours(meetingTime.EndTime)+meridian)
-		model.CheckError(err)
-		return time
-	}
-	return time.Unix(0, 0)
 }
 
 func (meeting RMeetingTime) isSeminar() bool {
@@ -712,56 +637,71 @@ func (meeting RMeetingTime) day() string {
 	}
 }
 
-func (meeting RMeetingTime) DayPointer() *string {
-	if meeting.MeetingDay == "" {
-		return nil
-	} else {
-		return &meeting.MeetingDay
-	}
-}
-
-func (meeting RMeetingTime) ClassType() *string {
-	mtype := ""
+func (meeting RMeetingTime) classType() string {
 	if meeting.isLab() {
-		mtype = "Lab"
+		return "Lab"
 	} else if meeting.isStudio() {
-		mtype = "Studio"
+		return "Studio"
 	} else if meeting.isByArrangement() {
-		mtype = "Hours By Arrangement"
+		return "Hours By Arrangement"
 	} else if meeting.isLecture() {
-		mtype = "Lecture"
+		return "Lecture"
 	} else if meeting.isOnline() {
-		mtype = "Online"
+		return "Online"
 	} else if meeting.isInternship() {
-		mtype = "Insternship"
+		return "Insternship"
 	} else if meeting.isSeminar() {
-		mtype = "Seminar"
+		return "Seminar"
 	} else if meeting.isHybrid() {
-		mtype = "Hybrid"
+		return "Hybrid"
 	} else if meeting.isRecitation() {
-		mtype = "Recitation"
+		return "Recitation"
 	} else {
-		mtype = meeting.MeetingModeDesc
-	}
-	if mtype == "" {
-		return nil
-	} else {
-		return &mtype
+		return meeting.MeetingModeDesc
 	}
 }
 
-// Determines if one date string is after another e.g 1:00PM is after 9:00AM
-func IsAfter(t1, t2 string) bool {
-	if l1 := len(t1); l1 == 7 {
+var emptyByteArray = make([]byte, 0)
+var nullByte = []byte("\x00")
+var headingBytes = []byte("\x01")
+
+func trimAll(str string) string {
+	str = stripSpaces(str)
+	temp := []byte(str)
+
+	// Remove NUL and Heading bytes from string, cannot be inserted into postgresql
+	temp = bytes.Replace(temp, nullByte, emptyByteArray, -1)
+	str = string(bytes.Replace(temp, headingBytes, emptyByteArray, -1))
+
+	return trim(str)
+}
+
+func stripSpaces(str string) string {
+	var lastRune rune
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) && unicode.IsSpace(lastRune) {
+			// if the character is a space, drop it
+			return -1
+		}
+		lastRune = r
+		// else keep it in the string
+		return r
+	}, str)
+}
+
+// Determines if t2 is after t1
+func isAfter(t1, t2 string) bool {
+	if length := len(t1); length == 7 {
 		t1 = "0" + t1
-	} else if l1 == 0 {
+	} else if length == 0 {
 		return false
 	}
-	if l2 := len(t2); l2 == 7 {
+	if length := len(t2); length == 7 {
 		t2 = "0" + t2
-	} else if l2 == 0 {
+	} else if length == 0 {
 		return false
 	}
+
 	if t1[:2] == "12" {
 		t1 = t1[2:]
 		t1 = "00" + t1

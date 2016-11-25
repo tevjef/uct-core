@@ -9,10 +9,8 @@ func getRutgers(campus string) model.University {
 	university := model.University{
 		Name:             "Rutgers University–New Brunswick",
 		Abbr:             "RU-NB",
-		MainColor:        "F44336",
-		AccentColor:      "607D8B",
-		HomePage:         "http://newbrunswick.rutgers.edu/",
-		RegistrationPage: "https://sims.rutgers.edu/webreg/",
+		HomePage:         "http://newbrunswick.edu/",
+		RegistrationPage: "https://sims.edu/webreg/",
 		Registrations: []*model.Registration{
 			{
 				Period:     model.InFall.String(),
@@ -64,7 +62,7 @@ func getRutgers(campus string) model.University {
 			},
 		},
 		Metadata: []*model.Metadata{{
-			Title: "About", Content: aboutNewbrunswick,
+			Title: "About", Content: aboutNewBrunswick,
 		},
 		},
 	}
@@ -72,17 +70,18 @@ func getRutgers(campus string) model.University {
 	if campus == "NK" {
 		university.Name = "Rutgers University–Newark"
 		university.Abbr = "RU-NK"
-		university.HomePage = "http://www.newark.rutgers.edu/"
+		university.HomePage = "http://www.newark.edu/"
 		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutNewark,
 			},
 		}
 	}
+
 	if campus == "CM" {
 		university.Name = "Rutgers University–Camden"
 		university.Abbr = "RU-CAM"
-		university.HomePage = "http://www.camden.rutgers.edu/"
+		university.HomePage = "http://www.camden.edu/"
 		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutCamden,
@@ -94,7 +93,7 @@ func getRutgers(campus string) model.University {
 }
 
 const (
-	aboutNewbrunswick = `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
+	aboutNewBrunswick = `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
 				versity" title="Rutgers University">Rutgers University</a>, the others being in <a href="/wiki/Rutgers%
 				E2%80%93Camden" title="Rutgers–Camden" class="mw-redirect">Camden</a> and <a href="/wiki/Rutgers%E2%80%
 				93Newark" title="Rutgers–Newark" class="mw-redirect">Newark</a>. It is primarily located in the <a href

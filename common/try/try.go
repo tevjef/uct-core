@@ -1,10 +1,10 @@
 // https://github.com/matryer/try
 package try
 
-import "errors"
+import "github.com/pkg/errors"
 
 // MaxRetries is the maximum number of retries before bailing.
-var MaxRetries = 3
+var MaxRetries = 10
 
 var errMaxRetriesReached = errors.New("exceeded retry limit")
 
@@ -24,7 +24,7 @@ func Do(fn Func) error {
 		}
 		attempt++
 		if attempt > MaxRetries {
-			return errMaxRetriesReached
+			return errors.Wrap(err, errMaxRetriesReached.Error())
 		}
 	}
 	return err

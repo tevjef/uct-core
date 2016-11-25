@@ -1,8 +1,8 @@
 package redishelper
 
+//log "github.com/Sirupsen/logrus"
 import (
 	"gopkg.in/redis.v4"
-	//log "github.com/Sirupsen/logrus"
 	"uct/common/conf"
 )
 
@@ -12,11 +12,12 @@ type RedisWrapper struct {
 }
 
 const (
-	BaseNamespace = "uct:scraper"
+	BaseNamespace = "uct:"
+	ScraperQueue  = BaseNamespace + "scraper:queue"
 )
 
 func nameSpaceForApp(appName string) string {
-	return BaseNamespace + ":" + appName
+	return BaseNamespace + appName
 }
 
 func New(config conf.Config, appName string) *RedisWrapper {
@@ -29,17 +30,16 @@ func New(config conf.Config, appName string) *RedisWrapper {
 	}
 }
 
-func (r RedisWrapper) Find(key string) ([]string, error) {
+func (r RedisWrapper) FindAll(key string) ([]string, error) {
 	if keys, err := r.Client.Keys(key).Result(); err != nil {
 		return nil, err
 	} else {
-		//log.WithFields(log.Fields{"key":key, "result": keys}).Debugln("Find")
 		return keys, nil
 	}
 }
 
 func (r RedisWrapper) Count(key string) (int64, error) {
-	if keys, err := r.Find(key); err != nil {
+	if keys, err := r.FindAll(key); err != nil {
 		return -1, err
 	} else {
 		//log.WithFields(log.Fields{"key":key, "result": len(keys)}).Debugln("Count")

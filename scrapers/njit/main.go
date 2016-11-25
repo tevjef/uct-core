@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,16 +16,33 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"uct/common/conf"
 	"uct/common/model"
+	"uct/common/proxy"
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
 )
 
+var (
+	app        = kingpin.New("njit", "A program for scraping information from NJIT serrvers.")
+	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
+	config     = conf.Config{}
+)
+
 func main() {
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	log.SetLevel(log.DebugLevel)
+
+	// Parse configuration file
+	config = conf.OpenConfig(*configFile)
+	config.AppName = app.Name
+
+	// Start profiling
+	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	var university model.University
 
-	log.SetFormatter(&log.TextFormatter{})
 	university = njit
 
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
@@ -35,11 +55,11 @@ func main() {
 	for _, semester := range semesters {
 		CreateCookieQueue(parseSemester(*semester))
 
-		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 20}}
+		subjectRequest := subjectRequest{semester: *semester, paginated: paginated{offset: 1, max: 10}}
 		subjects := subjectRequest.requestSubjects()
 
 		var wg sync.WaitGroup
-		control := make(chan struct{}, 20)
+		control := make(chan struct{}, 10)
 		wg.Add(len(subjects))
 		for i := range subjects {
 			control <- struct{}{}
@@ -55,8 +75,9 @@ func main() {
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}
 
-	reader := model.MarshalMessage(model.JSON, university)
-	io.Copy(os.Stdout, reader)
+	if reader, err := model.MarshalMessage(model.JSON, university); err != nil {
+		io.Copy(os.Stdout, reader)
+	}
 }
 
 const baseUrl = "https://myhub.njit.edu/StudentRegistrationSsb/ssb/"
@@ -155,26 +176,21 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 	return
 }
 
-var proxyUrl, _ = url.Parse("http://localhost:8888")
-
 var httpClient = &http.Client{
-	Timeout: 15 * time.Second,
-	//Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+	Timeout:   15 * time.Second,
+	Transport: &http.Transport{Proxy: proxy.GetProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
 func getData(rawUrl string, model interface{}) error {
-	var success bool
 	modeType := fmt.Sprintf("%T", model)
 	req, _ := http.NewRequest(http.MethodGet, rawUrl, nil)
+	startTime := time.Now()
 
-	for i := 0; i < 3; i++ {
+	err := try.Do(func(attempt int) (retry bool, err error) {
 		// Get cookie
 		bc := cookieCutter.Pop(nil)
 		req.AddCookie(bc.Get())
 
-		startTime := time.Now()
-		log.WithFields(log.Fields{"retry": i, "url": rawUrl}).Debug(modeType + " request")
-		time.Sleep(time.Duration(i*2) * time.Second)
 		resp, err := httpClient.Do(req)
 
 		// Put cookie back on queue
@@ -183,27 +199,31 @@ func getData(rawUrl string, model interface{}) error {
 			return nil
 		})
 
+		var data []byte
+
 		if err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else if data, err := ioutil.ReadAll(resp.Body); err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else if err := json.Unmarshal(data, model); err != nil {
-			log.Errorf("Retrying %d after error: %s\n", i, err)
-			continue
-		} else {
-			log.WithFields(log.Fields{"content-length": len(data), "response_status": resp.StatusCode, "url": rawUrl, "response_time": time.Since(startTime).Seconds()}).Debug(modeType + " response")
-			success = true
-			break
+			return true, err
+		} else if data, err = ioutil.ReadAll(resp.Body); err != nil {
+			return true, err
+		} else if err = json.Unmarshal(data, model); err != nil {
+			return true, err
 		}
-	}
 
-	if !success {
-		return fmt.Errorf("Unable to retrieve resource at %s", rawUrl)
-	}
+		log.WithFields(log.Fields{"content-length": len(data),
+			"response_status": resp.StatusCode,
+			"url":             rawUrl,
+			"response_time":   time.Since(startTime).Seconds(),
+		}).Debug(modeType + " response")
 
-	return nil
+		return false, nil
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "Unable to retrieve resource at "+rawUrl)
+	} else {
+		return nil
+
+	}
 }
 
 func buildSubjects(njitSubjects []*NSubject) (s []*model.Subject) {

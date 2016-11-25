@@ -41,15 +41,21 @@ func main() {
 
 	var oldUniversity model.University
 
-	model.UnmarshallMessage(*format, firstFile, &oldUniversity)
+	if err := model.UnmarshallMessage(*format, firstFile, &oldUniversity); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	var newUniversity model.University
 
-	model.UnmarshallMessage(*format, secondFile, &newUniversity)
+	if err := model.UnmarshallMessage(*format, secondFile, &newUniversity); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	filteredUniversity := model.DiffAndFilter(oldUniversity, newUniversity)
 
-	buf := model.MarshalMessage(*format, filteredUniversity)
-
-	io.Copy(os.Stdout, buf)
+	if reader, err := model.MarshalMessage(*format, filteredUniversity); err != nil {
+		log.WithError(err).Fatal()
+	} else {
+		io.Copy(os.Stdout, reader)
+	}
 }

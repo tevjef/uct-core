@@ -36,15 +36,26 @@ func main() {
 	}
 
 	var university model.University
-	model.UnmarshallMessage(*format, input, &university)
 
-	model.ValidateAll(&university)
+	if err := model.UnmarshallMessage(*format, input, &university); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
+
+	if err := model.ValidateAll(&university); err != nil {
+		log.WithError(err).Fatalf("Failed to validate message")
+	}
 
 	if *out != "" {
-		output := model.MarshalMessage(*out, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*out, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	} else {
-		output := model.MarshalMessage(*format, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*format, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	}
 }

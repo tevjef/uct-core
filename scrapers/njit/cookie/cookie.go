@@ -1,17 +1,16 @@
 package cookie
 
 import (
-	"net/http"
-	"sync"
 	log "github.com/Sirupsen/logrus"
+	"net/http"
 	"strconv"
+	"sync"
 )
 
 type BakedCookie struct {
 	sync.Mutex
 	cookie *http.Cookie
-	name string
-
+	name   string
 }
 
 func (b *BakedCookie) Get() *http.Cookie {
@@ -33,14 +32,14 @@ type cookieCutout interface {
 
 func New(cookies []*http.Cookie, init func(baked *BakedCookie) error) *CookieCutter {
 	cc := &CookieCutter{
-		cq: make(chan *BakedCookie, len(cookies)),
+		cq:   make(chan *BakedCookie, len(cookies)),
 		peek: nil,
 	}
 
 	cc.wg.Add(len(cookies))
 
 	for i := range cookies {
-		bc := &BakedCookie{cookie:cookies[i], name: strconv.Itoa(i)}
+		bc := &BakedCookie{cookie: cookies[i], name: strconv.Itoa(i)}
 		go cc.initializeCookie(bc, init)
 	}
 
@@ -53,7 +52,7 @@ func (cc *CookieCutter) initializeCookie(baked *BakedCookie, init func(baked *Ba
 	if err := init(baked); err != nil {
 		log.Fatalln("failed to initialize cookie:", err)
 	}
-	cc.cq <-baked
+	cc.cq <- baked
 	cc.wg.Done()
 }
 
@@ -68,7 +67,7 @@ func (cc *CookieCutter) Push(baked *BakedCookie, onPush func(baked *BakedCookie)
 }
 
 func (cc *CookieCutter) Pop(onPop func(baked *BakedCookie) error) *BakedCookie {
-	bc := <- cc.cq
+	bc := <-cc.cq
 	if onPop != nil {
 		if err := onPop(bc); err == nil {
 
@@ -81,7 +80,7 @@ func (cc *CookieCutter) Pop(onPop func(baked *BakedCookie) error) *BakedCookie {
 }
 
 type CookieCutter struct {
-	wg sync.WaitGroup
-	cq chan *BakedCookie
+	wg   sync.WaitGroup
+	cq   chan *BakedCookie
 	peek *BakedCookie
 }

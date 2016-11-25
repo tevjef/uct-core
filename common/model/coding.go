@@ -5,39 +5,40 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"io"
 	"io/ioutil"
 	"strconv"
 )
 
-func MarshalMessage(format string, m University) *bytes.Reader {
+func MarshalMessage(format string, m University) (*bytes.Reader, error) {
 	var out []byte
 	var err error
 	if format == JSON {
 		out, err = json.Marshal(m)
 		if err != nil {
-			log.Fatalln("Failed to encode message:", err)
+			return nil, errors.Wrap(err, "failed to encode message")
 		}
 	} else if format == PROTOBUF {
 		out, err = m.Marshal()
 		if err != nil {
-			log.Fatalln("Failed to encode message:", err)
+			return nil, errors.Wrap(err, "failed to encode message")
 		}
 	}
-	return bytes.NewReader(out)
+	return bytes.NewReader(out), nil
 }
 
 func UnmarshallMessage(format string, r io.Reader, m *University) error {
 	if format == JSON {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(r, &*m); err != nil {
-			log.Fatalln("Failed to unmarshal message:", err)
+			return err
 		}
 	} else if format == PROTOBUF {
 		data, err := ioutil.ReadAll(r)
 		if err = m.Unmarshal(data); err != nil {
-			log.Fatalln("Failed to unmarshal message:", err)
+			return err
 		}
 	}
 	if m.Equal(University{}) {
@@ -50,7 +51,7 @@ func CheckUniqueSubject(subjects []*Subject) {
 	m := make(map[string]int)
 	for subjectIndex := range subjects {
 		subject := subjects[subjectIndex]
-		key := subject.Season + subject.Year + subject.Name
+		key := subject.Season + subject.Year + subject.Name + subject.Number
 		m[key]++
 		if m[key] > 1 {
 			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")

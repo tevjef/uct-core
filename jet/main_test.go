@@ -15,7 +15,7 @@ func Test_parseArgs(t *testing.T) {
 		args args
 		want []string
 	}{
-		{args:args{[]string{"asd", "asd", "asd", "--scraper", "rutgers","-u", "NK", "-c"}}, want:[]string{"-u", "NK", "-c"}},
+		{args: args{[]string{"asd", "asd", "asd", "--scraper", "rutgers", "-u", "NK", "-c"}}, want: []string{"-u", "NK", "-c"}},
 	}
 	for _, tt := range tests {
 		if got := parseArgs(tt.args.str); !reflect.DeepEqual(got, tt.want) {

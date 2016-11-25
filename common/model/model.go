@@ -74,7 +74,7 @@ func (s Period) String() string {
 }
 
 const (
-	Fall = "fall"
+	Fall   = "fall"
 	Spring = "spring"
 	Summer = "summer"
 	Winter = "winter"
@@ -96,15 +96,24 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
-var topicRegex, err = regexp.Compile("[^A-Za-z0-9-_.~% ]+")
+func isValidTopicRune(char rune) bool {
+	isDash := char == rune('-')
+	isUnderscore := char == rune('_')
+	isDot := char == rune('.')
+	isTilde := char == rune('~')
+	isPercent := char == rune('%')
+	return unicode.IsLetter(char) || unicode.IsNumber(char) || unicode.IsSpace(char) || isDash || isUnderscore || isDot || isTilde || isPercent
+}
 
 func ToTopicName(str string) string {
-	topicRegex := topicRegex.Copy()
-	str = trim(topicRegex.ReplaceAllString(str, ""))
-
+	// replaces spaces with dots
 	var lastRune rune
 	dot := rune('.')
 	str = strings.Map(func(r rune) rune {
+		if !isValidTopicRune(r) {
+			return -1
+		}
+
 		if unicode.IsSpace(r) || r == dot {
 			if unicode.IsSpace(lastRune) || lastRune == dot {
 				return -1
@@ -129,7 +138,7 @@ func ToTopicId(str string) string {
 	return strconv.FormatUint(topicHash.Sum64(), 10)
 }
 
-func toTitle(str string) string {
+func ToTitle(str string) string {
 	str = strings.Title(strings.ToLower(str))
 
 	for i := len(str) - 1; i != 0; i-- {
@@ -213,7 +222,7 @@ func (sub *Subject) Validate(uni *University) {
 	}
 
 	sub.Name = TrimAll(sub.Name)
-	sub.Name = toTitle(sub.Name)
+	sub.Name = ToTitle(sub.Name)
 
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
@@ -234,7 +243,7 @@ func (course *Course) Validate(subject *Subject) {
 	}
 
 	course.Name = TrimAll(course.Name)
-	course.Name = toTitle(course.Name)
+	course.Name = ToTitle(course.Name)
 
 	// Number
 	if course.Number == "" {
@@ -614,10 +623,10 @@ func (a SubjectByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
 }
 
-func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
-	filteredUniversity = uni2
-	oldSubjects := uni.Subjects
-	newSubjects := uni2.Subjects
+func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
+	filteredUniversity = newUni
+	oldSubjects := oldUni.Subjects
+	newSubjects := newUni.Subjects
 
 	var filteredSubjects []*Subject
 	// For each newer subject
@@ -628,7 +637,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			break
 		}
 
-		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
+		if !newSubjects[s].Equal(oldSubjects[s]) {
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -638,7 +647,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					break
 				}
 
-				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
+				if !newCourses[c].Equal(oldCourses[c]) {
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					oldSectionFields := logSection(oldSections, "old")
@@ -649,8 +658,8 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							filteredSections = newSections
 							break
 						}
-						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							fullSection := log.Fields{"old_full_section":oldSections[e].String(), "new_full_section":newSections[e].String()}
+						if !newSections[e].Equal(oldSections[e]) {
+							fullSection := log.Fields{"old_full_section": oldSections[e].String(), "new_full_section": newSections[e].String()}
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber, "old_status": oldSections[e].Status,
 								"new_call_number": newSections[e].CallNumber, "new_status": newSections[e].Status,
