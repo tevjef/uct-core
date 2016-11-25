@@ -150,6 +150,10 @@ func entryPoint(result chan model.University) {
 		log.Fatal(err)
 	}
 
+	if school.Name == "" {
+		return
+	}
+
 	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
 
 	result <- school
