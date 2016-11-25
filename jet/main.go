@@ -165,11 +165,10 @@ func entryPoint(result chan model.University) {
 
 	if school.Name == "" {
 		return
+	} else {
+		log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
+		result <- school
 	}
-
-	log.WithFields(log.Fields{"scraper_name": app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
-
-	result <- school
 }
 
 func parseArgs(str []string) []string {
