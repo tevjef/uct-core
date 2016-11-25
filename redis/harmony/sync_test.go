@@ -75,7 +75,7 @@ func TestRedisSync_calculateOffset_client_1(t *testing.T) {
 	rsync.registerInstance()
 
 	expected := int64(0)
-	result := rsync.calculateOffset()
+	result := rsync.updateOffset()
 
 	assert.Equal(t, expected, result)
 
@@ -97,7 +97,7 @@ func TestRedisSync_calculateOffset_client_3(t *testing.T) {
 	rsync.registerInstance()
 
 	expected := int64(40)
-	result := rsync.calculateOffset()
+	result := rsync.updateOffset()
 
 	assert.Equal(t, expected, result)
 
@@ -118,7 +118,7 @@ func TestRedisSync_calculateOffset_client_n(t *testing.T) {
 
 	expected := int64(59)
 
-	result := rsync.calculateOffset()
+	result := rsync.updateOffset()
 
 	assert.Equal(t, expected, result)
 
@@ -178,3 +178,4 @@ func TestRedisSync_Sync(t *testing.T) {
 
 	select {}
 }
+

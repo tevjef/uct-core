@@ -7,6 +7,8 @@ import (
 	"uct/redis"
 
 	log "github.com/Sirupsen/logrus"
+	"sync"
+	"uct/redis/lock"
 )
 
 type RedisSync struct {
@@ -14,37 +16,42 @@ type RedisSync struct {
 	uctRedis       *redishelper.RedisWrapper
 	syncInterval   time.Duration
 	syncExpiration time.Duration
+	listMu         lock.Lock
+	countMu        lock.Lock
+	mu             sync.Mutex
+
+	nsSpace     string
+	nsInstances string
+	nsHealth    string
 }
 
 type Instance struct {
-	guid        string
 	id          string
 	position    int64
 	count       int64
 	offset      time.Duration
 	timeQuantum time.Duration
+	mu          sync.Mutex
 }
-
-var (
-	nsSpace     string
-	nsInstances string
-	nsHealth    string
-)
 
 const (
 	envRedisSyncInterval   = "UCT_REDIS_SYNC_INTERVAL"
 	envRedisSyncExpiration = "UCT_REDIS_SYNC_EXPIRATION"
 )
 
+// number of instances
+// -- by number of keys with the same id*
+// -
+// determine position
+// -- push unto list
 func New(uctRedis *redishelper.RedisWrapper, timeQuantum time.Duration, appId string) *RedisSync {
 	// Setup namespaces
-	nsSpace = uctRedis.NameSpace + ":sync"
-	nsInstances = nsSpace + ":instance"
-	nsHealth = nsSpace + ":health"
+	nsSpace := uctRedis.NameSpace + ":sync"
+	nsInstances := nsSpace + ":instance"
+	nsHealth := nsSpace + ":health"
 
 	rs := &RedisSync{
 		instance: Instance{
-			guid:        appId,
 			timeQuantum: timeQuantum,
 			position:    -1,
 			offset:      -1,
@@ -53,6 +60,9 @@ func New(uctRedis *redishelper.RedisWrapper, timeQuantum time.Duration, appId st
 		uctRedis:       uctRedis,
 		syncInterval:   2 * time.Second,
 		syncExpiration: 4 * time.Second,
+		nsSpace:        nsSpace,
+		nsInstances:    nsInstances,
+		nsHealth:       nsHealth,
 	}
 
 	if env := os.Getenv(envRedisSyncInterval); env != "" {
@@ -80,6 +90,11 @@ func (rsync *RedisSync) Sync(cancel chan bool) <-chan Instance {
 
 func (rsync *RedisSync) beginSync(instanceConfig chan<- Instance, cancel <-chan bool) {
 	ticker := time.NewTicker(rsync.syncInterval)
+
+	//var lastOffset int64
+	//var lastPosition int64
+	var lastCount int64
+
 	for {
 		select {
 		case <-ticker.C:
@@ -100,19 +115,18 @@ func (rsync *RedisSync) beginSync(instanceConfig chan<- Instance, cancel <-chan 
 				// Register instance to list if not already exists
 				rsync.registerInstance()
 
-				// Get the number of currently alive instances, if it's less that the last count but not 0
-				// Unregister all instances all instances. They will all reorder themselves on their next ping
-				instanceCount := rsync.getInstanceCount()
-				if instanceCount < rsync.instance.count && instanceCount != 0 {
+				// Get the number of currently alive instances, if its less than the last count and not 0
+				// Unregister all instances. They will all register themselves on their next ping
+				if rsync.instance.count() < lastCount && lastCount != 0 {
 					rsync.unregisterAll()
 				}
 
 				// Store the current number of instances for future reference
-				rsync.instance.count = rsync.getInstanceCount()
+				lastCount = rsync.instance.count()
 
 				// Calculate the offset given a duration and channel it so that the application update it's offset
 				oldOffset := rsync.instance.offset
-				rsync.instance.offset = time.Duration(rsync.calculateOffset()) * time.Second
+				rsync.instance.offset = time.Duration(rsync.updateOffset()) * time.Second
 
 				// Send new offset on scale up and down???
 				if rsync.instance.offset != oldOffset {
@@ -130,7 +144,9 @@ func (rsync *RedisSync) beginSync(instanceConfig chan<- Instance, cancel <-chan 
 
 // Deletes the list at key `nsInstances`
 func (rsync *RedisSync) unregisterAll() {
-	rsync.uctRedis.Client.Del(nsInstances)
+	rsync.listMu.Lock()
+	rsync.uctRedis.Client.Del(rsync.nsInstances)
+	rsync.listMu.Unlock()
 }
 
 // Pushes this instanceId for this instance on the list nsInstances if the
@@ -138,33 +154,54 @@ func (rsync *RedisSync) unregisterAll() {
 // the instanceId was pushed to
 func (rsync *RedisSync) registerInstance() {
 	// Reset list expiration
-	rsync.uctRedis.Client.Expire(nsInstances, rsync.syncExpiration)
-	if _, err := rsync.uctRedis.RPushNotExist(nsInstances, rsync.instance.id); err != nil {
-		log.WithError(err).Fatalln("failed to claim position in list:", nsInstances)
-	}
+	rsync.uctRedis.Client.Expire(rsync.nsInstances, rsync.syncExpiration)
 
-	rsync.instance.position = rsync.getPosition()
+	rsync.listMu.Lock()
+	if _, err := rsync.uctRedis.RPushNotExist(rsync.nsInstances, rsync.instance.id); err != nil {
+		log.WithError(err).Fatalln("failed to claim position in list:", rsync.nsInstances)
+	}
+	rsync.listMu.Unlock()
+
+	rsync.updatePosition()
 }
 
 // Get the index position on the list where the instance resides
-func (rsync *RedisSync) getPosition() int64 {
-	if index, err := rsync.uctRedis.Exists(nsInstances, rsync.instance.id); err != nil {
-		log.WithError(err).Fatalln("failed to check if key exists in list:", nsInstances)
-		return -1
+func (rsync *RedisSync) updatePosition() {
+	rsync.listMu.Lock()
+	defer rsync.listMu.Unlock()
+
+	if index, err := rsync.uctRedis.Exists(rsync.nsInstances, rsync.instance.id); err != nil {
+		log.WithError(err).Fatalln("failed to check if key exists in list:", rsync.nsInstances)
 	} else {
-		return index
+		rsync.instance.mu.Lock()
+		rsync.instance.position = index
+		rsync.instance.mu.Unlock()
 	}
+}
+
+func (inst *Instance) position() int64 {
+	inst.mu.Lock()
+	defer inst.mu.Unlock()
+	return inst.position
 }
 
 // Get the number of instance that have performed a ping, it finds
 // instances by pattern matching the prefix of the instanceId
-func (rsync *RedisSync) getInstanceCount() int64 {
-	if count, err := rsync.uctRedis.Count(nsHealth + ":*"); err != nil {
+func (rsync *RedisSync) updateInstanceCount() {
+	if count, err := rsync.uctRedis.Count(rsync.nsHealth + ":*"); err != nil {
 		log.WithError(err).Fatalln("failed to get number of instances")
 	} else {
-		return count
+		rsync.instance.mu.Lock()
+		rsync.instance.count = count
+		rsync.instance.mu.Unlock()
 	}
-	return -1
+}
+
+func (inst *Instance) count() int64 {
+	inst.mu.Lock()
+	defer inst.mu.Unlock()
+
+	return inst.count
 }
 
 func (rsync *RedisSync) ping() {
@@ -178,12 +215,16 @@ func (rsync *RedisSync) pingWithExpiration(duration time.Duration) {
 	}
 }
 
-func (rsync *RedisSync) calculateOffset() int64 {
+func (rsync *RedisSync) updateOffset() int64 {
 	time := int64(rsync.instance.timeQuantum.Seconds())
-	instances := rsync.getInstanceCount()
+	rsync.instance.mu.Lock()
+	instances := rsync.instance.count
 	position := rsync.instance.position
 
-	return calculateOffset(time, instances, position)
+	rsync.instance.offset = calculateOffset(time, instances, position)
+	rsync.instance.mu.Unlock()
+
+	return
 }
 
 func calculateOffset(interval, instances, position int64) int64 {
