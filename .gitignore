@@ -51,4 +51,4 @@ secrets.go
 *.txt
 
 .env
-rutgers
+vendor

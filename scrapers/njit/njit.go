@@ -4,9 +4,9 @@ import (
 	"github.com/Sirupsen/logrus"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"uct/common/model"
-	"strings"
 )
 
 type NSemesters struct {

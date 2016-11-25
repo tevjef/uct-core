@@ -58,7 +58,6 @@ func prepareForSync(instance Instance, start func(cancel chan bool), interval ti
 
 func scrapeOnTick(start func(cancel chan bool), ticker *time.Ticker, cancel chan bool) {
 	notifyCancel := make(chan bool, 1)
-tickLoop:
 	for {
 		select {
 		case <-ticker.C:
@@ -69,7 +68,7 @@ tickLoop:
 			ticker.Stop()
 			notifyCancel <- true
 			close(cancel)
-			break tickLoop
+			return
 		}
 	}
 }

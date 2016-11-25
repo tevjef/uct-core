@@ -270,7 +270,7 @@ var (
 	ListSubjectQuery = `SELECT subject.id, university_id, subject.name, subject.number, subject.season, subject.year, subject.topic_name, subject.topic_id FROM subject JOIN university ON university.id = subject.university_id
 									AND university.topic_name = :topic_name
 									AND season = :subject_season
-									AND year = :subject_year ORDER BY subject.id`
+									AND year = :subject_year ORDER BY subject.name`
 
 	SelectCourseQuery = `SELECT data FROM course WHERE course.topic_name = :topic_name ORDER BY course.id`
 

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	app    = kingpin.New("print", "An application to print and translate json and protobuf")
+	app    = kingpin.New("push", "An application to print and translate json and protobuf")
 	format = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
 	out    = app.Flag("output", "output format").Short('o').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").String()
 	file   = app.Arg("input", "file to print").File()
@@ -48,16 +48,10 @@ func main() {
 	}
 
 	if *out != "" {
-		if output, err := model.MarshalMessage(*out, university); err != nil {
-			log.WithError(err).Fatal()
-		} else {
-			io.Copy(os.Stdout, output)
-		}
+		output := model.MarshalMessage(*out, university)
+		io.Copy(os.Stdout, output)
 	} else {
-		if output, err := model.MarshalMessage(*format, university); err != nil {
-			log.WithError(err).Fatal()
-		} else {
-			io.Copy(os.Stdout, output)
-		}
+		output := model.MarshalMessage(*format, university)
+		io.Copy(os.Stdout, output)
 	}
 }

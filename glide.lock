@@ -1,5 +1,5 @@
 hash: a8e857a0d9d0707503052cb84826498094b55b6f4fa16a67dc02becc8da9f13a
-updated: 2016-10-07T23:10:12.150194985-04:00
+updated: 2016-11-21T14:19:19.000516909-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -7,8 +7,6 @@ imports:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
-- name: github.com/andybalholm/cascadia
-  version: 3ad29d1ad1c4f2023e355603324348cf1f4b2d48
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/bradfitz/gomemcache
@@ -18,12 +16,12 @@ imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/garyburd/redigo
-  version: b8dc90050f24c1a73a52f107f3f575be67b21b7c
+  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
   subpackages:
   - redis
   - internal
 - name: github.com/gin-gonic/contrib
-  version: 547e518040cfb96576b507d2f26779ab9c6fc829
+  version: cf28f84316e50a05a59d174b37c26ad9a43a1201
   subpackages:
   - ginrus
 - name: github.com/gin-gonic/gin
@@ -36,22 +34,22 @@ imports:
   subpackages:
   - proto
   - jsonpb
+- name: github.com/guregu/null
+  version: 41961cea0328defc5f95c1c473f89ebf0d1813f6
 - name: github.com/influxdata/influxdb
-  version: ff307047057b7797418998a4ed709b0c0f346324
+  version: 800da5732b91c816b0a097acf8887fa2af1efa1a
   subpackages:
   - client/v2
-  - models
-  - pkg/escape
 - name: github.com/jmoiron/sqlx
-  version: 7396209bbeada6a4fcc28aa9408f89b2e71cac39
+  version: f71d5ee01769df469d115332106ef504ded071dc
   subpackages:
   - reflectx
 - name: github.com/jpillora/backoff
-  version: 0496a6c14df020789376f4d4a261273d5ddb36ec
+  version: a6f64285fd4072883335339357436b78d62c96a4
 - name: github.com/kelseyhightower/envconfig
-  version: 13674b2d056fb658a00ba3f36e78043ced07c924
+  version: 9aca109c9aec4633fced9717c4a09ecab3d33111
 - name: github.com/lib/pq
-  version: 4dd446efc17690bc53e154025146f73203b18309
+  version: d8eeeb8bae8896dd8e1b7e514ab0d396c4f12a1b
   subpackages:
   - oid
 - name: github.com/manucorporat/sse
@@ -59,15 +57,17 @@ imports:
 - name: github.com/mattn/go-colorable
   version: 043ae16291351db8465272edf465c9f388161627
 - name: github.com/mattn/go-isatty
-  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/mattn/go-xmpp
-  version: e44d1877bb457f5c3991903e9934a31e55c3a2ad
+  version: f4550b5399387339df5ce4c3f88c1ef85333bdd5
+- name: github.com/oleiade/reflections
+  version: 0e86b3c98b2ff33e30c85cfe97d9a63d439fe7eb
 - name: github.com/pborman/uuid
-  version: c55201b036063326c5b1b89ccfe45a184973d073
+  version: 3d4f2ba23642d3cfd06bd4b54cf03d99d95c0f1b
 - name: github.com/pkg/errors
-  version: 839d9e913e063e28dfd0e6c7b7512793e0a48be9
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/pquerna/ffjson
-  version: 5b79949af5378123d6b0672afc88d3b214bb4f9f
+  version: a29c662791e4de7fc53a6cf209c9af657bba96f3
   subpackages:
   - ffjson
   - fflib/v1
@@ -77,7 +77,7 @@ imports:
 - name: github.com/robfig/go-cache
   version: 9fc39e0dbf62c034ec4e45e6120fc69433a3ec51
 - name: github.com/satori/go.uuid
-  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/contrib
@@ -86,20 +86,16 @@ imports:
   - cache
 - name: github.com/tevjef/go-gcm
   version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
-- name: github.com/vlad-doru/influxus
-  version: 2a7a59926db4661bcdc39c50a5ab0fdc654a885a
 - name: golang.org/x/exp
-  version: 3c4824dd1cddf3c4eae78613f4a5caf2caf17675
+  version: 03962049e143533dbf9467cffb8a52a15595b718
   subpackages:
   - utf8string
 - name: golang.org/x/net
-  version: 84ba27dd5b2d8135e9da1395277f2c9333a2ffda
+  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
   subpackages:
-  - html
   - context
-  - html/atom
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: b699b7032584f0953262cb2788a0ca19bb494703
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2
@@ -109,7 +105,7 @@ imports:
 - name: gopkg.in/bsm/ratelimit.v1
   version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/redis.v4
-  version: 49f197e6d11de35192fce19b2b9fd2f9b8b13c4a
+  version: 8a8d997ad58dc600d2ff0f64914102192f3b51ac
   subpackages:
   - internal
   - internal/consistenthash
@@ -119,7 +115,7 @@ imports:
   - internal/proto
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib

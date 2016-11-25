@@ -95,11 +95,11 @@ func Test_extractMeetings(t *testing.T) {
 		args         args
 		wantMeetings []*MeetingTime
 	}{
-		{args:args{&MeetingTime{Sunday:true, Monday:true, Tuesday:true , Wednesday:true, Thursday:true, Friday:true, Saturday:true}},
-			wantMeetings:[]*MeetingTime{{Sunday:true}, {Monday:true}, {Tuesday:true},{Wednesday:true}, {Thursday:true}, {Friday:true}, {Saturday:true},}},
+		{args: args{&MeetingTime{Sunday: true, Monday: true, Tuesday: true, Wednesday: true, Thursday: true, Friday: true, Saturday: true}},
+			wantMeetings: []*MeetingTime{{Sunday: true}, {Monday: true}, {Tuesday: true}, {Wednesday: true}, {Thursday: true}, {Friday: true}, {Saturday: true}}},
 
-		{args:args{&MeetingTime{MeetingScheduleType:"ADV"}},
-			wantMeetings:[]*MeetingTime{{MeetingScheduleType:"ADV"}}},
+		{args: args{&MeetingTime{MeetingScheduleType: "ADV"}},
+			wantMeetings: []*MeetingTime{{MeetingScheduleType: "ADV"}}},
 	}
 	for _, tt := range tests {
 		if gotMeetings := (&NCourse{}).extractMeetings(tt.args.njitMeeting); !reflect.DeepEqual(gotMeetings, tt.wantMeetings) {
