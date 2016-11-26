@@ -153,14 +153,10 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 				}
 
 				// Send new offset on scale up and down???
-				if offset := rsync.instance.offset(); offset != lastOffset {
-					log.Infoln("Sending new offset", offset, rsync.instance.id)
-					instanceConfig <- *rsync.instance
+				instanceConfig <- *rsync.instance
 
-					// Calculate the offset given a duration and channel it so that the application update it's offset
-					lastOffset = offset
-				}
-
+				// Calculate the offset given a duration and channel it so that the application update it's offset
+				lastOffset = rsync.instance.offset()
 			}()
 		case <-cancel:
 			ticker.Stop()
