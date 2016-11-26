@@ -7,6 +7,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+var fields = log.Fields{}
+
 func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(cancel chan struct{})) {
 	go func() {
 		rsync := newSync(wrapper, func(config *config) {
@@ -19,8 +21,10 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(can
 		for {
 			select {
 			case instance := <-newInstanceConfig:
-				log.WithFields(log.Fields{"offset": instance.offset().Seconds(), "instances": instance.count(),
-					"position": instance.position()}).Infoln("new offset recieved")
+				fields = log.Fields{"offset": instance.offset().Seconds(), "instances": instance.count(),
+					"position": instance.position()}
+
+				log.WithFields(fields).Infoln("new offset recieved")
 
 				// No need to cancel the previous go routine, there isn't one
 				if cancelSync != nil {
@@ -61,6 +65,7 @@ func scrapeOnTick(start func(cancel chan struct{}), ticker *time.Ticker, cancel 
 	for {
 		select {
 		case <-ticker.C:
+			log.WithFields(fields).Infoln("sync info")
 			go start(notifyCancel)
 		case <-cancel:
 			log.Infoln("New offset received, cancelling old ticker")
