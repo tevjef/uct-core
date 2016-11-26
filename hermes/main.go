@@ -33,7 +33,7 @@ var (
 	preparedStmts = make(map[string]*sqlx.NamedStmt)
 )
 
-var redisWrapper *redishelper.RedisWrapper
+var helper *redis.Helper
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -50,7 +50,7 @@ func main() {
 	// Start profiling
 	go model.StartPprof(config.GetDebugSever(app.Name))
 
-	redisWrapper = redishelper.New(config, app.Name)
+	helper = redis.NewHelper(config, app.Name)
 
 	var err error
 	// Open database connection
@@ -102,9 +102,9 @@ func waitForPop() chan notificationPair {
 }
 
 func popNotification() (*notificationPair, error) {
-	if topic, err := redisWrapper.Client.BRPopLPush(notification.MainQueue, notification.DoneQueue, 0).Result(); err == nil {
+	if topic, err := helper.Client.BRPopLPush(notification.MainQueue, notification.DoneQueue, 0).Result(); err == nil {
 		dataNamespace := notification.MainQueueData + topic
-		if b, err := redisWrapper.Client.Get(dataNamespace).Bytes(); err != nil {
+		if b, err := helper.Client.Get(dataNamespace).Bytes(); err != nil {
 			return nil, errors.Wrap(err, "error getting notification data")
 		} else {
 			uctNotification := &model.UCTNotification{}
@@ -112,7 +112,7 @@ func popNotification() (*notificationPair, error) {
 				return nil, err
 			} else if jsonBytes, err := ffjson.Marshal(uctNotification); err != nil {
 				return nil, err
-			} else if _, err := redisWrapper.Client.Del(topic).Result(); err != nil {
+			} else if _, err := helper.Client.Del(topic).Result(); err != nil {
 				log.WithError(err).Warningln("failed to del topic data")
 				return &notificationPair{n: uctNotification, raw: string(jsonBytes)}, nil
 			} else {

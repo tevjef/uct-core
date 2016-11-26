@@ -19,13 +19,13 @@ func audit(university string) {
 	var section int
 	var meeting int
 	var metadata int
-	
+
 	var diffSubject int
 	var diffCourse int
 	var diffSection int
 	var diffMeeting int
 	var diffMetadata int
-	
+
 	var diffSerialCourse int
 	var diffSerialSection int
 	var diffSerialSubject int
@@ -64,8 +64,7 @@ func audit(university string) {
 			diffMeeting += count
 		case count := <-diffMetadataCh:
 			diffMetadata += count
-			
-			
+
 		case count := <-diffSerialSubjectCh:
 			diffSerialSubject += count
 		case count := <-diffSerialCourseCh:
@@ -85,24 +84,24 @@ func audit(university string) {
 				"upserts":         upserts,
 				"existential":     existential,
 
-				"subjectCount":    subject,
-				"courseCount":     course,
-				"sectionCount":    section,
-				"meetingCount":    meeting,
-				"metadataCount":   metadata,
+				"subjectCount":  subject,
+				"courseCount":   course,
+				"sectionCount":  section,
+				"meetingCount":  meeting,
+				"metadataCount": metadata,
 
-				"diffSubjectCount":    diffSubject,
-				"diffCourseCount":     diffCourse,
-				"diffSectionCount":    diffSection,
-				"diffMeetingCount":    diffMeeting,
-				"diffMetadataCount":   diffMetadata,
+				"diffSubjectCount":  diffSubject,
+				"diffCourseCount":   diffCourse,
+				"diffSectionCount":  diffSection,
+				"diffMeetingCount":  diffMeeting,
+				"diffMetadataCount": diffMetadata,
 
-				"diffSerialSubject":   diffSerialSubject,
-				"diffSerialCourse":    diffSerialCourse,
-				"diffSerialSection":   diffSerialSection,
-				"diffSerialMeeting":    diffSerialMeeting,
-				"diffSerialMetadata":   diffSerialMetadata,
-				"elapsed":         time.Since(start).Seconds(),
+				"diffSerialSubject":  diffSerialSubject,
+				"diffSerialCourse":   diffSerialCourse,
+				"diffSerialSection":  diffSerialSection,
+				"diffSerialMeeting":  diffSerialMeeting,
+				"diffSerialMetadata": diffSerialMetadata,
+				"elapsed":            time.Since(start).Seconds(),
 			}).Info("done!")
 
 			doneAudit <- true
@@ -112,10 +111,10 @@ func audit(university string) {
 }
 
 var (
-	insertionsCh        = make(chan int)
-	updatesCh           = make(chan int)
-	upsertsCh           = make(chan int)
-	existentialCh       = make(chan int)
+	insertionsCh  = make(chan int)
+	updatesCh     = make(chan int)
+	upsertsCh     = make(chan int)
+	existentialCh = make(chan int)
 
 	subjectCh  = make(chan int)
 	courseCh   = make(chan int)
