@@ -148,7 +148,7 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 				// Unregister all instances. They will all register themselves on their next ping
 				//log.WithFields(log.Fields{"count": rsync.instance.count(), "last_count": lastCount}).Println()
 				if currentCount := rsync.instance.count(); currentCount < lastCount && lastCount != 0 {
-					rsync.unregisterAll(currentCount) /* */
+					rsync.unregisterAll() /* */
 					return
 				}
 
@@ -165,7 +165,7 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 	}
 }
 
-func (rsync *redisSync) unregisterAll(currentCount int64) {
+func (rsync *redisSync) unregisterAll() {
 	rsync.listMu.Lock()
 	defer rsync.listMu.Unlock()
 
@@ -182,6 +182,13 @@ func (rsync *redisSync) registerInstance() {
 	// If "some time" goes by without another ping, this instance
 	// is considered to be dead
 	rsync.ping()
+
+
+	// Clear list if there are currently no instances
+	// An old list of instances may not have expired yet
+	if rsync.updateInstanceCount(); rsync.instance.count() == 0 {
+		rsync.unregisterAll()
+	}
 
 	if _, err := rsync.listMu.Lock(); err != nil {
 		log.WithError(err).Fatalln("failed to aquire lock in registerInstance", rsync.instanceList)
