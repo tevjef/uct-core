@@ -18,20 +18,26 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(can
 		newInstanceConfig := rsync.sync(make(chan struct{}))
 
 		var cancelSync chan struct{}
+		var lastOffset time.Duration = -1
+
 		for {
 			select {
 			case instance := <-newInstanceConfig:
 				fields = log.Fields{"offset": instance.offset().Seconds(), "instances": instance.count(),
 					"position": instance.position()}
 
-				log.WithFields(fields).Infoln("new offset recieved")
+				if instance.offset() != lastOffset {
+					log.WithFields(fields).Infoln("new offset recieved")
 
-				// No need to cancel the previous go routine, there isn't one
-				if cancelSync != nil {
-					cancelSync <- struct{}{}
+					// No need to cancel the previous go routine, there isn't one
+					if cancelSync != nil {
+						cancelSync <- struct{}{}
+					}
+					cancelSync = make(chan struct{})
+					go prepareForSync(instance, start, interval, cancelSync)
 				}
-				cancelSync = make(chan struct{})
-				go prepareForSync(instance, start, interval, cancelSync)
+
+				lastOffset = instance.offset()
 			}
 		}
 	}()
@@ -41,19 +47,19 @@ func prepareForSync(instance instance, start func(cancel chan struct{}), interva
 	secondsTilNextMinute := time.Duration(60-time.Now().Second()) * time.Second
 	// Sleeps until the next minute + the calculated offset
 	dur := secondsTilNextMinute + instance.off
-	log.Infoln("Sleeping to syncronize for", dur.String())
+	log.Infoln("sleeping to syncronize for", dur.String())
 
 	cancelTicker := make(chan struct{}, 1)
 
 	syncTimer := time.AfterFunc(dur, func() {
-		log.Infoln("Ticker for", interval.String())
+		log.Infoln("ticker for", interval.String())
 		ticker := time.NewTicker(interval)
 		scrapeOnTick(start, ticker, cancelTicker)
 	})
 
 	<-cancel
 
-	log.Infoln("Cancelling previous ticker")
+	log.Infoln("cancelling previous ticker")
 	cancelTicker <- struct{}{}
 
 	// Stop timer if it has not stopped already
@@ -68,7 +74,7 @@ func scrapeOnTick(start func(cancel chan struct{}), ticker *time.Ticker, cancel 
 			log.WithFields(fields).Infoln("sync info")
 			go start(notifyCancel)
 		case <-cancel:
-			log.Infoln("New offset received, cancelling old ticker")
+			log.Infoln("new offset received, cancelling old ticker")
 			// Clean up then break
 			ticker.Stop()
 			notifyCancel <- struct{}{}
