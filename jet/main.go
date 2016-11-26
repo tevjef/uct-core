@@ -32,12 +32,14 @@ var (
 	scraperName    = app.Flag("scraper-name", "The scraper name, used in logging").Required().String()
 	command        = app.Flag("scraper", "The scraper this program wraps, the name of the executable").Required().String()
 	config         conf.Config
-	redisWrapper   *redishelper.RedisWrapper
+	helper         *redis.Helper
 )
 
 func main() {
 	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
 	app.Name = *scraperName
+
+	log.SetLevel(log.InfoLevel)
 
 	if *outputFormat != model.JSON && *outputFormat != model.PROTOBUF {
 		log.Fatalln("Invalid format:", *outputFormat)
@@ -62,9 +64,9 @@ func main() {
 			}
 		}
 
-		redisWrapper = redishelper.New(config, app.Name)
+		helper = redis.NewHelper(config, app.Name)
 
-		harmony.DaemonScraper(redisWrapper, *daemonInterval, func(cancel chan bool) {
+		harmony.DaemonScraper(helper, *daemonInterval, func(cancel chan struct{}) {
 			entryPoint(resultChan)
 		})
 
@@ -116,11 +118,11 @@ func pushToRedis(reader *bytes.Reader) {
 		model.CheckError(err)
 	} else {
 		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": hash(data)}).Info()
-		if err := redisWrapper.Client.Set(redisWrapper.NameSpace+":data:latest", data, 0).Err(); err != nil {
+		if err := helper.Client.Set(helper.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Fatalln(errors.New("failed to connect to redis server"))
 		}
 
-		if _, err := redisWrapper.LPushNotExist(redishelper.ScraperQueue, redisWrapper.NameSpace); err != nil {
+		if _, err := helper.LPushNotExist(redis.ScraperQueue, helper.NameSpace); err != nil {
 			log.Fatalln(errors.New("failed to queue univeristiy for upload"))
 		}
 	}

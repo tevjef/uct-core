@@ -1,12 +1,12 @@
-package redishelper
+package redis
 
-//log "github.com/Sirupsen/logrus"
 import (
 	"gopkg.in/redis.v4"
 	"uct/common/conf"
+	//log "github.com/Sirupsen/logrus"
 )
 
-type RedisWrapper struct {
+type Helper struct {
 	NameSpace string
 	Client    *redis.Client
 }
@@ -20,8 +20,8 @@ func nameSpaceForApp(appName string) string {
 	return BaseNamespace + appName
 }
 
-func New(config conf.Config, appName string) *RedisWrapper {
-	return &RedisWrapper{
+func NewHelper(config conf.Config, appName string) *Helper {
+	return &Helper{
 		NameSpace: nameSpaceForApp(appName),
 		Client: redis.NewClient(&redis.Options{
 			Addr:     config.GetRedisAddr(),
@@ -30,7 +30,7 @@ func New(config conf.Config, appName string) *RedisWrapper {
 	}
 }
 
-func (r RedisWrapper) FindAll(key string) ([]string, error) {
+func (r Helper) FindAll(key string) ([]string, error) {
 	if keys, err := r.Client.Keys(key).Result(); err != nil {
 		return nil, err
 	} else {
@@ -38,7 +38,7 @@ func (r RedisWrapper) FindAll(key string) ([]string, error) {
 	}
 }
 
-func (r RedisWrapper) Count(key string) (int64, error) {
+func (r Helper) Count(key string) (int64, error) {
 	if keys, err := r.FindAll(key); err != nil {
 		return -1, err
 	} else {
@@ -47,7 +47,16 @@ func (r RedisWrapper) Count(key string) (int64, error) {
 	}
 }
 
-func (r RedisWrapper) RPush(list, key string) (int64, error) {
+func (r Helper) ListSize(list string) (int64, error) {
+	if keys, err := r.Client.LRange(list, 0, -1).Result(); err != nil {
+		return -1, err
+	} else {
+		//log.WithFields(log.Fields{"key":key, "result": len(keys)}).Debugln("ListSize")
+		return int64(len(keys)), nil
+	}
+}
+
+func (r Helper) RPush(list, key string) (int64, error) {
 	if result, err := r.Client.RPush(list, key).Result(); err != nil {
 		return -1, err
 	} else {
@@ -56,9 +65,9 @@ func (r RedisWrapper) RPush(list, key string) (int64, error) {
 	}
 }
 
-func (r RedisWrapper) RPushNotExist(list, key string) (int64, error) {
+func (r Helper) RPushNotExist(list, key string) (int64, error) {
 	if i, err := r.Exists(list, key); err != nil {
-		//log.WithError(err).Panic("failed if exists on list:", list)
+		//log.WithError(err).Panic("failed if exists on list", list)
 	} else {
 		if i >= 0 {
 			return i, nil
@@ -68,12 +77,12 @@ func (r RedisWrapper) RPushNotExist(list, key string) (int64, error) {
 	if result, err := r.Client.RPush(list, key).Result(); err != nil {
 		return -1, err
 	} else {
-		//log.WithFields(log.Fields{"result":result}).Debugln("RPushNotExist")
+		//log.WithFields(log.Fields{"result":result}).Println("RPushNotExist")
 		return result, nil
 	}
 }
 
-func (r RedisWrapper) LPushNotExist(list, key string) (int64, error) {
+func (r Helper) LPushNotExist(list, key string) (int64, error) {
 	if i, err := r.Exists(list, key); err != nil {
 		//log.WithError(err).Panic("failed if exists on list:", list)
 	} else {
@@ -90,7 +99,7 @@ func (r RedisWrapper) LPushNotExist(list, key string) (int64, error) {
 	}
 }
 
-func (r RedisWrapper) LPush(list, key string) (int64, error) {
+func (r Helper) LPush(list, key string) (int64, error) {
 	if result, err := r.Client.LPush(list, key).Result(); err != nil {
 		return -1, err
 	} else {
@@ -99,7 +108,7 @@ func (r RedisWrapper) LPush(list, key string) (int64, error) {
 	}
 }
 
-func (r RedisWrapper) Exists(list, key string) (int64, error) {
+func (r Helper) Exists(list, key string) (int64, error) {
 	if result, err := r.Client.LRange(list, 0, -1).Result(); err != nil {
 		return -1, err
 	} else {

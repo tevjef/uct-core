@@ -31,7 +31,7 @@ func main() {
 	config = conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
-	redisWrapper := redishelper.New(config, app.Name)
+	redisWrapper := redis.NewHelper(config, app.Name)
 
 	// Start profiling
 	go model.StartPprof(config.GetDebugSever(app.Name))

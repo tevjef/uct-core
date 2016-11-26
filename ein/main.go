@@ -1,9 +1,9 @@
 package main
 
 import (
+	_ "expvar"
 	"fmt"
 	_ "net/http/pprof"
-	_ "expvar"
 	"os"
 	"strconv"
 	"strings"
@@ -13,10 +13,10 @@ import (
 	"uct/common/model"
 	"uct/redis"
 
+	"bytes"
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"bytes"
 )
 
 type App struct {
@@ -68,7 +68,7 @@ func main() {
 	go model.StartPprof(config.GetDebugSever(app.Name))
 
 	// Start redis client
-	wrapper := redishelper.New(config, app.Name)
+	wrapper := redis.NewHelper(config, app.Name)
 
 	// Initialize database connection
 	database, err := model.InitDB(config.GetDbConfig(app.Name))
@@ -81,7 +81,7 @@ func main() {
 
 	for {
 		log.Infoln("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(10*time.Minute, redishelper.ScraperQueue).Result(); err != nil {
+		if data, err := wrapper.Client.BRPop(10*time.Minute, redis.ScraperQueue).Result(); err != nil {
 			log.WithError(err).Warningln("Queue blocking exceeded timeout")
 			continue
 		} else {
