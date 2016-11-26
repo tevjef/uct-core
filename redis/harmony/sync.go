@@ -118,10 +118,18 @@ func (rsync *redisSync) sync(cancel chan struct{}) <-chan instance {
 }
 
 func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan struct{}) {
+
+	// Clean up previous instances
+	if keys, err := rsync.uctRedis.FindAll(rsync.healthSpace + ":*"); err != nil {
+		log.WithError(err).Fatalln("failed to retrieve all keys during clean up", rsync.instance.id)
+	} else if err := rsync.uctRedis.Client.Del(keys...).Err(); err != nil {
+		log.WithError(err).WithField("keys", keys).Fatalln("failed to delete all keys during clean up", rsync.instance.id)
+	} else if err := rsync.uctRedis.Client.Del(rsync.instanceList).Err(); err != nil {
+		log.WithError(err).Fatalln("failed to delete instance list", rsync.instance.id)
+	}
+
 	ticker := time.NewTicker(rsync.syncInterval)
 
-	var lastOffset time.Duration = -1
-	//var lastPosition int64
 	var lastCount int64
 
 	for {
@@ -152,11 +160,8 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 					return
 				}
 
-				// Send new offset on scale up and down???
+				// Send instance
 				instanceConfig <- *rsync.instance
-
-				// Calculate the offset given a duration and channel it so that the application update it's offset
-				lastOffset = rsync.instance.offset()
 			}()
 		case <-cancel:
 			ticker.Stop()
@@ -183,19 +188,12 @@ func (rsync *redisSync) registerInstance() {
 	// is considered to be dead
 	rsync.ping()
 
-
-	// Clear list if there are currently no instances
-	// An old list of instances may not have expired yet
-	if rsync.updateInstanceCount(); rsync.instance.count() == 0 {
-		rsync.unregisterAll()
-	}
-
 	if _, err := rsync.listMu.Lock(); err != nil {
-		log.WithError(err).Fatalln("failed to aquire lock in registerInstance", rsync.instanceList)
+		log.WithError(err).Fatalln("failed to aquire lock in registerInstance", rsync.instance.id)
 	} else if _, err = rsync.uctRedis.RPushNotExist(rsync.instanceList, rsync.instance.id); err != nil {
-		log.WithError(err).Fatalln("failed to claim position in list:", rsync.instanceList)
+		log.WithError(err).Fatalln("failed to claim position in list:", rsync.instance.id)
 	} else if err = rsync.listMu.Unlock(); err != nil {
-		log.WithError(err).Fatalln("failed to release lock in registerInstance", rsync.instanceList)
+		log.WithError(err).Fatalln("failed to release lock in registerInstance", rsync.instance.id)
 	} else {
 		rsync.updateInstanceCount()
 		rsync.updatePosition()
@@ -276,7 +274,8 @@ func (rsync *redisSync) updateOffset() {
 		"offset":    rsync.instance.off.Seconds(),
 		"interval":  rsync.instance.timeQuantum.Seconds(),
 		"instances": rsync.instance.c,
-		"position":  rsync.instance.pos}).Debugln(rsync.instance.id)
+		"position":  rsync.instance.pos,
+		"instance_id":rsync.instance.id}).Debugln(rsync.instance.id)
 
 }
 
@@ -285,7 +284,11 @@ func calculateOffset(interval, instances, position int64) int64 {
 	offset := (interval * position) / instances
 
 	if offset > interval {
-		log.WithFields(log.Fields{"offset": offset, "interval": interval, "instances": instances, "position": position}).Warnln("offset is more than interval")
+		log.WithFields(log.Fields{
+			"offset": offset,
+			"interval": interval,
+			"instances": instances,
+			"position": position}).Warnln("offset is more than interval")
 		offset = interval
 	}
 

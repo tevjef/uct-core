@@ -24,7 +24,7 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(can
 			select {
 			case instance := <-newInstanceConfig:
 				fields = log.Fields{"offset": instance.offset().Seconds(), "instances": instance.count(),
-					"position": instance.position()}
+					"position": instance.position(), "instance_id":instance.id}
 
 				if instance.offset() != lastOffset {
 					log.WithFields(fields).Infoln("new offset recieved")
