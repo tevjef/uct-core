@@ -83,7 +83,6 @@ const (
 const (
 	Open Status = 1 + iota
 	Closed
-	Cancelled
 )
 
 var status = [...]string{

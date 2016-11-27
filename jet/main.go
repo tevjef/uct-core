@@ -157,7 +157,7 @@ func entryPoint(result chan model.University) {
 	// DATA RACE!!!
 	go io.Copy(os.Stderr, stderr)
 
-	if err = model.UnmarshallMessage(*inputFormat, stdout, &school); err != nil {
+	if err = model.UnmarshalMessage(*inputFormat, stdout, &school); err != nil {
 		school = model.University{}
 	}
 

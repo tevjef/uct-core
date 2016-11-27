@@ -112,7 +112,7 @@ func main() {
 
 					// Decode new data
 					var newUniversity model.University
-					if err := model.UnmarshallMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
+					if err := model.UnmarshalMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
 						log.WithError(err).Panic("Error while unmarshalling new data")
 					}
 
@@ -124,7 +124,7 @@ func main() {
 					// Decode old data if have some
 					if oldRaw != "" && !*noDiff {
 						var oldUniversity model.University
-						if err := model.UnmarshallMessage(*format, strings.NewReader(oldRaw), &oldUniversity); err != nil {
+						if err := model.UnmarshalMessage(*format, strings.NewReader(oldRaw), &oldUniversity); err != nil {
 							log.WithError(err).Panic("Error while unmarshalling old data")
 						}
 
@@ -167,7 +167,7 @@ func (app App) updateSerial(raw []byte, diff model.University) {
 
 	// Decode new data
 	var newUniversity model.University
-	if err := model.UnmarshallMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
+	if err := model.UnmarshalMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
 		log.WithError(err).Panic("Error while unmarshalling new data")
 	}
 

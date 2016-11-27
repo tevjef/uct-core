@@ -52,3 +52,4 @@ secrets.go
 
 .env
 vendor
+scrapers/rutgers/rutgers

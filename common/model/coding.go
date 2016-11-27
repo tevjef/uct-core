@@ -29,7 +29,7 @@ func MarshalMessage(format string, m University) (*bytes.Reader, error) {
 	return bytes.NewReader(out), nil
 }
 
-func UnmarshallMessage(format string, r io.Reader, m *University) error {
+func UnmarshalMessage(format string, r io.Reader, m *University) error {
 	if format == JSON {
 		dec := ffjson.NewDecoder()
 		if err := dec.DecodeReader(r, &*m); err != nil {

@@ -33,7 +33,7 @@ func main() {
 
 	var university model.University
 
-	if err := model.UnmarshallMessage(*format, input, &university); err != nil {
+	if err := model.UnmarshalMessage(*format, input, &university); err != nil {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
 	}
 
