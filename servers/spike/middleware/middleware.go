@@ -1,4 +1,4 @@
-package servers
+package middleware
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -7,11 +7,16 @@ import (
 	"strconv"
 	"time"
 	"uct/common/model"
+	"strings"
 )
 
 const (
-	jsonContentType     = "application/json; charset=utf-8"
-	protobufContentType = "application/x-protobuf"
+	JsonContentType = "application/json"
+	ProtobufContentType = "application/x-protobuf"
+
+	TextPlainContentType = "text/plain"
+	TextHtmlContentType = "text/html"
+	JavascriptContentType = "application/javascript"
 
 	ServingFromCache = "servingFromCache"
 	ResponseKey      = "response"
@@ -21,7 +26,7 @@ const (
 	contentLengthHeader = "Content-Length"
 )
 
-func ContentNegotiationWriter() gin.HandlerFunc {
+func ContentNegotiation(contentType string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 		if _, exists := c.Get(ServingFromCache); exists {
@@ -31,13 +36,17 @@ func ContentNegotiationWriter() gin.HandlerFunc {
 		var responseType string
 
 		for _, val := range c.Request.Header["Accept"] {
-			if val == protobufContentType {
-				responseType = protobufContentType
+			if strings.Contains(val, ProtobufContentType) {
+				responseType = ProtobufContentType
+			} else if strings.Contains(val, TextHtmlContentType) {
+				responseType = JsonContentType
+			} else if strings.Contains(val, JsonContentType) {
+				responseType = JsonContentType
 			}
 		}
 
 		if responseType == "" {
-			responseType = jsonContentType
+			responseType = contentType
 		}
 
 		if value, exists := c.Get(ResponseKey); exists {
@@ -48,12 +57,14 @@ func ContentNegotiationWriter() gin.HandlerFunc {
 				var responseData []byte
 				var err error
 
-				if responseType == protobufContentType {
-					responseData, err = response.Marshal()
-					log.WithError(err).Errorln("error while parsing protobuf response")
-				} else {
-					responseData, err = ffjson.Marshal(response)
-					log.WithError(err).Errorln("error while parsing json response")
+				if responseType == ProtobufContentType {
+					if responseData, err = response.Marshal(); err != nil {
+						log.WithError(err).Errorln("error while parsing protobuf response")
+					}
+				} else if responseType == JsonContentType {
+					if responseData, err = ffjson.Marshal(response); err != nil {
+						log.WithError(err).Errorln("error while parsing json response")
+					}
 				}
 
 				// Write Headers
@@ -68,59 +79,30 @@ func ContentNegotiationWriter() gin.HandlerFunc {
 	}
 }
 
-func JsonWriter() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next()
-		if _, exists := c.Get(ServingFromCache); exists {
-			return
-		}
-
-		if value, exists := c.Get(ResponseKey); exists {
-			if response, ok := value.(model.Response); ok {
-				// Write status header
-				c.Writer.WriteHeader(int(*response.Meta.Code))
-				// Serialize response
-				b, err := ffjson.Marshal(response)
-				model.LogError(err)
-
-				// Write Headers
-				c.Header(contentLengthHeader, strconv.Itoa(len(b)))
-				c.Header(contentTypeHeader, jsonContentType)
-
-				// Write data and flush
-				c.Writer.Write(b)
-				c.Writer.Flush()
-			}
-		}
-	}
-}
-
 // Each handler must either set a meta or response
-func ErrorWriter() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next()
-		meta := model.Meta{}
-		var metaExists bool
-		var responseExists bool
-		var value interface{}
+func Decorator(c *gin.Context) {
+	c.Next()
+	meta := model.Meta{}
+	var metaExists bool
+	var responseExists bool
+	var value interface{}
 
-		if value, metaExists = c.Get(MetaKey); metaExists {
-			meta = value.(model.Meta)
-		}
+	if value, metaExists = c.Get(MetaKey); metaExists {
+		meta = value.(model.Meta)
+	}
 
-		if value, responseExists = c.Get(ResponseKey); responseExists {
-			response, _ := value.(model.Response)
-			code := int32(200)
-			meta.Code = &code
-			response.Meta = &meta
-			c.Set(ResponseKey, response)
-		} else {
-			c.Set(ResponseKey, model.Response{Meta: &meta})
-		}
+	if value, responseExists = c.Get(ResponseKey); responseExists {
+		response, _ := value.(model.Response)
+		code := int32(200)
+		meta.Code = &code
+		response.Meta = &meta
+		c.Set(ResponseKey, response)
+	} else {
+		c.Set(ResponseKey, model.Response{Meta: &meta})
+	}
 
-		if !metaExists && !responseExists {
-			c.Set(ServingFromCache, true)
-		}
+	if !metaExists && !responseExists {
+		c.Set(ServingFromCache, true)
 	}
 }
 
@@ -129,6 +111,7 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 		start := time.Now()
 		// some evil middlewares modify this values
 		path := c.Request.URL.Path
+
 		c.Next()
 
 		end := time.Now()

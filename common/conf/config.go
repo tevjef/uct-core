@@ -10,8 +10,6 @@ import (
 	"strconv"
 )
 
-type Env int
-
 type pprof map[string]server
 type scrapers map[string]*scraper
 
@@ -22,11 +20,16 @@ type Config struct {
 	Pprof    pprof    `toml:"pprof"`
 	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
+	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
 	Scrapers scrapers `toml:"scrapers"`
 }
 
 type spike struct {
+	RedisDb     int `toml:"redis_db" envconfig:"REDIS_DB"`
+}
+
+type julia struct {
 }
 
 type hermes struct {
@@ -114,6 +117,16 @@ func (c *Config) fromEnvironment() {
 	}
 
 	err = envconfig.Process("", &c.Hermes)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = envconfig.Process("", &c.Spike)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = envconfig.Process("", &c.Julia)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
