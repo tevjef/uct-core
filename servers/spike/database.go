@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 	"uct/common/model"
-	"uct/servers"
+	"uct/servers/spike/middleware"
 )
 
 var (
@@ -42,7 +42,7 @@ func SelectUniversities() (universities []*model.University, err error) {
 		return
 	}
 	if err == nil && len(universities) == 0 {
-		err = servers.ErrNoRows{"No data found a list of universities"}
+		err = middleware.ErrNoRows{Uri: "No data found a list of universities"}
 	}
 
 	for i := range universities {
@@ -118,7 +118,7 @@ func SelectSubjects(uniTopicName, season, year string) (subjects []*model.Subjec
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
-		err = servers.ErrNoRows{fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year)}
+		err = middleware.ErrNoRows{Uri: fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year)}
 	}
 	return
 }
@@ -143,7 +143,7 @@ func SelectCourses(subjectTopicName string) (courses []*model.Course, err error)
 		return
 	}
 	if err == nil && len(courses) == 0 {
-		err = servers.ErrNoRows{fmt.Sprintf("No courses found for %s", subjectTopicName)}
+		err = middleware.ErrNoRows{Uri: fmt.Sprintf("No courses found for %s", subjectTopicName)}
 	}
 	for i := range d {
 		c := model.Course{}
@@ -194,7 +194,7 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 func Select(query string, dest interface{}, args interface{}) error {
 	if err := GetCachedStmt(query).Select(dest, args); err != nil {
 		if err == sql.ErrNoRows {
-			err = servers.ErrNoRows{err.Error()}
+			err = middleware.ErrNoRows{Uri: err.Error()}
 		}
 		return err
 	}
@@ -204,7 +204,7 @@ func Select(query string, dest interface{}, args interface{}) error {
 func Get(query string, dest interface{}, args interface{}) error {
 	if err := GetCachedStmt(query).Get(dest, args); err != nil {
 		if err == sql.ErrNoRows {
-			err = servers.ErrNoRows{err.Error()}
+			err = middleware.ErrNoRows{Uri: err.Error()}
 		}
 		return err
 	}
@@ -227,7 +227,7 @@ func Prepare(query string) *sqlx.NamedStmt {
 	}
 }
 
-func PrepareAllStmts() {
+func prepareAllStmts() {
 	queries := []string{
 		SelectUniversityQuery,
 		ListUniversitiesQuery,
