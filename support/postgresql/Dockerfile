@@ -1,4 +1,4 @@
-FROM postgres:9.5.4
+FROM postgres:9.6
 
 COPY . /docker-entrypoint-initdb.d/
 
