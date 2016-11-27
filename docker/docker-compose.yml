@@ -242,7 +242,7 @@ services:
       fluentd.tag: "postgresql"
 
   redis:
-    image: redis:alpine
+    image: redis:3.2-alpine
     restart: always
     depends_on:
       - fluentd
