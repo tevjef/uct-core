@@ -9,62 +9,60 @@ func getRutgers(campus string) model.University {
 	university := model.University{
 		Name:             "Rutgers University–New Brunswick",
 		Abbr:             "RU-NB",
-		MainColor:        "F44336",
-		AccentColor:      "607D8B",
-		HomePage:         "http://newbrunswick.rutgers.edu/",
-		RegistrationPage: "https://sims.rutgers.edu/webreg/",
+		HomePage:         "http://newbrunswick.edu/",
+		RegistrationPage: "https://sims.edu/webreg/",
 		Registrations: []*model.Registration{
 			{
-				Period:     model.SEM_FALL.String(),
+				Period:     model.InFall.String(),
 				PeriodDate: time.Date(2000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.SEM_SPRING.String(),
+				Period:     model.InSpring.String(),
 				PeriodDate: time.Date(2000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.SEM_SUMMER.String(),
+				Period:     model.InSummer.String(),
 				PeriodDate: time.Date(2000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.SEM_WINTER.String(),
+				Period:     model.InWinter.String(),
 				PeriodDate: time.Date(2000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.START_FALL.String(),
+				Period:     model.StartFall.String(),
 				PeriodDate: time.Date(2000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.START_SPRING.String(),
+				Period:     model.StartSpring.String(),
 				PeriodDate: time.Date(2000, time.October, 5, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.START_SUMMER.String(),
+				Period:     model.StartSummer.String(),
 				PeriodDate: time.Date(2000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.START_WINTER.String(),
+				Period:     model.StartWinter.String(),
 				PeriodDate: time.Date(2000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.END_FALL.String(),
+				Period:     model.EndFall.String(),
 				PeriodDate: time.Date(2000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.END_SPRING.String(),
+				Period:     model.EndSpring.String(),
 				PeriodDate: time.Date(2000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.END_SUMMER.String(),
+				Period:     model.EndSummer.String(),
 				PeriodDate: time.Date(2000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 			{
-				Period:     model.END_WINTER.String(),
+				Period:     model.EndWinter.String(),
 				PeriodDate: time.Date(2000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 		},
 		Metadata: []*model.Metadata{{
-			Title: "About", Content: aboutNewbrunswick,
+			Title: "About", Content: aboutNewBrunswick,
 		},
 		},
 	}
@@ -72,17 +70,18 @@ func getRutgers(campus string) model.University {
 	if campus == "NK" {
 		university.Name = "Rutgers University–Newark"
 		university.Abbr = "RU-NK"
-		university.HomePage = "http://www.newark.rutgers.edu/"
+		university.HomePage = "http://www.newark.edu/"
 		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutNewark,
 			},
 		}
 	}
+
 	if campus == "CM" {
 		university.Name = "Rutgers University–Camden"
 		university.Abbr = "RU-CAM"
-		university.HomePage = "http://www.camden.rutgers.edu/"
+		university.HomePage = "http://www.camden.edu/"
 		university.Metadata = []*model.Metadata{
 			{
 				Title: "About", Content: aboutCamden,
@@ -94,7 +93,7 @@ func getRutgers(campus string) model.University {
 }
 
 const (
-	aboutNewbrunswick = `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
+	aboutNewBrunswick = `<p><b>Rutgers University–New Brunswick</b> is the oldest campus of <a href="/wiki/Rutgers_Uni
 				versity" title="Rutgers University">Rutgers University</a>, the others being in <a href="/wiki/Rutgers%
 				E2%80%93Camden" title="Rutgers–Camden" class="mw-redirect">Camden</a> and <a href="/wiki/Rutgers%E2%80%
 				93Newark" title="Rutgers–Newark" class="mw-redirect">Newark</a>. It is primarily located in the <a href

@@ -10,179 +10,170 @@ import (
 )
 
 var rutgers = []*Registration{
-	&Registration{
-		Period:     SEM_FALL.String(),
+	{
+		Period:     InFall.String(),
 		PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     SEM_SPRING.String(),
+	{
+		Period:     InSpring.String(),
 		PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     SEM_SUMMER.String(),
+	{
+		Period:     InSummer.String(),
 		PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     SEM_WINTER.String(),
+	{
+		Period:     InWinter.String(),
 		PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     START_FALL.String(),
+	{
+		Period:     StartFall.String(),
 		PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     START_SPRING.String(),
+	{
+		Period:     StartSpring.String(),
 		PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     START_SUMMER.String(),
+	{
+		Period:     StartSummer.String(),
 		PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     START_WINTER.String(),
+	{
+		Period:     StartWinter.String(),
 		PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     END_FALL.String(),
+	{
+		Period:     EndFall.String(),
 		PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     END_SPRING.String(),
+	{
+		Period:     EndSpring.String(),
 		PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     END_SUMMER.String(),
+	{
+		Period:     EndSummer.String(),
 		PeriodDate: time.Date(0000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
-		Period:     END_WINTER.String(),
+	{
+		Period:     EndWinter.String(),
 		PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 	}}
-
-/*
-const (
-	FALL Season = iota
-	SPRING
-	SUMMER
-	WINTER
-)
-*/
 
 func TestResolveSemesters(t *testing.T) {
 
 	semesters := ResolveSemesters(time.Now(), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SUMMER, semesters.Last.Season)
+	assert.Equal(t, Summer, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, FALL, semesters.Current.Season)
+	assert.Equal(t, Fall, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, WINTER, semesters.Next.Season)
+	assert.Equal(t, Winter, semesters.Next.Season)
 
 	semesters = ResolveSemesters(time.Date(2015, time.December, 24, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2015, int(semesters.Last.Year))
-	assert.Equal(t, WINTER, semesters.Last.Season)
+	assert.Equal(t, Winter, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SPRING, semesters.Current.Season)
+	assert.Equal(t, Spring, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, SUMMER, semesters.Next.Season)
+	assert.Equal(t, Summer, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.January, 8, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2015, int(semesters.Last.Year))
-	assert.Equal(t, WINTER, semesters.Last.Season)
+	assert.Equal(t, Winter, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SPRING, semesters.Current.Season)
+	assert.Equal(t, Spring, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, SUMMER, semesters.Next.Season)
+	assert.Equal(t, Summer, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.March, 19, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2015, int(semesters.Last.Year))
-	assert.Equal(t, WINTER, semesters.Last.Season)
+	assert.Equal(t, Winter, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SPRING, semesters.Current.Season)
+	assert.Equal(t, Spring, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, SUMMER, semesters.Next.Season)
+	assert.Equal(t, Summer, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.March, 20, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SPRING, semesters.Last.Season)
+	assert.Equal(t, Spring, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SUMMER, semesters.Current.Season)
+	assert.Equal(t, Summer, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, FALL, semesters.Next.Season)
+	assert.Equal(t, Fall, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.April, 30, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SPRING, semesters.Last.Season)
+	assert.Equal(t, Spring, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SUMMER, semesters.Current.Season)
+	assert.Equal(t, Summer, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, FALL, semesters.Next.Season)
+	assert.Equal(t, Fall, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.June, 14, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SPRING, semesters.Last.Season)
+	assert.Equal(t, Spring, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, SUMMER, semesters.Current.Season)
+	assert.Equal(t, Summer, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, FALL, semesters.Next.Season)
+	assert.Equal(t, Fall, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.June, 15, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SUMMER, semesters.Last.Season)
+	assert.Equal(t, Summer, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, FALL, semesters.Current.Season)
+	assert.Equal(t, Fall, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, WINTER, semesters.Next.Season)
+	assert.Equal(t, Winter, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.September, 15, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SUMMER, semesters.Last.Season)
+	assert.Equal(t, Summer, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, FALL, semesters.Current.Season)
+	assert.Equal(t, Fall, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, WINTER, semesters.Next.Season)
+	assert.Equal(t, Winter, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.October, 17, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, SUMMER, semesters.Last.Season)
+	assert.Equal(t, Summer, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, FALL, semesters.Current.Season)
+	assert.Equal(t, Fall, semesters.Current.Season)
 	assert.Equal(t, 2016, int(semesters.Next.Year))
-	assert.Equal(t, WINTER, semesters.Next.Season)
+	assert.Equal(t, Winter, semesters.Next.Season)
 
 	semesters = ResolveSemesters(time.Date(2016, time.October, 18, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, FALL, semesters.Last.Season)
+	assert.Equal(t, Fall, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, WINTER, semesters.Current.Season)
+	assert.Equal(t, Winter, semesters.Current.Season)
 	assert.Equal(t, 2017, int(semesters.Next.Year))
-	assert.Equal(t, SPRING, semesters.Next.Season)
+	assert.Equal(t, Spring, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.November, 1, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, FALL, semesters.Last.Season)
+	assert.Equal(t, Fall, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, WINTER, semesters.Current.Season)
+	assert.Equal(t, Winter, semesters.Current.Season)
 	assert.Equal(t, 2017, int(semesters.Next.Year))
-	assert.Equal(t, SPRING, semesters.Next.Season)
+	assert.Equal(t, Spring, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 	semesters = ResolveSemesters(time.Date(2016, time.December, 22, 0, 0, 0, 0, time.UTC), rutgers)
 	assert.Equal(t, 2016, int(semesters.Last.Year))
-	assert.Equal(t, FALL, semesters.Last.Season)
+	assert.Equal(t, Fall, semesters.Last.Season)
 	assert.Equal(t, 2016, int(semesters.Current.Year))
-	assert.Equal(t, WINTER, semesters.Current.Season)
+	assert.Equal(t, Winter, semesters.Current.Season)
 	assert.Equal(t, 2017, int(semesters.Next.Year))
-	assert.Equal(t, SPRING, semesters.Next.Season)
+	assert.Equal(t, Spring, semesters.Next.Season)
 	//fmt.Printf("%#v\n", semesters)
 
 }
@@ -194,8 +185,8 @@ func TestMeetingSorter(t *testing.T) {
 	th := "Thursday"
 	f := "Friday"
 
-	meetings := []Meeting{Meeting{Day: &tu},
-		Meeting{Day: &w}, Meeting{Day: &th}, Meeting{Day: &m}, Meeting{Day: &f}}
+	meetings := []Meeting{{Day: &tu},
+		{Day: &w}, {Day: &th}, {Day: &m}, {Day: &f}}
 
 	sort.Sort(meetingSorter{meetings})
 
@@ -209,31 +200,31 @@ func TestToTitle(t *testing.T) {
 	str := "ART APPRECIATION VIIIII"
 	expect := "Art Appreciation VIIIII"
 
-	result := toTitle(str)
+	result := ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION V"
 	expect = "Art Appreciation V"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION VI"
 	expect = "Art Appreciation VI"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION II"
 	expect = "Art Appreciation II"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 	str = "ART APPRECIATION I"
 	expect = "Art Appreciation I"
 
-	result = toTitle(str)
+	result = ToTitle(str)
 	assert.Equal(t, expect, result)
 
 }
@@ -259,7 +250,7 @@ func TestSwapChar(t *testing.T) {
 func TestTopicName(t *testing.T) {
 	topic1 := "Rutgers University–New Brunswick"
 	topic2 := "AFRICAN, M. EAST. & S. ASIAN LANG & LIT $ __ "
-	topic3 := "Res Proposal In A....H.!@#$%^&*()_?><.02.87ASDA"
+	topic3 := "Res Proposal In A....H.!@#$%[]^&*()_?><.02.87A\u0000SDA"
 
 	fmt.Printf("%s\n", ToTopicName(topic1))
 	fmt.Printf("%s\n", ToTopicName(topic1))
@@ -271,38 +262,29 @@ func TestTopicName(t *testing.T) {
 	fmt.Printf("%s\n", ToTopicName(topic3))
 
 	fmt.Println("\n")
-
-	fmt.Printf("%s\n", toTopicName(topic1))
-	fmt.Printf("%s\n", toTopicName(topic1))
-
-	fmt.Printf("%s\n", toTopicName(topic2))
-	fmt.Printf("%s\n", toTopicName(topic2))
-
-	fmt.Printf("%s\n", toTopicName(topic3))
-	fmt.Printf("%s\n", toTopicName(topic3))
 }
 
 func TestSemesterSorter(t *testing.T) {
 	semesters := []*Semester{
-		{Year: 2016, Season: WINTER},
-		{Year: 2015, Season: WINTER},
-		{Year: 2016, Season: SPRING},
-		{Year: 2016, Season: SUMMER},
-		{Year: 2017, Season: FALL},
-		{Year: 2015, Season: FALL},
-		{Year: 2015, Season: SPRING},
-		{Year: 2015, Season: SUMMER},
+		{Year: 2016, Season: Winter},
+		{Year: 2015, Season: Winter},
+		{Year: 2016, Season: Spring},
+		{Year: 2016, Season: Summer},
+		{Year: 2017, Season: Fall},
+		{Year: 2015, Season: Fall},
+		{Year: 2015, Season: Spring},
+		{Year: 2015, Season: Summer},
 	}
 
 	expected := []*Semester{
-		{Year: 2017, Season: FALL},
-		{Year: 2016, Season: SUMMER},
-		{Year: 2016, Season: SPRING},
-		{Year: 2016, Season: WINTER},
-		{Year: 2015, Season: FALL},
-		{Year: 2015, Season: SUMMER},
-		{Year: 2015, Season: SPRING},
-		{Year: 2015, Season: WINTER},
+		{Year: 2017, Season: Fall},
+		{Year: 2016, Season: Summer},
+		{Year: 2016, Season: Spring},
+		{Year: 2016, Season: Winter},
+		{Year: 2015, Season: Fall},
+		{Year: 2015, Season: Summer},
+		{Year: 2015, Season: Spring},
+		{Year: 2015, Season: Winter},
 	}
 
 	sort.Sort(SemesterSorter(semesters))

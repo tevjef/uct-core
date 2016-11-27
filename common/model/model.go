@@ -40,18 +40,18 @@ const (
 )
 
 const (
-	SEM_FALL Period = iota
-	SEM_SPRING
-	SEM_SUMMER
-	SEM_WINTER
-	START_FALL
-	START_SPRING
-	START_SUMMER
-	START_WINTER
-	END_FALL
-	END_SPRING
-	END_SUMMER
-	END_WINTER
+	InFall Period = iota
+	InSpring
+	InSummer
+	InWinter
+	StartFall
+	StartSpring
+	StartSummer
+	StartWinter
+	EndFall
+	EndSpring
+	EndSummer
+	EndWinter
 )
 
 var period = [...]string{
@@ -74,16 +74,15 @@ func (s Period) String() string {
 }
 
 const (
-	FALL   = "fall"
-	SPRING = "spring"
-	SUMMER = "summer"
-	WINTER = "winter"
+	Fall   = "fall"
+	Spring = "spring"
+	Summer = "summer"
+	Winter = "winter"
 )
 
 const (
-	OPEN Status = 1 + iota
-	CLOSED
-	CANCELLED
+	Open Status = 1 + iota
+	Closed
 )
 
 var status = [...]string{
@@ -96,15 +95,24 @@ func (s Status) String() string {
 	return status[s-1]
 }
 
-var topicRegex, err = regexp.Compile("[^A-Za-z0-9-_.~% ]+")
+func isValidTopicRune(char rune) bool {
+	isDash := char == rune('-')
+	isUnderscore := char == rune('_')
+	isDot := char == rune('.')
+	isTilde := char == rune('~')
+	isPercent := char == rune('%')
+	return unicode.IsLetter(char) || unicode.IsNumber(char) || unicode.IsSpace(char) || isDash || isUnderscore || isDot || isTilde || isPercent
+}
 
 func ToTopicName(str string) string {
-	topicRegex := topicRegex.Copy()
-	str = trim(topicRegex.ReplaceAllString(str, ""))
-
+	// replaces spaces with dots
 	var lastRune rune
 	dot := rune('.')
 	str = strings.Map(func(r rune) rune {
+		if !isValidTopicRune(r) {
+			return -1
+		}
+
 		if unicode.IsSpace(r) || r == dot {
 			if unicode.IsSpace(lastRune) || lastRune == dot {
 				return -1
@@ -129,7 +137,7 @@ func ToTopicId(str string) string {
 	return strconv.FormatUint(topicHash.Sum64(), 10)
 }
 
-func toTitle(str string) string {
+func ToTitle(str string) string {
 	str = strings.Title(strings.ToLower(str))
 
 	for i := len(str) - 1; i != 0; i-- {
@@ -213,7 +221,7 @@ func (sub *Subject) Validate(uni *University) {
 	}
 
 	sub.Name = TrimAll(sub.Name)
-	sub.Name = toTitle(sub.Name)
+	sub.Name = ToTitle(sub.Name)
 
 	// TopicName
 	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
@@ -234,7 +242,7 @@ func (course *Course) Validate(subject *Subject) {
 	}
 
 	course.Name = TrimAll(course.Name)
-	course.Name = toTitle(course.Name)
+	course.Name = ToTitle(course.Name)
 
 	// Number
 	if course.Number == "" {
@@ -284,7 +292,7 @@ func (section *Section) Validate(course *Course) {
 	// Max
 	if section.Max == 0 {
 		section.Max = 1
-		if section.Status == OPEN.String() {
+		if section.Status == Open.String() {
 			section.Now = 1
 		} else {
 			section.Now = 0
@@ -381,16 +389,16 @@ func (r Registration) dayOfYear() int {
 
 func (r Registration) season() string {
 	switch r.Period {
-	case SEM_FALL.String():
-		return FALL
-	case SEM_SPRING.String():
-		return SPRING
-	case SEM_SUMMER.String():
-		return SUMMER
-	case SEM_WINTER.String():
-		return WINTER
+	case InFall.String():
+		return Fall
+	case InSpring.String():
+		return Spring
+	case InSummer.String():
+		return Summer
+	case InWinter.String():
+		return Winter
 	default:
-		return SUMMER
+		return Summer
 	}
 }
 
@@ -402,29 +410,29 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 	yearDay := t.YearDay()
 
 	//var springReg = registration[SEM_SPRING];
-	var winterReg = registration[SEM_WINTER]
+	var winterReg = registration[InWinter]
 	//var summerReg = registration[SEM_SUMMER];
 	//var fallReg  = registration[SEM_FALL];
-	var startFallReg = registration[START_FALL]
-	var startSpringReg = registration[START_SPRING]
-	var endSummerReg = registration[END_SUMMER]
+	var startFallReg = registration[StartFall]
+	var startSpringReg = registration[StartSpring]
+	var endSummerReg = registration[EndSummer]
 	//var startSummerReg  = registration[START_SUMMER];
 
 	fall := &Semester{
 		Year:   int32(year),
-		Season: FALL}
+		Season: Fall}
 
 	winter := &Semester{
 		Year:   int32(year),
-		Season: WINTER}
+		Season: Winter}
 
 	spring := &Semester{
 		Year:   int32(year),
-		Season: SPRING}
+		Season: Spring}
 
 	summer := &Semester{
 		Year:   int32(year),
-		Season: SUMMER}
+		Season: Summer}
 
 	// Spring: Winter - StartFall
 	if (month >= winterReg.month() && day >= winterReg.day()) || (month <= startFallReg.month() && day < startFallReg.day()) {
@@ -614,10 +622,10 @@ func (a SubjectByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
 }
 
-func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
-	filteredUniversity = uni2
-	oldSubjects := uni.Subjects
-	newSubjects := uni2.Subjects
+func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
+	filteredUniversity = newUni
+	oldSubjects := oldUni.Subjects
+	newSubjects := newUni.Subjects
 
 	var filteredSubjects []*Subject
 	// For each newer subject
@@ -628,7 +636,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 			break
 		}
 
-		if err := newSubjects[s].VerboseEqual(oldSubjects[s]); err != nil {
+		if !newSubjects[s].Equal(oldSubjects[s]) {
 			oldCourses := oldSubjects[s].Courses
 			newCourses := newSubjects[s].Courses
 			var filteredCourses []*Course
@@ -638,7 +646,7 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 					break
 				}
 
-				if err := newCourses[c].VerboseEqual(oldCourses[c]); err != nil {
+				if !newCourses[c].Equal(oldCourses[c]) {
 					oldSections := oldCourses[c].Sections
 					newSections := newCourses[c].Sections
 					oldSectionFields := logSection(oldSections, "old")
@@ -649,8 +657,8 @@ func DiffAndFilter(uni, uni2 University) (filteredUniversity University) {
 							filteredSections = newSections
 							break
 						}
-						if err := newSections[e].VerboseEqual(oldSections[e]); err != nil {
-							fullSection := log.Fields{"old_full_section":oldSections[e].String(), "new_full_section":newSections[e].String()}
+						if !newSections[e].Equal(oldSections[e]) {
+							fullSection := log.Fields{"old_full_section": oldSections[e].String(), "new_full_section": newSections[e].String()}
 							log.WithFields(log.Fields{
 								"old_call_number": oldSections[e].CallNumber, "old_status": oldSections[e].Status,
 								"new_call_number": newSections[e].CallNumber, "new_status": newSections[e].Status,

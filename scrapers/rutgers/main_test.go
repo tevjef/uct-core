@@ -1,165 +1,63 @@
 package main
 
 import (
-	"github.com/gogo/protobuf/proto"
-	"github.com/pquerna/ffjson/ffjson"
-	"io/ioutil"
-	"log"
-	"os"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 	"uct/common/model"
 )
 
-var emptyUniversity = model.University{}
-var scrapedUni *model.University
-var university model.University
-var jsonBytes []byte
-var protoBytes []byte
-var err error
-
-func TestMain(m *testing.M) {
-	if _, err := os.Stat("json.out"); os.IsNotExist(err) {
-		writeJsonData()
-	}
-	if _, err := os.Stat("protobuf.out"); os.IsNotExist(err) {
-		writeProtoData()
-	}
-	jsonBytes, err = ioutil.ReadFile("json.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
+func TestRequestSubjects(t *testing.T) {
+	rr := rutgersRequest{
+		host:     "http://sis.rutgers.edu/soc",
+		semester: *model.ResolveSemesters(time.Now(), getRutgers("NK").Registrations).Current,
+		campus:   "NK",
 	}
 
-	protoBytes, err = ioutil.ReadFile("protobuf.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
+	s := subjectRequest{rutgersRequest: rr}.requestSubjects()
+
+	assert.True(t, len(s) > 10)
+	for _, val := range s {
+		assert.True(t, val.Name != "")
 	}
 
-	os.Exit(m.Run())
-}
+	rr.campus = "NB"
 
-func writeJsonData() []byte {
-	if scrapedUni == nil {
-		t := getCampus("CM")
-		scrapedUni = &t
-	}
-	data, err := ffjson.Marshal(scrapedUni)
-	if err != nil {
-		log.Fatalln("Failed to encode university:", err)
-	}
-	if err := ioutil.WriteFile("json.out", data, 0644); err != nil {
-		log.Fatalln("Failed to write university:", err)
-	}
-	return data
-}
+	s = subjectRequest{rutgersRequest: rr}.requestSubjects()
 
-func writeProtoData() []byte {
-	if scrapedUni == nil {
-		t := getCampus("CM")
-		scrapedUni = &t
-	}
-	out, err := proto.Marshal(scrapedUni)
-	if err != nil {
-		log.Fatalln("Failed to encode university:", err)
-	}
-	if err := ioutil.WriteFile("protobuf.out", out, 0644); err != nil {
-		log.Fatalln("Failed to write university:", err)
-	}
-	return out
-}
-
-func TestMarshalJsonUniversity(t *testing.T) {
-	_, err := ffjson.Marshal(university)
-	model.CheckError(err)
-	//fmt.Println(string(data))
-}
-
-func TestMarshalProtoUniversity(t *testing.T) {
-	_, err := proto.Marshal(&university)
-	model.CheckError(err)
-	//fmt.Println(string(data))
-}
-
-func TestUnmarshalJsonUniversity(t *testing.T) {
-	in, err := ioutil.ReadFile("json.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
-	}
-	school := &model.University{}
-	if err := ffjson.UnmarshalFast(in, school); err != nil {
-		log.Fatalln("Failed to parse university:", err)
-	}
-	//fmt.Println(school.String())
-}
-
-func TestUnmarshalProtoUniversity(t *testing.T) {
-	in, err := ioutil.ReadFile("protobuf.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
-	}
-	school := &model.University{}
-	if err := proto.Unmarshal(in, school); err != nil {
-		log.Fatalln("Failed to parse address book:", err)
-	}
-	//fmt.Println(school.String())
-}
-
-func TestUnmarshalProtoEqualUniversity(t *testing.T) {
-	in, err := ioutil.ReadFile("json.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
-	}
-	s := &model.University{}
-	if err := ffjson.UnmarshalFast(in, s); err != nil {
-
+	assert.True(t, len(s) > 10)
+	for _, val := range s {
+		assert.True(t, val.Name != "")
 	}
 
-	in, err = ioutil.ReadFile("protobuf.out")
-	if err != nil {
-		log.Fatalln("Error reading file:", err)
-	}
-	school := &model.University{}
-	if err := proto.Unmarshal(in, school); err != nil {
-		log.Fatalln("Failed to parse university:", err)
-	}
+	rr.campus = "CM"
 
-	err = school.VerboseEqual(s)
+	s = subjectRequest{rutgersRequest: rr}.requestSubjects()
 
-	//fmt.Println(school.GoString())
-	//school.GoString()
-
-	model.CheckError(err)
-}
-
-func BenchmarkMarshalJsonUniversity(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		ffjson.Marshal(university)
+	assert.True(t, len(s) > 10)
+	for _, val := range s {
+		assert.True(t, val.Name != "")
 	}
 }
 
-func BenchmarkMarshalProtoUniversity(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		proto.Marshal(&university)
+func TestRequestCourses(t *testing.T) {
+	rr := rutgersRequest{
+		host:     "http://sis.rutgers.edu/soc",
+		semester: *model.ResolveSemesters(time.Now(), getRutgers("NK").Registrations).Current,
+		campus:   "NK",
+	}
+
+	s := subjectRequest{rutgersRequest: rr}.requestSubjects()
+
+	c := courseRequest{rutgersRequest: rr, subject: s[10].Number}.requestCourses()
+
+	assert.True(t, len(c) > 1)
+	for _, val := range c {
+		assert.True(t, val.CourseNumber != "")
 	}
 }
 
-func BenchmarkUnmarshalJsonUniversity(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		if err = ffjson.UnmarshalFast(jsonBytes, &emptyUniversity); err != nil {
-			log.Fatalln("Failed to parse university:", err)
-		}
-		emptyUniversity.Reset()
-	}
-}
-
-func BenchmarkUnmarshalProtoUniversity(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		if err = proto.Unmarshal(protoBytes, &emptyUniversity); err != nil {
-			log.Fatalln("Failed to parse university:", err)
-		}
-		emptyUniversity.Reset()
-	}
+func TestGetCampus(t *testing.T) {
+	u := getCampus("CM")
+	assert.True(t, len(u.Subjects) > 1)
 }

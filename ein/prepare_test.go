@@ -1,42 +1,29 @@
 package main
 
-import ()
 import (
 	"fmt"
 	"reflect"
 	"testing"
+	"io/ioutil"
 )
 
 func BenchmarkGetTypeSprint(b *testing.B) {
-	b.StopTimer()
-
-	toPrint := getType()
-	fmt.Println(fmt.Sprintf("%T", toPrint))
-
 	b.ReportAllocs()
-	b.StartTimer()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		fmt.Sprintf("%T", getType())
+		fmt.Fprintf(ioutil.Discard, "%T", MockDatabaseHandler{})
 	}
 }
 
 func BenchmarkGetTypeReflect(b *testing.B) {
-	b.StopTimer()
-
-	toPrint := getType()
-	fmt.Println(reflect.TypeOf(toPrint))
-
+	t := reflect.TypeOf(MockDatabaseHandler{})
 	b.ReportAllocs()
-	b.StartTimer()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		reflect.TypeOf(getType())
+		t = reflect.TypeOf(MockDatabaseHandler{})
 	}
-}
 
-func getType() interface{} {
-	return MockDatabaseHandler{}
+	fmt.Println(t)
 }
 
 type MockDatabaseHandler struct {

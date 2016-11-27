@@ -8,14 +8,9 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type Env int
-
-const (
-	UCT_SCRAPER_RUTGERS_INTERVAL = "UCT_SCRAPER_RUTGERS_INTERVAL"
-)
 
 type pprof map[string]server
 type scrapers map[string]*scraper
@@ -122,17 +117,6 @@ func (c *Config) fromEnvironment() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	// bind env for rutgers
-	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != "" {
-		for key := range c.Scrapers {
-			if strings.Contains(key, "rutgers") {
-				log.Debugln(c.Scrapers[key])
-				c.Scrapers[key].Interval = env
-			}
-		}
-	}
-
 }
 
 func bindEnv(defValue string, env string) string {

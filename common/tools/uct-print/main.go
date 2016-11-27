@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
-	"log"
 	"os"
 	"uct/common/model"
 )
@@ -33,7 +33,9 @@ func main() {
 
 	var university model.University
 
-	model.UnmarshallMessage(*format, input, &university)
+	if err := model.UnmarshalMessage(*format, input, &university); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	if *format == model.JSON {
 		if *out != "" {
@@ -46,10 +48,16 @@ func main() {
 	}
 
 	if *out != "" {
-		output := model.MarshalMessage(*out, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*out, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	} else {
-		output := model.MarshalMessage(*format, university)
-		io.Copy(os.Stdout, output)
+		if output, err := model.MarshalMessage(*format, university); err != nil {
+			log.WithError(err).Fatal()
+		} else {
+			io.Copy(os.Stdout, output)
+		}
 	}
 }
