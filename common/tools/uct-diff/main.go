@@ -41,13 +41,13 @@ func main() {
 
 	var oldUniversity model.University
 
-	if err := model.UnmarshallMessage(*format, firstFile, &oldUniversity); err != nil {
+	if err := model.UnmarshalMessage(*format, firstFile, &oldUniversity); err != nil {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
 	}
 
 	var newUniversity model.University
 
-	if err := model.UnmarshallMessage(*format, secondFile, &newUniversity); err != nil {
+	if err := model.UnmarshalMessage(*format, secondFile, &newUniversity); err != nil {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
 	}
 

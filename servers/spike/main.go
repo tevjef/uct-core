@@ -12,7 +12,7 @@ import (
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-	"uct/servers"
+	"uct/servers/spike/middleware"
 )
 
 var (
@@ -22,8 +22,6 @@ var (
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
 	config     = conf.Config{}
 )
-
-const CacheDuration = 10 * time.Second
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -43,74 +41,67 @@ func main() {
 	var err error
 
 	// Open database connection
-	database, err = model.InitDB(config.GetDbConfig(app.Name))
-	model.CheckError(err)
+	if database, err = model.InitDB(config.GetDbConfig(app.Name)); err != nil {
+		log.WithError(err).Fatalln("failed to open connection to database")
+	}
 
 	// Prepare database connections
 	database.SetMaxOpenConns(config.Postgres.ConnMax)
-	PrepareAllStmts()
+	prepareAllStmts()
 
-	// Open cache
-	//store := cache.NewInMemoryStore(CacheDuration)
-
-	store := cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, CacheDuration)
 
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.Use(servers.Ginrus(log.StandardLogger(), time.RFC3339, true))
+	r.Use(middleware.Ginrus(log.StandardLogger(), time.RFC3339, true))
+	r.Use(cache.Cache(cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10 * time.Second)))
 
-	// Json
+	// does not cache and defaults to json
 	v1 := r.Group("/v1")
-	v1.Use(servers.JsonWriter())
-	v1.Use(servers.ErrorWriter())
+	{
+		v1.Use(middleware.ContentNegotiation(middleware.JsonContentType))
+		v1.Use(middleware.Decorator)
 
-	// Protocol Buffers
+		v1.GET("/universities", universitiesHandler(0))
+		v1.GET("/university/:topic", universityHandler(0))
+		v1.GET("/subjects/:topic/:season/:year", subjectsHandler(0))
+		v1.GET("/subject/:topic", subjectHandler(0))
+		v1.GET("/courses/:topic", coursesHandler(0))
+		v1.GET("/course/:topic", courseHandler(0))
+		v1.GET("/section/:topic", sectionHandler(0))
+	}
+
+	// v2 caches responses and defaults to protobuf
 	v2 := r.Group("/v2")
-	v2.Use(servers.ProtobufWriter())
-	v2.Use(servers.ErrorWriter())
+	{
+		v2.Use(middleware.ContentNegotiation(middleware.ProtobufContentType))
+		v2.Use(middleware.Decorator)
 
-	// Json (caching)
-	v3 := r.Group("/v3")
-	v3.Use(servers.JsonWriter())
-	v3.Use(servers.ErrorWriter())
+		v2.GET("/universities", universitiesHandler(time.Minute))
+		v2.GET("/university/:topic", universityHandler(time.Minute))
+		v2.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
+		v2.GET("/subject/:topic", subjectHandler(10 * time.Second))
+		v2.GET("/courses/:topic", coursesHandler(10 * time.Second))
+		v2.GET("/course/:topic", courseHandler(10 * time.Second))
+		v2.GET("/section/:topic", sectionHandler(10 * time.Second))
+	}
 
-	// Protocol Buffers (caching)
+
+	// Legacy, some version android and iOS clients use this endpoint. Investigate redirecting traffic to /v2 with nginx
 	v4 := r.Group("/v4")
-	v4.Use(servers.ProtobufWriter())
-	v4.Use(servers.ErrorWriter())
+	{
+		v4.Use(middleware.ContentNegotiation(middleware.ProtobufContentType))
+		v4.Use(middleware.Decorator)
 
-	v1.GET("/universities", universitiesHandler)
-	v1.GET("/university/:topic", universityHandler)
-	v1.GET("/subjects/:topic/:season/:year", subjectsHandler)
-	v1.GET("/subject/:topic", subjectHandler)
-	v1.GET("/courses/:topic", coursesHandler)
-	v1.GET("/course/:topic", courseHandler)
-	v1.GET("/section/:topic", sectionHandler)
-
-	v2.GET("/universities", universitiesHandler)
-	v2.GET("/university/:topic", universityHandler)
-	v2.GET("/subjects/:topic/:season/:year", subjectsHandler)
-	v2.GET("/subject/:topic", subjectHandler)
-	v2.GET("/courses/:topic", coursesHandler)
-	v2.GET("/course/:topic", courseHandler)
-	v2.GET("/section/:topic", sectionHandler)
-
-	v3.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
-	v3.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
-	v3.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
-	v3.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
-	v3.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
-	v3.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
-	v3.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
-
-	v4.GET("/universities", cache.CachePage(store, time.Minute, universitiesHandler))
-	v4.GET("/university/:topic", cache.CachePage(store, time.Minute, universityHandler))
-	v4.GET("/subjects/:topic/:season/:year", cache.CachePage(store, time.Minute, subjectsHandler))
-	v4.GET("/subject/:topic", cache.CachePage(store, CacheDuration, subjectHandler))
-	v4.GET("/courses/:topic", cache.CachePage(store, CacheDuration, coursesHandler))
-	v4.GET("/course/:topic", cache.CachePage(store, CacheDuration, courseHandler))
-	v4.GET("/section/:topic", cache.CachePage(store, CacheDuration, sectionHandler))
+		v4.GET("/universities", universitiesHandler(time.Minute))
+		v4.GET("/university/:topic", universityHandler(time.Minute))
+		v4.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
+		v4.GET("/subject/:topic", subjectHandler(10 * time.Second))
+		v4.GET("/courses/:topic", coursesHandler(10 * time.Second))
+		v4.GET("/course/:topic", courseHandler(10 * time.Second))
+		v4.GET("/section/:topic", sectionHandler(10 * time.Second))
+	}
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
+

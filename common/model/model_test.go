@@ -10,63 +10,54 @@ import (
 )
 
 var rutgers = []*Registration{
-	&Registration{
+	{
 		Period:     InFall.String(),
 		PeriodDate: time.Date(0000, time.September, 6, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     InSpring.String(),
 		PeriodDate: time.Date(0000, time.January, 17, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     InSummer.String(),
 		PeriodDate: time.Date(0000, time.May, 30, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     InWinter.String(),
 		PeriodDate: time.Date(0000, time.December, 23, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     StartFall.String(),
 		PeriodDate: time.Date(0000, time.March, 20, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     StartSpring.String(),
 		PeriodDate: time.Date(0000, time.October, 18, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     StartSummer.String(),
 		PeriodDate: time.Date(0000, time.January, 14, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     StartWinter.String(),
 		PeriodDate: time.Date(0000, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     EndFall.String(),
 		PeriodDate: time.Date(0000, time.September, 13, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     EndSpring.String(),
 		PeriodDate: time.Date(0000, time.January, 27, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     EndSummer.String(),
 		PeriodDate: time.Date(0000, time.June, 15, 0, 0, 0, 0, time.UTC).Unix(),
 	},
-	&Registration{
+	{
 		Period:     EndWinter.String(),
 		PeriodDate: time.Date(0000, time.December, 22, 0, 0, 0, 0, time.UTC).Unix(),
 	}}
-
-/*
-const (
-	FALL Season = iota
-	SPRING
-	SUMMER
-	WINTER
-)
-*/
 
 func TestResolveSemesters(t *testing.T) {
 
@@ -194,8 +185,8 @@ func TestMeetingSorter(t *testing.T) {
 	th := "Thursday"
 	f := "Friday"
 
-	meetings := []Meeting{Meeting{Day: &tu},
-		Meeting{Day: &w}, Meeting{Day: &th}, Meeting{Day: &m}, Meeting{Day: &f}}
+	meetings := []Meeting{{Day: &tu},
+		{Day: &w}, {Day: &th}, {Day: &m}, {Day: &f}}
 
 	sort.Sort(meetingSorter{meetings})
 

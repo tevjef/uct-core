@@ -1,5 +1,5 @@
 hash: a8e857a0d9d0707503052cb84826498094b55b6f4fa16a67dc02becc8da9f13a
-updated: 2016-11-21T14:19:19.000516909-05:00
+updated: 2016-11-27T14:33:45.159967563-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -16,7 +16,7 @@ imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/garyburd/redigo
-  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
+  version: d7de57ceb51b029d5c5a61e26587f672e2834178
   subpackages:
   - redis
   - internal
@@ -34,8 +34,6 @@ imports:
   subpackages:
   - proto
   - jsonpb
-- name: github.com/guregu/null
-  version: 41961cea0328defc5f95c1c473f89ebf0d1813f6
 - name: github.com/influxdata/influxdb
   version: 800da5732b91c816b0a097acf8887fa2af1efa1a
   subpackages:
@@ -57,11 +55,9 @@ imports:
 - name: github.com/mattn/go-colorable
   version: 043ae16291351db8465272edf465c9f388161627
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
 - name: github.com/mattn/go-xmpp
   version: f4550b5399387339df5ce4c3f88c1ef85333bdd5
-- name: github.com/oleiade/reflections
-  version: 0e86b3c98b2ff33e30c85cfe97d9a63d439fe7eb
 - name: github.com/pborman/uuid
   version: 3d4f2ba23642d3cfd06bd4b54cf03d99d95c0f1b
 - name: github.com/pkg/errors
@@ -81,7 +77,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/contrib
-  version: cdba1458fa02da0e004db68b90681a326006fd5d
+  version: 01a048156423a8a7d05e2d93f96c8b1f4f2e8a0e
   subpackages:
   - cache
 - name: github.com/tevjef/go-gcm
@@ -95,7 +91,7 @@ imports:
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: b699b7032584f0953262cb2788a0ca19bb494703
+  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2
