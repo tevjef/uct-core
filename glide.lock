@@ -1,5 +1,5 @@
 hash: a8e857a0d9d0707503052cb84826498094b55b6f4fa16a67dc02becc8da9f13a
-updated: 2016-11-27T14:33:45.159967563-05:00
+updated: 2016-11-27T19:08:51.095393142-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -10,7 +10,7 @@ imports:
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/bradfitz/gomemcache
-  version: fb1f79c6b65acda83063cbc69f6bba1522558bfc
+  version: 2fafb84a66c4911e11a8f50955b01e74fe3ab9c5
   subpackages:
   - memcache
 - name: github.com/BurntSushi/toml
@@ -20,10 +20,6 @@ imports:
   subpackages:
   - redis
   - internal
-- name: github.com/gin-gonic/contrib
-  version: cf28f84316e50a05a59d174b37c26ad9a43a1201
-  subpackages:
-  - ginrus
 - name: github.com/gin-gonic/gin
   version: 9163ee543d3f1fab9b0ad8cdf6dc2a6ec2c07dbb
   subpackages:
@@ -77,7 +73,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/tevjef/contrib
-  version: 01a048156423a8a7d05e2d93f96c8b1f4f2e8a0e
+  version: 0738c620531461a14060d51e56c757d00a4fae06
   subpackages:
   - cache
 - name: github.com/tevjef/go-gcm
