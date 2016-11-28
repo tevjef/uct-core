@@ -26,7 +26,7 @@ type Config struct {
 }
 
 type spike struct {
-	RedisDb     int `toml:"redis_db" envconfig:"REDIS_DB"`
+	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
 }
 
 type julia struct {

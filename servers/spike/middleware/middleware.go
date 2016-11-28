@@ -5,17 +5,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
+	"strings"
 	"time"
 	"uct/common/model"
-	"strings"
 )
 
 const (
-	JsonContentType = "application/json"
+	JsonContentType     = "application/json"
 	ProtobufContentType = "application/x-protobuf"
 
-	TextPlainContentType = "text/plain"
-	TextHtmlContentType = "text/html"
+	TextPlainContentType  = "text/plain"
+	TextHtmlContentType   = "text/html"
 	JavascriptContentType = "application/javascript"
 
 	ServingFromCache = "servingFromCache"
@@ -29,10 +29,6 @@ const (
 func ContentNegotiation(contentType string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		if _, exists := c.Get(ServingFromCache); exists {
-			return
-		}
-
 		var responseType string
 
 		for _, val := range c.Request.Header["Accept"] {
@@ -100,10 +96,6 @@ func Decorator(c *gin.Context) {
 	} else {
 		c.Set(ResponseKey, model.Response{Meta: &meta})
 	}
-
-	if !metaExists && !responseExists {
-		c.Set(ServingFromCache, true)
-	}
 }
 
 func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
@@ -113,6 +105,10 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 		path := c.Request.URL.Path
 
 		c.Next()
+
+		if header := c.Request.Header.Get("X-Health-Check"); header != "" {
+			return
+		}
 
 		end := time.Now()
 		latency := end.Sub(start)

@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"gopkg.in/redis.v4"
+	"gopkg.in/redis.v5"
 	"uct/common/conf"
 	//log "github.com/Sirupsen/logrus"
 )

@@ -271,11 +271,11 @@ func (rsync *redisSync) updateOffset() {
 	rsync.instance.off = time.Duration(calculateOffset(t, instances, position)) * time.Second
 
 	log.WithFields(log.Fields{
-		"offset":    rsync.instance.off.Seconds(),
-		"interval":  rsync.instance.timeQuantum.Seconds(),
-		"instances": rsync.instance.c,
-		"position":  rsync.instance.pos,
-		"instance_id":rsync.instance.id}).Debugln(rsync.instance.id)
+		"offset":      rsync.instance.off.Seconds(),
+		"interval":    rsync.instance.timeQuantum.Seconds(),
+		"instances":   rsync.instance.c,
+		"position":    rsync.instance.pos,
+		"instance_id": rsync.instance.id}).Debugln(rsync.instance.id)
 
 }
 
@@ -285,10 +285,10 @@ func calculateOffset(interval, instances, position int64) int64 {
 
 	if offset > interval {
 		log.WithFields(log.Fields{
-			"offset": offset,
-			"interval": interval,
+			"offset":    offset,
+			"interval":  interval,
 			"instances": instances,
-			"position": position}).Warnln("offset is more than interval")
+			"position":  position}).Warnln("offset is more than interval")
 		offset = interval
 	}
 

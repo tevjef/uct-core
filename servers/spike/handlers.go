@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"strings"
-	"uct/common/model"
 	"time"
-	"github.com/tevjef/contrib/cache"
+	"uct/common/model"
+	"uct/servers/spike/cache"
 	"uct/servers/spike/middleware"
 )
 
@@ -69,7 +69,7 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 	})
 }
 
-func courseHandler(expire time.Duration)  gin.HandlerFunc {
+func courseHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(expire, func(c *gin.Context) {
 		courseTopicName := strings.ToLower(c.ParamValue("topic"))
 

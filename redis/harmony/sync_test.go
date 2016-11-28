@@ -49,7 +49,7 @@ func TestClientConnection(t *testing.T) {
 func TestRedisSync_registerInstance(t *testing.T) {
 	rsync := setup(time.Minute, "instance")
 
-	for i :=0 ; i < 100; i++ {
+	for i := 0; i < 100; i++ {
 		rsync.registerInstance()
 	}
 
@@ -59,7 +59,7 @@ func TestRedisSync_registerInstance(t *testing.T) {
 
 	assert.Equal(t, int64(0), position)
 	assert.Equal(t, int64(1), count)
-	assert.Equal(t, time.Second * 0, offset)
+	assert.Equal(t, time.Second*0, offset)
 
 	teardown()
 }
@@ -67,8 +67,8 @@ func TestRedisSync_registerInstance(t *testing.T) {
 func TestRedisSync_registerMultipleInstance(t *testing.T) {
 	rsync := &redisSync{}
 
-	for i := 0 ; i < 60; i++ {
-		rsync = setup(time.Minute, "instance" + strconv.Itoa(i))
+	for i := 0; i < 60; i++ {
+		rsync = setup(time.Minute, "instance"+strconv.Itoa(i))
 		rsync.registerInstance()
 	}
 
@@ -76,10 +76,9 @@ func TestRedisSync_registerMultipleInstance(t *testing.T) {
 	count := rsync.instance.count()
 	offset := rsync.instance.offset()
 
-
 	assert.Equal(t, int64(59), position)
 	assert.Equal(t, int64(60), count)
-	assert.Equal(t, time.Second * 59, offset)
+	assert.Equal(t, time.Second*59, offset)
 
 	teardown()
 }
@@ -118,7 +117,6 @@ func TestRedisSync_SyncMultiple(t *testing.T) {
 			results <- instance.offset()
 		}
 
-
 	}()
 
 	go func() {
@@ -129,7 +127,7 @@ func TestRedisSync_SyncMultiple(t *testing.T) {
 	}()
 
 	for i := 0; i < 2; i++ {
-		times = append(times, int(<- results))
+		times = append(times, int(<-results))
 	}
 
 	assert.Equal(t, 2, len(times))
@@ -138,7 +136,6 @@ func TestRedisSync_SyncMultiple(t *testing.T) {
 
 	teardown()
 }
-
 
 func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
@@ -149,9 +146,9 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		for instance := range rsync.sync(make(chan struct{})) {
 			log.WithFields(log.Fields{
-				"offset": instance.off.Seconds(),
+				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position": rsync.instance.count()}).Println("instance1")
+				"position":  rsync.instance.count()}).Println("instance1")
 		}
 	}()
 
@@ -162,9 +159,9 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		for instance := range rsync.sync(make(chan struct{})) {
 			log.WithFields(log.Fields{
-				"offset": instance.off.Seconds(),
+				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position": rsync.instance.count()}).Println("instance2")
+				"position":  rsync.instance.count()}).Println("instance2")
 		}
 	}()
 
@@ -181,9 +178,9 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		for instance := range rsync.sync(channel) {
 			log.WithFields(log.Fields{
-				"offset": instance.off.Seconds(),
+				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position": rsync.instance.count()}).Println("instance3")
+				"position":  rsync.instance.count()}).Println("instance3")
 		}
 
 	}()
@@ -197,9 +194,9 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		for instance := range rsync.sync(channel) {
 			log.WithFields(log.Fields{
-				"offset": instance.off.Seconds(),
+				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position": rsync.instance.count()}).Println("instance4")
+				"position":  rsync.instance.count()}).Println("instance4")
 		}
 	}()
 
@@ -221,17 +218,17 @@ func Test_calculateOffset(t *testing.T) {
 		args args
 		want int64
 	}{
-		{args:args{60, 1, 0}, want: 0},
-		{args:args{60, 2, 0}, want: 0},
-		{args:args{60, 2, 1}, want: 30},
-		{args:args{60, 3, 0}, want: 0},
-		{args:args{60, 3, 1}, want: 20},
-		{args:args{60, 3, 2}, want: 40},
-		{args:args{60, 4, 0}, want: 0},
-		{args:args{60, 4, 1}, want: 15},
-		{args:args{60, 4, 2}, want: 30},
-		{args:args{60, 4, 3}, want: 45},
-		{args:args{60, 60, 59}, want: 59},
+		{args: args{60, 1, 0}, want: 0},
+		{args: args{60, 2, 0}, want: 0},
+		{args: args{60, 2, 1}, want: 30},
+		{args: args{60, 3, 0}, want: 0},
+		{args: args{60, 3, 1}, want: 20},
+		{args: args{60, 3, 2}, want: 40},
+		{args: args{60, 4, 0}, want: 0},
+		{args: args{60, 4, 1}, want: 15},
+		{args: args{60, 4, 2}, want: 30},
+		{args: args{60, 4, 3}, want: 45},
+		{args: args{60, 60, 59}, want: 59},
 	}
 	for _, tt := range tests {
 		if got := calculateOffset(tt.args.interval, tt.args.instances, tt.args.position); got != tt.want {
