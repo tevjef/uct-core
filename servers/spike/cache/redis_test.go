@@ -12,7 +12,7 @@ const redisTestServer = "localhost:6379"
 var newRedisStore = func(t *testing.T, defaultExpiration time.Duration) CacheStore {
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
-		c.Write([]byte("flush_all\r\n"))
+		c.Write([]byte("flush_db\r\n"))
 		c.Close()
 		redisCache := NewRedisCache(redisTestServer, "", 9, defaultExpiration)
 		redisCache.Flush()

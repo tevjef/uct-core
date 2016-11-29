@@ -27,14 +27,14 @@ func (c *RedisStore) Set(key string, value interface{}, expires time.Duration) e
 		return err
 	}
 
-	return c.client.Set(key, b, c.exp(expires)).Err()
+	return c.client.Set(key, b, c.expiration(expires)).Err()
 }
 
 func (c *RedisStore) Add(key string, value interface{}, expires time.Duration) error {
 	if exists, _ := c.Exists(key); exists {
 		return ErrNotStored
 	}
-	return c.client.Set(key, value, c.exp(expires)).Err()
+	return c.client.Set(key, value, c.expiration(expires)).Err()
 }
 
 func (c *RedisStore) Get(key string, ptrValue interface{}) error {
@@ -56,7 +56,7 @@ func (c *RedisStore) Replace(key string, value interface{}, expires time.Duratio
 		return ErrNotStored
 	}
 
-	err := c.Set(key, value, c.exp(expires))
+	err := c.Set(key, value, c.expiration(expires))
 	if value == nil {
 		return ErrNotStored
 	} else {
@@ -116,7 +116,7 @@ func (c *RedisStore) Flush() error {
 	return c.client.FlushDb().Err()
 }
 
-func (c *RedisStore) exp(expires time.Duration) time.Duration {
+func (c *RedisStore) expiration(expires time.Duration) time.Duration {
 	switch expires {
 	case DEFAULT:
 		expires = c.defaultExpiration
