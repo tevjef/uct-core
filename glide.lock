@@ -1,5 +1,5 @@
 hash: 45a3c6f7f33222f2cfb17746965e8771a944c20c34a76b3553c3820383ad4b90
-updated: 2016-11-28T22:53:48.846539455-05:00
+updated: 2016-11-29T02:27:26.547168788-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -79,15 +79,6 @@ imports:
   version: d5acf1dac43705f8bfbb71d878e290e2bed3950b
 - name: gopkg.in/bsm/ratelimit.v1
   version: db14e161995a5177acef654cb0dd785e8ee8bc22
-- name: gopkg.in/redis.v4
-  version: 8a8d997ad58dc600d2ff0f64914102192f3b51ac
-  subpackages:
-  - internal
-  - internal/consistenthash
-  - internal/errors
-  - internal/hashtag
-  - internal/pool
-  - internal/proto
 - name: gopkg.in/redis.v5
   version: c9856861674f102a5f51104c36401a3cf691739c
   subpackages:
