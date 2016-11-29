@@ -122,6 +122,8 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 	// Clean up previous instances
 	if keys, err := rsync.uctRedis.FindAll(rsync.healthSpace + ":*"); err != nil {
 		log.WithError(err).Fatalln("failed to retrieve all keys during clean up", rsync.instance.id)
+	} else if len(keys) == 0 {
+		// do nothing
 	} else if err := rsync.uctRedis.Client.Del(keys...).Err(); err != nil {
 		log.WithError(err).WithField("keys", keys).Fatalln("failed to delete all keys during clean up", rsync.instance.id)
 	} else if err := rsync.uctRedis.Client.Del(rsync.instanceList).Err(); err != nil {
