@@ -33,14 +33,14 @@ type Policy struct {
 var DefaultPolicy *Policy = &Policy{
 	ServerMaxAge: 10 * time.Second,
 	ClientMaxAge: 10 * time.Second,
-	Directive: Public,
+	Directive:    Public,
 }
 
 func PolicyWithExpiration(expiration time.Duration) *Policy {
 	return &Policy{
 		ServerMaxAge: expiration,
 		ClientMaxAge: expiration,
-		Directive: Public,
+		Directive:    Public,
 	}
 }
 
@@ -74,4 +74,3 @@ func (p *Policy) CacheHeader() string {
 func (p *Policy) CacheControl() (string, string) {
 	return "Cache-Control", p.CacheHeader()
 }
-

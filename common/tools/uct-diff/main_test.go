@@ -3,12 +3,13 @@ package main
 import (
 	"bufio"
 	"flag"
-	"github.com/pquerna/ffjson/ffjson"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 	"uct/common/model"
+
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 var uni1 model.University

@@ -1,8 +1,9 @@
 package cache
 
 import (
-	"gopkg.in/redis.v5"
 	"time"
+
+	redis "gopkg.in/redis.v4"
 )
 
 // Wraps the Redis client to meet the Cache interface.

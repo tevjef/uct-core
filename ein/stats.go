@@ -1,9 +1,10 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"time"
 	"uct/common/model"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func audit(university string) {

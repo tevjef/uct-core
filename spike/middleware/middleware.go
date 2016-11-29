@@ -1,13 +1,14 @@
 package middleware
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
-	"github.com/pquerna/ffjson/ffjson"
 	"strconv"
 	"strings"
 	"time"
 	"uct/common/model"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 const (

@@ -7,11 +7,12 @@ import (
 	"uct/common/conf"
 	"uct/redis"
 
+	"sort"
+
 	_ "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"sort"
 )
 
 func getClient() *redis.Helper {

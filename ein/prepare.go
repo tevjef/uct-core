@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmoiron/sqlx"
 	"net"
 	"os"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
 )
 
 type DatabaseHandler interface {

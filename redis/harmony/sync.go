@@ -6,10 +6,11 @@ import (
 	"time"
 	"uct/redis"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
 	"sync"
 	"uct/redis/lock"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/satori/go.uuid"
 )
 
 type redisSync struct {

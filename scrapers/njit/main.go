@@ -4,9 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/pkg/errors"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +18,11 @@ import (
 	"uct/common/proxy"
 	"uct/common/try"
 	"uct/scrapers/njit/cookie"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 var (

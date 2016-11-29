@@ -12,14 +12,16 @@ import (
 	"uct/common/conf"
 	"uct/common/model"
 
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
 	"uct/redis"
 	"uct/redis/harmony"
 
 	"os/exec"
 
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"hash/fnv"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (

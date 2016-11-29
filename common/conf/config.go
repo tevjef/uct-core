@@ -2,12 +2,13 @@ package conf
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	log "github.com/Sirupsen/logrus"
-	"github.com/kelseyhightower/envconfig"
 	"net"
 	"os"
 	"strconv"
+
+	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type pprof map[string]server

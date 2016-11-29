@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/pkg/errors"
-	"github.com/pquerna/ffjson/ffjson"
 	"io"
 	"io/ioutil"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 func MarshalMessage(format string, m University) (*bytes.Reader, error) {

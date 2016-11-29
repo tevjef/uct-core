@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
 	"sync"
 	"uct/common/model"
 
@@ -20,7 +22,6 @@ import (
 	"uct/common/try"
 
 	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (

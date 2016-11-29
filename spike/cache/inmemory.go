@@ -1,9 +1,10 @@
 package cache
 
 import (
-	"github.com/robfig/go-cache"
 	"reflect"
 	"time"
+
+	"github.com/robfig/go-cache"
 )
 
 type InMemoryStore struct {

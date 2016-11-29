@@ -1,10 +1,6 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
-	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
@@ -13,6 +9,12 @@ import (
 	"uct/common/model"
 	"uct/spike/cache"
 	"uct/spike/middleware"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 var (

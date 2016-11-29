@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"errors"
-	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
 	"uct/common/model"
 	"uct/spike/middleware"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -124,7 +125,7 @@ func Cache(store CacheStore) gin.HandlerFunc {
 }
 
 // Cache Decorator
-func CachePage(handle gin.HandlerFunc, expire time.Duration, ) gin.HandlerFunc {
+func CachePage(handle gin.HandlerFunc, expire time.Duration) gin.HandlerFunc {
 	return CachePageWithPolicy(handle, PolicyWithExpiration(expire))
 }
 
@@ -167,7 +168,6 @@ func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc
 		}
 	}
 }
-
 
 func cacheStoreFromContext(c *gin.Context) CacheStore {
 	return c.Value(CacheMiddlewareKey).(CacheStore)

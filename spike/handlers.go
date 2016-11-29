@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"strings"
 	"time"
 	"uct/common/model"
 	"uct/spike/cache"
 	"uct/spike/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {
