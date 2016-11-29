@@ -78,11 +78,11 @@ it doesn't support a syscall analogous to mprotect.
 package freeze
 
 import (
-"reflect"
-"runtime"
-"unsafe"
+	"reflect"
+	"runtime"
+	"unsafe"
 
-"golang.org/x/sys/unix"
+	"golang.org/x/sys/unix"
 )
 
 // Pointer returns a frozen copy of v, which must be a pointer. Future writes
@@ -250,7 +250,7 @@ func copyAndFreeze(dataptr, n uintptr) uintptr {
 		return dataptr
 	}
 	// allocate new memory to be frozen
-	newMem, err := unix.Mmap(-1, 0, int(n), unix.PROT_READ | unix.PROT_WRITE, unix.MAP_ANON | unix.MAP_PRIVATE)
+	newMem, err := unix.Mmap(-1, 0, int(n), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_ANON|unix.MAP_PRIVATE)
 	if err != nil {
 		panic(err)
 	}

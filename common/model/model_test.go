@@ -2,11 +2,12 @@ package model
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var rutgers = []*Registration{

@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"uct/common/model"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ErrNoRows struct {

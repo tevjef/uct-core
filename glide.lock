@@ -1,5 +1,5 @@
-hash: a8e857a0d9d0707503052cb84826498094b55b6f4fa16a67dc02becc8da9f13a
-updated: 2016-11-27T19:17:34.946294681-05:00
+hash: 45a3c6f7f33222f2cfb17746965e8771a944c20c34a76b3553c3820383ad4b90
+updated: 2016-11-29T02:27:26.547168788-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -9,31 +9,18 @@ imports:
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
-- name: github.com/bradfitz/gomemcache
-  version: 2fafb84a66c4911e11a8f50955b01e74fe3ab9c5
-  subpackages:
-  - memcache
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
-- name: github.com/garyburd/redigo
-  version: d7de57ceb51b029d5c5a61e26587f672e2834178
-  subpackages:
-  - redis
-  - internal
 - name: github.com/gin-gonic/gin
   version: 9163ee543d3f1fab9b0ad8cdf6dc2a6ec2c07dbb
   subpackages:
   - binding
   - render
 - name: github.com/gogo/protobuf
-  version: e33835a643a970c11ac74f6333f5f6866387a101
+  version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
   - proto
   - jsonpb
-- name: github.com/influxdata/influxdb
-  version: 800da5732b91c816b0a097acf8887fa2af1efa1a
-  subpackages:
-  - client/v2
 - name: github.com/jmoiron/sqlx
   version: f71d5ee01769df469d115332106ef504ded071dc
   subpackages:
@@ -71,11 +58,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
-  version: a283a10442df8dc09befd873fab202bf8a253d6a
-- name: github.com/tevjef/contrib
-  version: 8bad123eb14eebb1ab8c81559d953f5605f6e8f4
-  subpackages:
-  - cache
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/tevjef/go-gcm
   version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
 - name: golang.org/x/exp
@@ -96,12 +79,11 @@ imports:
   version: d5acf1dac43705f8bfbb71d878e290e2bed3950b
 - name: gopkg.in/bsm/ratelimit.v1
   version: db14e161995a5177acef654cb0dd785e8ee8bc22
-- name: gopkg.in/redis.v4
-  version: 8a8d997ad58dc600d2ff0f64914102192f3b51ac
+- name: gopkg.in/redis.v5
+  version: c9856861674f102a5f51104c36401a3cf691739c
   subpackages:
   - internal
   - internal/consistenthash
-  - internal/errors
   - internal/hashtag
   - internal/pool
   - internal/proto

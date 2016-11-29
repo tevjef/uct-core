@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"os"
 	"uct/common/model"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (

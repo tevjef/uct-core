@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"testing"
-	"io/ioutil"
 )
 
 func BenchmarkGetTypeSprint(b *testing.B) {

@@ -7,6 +7,8 @@ import (
 	"uct/common/conf"
 	"uct/common/model"
 
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
 	"uct/julia/notifier"
 	"uct/notification"
 	"uct/redis"
@@ -14,7 +16,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (

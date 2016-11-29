@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmoiron/sqlx"
 	"net"
 	"net/http"
 	"runtime"
@@ -14,8 +12,12 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/pkg/errors"
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
+
 	"uct/common/conf"
+
+	"github.com/pkg/errors"
 )
 
 var trim = strings.TrimSpace

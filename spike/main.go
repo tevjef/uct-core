@@ -1,18 +1,20 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
-	"github.com/tevjef/contrib/cache"
-	"gopkg.in/alecthomas/kingpin.v2"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-	"uct/servers/spike/middleware"
+	"uct/spike/cache"
+	"uct/spike/middleware"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -49,12 +51,11 @@ func main() {
 	database.SetMaxOpenConns(config.Postgres.ConnMax)
 	prepareAllStmts()
 
-
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Ginrus(log.StandardLogger(), time.RFC3339, true))
-	r.Use(cache.Cache(cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10 * time.Second)))
+	r.Use(cache.Cache(cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10*time.Second)))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")
@@ -80,12 +81,11 @@ func main() {
 		v2.GET("/universities", universitiesHandler(time.Minute))
 		v2.GET("/university/:topic", universityHandler(time.Minute))
 		v2.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
-		v2.GET("/subject/:topic", subjectHandler(10 * time.Second))
-		v2.GET("/courses/:topic", coursesHandler(10 * time.Second))
-		v2.GET("/course/:topic", courseHandler(10 * time.Second))
-		v2.GET("/section/:topic", sectionHandler(10 * time.Second))
+		v2.GET("/subject/:topic", subjectHandler(10*time.Second))
+		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
+		v2.GET("/course/:topic", courseHandler(10*time.Second))
+		v2.GET("/section/:topic", sectionHandler(10*time.Second))
 	}
-
 
 	// Legacy, some version android and iOS clients use this endpoint. Investigate redirecting traffic to /v2 with nginx
 	v4 := r.Group("/v4")
@@ -96,12 +96,11 @@ func main() {
 		v4.GET("/universities", universitiesHandler(time.Minute))
 		v4.GET("/university/:topic", universityHandler(time.Minute))
 		v4.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
-		v4.GET("/subject/:topic", subjectHandler(10 * time.Second))
-		v4.GET("/courses/:topic", coursesHandler(10 * time.Second))
-		v4.GET("/course/:topic", courseHandler(10 * time.Second))
-		v4.GET("/section/:topic", sectionHandler(10 * time.Second))
+		v4.GET("/subject/:topic", subjectHandler(10*time.Second))
+		v4.GET("/courses/:topic", coursesHandler(10*time.Second))
+		v4.GET("/course/:topic", courseHandler(10*time.Second))
+		v4.GET("/section/:topic", sectionHandler(10*time.Second))
 	}
 
 	r.Run(":" + strconv.Itoa(int(*port)))
 }
-

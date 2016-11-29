@@ -7,12 +7,15 @@ import (
 	"uct/common/conf"
 	"uct/common/model"
 
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
 	"strconv"
 	"uct/common/try"
 	"uct/notification"
 	"uct/redis"
 
 	_ "github.com/lib/pq"
+	gcm "github.com/tevjef/go-gcm"
 
 	"fmt"
 
@@ -20,8 +23,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/tevjef/go-gcm"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (

@@ -1,10 +1,11 @@
 package cookie
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type BakedCookie struct {

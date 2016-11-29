@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/Sirupsen/logrus"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"uct/common/model"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type NSemesters struct {

@@ -13,10 +13,12 @@ import (
 	"uct/common/model"
 	"uct/redis"
 
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
 	"bytes"
+
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type App struct {

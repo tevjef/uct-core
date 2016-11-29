@@ -2,12 +2,13 @@ package conf
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	log "github.com/Sirupsen/logrus"
-	"github.com/kelseyhightower/envconfig"
 	"net"
 	"os"
 	"strconv"
+
+	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type pprof map[string]server
@@ -26,7 +27,7 @@ type Config struct {
 }
 
 type spike struct {
-	RedisDb     int `toml:"redis_db" envconfig:"REDIS_DB"`
+	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
 }
 
 type julia struct {

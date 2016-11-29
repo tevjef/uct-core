@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmoiron/sqlx"
 	"sort"
 	"strconv"
 	"time"
 	"uct/common/model"
-	"uct/servers/spike/middleware"
+	"uct/spike/middleware"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
 )
 
 var (

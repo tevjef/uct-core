@@ -2,7 +2,6 @@ package cookie
 
 import (
 	"crypto/tls"
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func init() {

@@ -1,9 +1,9 @@
 package redis
 
 import (
-	"gopkg.in/redis.v4"
 	"uct/common/conf"
-	//log "github.com/Sirupsen/logrus"
+
+	redis "gopkg.in/redis.v5"
 )
 
 type Helper struct {

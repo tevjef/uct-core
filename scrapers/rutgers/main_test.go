@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 	"uct/common/model"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequestSubjects(t *testing.T) {

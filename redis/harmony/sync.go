@@ -6,10 +6,11 @@ import (
 	"time"
 	"uct/redis"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
 	"sync"
 	"uct/redis/lock"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/satori/go.uuid"
 )
 
 type redisSync struct {
@@ -122,6 +123,8 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 	// Clean up previous instances
 	if keys, err := rsync.uctRedis.FindAll(rsync.healthSpace + ":*"); err != nil {
 		log.WithError(err).Fatalln("failed to retrieve all keys during clean up", rsync.instance.id)
+	} else if len(keys) == 0 {
+		// do nothing
 	} else if err := rsync.uctRedis.Client.Del(keys...).Err(); err != nil {
 		log.WithError(err).WithField("keys", keys).Fatalln("failed to delete all keys during clean up", rsync.instance.id)
 	} else if err := rsync.uctRedis.Client.Del(rsync.instanceList).Err(); err != nil {
@@ -271,11 +274,11 @@ func (rsync *redisSync) updateOffset() {
 	rsync.instance.off = time.Duration(calculateOffset(t, instances, position)) * time.Second
 
 	log.WithFields(log.Fields{
-		"offset":    rsync.instance.off.Seconds(),
-		"interval":  rsync.instance.timeQuantum.Seconds(),
-		"instances": rsync.instance.c,
-		"position":  rsync.instance.pos,
-		"instance_id":rsync.instance.id}).Debugln(rsync.instance.id)
+		"offset":      rsync.instance.off.Seconds(),
+		"interval":    rsync.instance.timeQuantum.Seconds(),
+		"instances":   rsync.instance.c,
+		"position":    rsync.instance.pos,
+		"instance_id": rsync.instance.id}).Debugln(rsync.instance.id)
 
 }
 
@@ -285,10 +288,10 @@ func calculateOffset(interval, instances, position int64) int64 {
 
 	if offset > interval {
 		log.WithFields(log.Fields{
-			"offset": offset,
-			"interval": interval,
+			"offset":    offset,
+			"interval":  interval,
 			"instances": instances,
-			"position": position}).Warnln("offset is more than interval")
+			"position":  position}).Warnln("offset is more than interval")
 		offset = interval
 	}
 

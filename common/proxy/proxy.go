@@ -1,10 +1,11 @@
 package proxy
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var proxyUrl = os.Getenv("HTTP_PROXY_URL")

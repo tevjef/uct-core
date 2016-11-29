@@ -2,7 +2,7 @@ FROM golang:1.6.3-alpine
 
 COPY . /go/src/uct
 
-ENV APP_PACKAGE="uct/servers/spike"
+ENV APP_PACKAGE="uct/spike"
 ENV APP_NAME="spike"
 
 RUN apk --no-cache add ca-certificates openssl git && \

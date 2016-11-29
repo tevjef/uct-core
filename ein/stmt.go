@@ -1,9 +1,10 @@
 package main
 
 import (
+	"uct/common/model"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
-	"uct/common/model"
 )
 
 var preparedStmts = make(map[string]*sqlx.NamedStmt)
