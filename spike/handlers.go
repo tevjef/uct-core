@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 	"uct/common/model"
-	"uct/servers/spike/cache"
-	"uct/servers/spike/middleware"
+	"uct/spike/cache"
+	"uct/spike/middleware"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {

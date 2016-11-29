@@ -11,8 +11,8 @@ import (
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-	"uct/servers/spike/cache"
-	"uct/servers/spike/middleware"
+	"uct/spike/cache"
+	"uct/spike/middleware"
 )
 
 var (

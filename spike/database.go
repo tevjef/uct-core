@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 	"uct/common/model"
-	"uct/servers/spike/middleware"
+	"uct/spike/middleware"
 )
 
 var (

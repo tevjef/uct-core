@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"time"
 	"uct/common/model"
-	"uct/servers/spike/middleware"
+	"uct/spike/middleware"
 )
 
 const (
