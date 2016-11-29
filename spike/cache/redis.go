@@ -18,6 +18,7 @@ func NewRedisCache(host string, password string, database int, defaultExpiration
 		Addr:     host,
 		Password: password,
 		DB:       database,
+		PoolSize: 30,
 	})
 	return &RedisStore{client, defaultExpiration}
 }
