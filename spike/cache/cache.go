@@ -124,19 +124,29 @@ func Cache(store CacheStore) gin.HandlerFunc {
 }
 
 // Cache Decorator
-func CachePage(expire time.Duration, handle gin.HandlerFunc) gin.HandlerFunc {
-	if expire == 0 {
-		return handle
+func CachePage(handle gin.HandlerFunc, expire time.Duration, ) gin.HandlerFunc {
+	return CachePageWithPolicy(handle, PolicyWithExpiration(expire))
+}
+
+// Cache Decorator
+func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc {
+	if policy == nil {
+		policy = &Policy{}
 	}
 
 	return func(c *gin.Context) {
 		var cache responseCache
 		store := cacheStoreFromContext(c)
 
+		c.Header(policy.CacheControl())
+		if policy.ServerMaxAge == 0 {
+			handle(c)
+		}
+
 		key := urlEscape(PageCachePrefix, c.Request.URL.RequestURI())
 		if err := store.Get(key, &cache); err != nil {
 			// replace writer
-			writer := newCachedWriter(store, expire, c.Writer, key, c)
+			writer := newCachedWriter(store, policy.ServerMaxAge, c.Writer, key, c)
 			c.Writer = writer
 			handle(c)
 		} else {
@@ -157,6 +167,7 @@ func CachePage(expire time.Duration, handle gin.HandlerFunc) gin.HandlerFunc {
 		}
 	}
 }
+
 
 func cacheStoreFromContext(c *gin.Context) CacheStore {
 	return c.Value(CacheMiddlewareKey).(CacheStore)
