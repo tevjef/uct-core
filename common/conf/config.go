@@ -80,6 +80,7 @@ func (scrapers scrapers) Get(key string) *scraper {
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.DebugLevel)
 }
 
 func IsDebug() bool {
@@ -142,7 +143,7 @@ func bindEnv(defValue string, env string) string {
 	}
 }
 
-func (c Config) GetDebugSever(appName string) *net.TCPAddr {
+func (c Config) DebugSever(appName string) *net.TCPAddr {
 	value := c.Pprof[appName].Host
 	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
 		log.Panicf("'%s' is not a valid TCP address: %s", value, err)
@@ -152,15 +153,11 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 	}
 }
 
-func (c Config) GetDbConfig(appName string) string {
+func (c Config) DatabaseConfig(appName string) string {
 	return fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s fallback_application_name=%s sslmode=disable",
 		c.Postgres.User, c.Postgres.Name, c.Postgres.Password, c.Postgres.Host, c.Postgres.Port, appName)
 }
 
-func (c Config) GetInfluxAddr() string {
-	return "http://" + c.InfluxDb.Host + ":" + c.InfluxDb.Port
-}
-
-func (c Config) GetRedisAddr() string {
+func (c Config) RedisAddr() string {
 	return c.Redis.Host + ":" + c.Redis.Port
 }

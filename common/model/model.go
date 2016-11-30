@@ -3,6 +3,8 @@ package model
 import (
 	log "github.com/Sirupsen/logrus"
 	//	"golang.org/x/exp/utf8string"
+	"bytes"
+	"fmt"
 	"hash/fnv"
 	"net/url"
 	"regexp"
@@ -14,11 +16,6 @@ import (
 )
 
 type (
-	MeetingByDay    []Meeting
-	SectionByNumber []Section
-	CourseByName    []Course
-	SubjectByName   []Subject
-
 	Period int
 	Status int
 
@@ -35,8 +32,8 @@ type (
 )
 
 const (
-	PROTOBUF = "protobuf"
-	JSON     = "json"
+	Protobuf = "protobuf"
+	Json     = "json"
 )
 
 const (
@@ -88,7 +85,6 @@ const (
 var status = [...]string{
 	"Open",
 	"Closed",
-	"Cancelled",
 }
 
 func (s Status) String() string {
@@ -154,6 +150,153 @@ func swapChar(s, char string, index int) string {
 	left := s[:index]
 	right := s[index+1:]
 	return left + char + right
+}
+
+var emptyByteArray = make([]byte, 0)
+var nullByte = []byte("\x00")
+var headingBytes = []byte("\x01")
+
+func stripSpaces(str string) string {
+	var lastRune rune
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) && unicode.IsSpace(lastRune) {
+			// if the character is a space, drop it
+			return -1
+		}
+		lastRune = r
+		// else keep it in the string
+		return r
+	}, str)
+}
+
+var trim = strings.TrimSpace
+
+func TrimAll(str string) string {
+	str = stripSpaces(str)
+	temp := []byte(str)
+
+	// Remove NUL and Heading bytes from string, cannot be inserted into postgresql
+	temp = bytes.Replace(temp, nullByte, emptyByteArray, -1)
+	str = string(bytes.Replace(temp, headingBytes, emptyByteArray, -1))
+	return trim(str)
+}
+
+func CheckUniqueSubject(subjects []*Subject) {
+	m := make(map[string]int)
+	for subjectIndex := range subjects {
+		subject := subjects[subjectIndex]
+		key := subject.Season + subject.Year + subject.Name + subject.Number
+		m[key]++
+		if m[key] > 1 {
+			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")
+			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
+		}
+	}
+}
+
+func CheckUniqueCourse(subject *Subject, courses []*Course) {
+	m := map[string]int{}
+	for courseIndex := range courses {
+		course := courses[courseIndex]
+		key := course.Name + course.Number
+		m[key]++
+		if m[key] > 1 {
+			log.WithFields(log.Fields{"subject": subject.Name,
+				"season": subject.Season,
+				"year":   subject.Year,
+				"key":    key,
+				"count":  m[key]}).Debugln("Duplicate course")
+			course.Name = course.Name + "_" + strconv.Itoa(m[key])
+		}
+	}
+}
+
+func ValidateAll(uni *University) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in ValidateAll", r)
+			err = fmt.Errorf("%v+", r)
+		}
+	}()
+
+	uni.Validate()
+	CheckUniqueSubject(uni.Subjects)
+	for subjectIndex := range uni.Subjects {
+		subject := uni.Subjects[subjectIndex]
+		subject.Validate(uni)
+
+		courses := subject.Courses
+		CheckUniqueCourse(subject, courses)
+		for courseIndex := range courses {
+			course := courses[courseIndex]
+			course.Validate(subject)
+
+			sections := course.Sections
+			for sectionIndex := range sections {
+				section := sections[sectionIndex]
+				section.Validate(course)
+
+				//[]Instructors
+				instructors := section.Instructors
+				for instructorIndex := range instructors {
+					instructor := instructors[instructorIndex]
+					instructor.Index = int32(instructorIndex)
+					instructor.Validate()
+				}
+
+				//[]Meeting
+				meetings := section.Meetings
+				for meetingIndex := range meetings {
+					meeting := meetings[meetingIndex]
+					meeting.Index = int32(meetingIndex)
+					meeting.Validate()
+
+					// Meeting []Metadata
+					metadatas := meeting.Metadata
+					for metadataIndex := range metadatas {
+						metadata := metadatas[metadataIndex]
+						metadata.Validate()
+					}
+				}
+
+				//[]Books
+				books := section.Books
+				for bookIndex := range books {
+					book := books[bookIndex]
+					book.Validate()
+				}
+
+				// Section []Metadata
+				metadatas := section.Metadata
+				for metadataIndex := range metadatas {
+					metadata := metadatas[metadataIndex]
+					metadata.Validate()
+				}
+			}
+
+			// Course []Metadata
+			metadatas := course.Metadata
+			for metadataIndex := range metadatas {
+				metadata := metadatas[metadataIndex]
+				metadata.Validate()
+			}
+		}
+	}
+
+	for registrations := range uni.Registrations {
+		_ = uni.Registrations[registrations]
+
+	}
+
+	// university []Metadata
+	metadatas := uni.Metadata
+	for metadataIndex := range metadatas {
+		metadata := metadatas[metadataIndex]
+		metadata.Validate()
+
+	}
+
+	return nil
 }
 
 func (u *University) Validate() {
@@ -443,21 +586,21 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 			winter.Year = winter.Year - 1
 			fall.Year = fall.Year - 1
 		}
-		Log("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
+		log.Debugln("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
 		return &ResolvedSemester{
 			Last:    winter,
 			Current: spring,
 			Next:    summer}
 
 	} else if yearDay >= startFallReg.dayOfYear() && yearDay < endSummerReg.dayOfYear() {
-		Log("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
+		log.Debugln("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
 		return &ResolvedSemester{
 			Last:    spring,
 			Current: summer,
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
-		Log("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
+		log.Debugln("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
 		return &ResolvedSemester{
 			Last:    summer,
 			Current: fall,
@@ -465,7 +608,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 		}
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
-		Log("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
+		log.Debugln("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
 		return &ResolvedSemester{
 			Last:    fall,
 			Current: winter,
@@ -586,6 +729,8 @@ func (a meetingSorter) Less(i, j int) bool {
 	return a.meetings[i].dayRank() < a.meetings[j].dayRank()
 }
 
+type SectionByNumber []Section
+
 func (a SectionByNumber) Len() int {
 	return len(a)
 }
@@ -598,6 +743,8 @@ func (a SectionByNumber) Less(i, j int) bool {
 	return strings.Compare(a[i].Number, a[j].Number) < 0
 }
 
+type CourseByName []Course
+
 func (a CourseByName) Len() int {
 	return len(a)
 }
@@ -609,6 +756,8 @@ func (a CourseByName) Swap(i, j int) {
 func (a CourseByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
 }
+
+type SubjectByName []Subject
 
 func (a SubjectByName) Len() int {
 	return len(a)

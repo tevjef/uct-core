@@ -22,12 +22,14 @@ import (
 	"hash/fnv"
 
 	log "github.com/Sirupsen/logrus"
+	"golang.org/x/tools/go/gcimporter15/testdata"
+	"log"
 )
 
 var (
 	app            = kingpin.New("jet", "A program the wraps a uct scraper and collect it's output")
-	outputFormat   = app.Flag("output-format", "Choose output format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	inputFormat    = app.Flag("input-format", "Choose input format").HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	outputFormat   = app.Flag("output-format", "Choose output format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
+	inputFormat    = app.Flag("input-format", "Choose input format").HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
 	daemonInterval = app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
 	daemonFile     = app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
 	configFile     = app.Flag("config", "configuration file for the application").Short('c').File()
@@ -43,7 +45,7 @@ func main() {
 
 	log.SetLevel(log.InfoLevel)
 
-	if *outputFormat != model.JSON && *outputFormat != model.PROTOBUF {
+	if *outputFormat != model.Json && *outputFormat != model.Protobuf {
 		log.Fatalln("Invalid format:", *outputFormat)
 	}
 

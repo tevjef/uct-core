@@ -38,12 +38,12 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	var err error
 
 	// Open database connection
-	if database, err = model.InitDB(config.GetDbConfig(app.Name)); err != nil {
+	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
 		log.WithError(err).Fatalln("failed to open connection to database")
 	}
 
@@ -55,7 +55,7 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Ginrus(log.StandardLogger(), time.RFC3339, true))
-	r.Use(cache.Cache(cache.NewRedisCache(config.GetRedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10*time.Second)))
+	r.Use(cache.Cache(cache.NewRedisCache(config.RedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10*time.Second)))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")

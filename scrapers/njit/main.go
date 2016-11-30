@@ -41,7 +41,7 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	var university model.University
 
@@ -77,7 +77,7 @@ func main() {
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}
 
-	if reader, err := model.MarshalMessage(model.JSON, university); err != nil {
+	if reader, err := model.MarshalMessage(model.Json, university); err != nil {
 		io.Copy(os.Stdout, reader)
 	}
 }

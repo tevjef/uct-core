@@ -1,4 +1,5 @@
 // https://github.com/matryer/try
+// https://github.com/rberrelleza/try
 package try
 
 import (

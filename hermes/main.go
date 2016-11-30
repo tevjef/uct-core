@@ -19,6 +19,7 @@ import (
 
 	"fmt"
 
+	"database/sql"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -49,13 +50,16 @@ func main() {
 	}
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	helper = redis.NewHelper(config, app.Name)
 
 	var err error
 	// Open database connection
-	database, err = model.InitDB(config.GetDbConfig(app.Name))
+	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
+		log.WithError(err).Fatalln()
+	}
+
 	model.CheckError(err)
 	prepareAllStmts()
 

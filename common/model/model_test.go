@@ -232,7 +232,7 @@ func TestToTitle(t *testing.T) {
 
 func TestSwapChar(t *testing.T) {
 	str := "ART APPRECIATION VII"
-	expect := "ART aPPERCIATION VII"
+	expect := "ART aPPRECIATION VII"
 
 	result := swapChar(str, "a", 4)
 	assert.Equal(t, expect, result)
@@ -289,32 +289,7 @@ func TestSemesterSorter(t *testing.T) {
 	}
 
 	sort.Sort(SemesterSorter(semesters))
-	assert.True(t, seasonEqu(semesters, expected))
-}
-
-func seasonEqu(a, b []*Semester) bool {
-	if a == nil && b == nil {
-		return true
-	}
-
-	if a == nil || b == nil {
-		return false
-	}
-
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i].Year != b[i].Year {
-			return false
-		}
-
-		if a[i].Season != b[i].Season {
-			return false
-		}
-	}
-	return true
+	assert.Equal(t, expected, semesters)
 }
 
 func BenchmarkToTopicName(b *testing.B) {
