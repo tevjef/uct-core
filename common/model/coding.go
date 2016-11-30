@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"strconv"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 )
