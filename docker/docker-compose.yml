@@ -142,7 +142,6 @@ services:
       fluentd.tag: "core.julia"
       fluentd.influxdb.tags: "[]"
 
-
   nginx:
     container_name: nginx
     restart: on-failure:3
@@ -227,7 +226,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /var/lib/uct/uct/postgresql:/var/lib/postgresql
+      - /var/lib/uct/postgresql:/var/lib/postgresql
     environment:
      - POSTGRES_USER=${POSTGRES_USER}
      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -310,13 +309,11 @@ services:
   spike:
     restart: on-failure:3
     depends_on:
-      - postgresql
-      - redis
       - fluentd
     image: tevjef/uct-core:spike${ENV}
     links:
       - postgresql
-      - influxdb
+      - redis
     ports:
       - '13400'
     environment:
