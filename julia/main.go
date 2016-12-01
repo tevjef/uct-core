@@ -35,10 +35,10 @@ func main() {
 	redisWrapper := redis.NewHelper(config, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	// Open connection to postgresql
-	listener := pq.NewListener(config.GetDbConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(config.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.WithError(err).Fatalln("failure in listener")
 		}

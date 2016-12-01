@@ -16,8 +16,8 @@ pipeline:
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
       - export PATH=$PATH:$GOPATH/bin
-      - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.1/glide-v0.12.1-linux-amd64.tar.gz
-      - tar -xzf glide-v0.12.1-linux-amd64.tar.gz
+      - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz
+      - tar -xzf glide-v0.12.3-linux-amd64.tar.gz
       - mv linux-amd64/glide /usr/bin
       - glide install
       - export PATH=$PATH:$GOPATH/bin

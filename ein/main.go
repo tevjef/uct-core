@@ -18,6 +18,7 @@ import (
 	"bytes"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -46,7 +47,7 @@ var (
 	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
 	noDiff     = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
 	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.JSON, model.PROTOBUF).PlaceHolder("[protobuf, json]").Required().String()
+	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
 	config     = conf.Config{}
 
@@ -56,7 +57,7 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != model.JSON && *format != model.PROTOBUF {
+	if *format != model.Json && *format != model.Protobuf {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -67,14 +68,18 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	// Start redis client
 	wrapper := redis.NewHelper(config, app.Name)
 
+	var database *sqlx.DB
+	var err error
+
 	// Initialize database connection
-	database, err := model.InitDB(config.GetDbConfig(app.Name))
-	model.CheckError(err)
+	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
+		log.WithError(err).Fatalln()
+	}
 
 	dbHandler := DatabaseHandlerImpl{Database: database}
 	dbHandler.PrepareAllStmts()
@@ -240,7 +245,9 @@ func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.
 
 func (app App) updateSerialSubject(subject *model.Subject) {
 	data, err := subject.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal subject")
+	}
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
 	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 
@@ -250,7 +257,9 @@ func (app App) updateSerialSubject(subject *model.Subject) {
 
 func (app App) updateSerialCourse(course *model.Course) {
 	data, err := course.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal course")
+	}
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
 	app.dbHandler.update(SerialCourseUpdateQuery, arg)
 
@@ -260,7 +269,9 @@ func (app App) updateSerialCourse(course *model.Course) {
 
 func (app App) updateSerialSection(section *model.Section) {
 	data, err := section.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal section")
+	}
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
 	app.dbHandler.update(SerialSectionUpdateQuery, arg)
 

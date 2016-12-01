@@ -14,8 +14,8 @@ import (
 var (
 	app      = kingpin.New("print", "An application to print and translate json and protobuf")
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
-	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
-	out      = app.Flag("output", "output format").Short('o').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").String()
+	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
+	out      = app.Flag("output", "output format").Short('o').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").String()
 	file     = app.Arg("input", "file to clean").File()
 )
 
@@ -26,7 +26,7 @@ func main() {
 	} else {
 		log.SetLevel(lvl)
 	}
-	if *format != model.JSON && *format != model.PROTOBUF {
+	if *format != model.Json && *format != model.Protobuf {
 		log.WithField("format", *format).Fatal("Invalid format")
 	}
 

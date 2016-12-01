@@ -28,7 +28,7 @@ var (
 	app        = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
 	campusFlag = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
 	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.JSON, model.PROTOBUF).PlaceHolder("[protobuf, json]").Default("protobuf").String()
+	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Default("protobuf").String()
 	latest     = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
 	config     conf.Config
 )
@@ -59,7 +59,7 @@ func main() {
 	config.AppName = app.Name
 
 	// Start profiling
-	go model.StartPprof(config.GetDebugSever(app.Name))
+	go model.StartPprof(config.DebugSever(app.Name))
 
 	if reader, err := model.MarshalMessage(*format, getCampus(*campusFlag)); err != nil {
 		log.WithError(err).Fatal()

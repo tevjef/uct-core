@@ -13,7 +13,7 @@ import (
 
 var (
 	app      = kingpin.New("model-diff", "An application to filter unchanged objects")
-	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
 	old      = app.Arg("old", "the first file to compare").Required().File()
 	new      = app.Arg("new", "the second file to compare").File()
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
@@ -28,7 +28,7 @@ func main() {
 		log.SetLevel(lvl)
 	}
 
-	if *format != model.JSON && *format != model.PROTOBUF {
+	if *format != model.Json && *format != model.Protobuf {
 		log.Fatalln("Invalid format:", *format)
 	}
 

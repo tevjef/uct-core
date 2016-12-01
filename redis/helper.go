@@ -24,7 +24,7 @@ func NewHelper(config conf.Config, appName string) *Helper {
 	return &Helper{
 		NameSpace: nameSpaceForApp(appName),
 		Client: redis.NewClient(&redis.Options{
-			Addr:     config.GetRedisAddr(),
+			Addr:     config.RedisAddr(),
 			Password: config.Redis.Password,
 			DB:       config.Redis.Db}),
 	}
