@@ -22,7 +22,7 @@ func StartPprof(host *net.TCPAddr) {
 func InitDB(connection string) (database *sqlx.DB, err error) {
 	database, err = sqlx.Open("postgres", connection)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return
+	return database, err
 }

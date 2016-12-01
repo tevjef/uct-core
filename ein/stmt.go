@@ -1,8 +1,6 @@
 package main
 
 import (
-	"uct/common/model"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 )

@@ -22,8 +22,6 @@ import (
 	"hash/fnv"
 
 	log "github.com/Sirupsen/logrus"
-	"golang.org/x/tools/go/gcimporter15/testdata"
-	"log"
 )
 
 var (

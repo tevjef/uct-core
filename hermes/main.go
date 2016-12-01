@@ -19,7 +19,6 @@ import (
 
 	"fmt"
 
-	"database/sql"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
