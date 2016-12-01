@@ -127,21 +127,21 @@ $ rutgers -u NK --format protobuf
 ```
 This is a command to run this program would typically look like. This will run once then output the scraped data to stdout. This should be typical invocation a CourseTrakr scraper. The wrapper I previously mentioned is currently baked into this program as an experiment. Adding the flag `--daemon=1m` flag will cause the program to scrape at 1 minute intervals then output the data to Redis.
 
-![wide](https://tevinjeffrey.mehttps://tevinjeffrey.me/content/images/2016/10/gopher1-1.png)
+![full](https://tevinjeffrey.me/content/images/2016/10/gopher1-1.png)
 
 This ensures the data in the database is only 1 minute stale. A minute is a long time for a popular class to be open for at the start of the semester when demand is the greatest. Users may be competing with student manually refreshing their browser. Reducing the daemon's interval is one way to increase the database's freshness. 
 
 I found a number of problems with this approach. After the reduced interval, separate goroutines could be scraping simultaneously. One nearing completion and one just starting. This produces more logs means debugging gets a little bit more difficult. Reasoning about the program's internal state becomes difficult because  the complexity has increased. You now potentially have 2x the tcp connections. In a way, reducing the interval on a single instance in response to higher demand will only scale vertically.
 
-Scaling this program is not as trivial as starting a new instance. You may end up in a situation where 2 instances start at nearly the same time. E.g. With an interval of 60 seconds, `rutgers-1` starts at `t=0` and another instance, `rutgers-2` starts at `t=5`. After the first scrape, they start again at `t=60` and `t=65` respectively. There is no benefit to this configuration. 
+Scaling this program is not as trivial as starting a new in stance. You may end up in a situation where 2 instances start at nearly the same time. E.g. With an interval of 60 seconds, `rutgers-1` starts at `t=0` and another instance, `rutgers-2` starts at `t=5`. After the first scrape, they start again at `t=60` and `t=65` respectively. There is no benefit to this configuration. 
 
 Each new instance will have to synchronize with other instances to divide the interval and synchronize their scraping. 
 
-![wide](https://tevinjeffrey.mehttps://tevinjeffrey.me/content/images/2016/10/gopher2.png)
+![full](https://tevinjeffrey.me/content/images/2016/10/gopher2.png)
 
 It follows that an instance `rutgers-1` would start at `t=0` and a replica of that instance, `rutgers-2`, will discover `rutgers-1`'s start time then resolve itself to begin scraping at `t=30`. This way, the data freshness will be evenly distributed across the 60 second interval. 
 
-![wide](https://tevinjeffrey.mehttps://tevinjeffrey.me/content/images/2016/10/gopher3.png)
+![full](https://tevinjeffrey.me/content/images/2016/10/gopher3.png)
 
 Again, it follows that scaling up to 3 instances will shave the data freshness down to 20 seconds. Looking at a 3 minute timespan, `rutgers-1` will scrape at `t=0,60,120,180`, `rutgers-2` at `t=20,80,140` and `rutgers-3` at `t=40,100,160`. The beauty of this approach is that each instance does not need to be on the same machine. They synchronize and discovery each sibling instance through a remote key-value store. They automatically reconfigure themselves when new instances are added or removed. The greater advantage of this approach is that this program could wrap any other scraper from any language. It could be built into a container to be deployed and scaled anywhere.
 
@@ -153,7 +153,7 @@ Docker has a builtin feature where it will collect container logs written to `ST
 
 I also use [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) as an agent to collect metrics from all services. This includes metrics from Postgres, Redis, NGINX, Docker and even the host machine itself. All of the metrics are inserted into InfluxDB where they can then be queried and visualized with in [Grafana](http://grafana.org/). 
 
-![wide](https://tevinjeffrey.mehttps://tevinjeffrey.me/content/images/2016/10/Screen-Shot-2016-10-04-at-7.06.44-PM.png)
+![full](https://tevinjeffrey.me/content/images/2016/10/Screen-Shot-2016-10-04-at-7.06.44-PM.png)
 
 Being able to visualize your logs and metrics can give you invaluable insight into your service's behavior at runtime. 
 
