@@ -71,13 +71,13 @@ func main() {
 	go model.StartPprof(config.DebugSever(app.Name))
 
 	// Start redis client
-	wrapper := redis.NewHelper(config, app.Name)
+	helper := redis.NewHelper(config, app.Name)
 
 	var database *sqlx.DB
 	var err error
 
 	// Initialize database connection
-	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
+	if database, err = model.OpenPostgres(config.DatabaseConfig(app.Name)); err != nil {
 		log.WithError(err).Fatalln()
 	}
 
@@ -88,9 +88,8 @@ func main() {
 
 	for {
 		log.Infoln("Waiting on queue...")
-		if data, err := wrapper.Client.BRPop(10*time.Minute, redis.ScraperQueue).Result(); err != nil {
-			log.WithError(err).Warningln("Queue blocking exceeded timeout")
-			continue
+		if data, err := helper.Client.BRPop(0, redis.ScraperQueue).Result(); err != nil {
+			log.WithError(err).Fatalln()
 		} else {
 			func() {
 				defer func() {
@@ -106,14 +105,14 @@ func main() {
 
 				log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
 
-				if raw, err := wrapper.Client.Get(latestData).Bytes(); err != nil {
+				if raw, err := helper.Client.Get(latestData).Bytes(); err != nil {
 					log.WithError(err).Panic("Error getting latest data")
 				} else {
 					var university model.University
 
 					// Try getting older data from redis
 					var oldRaw string
-					if oldRaw, err = wrapper.Client.Get(oldData).Result(); err != nil {
+					if oldRaw, err = helper.Client.Get(oldData).Result(); err != nil {
 						log.Warningln("There was no older data, did it expire or is this first run?")
 					}
 
@@ -146,7 +145,7 @@ func main() {
 					}
 
 					// Set old data as the new data we just received. Important that this is after validating the new raw data
-					if _, err := wrapper.Client.Set(oldData, raw, 0).Result(); err != nil {
+					if _, err := helper.Client.Set(oldData, raw, 0).Result(); err != nil {
 						log.WithError(err).Panic("Error updating old data")
 					}
 
@@ -167,6 +166,8 @@ func main() {
 		}
 	}
 }
+
+func consume(data []string) {}
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
 func (app App) updateSerial(raw []byte, diff model.University) {

@@ -55,7 +55,7 @@ func main() {
 
 	var err error
 	// Open database connection
-	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
+	if database, err = model.OpenPostgres(config.DatabaseConfig(app.Name)); err != nil {
 		log.WithError(err).Fatalln("failed to open database connection")
 	} else {
 		prepareAllStmts()
