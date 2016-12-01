@@ -57,13 +57,13 @@ func main() {
 	var err error
 	// Open database connection
 	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
-		log.WithError(err).Fatalln()
+		log.WithError(err).Fatalln("failed to open database connection")
+	} else {
+		prepareAllStmts()
 	}
 
-	model.CheckError(err)
-	prepareAllStmts()
-
 	resultChan := waitForPop()
+
 	for {
 		select {
 		case pair := <-resultChan:
@@ -76,7 +76,10 @@ func recvNotification(pair notificationPair) {
 	log.WithFields(log.Fields{"university_name": pair.n.University.TopicName,
 		"notification_id": pair.n.NotificationId, "status": pair.n.Status,
 		"topic": pair.n.TopicName}).Info("postgres_notification")
-	defer model.TimeTrackWithLog(time.Now(), log.StandardLogger(), "send_notification")
+
+	defer func(start time.Time) {
+		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3, "name": "send_notification"}).Infoln()
+	}(time.Now())
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
 	err := try.Do(func(attempt int) (retry bool, err error) {

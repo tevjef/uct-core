@@ -180,7 +180,7 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 
 var httpClient = &http.Client{
 	Timeout:   15 * time.Second,
-	Transport: &http.Transport{Proxy: proxy.GetProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+	Transport: &http.Transport{Proxy: proxy.ProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
 func getData(rawUrl string, model interface{}) error {

@@ -62,7 +62,7 @@ func main() {
 		// Override cli arg with environment variable
 		if intervalFromEnv := config.Scrapers.Get(app.Name).Interval; intervalFromEnv != "" {
 			if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
-				model.CheckError(err)
+				log.WithError(err).Fatalln("failed to parse duration")
 			} else if interval > 0 {
 				daemonInterval = &interval
 			}
@@ -95,12 +95,12 @@ func main() {
 		// Write to file
 		if *daemonFile != "" {
 			if data, err := ioutil.ReadAll(reader); err != nil {
-				model.CheckError(err)
+				log.WithError(err).Fatalln("failed to read all data")
 			} else {
 				fileName := *daemonFile + "/" + app.Name + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + *outputFormat
 				log.Debugln("Writing file", fileName)
 				if err = ioutil.WriteFile(fileName, data, 0644); err != nil {
-					model.CheckError(err)
+					log.WithError(err).Fatalln("failed to write file")
 				}
 			}
 			continue
@@ -119,7 +119,7 @@ func main() {
 
 func pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
-		model.CheckError(err)
+		log.WithError(err).Fatalln("failed to read all data")
 	} else {
 		log.WithFields(log.Fields{"scraper_name": app.Name, "bytes": len(data), "hash": hash(data)}).Info()
 		if err := helper.Client.Set(helper.NameSpace+":data:latest", data, 0).Err(); err != nil {

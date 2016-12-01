@@ -245,7 +245,9 @@ func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.
 
 func (app App) updateSerialSubject(subject *model.Subject) {
 	data, err := subject.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal subject")
+	}
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
 	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
 
@@ -255,7 +257,9 @@ func (app App) updateSerialSubject(subject *model.Subject) {
 
 func (app App) updateSerialCourse(course *model.Course) {
 	data, err := course.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal course")
+	}
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
 	app.dbHandler.update(SerialCourseUpdateQuery, arg)
 
@@ -265,7 +269,9 @@ func (app App) updateSerialCourse(course *model.Course) {
 
 func (app App) updateSerialSection(section *model.Section) {
 	data, err := section.Marshal()
-	model.CheckError(err)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to marshal section")
+	}
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
 	app.dbHandler.update(SerialSectionUpdateQuery, arg)
 

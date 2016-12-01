@@ -3,15 +3,16 @@ package model
 import (
 	"fmt"
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
-	"unicode"
 	"bytes"
 	"hash/fnv"
+	"unicode"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 var trim = strings.TrimSpace
@@ -21,7 +22,6 @@ func swapChar(s, char string, index int) string {
 	right := s[index+1:]
 	return left + char + right
 }
-
 
 func stripSpaces(s string) string {
 	var lastRune rune
@@ -36,8 +36,8 @@ func stripSpaces(s string) string {
 	}, s)
 }
 
-const NUL = []byte("\x00")
-const SOH = []byte("\x01")
+var NUL []byte = []byte("\x00")
+var SOH []byte = []byte("\x01")
 
 func TrimAll(str string) string {
 	str = stripSpaces(str)
@@ -58,7 +58,7 @@ func isValidTopicRune(r rune) bool {
 	isDot := r == rune('.')
 	isTilde := r == rune('~')
 	isPercent := r == rune('%')
-	return  isLetter || isNumber || isSpace || isDash || isUnderscore || isDot || isTilde || isPercent
+	return isLetter || isNumber || isSpace || isDash || isUnderscore || isDot || isTilde || isPercent
 }
 
 func ToTopicName(topic string) string {
@@ -106,7 +106,7 @@ func ToTitle(str string) string {
 	return str
 }
 
-func ValidateAll(uni *University) (err error) {
+func ValidateAll(university *University) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered in ValidateAll", r)
@@ -114,116 +114,171 @@ func ValidateAll(uni *University) (err error) {
 		}
 	}()
 
-	uni.Validate()
-	CheckUniqueSubject(uni.Subjects)
-	for subjectIndex := range uni.Subjects {
-		subject := uni.Subjects[subjectIndex]
-		subject.Validate(uni)
-
-		courses := subject.Courses
-		CheckUniqueCourse(subject, courses)
-		for courseIndex := range courses {
-			course := courses[courseIndex]
-			course.Validate(subject)
-
-			sections := course.Sections
-			for sectionIndex := range sections {
-				section := sections[sectionIndex]
-				section.Validate(course)
-
-				//[]Instructors
-				instructors := section.Instructors
-				for instructorIndex := range instructors {
-					instructor := instructors[instructorIndex]
-					instructor.Index = int32(instructorIndex)
-					instructor.Validate()
-				}
-
-				//[]Meeting
-				meetings := section.Meetings
-				for meetingIndex := range meetings {
-					meeting := meetings[meetingIndex]
-					meeting.Index = int32(meetingIndex)
-					meeting.Validate()
-
-					// Meeting []Metadata
-					metadatas := meeting.Metadata
-					for metadataIndex := range metadatas {
-						metadata := metadatas[metadataIndex]
-						metadata.Validate()
-					}
-				}
-
-				//[]Books
-				books := section.Books
-				for bookIndex := range books {
-					book := books[bookIndex]
-					book.Validate()
-				}
-
-				// Section []Metadata
-				metadatas := section.Metadata
-				for metadataIndex := range metadatas {
-					metadata := metadatas[metadataIndex]
-					metadata.Validate()
-				}
-			}
-
-			// Course []Metadata
-			metadatas := course.Metadata
-			for metadataIndex := range metadatas {
-				metadata := metadatas[metadataIndex]
-				metadata.Validate()
-			}
-		}
+	if err := university.Validate(); err != nil {
+		return err
 	}
 
-	for registrations := range uni.Registrations {
-		_ = uni.Registrations[registrations]
-
+	if err := ValidateAllSubjects(university); err != nil {
+		return err
 	}
 
 	// university []Metadata
-	metadatas := uni.Metadata
-	for metadataIndex := range metadatas {
-		metadata := metadatas[metadataIndex]
-		metadata.Validate()
+	metadata := university.Metadata
+	for metadataIndex := range metadata {
+		metadata := metadata[metadataIndex]
+		if err := metadata.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ValidateAllSubjects(university *University) error {
+	makeUniqueSubjects(university.Subjects)
+	for subjectIndex := range university.Subjects {
+		subject := university.Subjects[subjectIndex]
+		if err := subject.Validate(university); err != nil {
+			return err
+		}
+
+		if err := ValidateAllCourses(subject); err != nil {
+			return err
+		}
 
 	}
 
 	return nil
 }
 
-func (u *University) Validate() {
+func ValidateAllCourses(subject *Subject) error {
+	courses := subject.Courses
+	makeUniqueCourses(subject, courses)
+	for courseIndex := range courses {
+		course := courses[courseIndex]
+		if err := course.Validate(subject); err != nil {
+			return err
+		}
+
+		if err := ValidateAllSections(course); err != nil {
+			return nil
+		}
+
+		// Course []Metadata
+		metadata := course.Metadata
+		for metadataIndex := range metadata {
+			metadata := metadata[metadataIndex]
+			if err := metadata.Validate(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func ValidateAllSections(course *Course) error {
+	sections := course.Sections
+
+	for sectionIndex := range sections {
+		section := sections[sectionIndex]
+		if err := section.Validate(course); err != nil {
+			return err
+		}
+
+		//[]Instructors
+		instructors := section.Instructors
+		for instructorIndex := range instructors {
+			instructor := instructors[instructorIndex]
+			instructor.Index = int32(instructorIndex)
+			if err := instructor.Validate(); err != nil {
+				return err
+			}
+		}
+
+		//[]Meeting
+		meetings := section.Meetings
+		for meetingIndex := range meetings {
+			meeting := meetings[meetingIndex]
+			meeting.Index = int32(meetingIndex)
+			if err := meeting.Validate(); err != nil {
+				return err
+			}
+
+			// Meeting []Metadata
+			metadatas := meeting.Metadata
+			for metadataIndex := range metadatas {
+				metadata := metadatas[metadataIndex]
+				if err := metadata.Validate(); err != nil {
+					return err
+				}
+			}
+		}
+
+		//[]Books
+		books := section.Books
+		for bookIndex := range books {
+			book := books[bookIndex]
+			if err := book.Validate(); err != nil {
+				return err
+			}
+		}
+
+		// Section []Metadata
+		metadatas := section.Metadata
+		for metadataIndex := range metadatas {
+			metadata := metadatas[metadataIndex]
+			if err := metadata.Validate(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (u *University) Validate() error {
 	// Name
 	if u.Name == "" {
-		log.Panic("University name == is empty")
+		return errors.New("University name == is empty")
 	}
 
 	// Abbr
 	if u.Abbr == "" {
-		regex, err := regexp.Compile("[^A-Z]")
-		CheckError(err)
-		u.Abbr = trim(regex.ReplaceAllString(u.Name, ""))
+		u.Abbr = strings.Map(func(r rune) rune {
+			if unicode.IsUpper(r) {
+				return r
+			}
+
+			return -1
+		}, u.Name)
 	}
 
 	// Homepage
 	if u.HomePage == "" {
-		log.Panic("HomePage == is empty")
+		return errors.New("HomePage == is empty")
 	}
+
 	u.HomePage = trim(u.HomePage)
-	nUrl, err := url.ParseRequestURI(u.HomePage)
-	CheckError(err)
-	u.HomePage = nUrl.String()
+
+	if homePageUrl, err := url.ParseRequestURI(u.HomePage); err != nil {
+		return err
+	} else {
+		u.HomePage = homePageUrl.String()
+	}
 
 	// RegistrationPage
 	if u.RegistrationPage == "" {
-		log.Panic("RegistrationPage == is empty")
+		return errors.New("RegistrationPage == is empty")
 	}
+
 	u.RegistrationPage = trim(u.RegistrationPage)
-	nUrl, err = url.ParseRequestURI(u.RegistrationPage)
-	CheckError(err)
-	u.RegistrationPage = nUrl.String()
+
+	if registrationPageUrl, err := url.ParseRequestURI(u.RegistrationPage); err != nil {
+		return err
+	} else {
+		u.RegistrationPage = registrationPageUrl.String()
+	}
 
 	// MainColor
 	if u.MainColor == "" {
@@ -237,32 +292,34 @@ func (u *University) Validate() {
 
 	// Registration
 	if len(u.Registrations) != 12 {
-		log.Panic("Registration != 12 ")
+		return errors.New("Registration != 12 ")
 	}
 
 	if u.ResolvedSemesters == nil {
-		log.Panic("ResolvedSemesters is nil")
+		return errors.New("ResolvedSemesters is nil")
 	}
 
 	if u.ResolvedSemesters.Current == nil {
-		log.Panic("ResolvedSemesters.Current is nil")
+		return errors.New("ResolvedSemesters.Current is nil")
 	}
 
 	u.TopicName = ToTopicName(u.Name)
 	u.TopicId = ToTopicId(u.TopicName)
+
+	return nil
 }
 
-func (sub *Subject) Validate(uni *University) {
+func (sub *Subject) Validate(uni *University) error {
 	// Name
 	if sub.Name == "" {
-		log.Panic("Subject name == is empty")
+		return errors.New("Subject name == is empty")
 	}
 
 	sub.Name = TrimAll(sub.Name)
 	sub.Name = ToTitle(sub.Name)
 
 	// TopicName
-	sub.TopicName = uni.TopicName + "." + sub.Number + "." + sub.Name + "." + sub.Season + "." + sub.Year
+	sub.TopicName = strings.Join([]string{uni.TopicName, sub.Number, sub.Name, sub.Season, sub.Year}, ".")
 	sub.TopicName = ToTopicName(sub.TopicName)
 	sub.TopicId = ToTopicId(sub.TopicName)
 
@@ -271,12 +328,14 @@ func (sub *Subject) Validate(uni *University) {
 	} else {
 		sort.Sort(courseSorter{sub.Courses})
 	}
+
+	return nil
 }
 
-func (course *Course) Validate(subject *Subject) {
+func (course *Course) Validate(subject *Subject) error {
 	// Name
 	if course.Name == "" {
-		log.Panic("Course name == is empty", course)
+		return errors.New("Course name == is empty: " + course.Name)
 	}
 
 	course.Name = TrimAll(course.Name)
@@ -284,7 +343,7 @@ func (course *Course) Validate(subject *Subject) {
 
 	// Number
 	if course.Number == "" {
-		log.Panic("Number == is empty")
+		return errors.New("Number == is empty")
 	}
 
 	// Synopsis
@@ -295,8 +354,7 @@ func (course *Course) Validate(subject *Subject) {
 	}
 
 	// TopicName
-	course.TopicName = course.Number + "." + course.Name
-	course.TopicName = subject.TopicName + "." + course.TopicName
+	course.TopicName = strings.Join([]string{subject.TopicName, course.Number, course.Name}, ".")
 	course.TopicName = ToTopicName(course.TopicName)
 	course.TopicId = ToTopicId(course.TopicName)
 	if len(course.Sections) == 0 {
@@ -304,27 +362,31 @@ func (course *Course) Validate(subject *Subject) {
 	} else {
 		sort.Stable(sectionSorter{course.Sections})
 	}
+
+	return nil
 }
 
 // Validate within the context for these enclosing objects
-func (section *Section) Validate(course *Course) {
+func (section *Section) Validate(course *Course) error {
 	// Number
 	if section.Number == "" {
-		log.Panic("Number == is empty")
+		return errors.New("Number == is empty")
 	}
+
 	section.Number = trim(section.Number)
 
 	// Call Number
 	if section.CallNumber == "" {
-		log.Panic("CallNumber == is empty")
+		return errors.New("CallNumber == is empty")
 	}
+
 	section.CallNumber = trim(section.CallNumber)
 
 	// Status
 	if section.Status == "" {
-		log.Panic("Status == is empty")
+		return errors.New("Status == is empty")
 	} else if strings.ToLower(section.Status) != "open" && strings.ToLower(section.Status) != "closed" {
-		log.Panicf("Status != open || status != closed status=%s", section.Status)
+		return errors.New("Status != open || status != closed status=" + section.Status)
 	}
 
 	// Max
@@ -339,18 +401,18 @@ func (section *Section) Validate(course *Course) {
 
 	// Credits
 	if section.Credits == "" {
-		log.Panic("Credits == is empty")
+		return errors.New("Credits == is empty")
 	}
 
-	section.TopicName = course.TopicName + "." + section.Number + "." + section.CallNumber
+	section.TopicName = strings.Join([]string{course.TopicName, section.Number, section.CallNumber}, ".")
 	section.TopicName = ToTopicName(section.TopicName)
 	section.TopicId = ToTopicId(section.TopicName)
-	//sort.Stable(meetingSorter{section.Meetings})
 	sort.Stable(instructorSorter{section.Instructors})
 
+	return nil
 }
 
-func (meeting *Meeting) Validate() {
+func (meeting *Meeting) Validate() error {
 	if meeting.StartTime != nil {
 		a := TrimAll(*meeting.StartTime)
 		if a == "" {
@@ -368,56 +430,70 @@ func (meeting *Meeting) Validate() {
 			meeting.EndTime = &b
 		}
 	}
+
+	return nil
 }
 
-func (instructor *Instructor) Validate() {
-	// Name
+func (instructor *Instructor) Validate() error {
+
 	if instructor.Name == "" {
-		log.Panic("Instructor name == is empty")
+		return errors.New("Instructor name == is empty")
 	}
+
 	if instructor.Name[len(instructor.Name)-1:] == "-" {
 		instructor.Name = instructor.Name[:len(instructor.Name)-1]
 	}
 
 	instructor.Name = trim(instructor.Name)
+
+	return nil
 }
 
-func (book *Book) Validate() {
-	// Title
+func (book *Book) Validate() error {
 	if book.Title == "" {
-		log.Panic("Title  == is empty")
+		return errors.New("Title  == is empty")
 	}
+
 	book.Title = trim(book.Title)
 
-	// Url
 	if book.Url == "" {
-		log.Panic("Url == is empty")
+		return errors.New("Url == is empty")
 	}
+
 	book.Url = trim(book.Url)
-	url, err := url.ParseRequestURI(book.Url)
-	CheckError(err)
-	book.Url = url.String()
+
+	if url, err := url.ParseRequestURI(book.Url); err != nil {
+		return err
+	} else {
+		book.Url = url.String()
+	}
+
+	return nil
 }
 
-func (metaData *Metadata) Validate() {
+func (metaData *Metadata) Validate() error {
 	// Title
 	if metaData.Title == "" {
-		log.Panic("Title == is empty")
+		return errors.New("Title == is empty")
 	}
+
 	metaData.Title = trim(metaData.Title)
 
 	// Content
 	if metaData.Content == "" {
-		log.Panic("Content == is empty")
+		return errors.New("Content == is empty")
 	}
+
 	metaData.Content = trim(metaData.Content)
+
+	return nil
 }
 
-func CheckUniqueSubject(subjects []*Subject) {
+func makeUniqueSubjects(subjects []*Subject) {
 	m := make(map[string]int)
 	for subjectIndex := range subjects {
 		subject := subjects[subjectIndex]
-		key := subject.Season + subject.Year + subject.Name + subject.Number
+		key := strings.Join([]string{subject.Season, subject.Year, subject.Name, subject.Number}, "")
 		m[key]++
 		if m[key] > 1 {
 			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")
@@ -426,11 +502,11 @@ func CheckUniqueSubject(subjects []*Subject) {
 	}
 }
 
-func CheckUniqueCourse(subject *Subject, courses []*Course) {
+func makeUniqueCourses(subject *Subject, courses []*Course) {
 	m := map[string]int{}
 	for courseIndex := range courses {
 		course := courses[courseIndex]
-		key := course.Name + course.Number
+		key := strings.Join([]string{course.Name, course.Number}, "")
 		m[key]++
 		if m[key] > 1 {
 			log.WithFields(log.Fields{"subject": subject.Name,

@@ -12,7 +12,7 @@ var proxyUrl = os.Getenv("HTTP_PROXY_URL")
 var proxyUser = os.Getenv("HTTP_PROXY_USER")
 var proxyPass = os.Getenv("HTTP_PROXY_PASS")
 
-func GetProxyUrl() func(*http.Request) (*url.URL, error) {
+func ProxyUrl() func(*http.Request) (*url.URL, error) {
 	if proxyURL, err := url.Parse(proxyUrl); err != nil {
 		log.Fatalln(err)
 	} else {
