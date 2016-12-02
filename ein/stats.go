@@ -156,11 +156,15 @@ func countUniversity(uni model.University, subjectCh, courseCh, sectionCh, meeti
 	}
 }
 
-func collectDatabaseStats(stats *database.Stats) {
+func collectDatabaseStats(db database.Handler) {
+	stats := db.Stats()
+
 	insertionsCh <- int(stats.Insertions)
 	updatesCh <- int(stats.Updates)
 	existentialCh <- int(stats.Exists)
 	upsertsCh <- int(stats.Upserts)
+
+	db.ResetStats()
 }
 
 func countSubjects(subjects []*model.Subject, courses []*model.Course, subjectCh, courseCh, sectionCh, meetingCh, metadataCh chan int) {
