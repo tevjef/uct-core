@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "expvar"
 	"fmt"
 	_ "net/http/pprof"
 	"os"
@@ -22,46 +21,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type App struct {
-	dbHandler DatabaseHandler
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.DebugLevel)
 }
-
-type serial struct {
-	TopicName string `db:"topic_name"`
-	Data      []byte `db:"data"`
-}
-
-type serialSubject struct {
-	serial
-}
-
-type serialCourse struct {
-	serial
-}
-
-type serialSection struct {
-	serial
-}
-
-var (
-	app        = kingpin.New("ein", "A command-line application for inserting and updated university information")
-	noDiff     = app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
-	fullUpsert = app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Required().String()
-	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
-	config     = conf.Config{}
-
-	multiProgramming = 5
-)
 
 func main() {
+	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
+	noDiff := app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
+	fullUpsert := app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
+	format := app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Required().String()
+	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+	config := conf.Config{}
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	if *format != model.Json && *format != model.Protobuf {
 		log.Fatalln("Invalid format:", *format)
 	}
-
-	log.SetLevel(log.InfoLevel)
 
 	// Parse configuration file
 	config = conf.OpenConfig(*configFile)
@@ -70,112 +47,125 @@ func main() {
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	// Start redis client
-	helper := redis.NewHelper(config, app.Name)
-
 	var database *sqlx.DB
 	var err error
 
 	// Initialize database connection
 	if database, err = model.OpenPostgres(config.DatabaseConfig(app.Name)); err != nil {
 		log.WithError(err).Fatalln()
+	} else {
+		database.SetMaxOpenConns(config.Postgres.ConnMax)
 	}
 
-	dbHandler := DatabaseHandlerImpl{Database: database}
-	dbHandler.PrepareAllStmts()
-	app := App{dbHandler: dbHandler}
-	database.SetMaxOpenConns(multiProgramming)
+	ein := &ein{
+		app: app.Model(),
+		config: &einConfig{
+			service:     config,
+			noDiff:      *noDiff,
+			fullUpsert:  *fullUpsert,
+			inputFormat: *format,
+		},
+		redis:     redis.NewHelper(config, app.Name),
+		postgres: DatabaseHandlerImpl{
+			database: database,
+			statements: make(map[string]*sqlx.NamedStmt),
+		},
+	}
+
+	ein.init()
+}
+
+func (ein *ein) init() {
+	ein.postgres.prepareStatements()
 
 	for {
 		log.Infoln("Waiting on queue...")
-		if data, err := helper.Client.BRPop(0, redis.ScraperQueue).Result(); err != nil {
+		if data, err := ein.redis.Client.BRPop(0, redis.ScraperQueue).Result(); err != nil {
 			log.WithError(err).Fatalln()
 		} else {
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Errorln()
-					}
-				}()
-
-				val := data[1]
-
-				latestData := val + ":data:latest"
-				oldData := val + ":data:old"
-
-				log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
-
-				if raw, err := helper.Client.Get(latestData).Bytes(); err != nil {
-					log.WithError(err).Panic("Error getting latest data")
-				} else {
-					var university model.University
-
-					// Try getting older data from redis
-					var oldRaw string
-					if oldRaw, err = helper.Client.Get(oldData).Result(); err != nil {
-						log.Warningln("There was no older data, did it expire or is this first run?")
-					}
-
-					// Decode new data
-					var newUniversity model.University
-					if err := model.UnmarshalMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
-						log.WithError(err).Panic("Error while unmarshalling new data")
-					}
-
-					// Make sure the data received is primed for the database
-					if err := model.ValidateAll(&newUniversity); err != nil {
-						log.WithError(err).Panic("Error while validating newUniversity")
-					}
-
-					// Decode old data if have some
-					if oldRaw != "" && !*noDiff {
-						var oldUniversity model.University
-						if err := model.UnmarshalMessage(*format, strings.NewReader(oldRaw), &oldUniversity); err != nil {
-							log.WithError(err).Panic("Error while unmarshalling old data")
-						}
-
-						if err := model.ValidateAll(&oldUniversity); err != nil {
-							log.WithError(err).Panic("Error while validating oldUniversity")
-						}
-
-						university = model.DiffAndFilter(oldUniversity, newUniversity)
-
-					} else {
-						university = newUniversity
-					}
-
-					// Set old data as the new data we just received. Important that this is after validating the new raw data
-					if _, err := helper.Client.Set(oldData, raw, 0).Result(); err != nil {
-						log.WithError(err).Panic("Error updating old data")
-					}
-
-					go audit(university.TopicName)
-
-					app.insertUniversity(university)
-					app.updateSerial(raw, university)
-					// Log bytes received
-					log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
-
-					doneAudit <- true
-					<-doneAudit
-					//break
-				}
-
-			}()
-
+			ein.process(data)
 		}
 	}
 }
 
-func consume(data []string) {}
+func (ein *ein) process(data []string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Errorln()
+		}
+	}()
+
+	val := data[1]
+
+	latestData := val + ":data:latest"
+	oldData := val + ":data:old"
+
+	log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
+
+	if raw, err := ein.redis.Client.Get(latestData).Bytes(); err != nil {
+		log.WithError(err).Panic("Error getting latest data")
+	} else {
+		var university model.University
+
+		// Try getting older data from redis
+		var oldRaw string
+		if oldRaw, err = ein.redis.Client.Get(oldData).Result(); err != nil {
+			log.Warningln("There was no older data, did it expire or is this first run?")
+		}
+
+		// Decode new data
+		var newUniversity model.University
+		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
+			log.WithError(err).Panic("Error while unmarshalling new data")
+		}
+
+		// Make sure the data received is primed for the database
+		if err := model.ValidateAll(&newUniversity); err != nil {
+			log.WithError(err).Panic("Error while validating newUniversity")
+		}
+
+		// Decode old data if have some
+		if oldRaw != "" && !ein.config.noDiff {
+			var oldUniversity model.University
+			if err := model.UnmarshalMessage(ein.config.inputFormat, strings.NewReader(oldRaw), &oldUniversity); err != nil {
+				log.WithError(err).Panic("Error while unmarshalling old data")
+			}
+
+			if err := model.ValidateAll(&oldUniversity); err != nil {
+				log.WithError(err).Panic("Error while validating oldUniversity")
+			}
+
+			university = model.DiffAndFilter(oldUniversity, newUniversity)
+
+		} else {
+			university = newUniversity
+		}
+
+		// Set old data as the new data we just received. Important that this is after validating the new raw data
+		if _, err := ein.redis.Client.Set(oldData, raw, 0).Result(); err != nil {
+			log.WithError(err).Panic("Error updating old data")
+		}
+
+		go audit(university.TopicName)
+
+		ein.insertUniversity(university)
+		ein.updateSerial(raw, university)
+		// Log bytes received
+		log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
+
+		doneAudit <- true
+		<-doneAudit
+		//break
+	}
+}
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
-func (app App) updateSerial(raw []byte, diff model.University) {
+func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
 	// Decode new data
 	var newUniversity model.University
-	if err := model.UnmarshalMessage(*format, bytes.NewReader(raw), &newUniversity); err != nil {
+	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
 		log.WithError(err).Panic("Error while unmarshalling new data")
 	}
 
@@ -191,10 +181,10 @@ func (app App) updateSerial(raw []byte, diff model.University) {
 	countUniversity(diff, diffSubjectCh, diffCourseCh, diffSectionCh, diffMeetingCh, diffMetadataCh)
 	countSubjects(newUniversity.Subjects, diffCourses, diffSerialSubjectCh, diffSerialCourseCh, diffSerialSectionCh, diffSerialMeetingCountCh, diffSerialMetadataCountCh)
 
-	sem := make(chan bool, multiProgramming)
+	sem := make(chan bool, ein.config.service.Postgres.ConnMax)
 	for subjectIndex := range newUniversity.Subjects {
 		subject := newUniversity.Subjects[subjectIndex]
-		app.updateSerialSubject(subject)
+		ein.updateSerialSubject(subject)
 	}
 
 	cwg := sync.WaitGroup{}
@@ -205,11 +195,11 @@ func (app App) updateSerial(raw []byte, diff model.University) {
 
 		sem <- true
 		go func() {
-			app.updateSerialCourse(course)
+			ein.updateSerialCourse(course)
 
 			for sectionIndex := range course.Sections {
 				section := course.Sections[sectionIndex]
-				app.updateSerialSection(section)
+				ein.updateSerialSection(section)
 			}
 
 			<-sem
@@ -244,151 +234,167 @@ func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.
 	return coursesToUpdate
 }
 
-func (app App) updateSerialSubject(subject *model.Subject) {
+func (ein *ein) updateSerialSubject(subject *model.Subject) {
 	data, err := subject.Marshal()
 	if err != nil {
 		log.WithError(err).Fatalln("failed to marshal subject")
 	}
 	arg := serialSubject{serial{TopicName: subject.TopicName, Data: data}}
-	app.dbHandler.update(SerialSubjectUpdateQuery, arg)
+	ein.postgres.update(SerialSubjectUpdateQuery, arg)
 
 	// Sanity Check
 	log.WithFields(log.Fields{"subject": subject.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) updateSerialCourse(course *model.Course) {
+func (ein *ein) updateSerialCourse(course *model.Course) {
 	data, err := course.Marshal()
 	if err != nil {
 		log.WithError(err).Fatalln("failed to marshal course")
 	}
 	arg := serialCourse{serial{TopicName: course.TopicName, Data: data}}
-	app.dbHandler.update(SerialCourseUpdateQuery, arg)
+	ein.postgres.update(SerialCourseUpdateQuery, arg)
 
 	// Sanity Check
 	log.WithFields(log.Fields{"course": course.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) updateSerialSection(section *model.Section) {
+func (ein *ein) updateSerialSection(section *model.Section) {
 	data, err := section.Marshal()
 	if err != nil {
 		log.WithError(err).Fatalln("failed to marshal section")
 	}
 	arg := serialSection{serial{TopicName: section.TopicName, Data: data}}
-	app.dbHandler.update(SerialSectionUpdateQuery, arg)
+	ein.postgres.update(SerialSectionUpdateQuery, arg)
 
 	// Sanity Check
 	log.WithFields(log.Fields{"section": section.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
-func (app App) insertUniversity(uni model.University) {
+func (ein *ein) insertUniversity(university model.University) {
 	defer model.TimeTrack(time.Now(), "insertUniversity")
 
-	universityId := app.dbHandler.upsert(UniversityInsertQuery, UniversityUpdateQuery, uni)
+	university.Id = ein.postgres.upsert(UniversityInsertQuery, UniversityUpdateQuery, university)
 
-	for subjectIndex := range uni.Subjects {
-		subject := uni.Subjects[subjectIndex]
-		subject.UniversityId = universityId
-
-		subjectId := app.insertSubject(subject)
-
-		courses := subject.Courses
-		for courseIndex := range courses {
-			course := courses[courseIndex]
-
-			course.SubjectId = subjectId
-			courseId := app.insertCourse(course)
-
-			sections := course.Sections
-			for sectionIndex := range sections {
-				section := sections[sectionIndex]
-
-				section.CourseId = courseId
-				sectionId := app.insertSection(section)
-				// Make section data available as soon as possible
-				app.updateSerialSection(section)
-
-				//[]Instructors
-				instructors := section.Instructors
-				for instructorIndex := range instructors {
-					instructor := instructors[instructorIndex]
-					instructor.SectionId = sectionId
-					app.insertInstructor(instructor)
-				}
-
-				//[]Meeting
-				meetings := section.Meetings
-				for meetingIndex := range meetings {
-					meeting := meetings[meetingIndex]
-
-					meeting.SectionId = sectionId
-					meetingId := app.insertMeeting(meeting)
-
-					// Meeting []Metadata
-					metadatas := meeting.Metadata
-					for metadataIndex := range metadatas {
-						metadata := metadatas[metadataIndex]
-
-						metadata.MeetingId = &meetingId
-						app.insertMetadata(metadata)
-					}
-				}
-
-				//[]Books
-				books := section.Books
-				for bookIndex := range books {
-					book := books[bookIndex]
-
-					book.SectionId = sectionId
-					app.insertBook(book)
-				}
-
-				// Section []Metadata
-				metadatas := section.Metadata
-				for metadataIndex := range metadatas {
-					metadata := metadatas[metadataIndex]
-
-					metadata.SectionId = &sectionId
-					app.insertMetadata(metadata)
-				}
-			}
-
-			// Course []Metadata
-			metadatas := course.Metadata
-			for metadataIndex := range metadatas {
-				metadata := metadatas[metadataIndex]
-
-				metadata.CourseId = &courseId
-				app.insertMetadata(metadata)
-			}
-		}
-	}
+	ein.insertSubjects(&university)
 
 	// ResolvedSemesters
-	app.insertSemester(universityId, uni.ResolvedSemesters)
+	ein.insertSemester(&university)
 
 	// Registrations
-	for _, registrations := range uni.Registrations {
-		registrations.UniversityId = universityId
-		app.insertRegistration(registrations)
+	for _, registrations := range university.Registrations {
+		registrations.UniversityId = university.Id
+		ein.insertRegistration(registrations)
 	}
 
 	// university []Metadata
-	metadatas := uni.Metadata
-	for metadataIndex := range metadatas {
-		metadata := metadatas[metadataIndex]
+	metadata := university.Metadata
+	for metadataIndex := range metadata {
+		metadata := metadata[metadataIndex]
 
-		metadata.UniversityId = &universityId
-		app.insertMetadata(metadata)
+		metadata.UniversityId = &university.Id
+		ein.insertMetadata(metadata)
 	}
 }
 
-func (app App) insertSubject(sub *model.Subject) (subjectId int64) {
-	if !*fullUpsert {
-		if subjectId = app.dbHandler.exists(SubjectExistQuery, sub); subjectId != 0 {
+func (ein *ein) insertSubjects(university *model.University) {
+
+	for subjectIndex := range university.Subjects {
+		subject := university.Subjects[subjectIndex]
+		subject.UniversityId = university.Id
+
+		subject.Id = ein.insertSubject(subject)
+
+		ein.insertCourses(subject)
+
+	}
+}
+
+func (ein *ein) insertCourses(subject *model.Subject) {
+	courses := subject.Courses
+	for courseIndex := range courses {
+		course := courses[courseIndex]
+
+		course.SubjectId = subject.Id
+		course.Id = ein.insertCourse(course)
+
+		ein.insertSections(course)
+
+		// Course []Metadata
+		metadatas := course.Metadata
+		for metadataIndex := range metadatas {
+			metadata := metadatas[metadataIndex]
+
+			metadata.CourseId = &course.Id
+			ein.insertMetadata(metadata)
+		}
+	}
+}
+
+func (ein *ein) insertSections(course *model.Course) {
+	sections := course.Sections
+
+	for sectionIndex := range sections {
+		section := sections[sectionIndex]
+
+		section.CourseId = course.Id
+		sectionId := ein.insertSection(section)
+		// Make section data available as soon as possible
+		ein.updateSerialSection(section)
+
+		//[]Instructors
+		instructors := section.Instructors
+		for instructorIndex := range instructors {
+			instructor := instructors[instructorIndex]
+			instructor.SectionId = sectionId
+			ein.insertInstructor(instructor)
+		}
+
+		//[]Meeting
+		meetings := section.Meetings
+		for meetingIndex := range meetings {
+			meeting := meetings[meetingIndex]
+
+			meeting.SectionId = sectionId
+			meetingId := ein.insertMeeting(meeting)
+
+			// Meeting []Metadata
+			metadata := meeting.Metadata
+			for metadataIndex := range metadata {
+				metadata := metadata[metadataIndex]
+
+				metadata.MeetingId = &meetingId
+				ein.insertMetadata(metadata)
+			}
+		}
+
+		//[]Books
+		books := section.Books
+		for bookIndex := range books {
+			book := books[bookIndex]
+
+			book.SectionId = sectionId
+			ein.insertBook(book)
+		}
+
+		// Section []Metadata
+		metadata := section.Metadata
+		for metadataIndex := range metadata {
+			metadata := metadata[metadataIndex]
+
+			metadata.SectionId = &sectionId
+			ein.insertMetadata(metadata)
+		}
+	}
+
+}
+
+func (ein *ein) insertSubject(sub *model.Subject) (subjectId int64) {
+	if !ein.config.fullUpsert {
+		if subjectId = ein.postgres.exists(SubjectExistQuery, sub); subjectId != 0 {
 			return
 		}
 	}
-	subjectId = app.dbHandler.upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
+	subjectId = ein.postgres.upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
 
 	// Subject []Metadata
 	metadatas := sub.Metadata
@@ -396,71 +402,71 @@ func (app App) insertSubject(sub *model.Subject) (subjectId int64) {
 		metadata := metadatas[metadataIndex]
 
 		metadata.SubjectId = &subjectId
-		app.insertMetadata(metadata)
+		ein.insertMetadata(metadata)
 	}
 	return subjectId
 }
 
-func (app App) insertCourse(course *model.Course) (courseId int64) {
-	if !*fullUpsert {
-		if courseId = app.dbHandler.exists(CourseExistQuery, course); courseId != 0 {
+func (ein *ein) insertCourse(course *model.Course) (courseId int64) {
+	if !ein.config.fullUpsert {
+		if courseId = ein.postgres.exists(CourseExistQuery, course); courseId != 0 {
 			return
 		}
 	}
-	courseId = app.dbHandler.upsert(CourseInsertQuery, CourseUpdateQuery, course)
+	courseId = ein.postgres.upsert(CourseInsertQuery, CourseUpdateQuery, course)
 
 	return courseId
 }
 
-func (app App) insertSemester(universityId int64, resolvedSemesters *model.ResolvedSemester) int64 {
-	rs := &model.DBResolvedSemester{}
-	rs.UniversityId = universityId
-	rs.CurrentSeason = resolvedSemesters.Current.Season
-	rs.CurrentYear = strconv.Itoa(int(resolvedSemesters.Current.Year))
-	rs.LastSeason = resolvedSemesters.Last.Season
-	rs.LastYear = strconv.Itoa(int(resolvedSemesters.Last.Year))
-	rs.NextSeason = resolvedSemesters.Next.Season
-	rs.NextYear = strconv.Itoa(int(resolvedSemesters.Next.Year))
-	return app.dbHandler.upsert(SemesterInsertQuery, SemesterUpdateQuery, rs)
+func (ein *ein) insertSemester(university *model.University) int64 {
+	return ein.postgres.upsert(SemesterInsertQuery, SemesterUpdateQuery, &model.DBResolvedSemester{
+		UniversityId: university.Id,
+		CurrentSeason: university.ResolvedSemesters.Current.Season,
+		CurrentYear: strconv.Itoa(int(university.ResolvedSemesters.Current.Year)),
+		LastSeason: university.ResolvedSemesters.Last.Season,
+		LastYear: strconv.Itoa(int(university.ResolvedSemesters.Last.Year)),
+		NextSeason: university.ResolvedSemesters.Next.Season,
+		NextYear: strconv.Itoa(int(university.ResolvedSemesters.Next.Year)),
+	})
 }
 
-func (app App) insertSection(section *model.Section) int64 {
-	return app.dbHandler.upsert(SectionInsertQuery, SectionUpdateQuery, section)
+func (ein *ein) insertSection(section *model.Section) int64 {
+	return ein.postgres.upsert(SectionInsertQuery, SectionUpdateQuery, section)
 }
 
-func (app App) insertMeeting(meeting *model.Meeting) (meetingId int64) {
-	if !*fullUpsert {
-		if meetingId = app.dbHandler.exists(MeetingExistQuery, meeting); meetingId != 0 {
+func (ein *ein) insertMeeting(meeting *model.Meeting) (meetingId int64) {
+	if !!ein.config.fullUpsert {
+		if meetingId = ein.postgres.exists(MeetingExistQuery, meeting); meetingId != 0 {
 			return
 		}
 	}
-	return app.dbHandler.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
+	return ein.postgres.upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
 }
 
-func (app App) insertInstructor(instructor *model.Instructor) (instructorId int64) {
-	if instructorId = app.dbHandler.exists(InstructorExistQuery, instructor); instructorId != 0 {
+func (ein *ein) insertInstructor(instructor *model.Instructor) (instructorId int64) {
+	if instructorId = ein.postgres.exists(InstructorExistQuery, instructor); instructorId != 0 {
 		return
 	}
-	return app.dbHandler.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
+	return ein.postgres.upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
 }
 
-func (app App) insertBook(book *model.Book) (bookId int64) {
-	bookId = app.dbHandler.upsert(BookInsertQuery, BookUpdateQuery, book)
+func (ein *ein) insertBook(book *model.Book) (bookId int64) {
+	bookId = ein.postgres.upsert(BookInsertQuery, BookUpdateQuery, book)
 
 	return bookId
 }
 
-func (app App) insertRegistration(registration *model.Registration) int64 {
-	return app.dbHandler.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
+func (ein *ein) insertRegistration(registration *model.Registration) int64 {
+	return ein.postgres.upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
 }
 
-func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
+func (ein *ein) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 	var insertQuery string
 	var updateQuery string
 
 	if metadata.UniversityId != nil {
-		if !*fullUpsert {
-			if metadataId = app.dbHandler.exists(MetaUniExistQuery, metadata); metadataId != 0 {
+		if !ein.config.fullUpsert {
+			if metadataId = ein.postgres.exists(MetaUniExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -468,8 +474,8 @@ func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 		insertQuery = MetaUniInsertQuery
 
 	} else if metadata.SubjectId != nil {
-		if !*fullUpsert {
-			if metadataId = app.dbHandler.exists(MetaSubjectExistQuery, metadata); metadataId != 0 {
+		if !ein.config.fullUpsert {
+			if metadataId = ein.postgres.exists(MetaSubjectExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -477,8 +483,8 @@ func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 		insertQuery = MetaSubjectInsertQuery
 
 	} else if metadata.CourseId != nil {
-		if !*fullUpsert {
-			if metadataId = app.dbHandler.exists(MetaCourseExistQuery, metadata); metadataId != 0 {
+		if !ein.config.fullUpsert {
+			if metadataId = ein.postgres.exists(MetaCourseExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -486,8 +492,8 @@ func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 		insertQuery = MetaCourseInsertQuery
 
 	} else if metadata.SectionId != nil {
-		if !*fullUpsert {
-			if metadataId = app.dbHandler.exists(MetaSectionExistQuery, metadata); metadataId != 0 {
+		if !ein.config.fullUpsert {
+			if metadataId = ein.postgres.exists(MetaSectionExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
@@ -495,13 +501,13 @@ func (app App) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 		insertQuery = MetaSectionInsertQuery
 
 	} else if metadata.MeetingId != nil {
-		if !*fullUpsert {
-			if metadataId = app.dbHandler.exists(MetaMeetingExistQuery, metadata); metadataId != 0 {
+		if !ein.config.fullUpsert {
+			if metadataId = ein.postgres.exists(MetaMeetingExistQuery, metadata); metadataId != 0 {
 				return
 			}
 		}
 		updateQuery = MetaMeetingUpdateQuery
 		insertQuery = MetaMeetingInsertQuery
 	}
-	return app.dbHandler.upsert(insertQuery, updateQuery, metadata)
+	return ein.postgres.upsert(insertQuery, updateQuery, metadata)
 }

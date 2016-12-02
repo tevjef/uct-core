@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
@@ -12,6 +11,7 @@ import (
 )
 
 type pprof map[string]server
+
 type scrapers map[string]*scraper
 
 type Config struct {
@@ -81,12 +81,6 @@ func (scrapers scrapers) Get(key string) *scraper {
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.DebugLevel)
-}
-
-func IsDebug() bool {
-	value := os.Getenv("UCT_DEBUG")
-	b, _ := strconv.ParseBool(value)
-	return b
 }
 
 func OpenConfig(file *os.File) Config {

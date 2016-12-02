@@ -15,18 +15,20 @@ type DatabaseHandler interface {
 	update(query string, data interface{}) (id int64)
 	upsert(insertQuery, updateQuery string, data interface{}) (id int64)
 	exists(query string, data interface{}) (id int64)
+	prepareStatements()
 }
 
 type DatabaseHandlerImpl struct {
-	Database *sqlx.DB
+	database   *sqlx.DB
+	statements map[string]*sqlx.NamedStmt
 }
 
-func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
+func (db DatabaseHandlerImpl) insert(query string, data interface{}) (id int64) {
 	// model.TimeTrack(time.Now(), "insert")
 
 	insertionsCh <- 1
 	typeName := fmt.Sprintf("%T", data)
-	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
+	if rows, err := db.getCachedStmt(query).Queryx(data); err != nil {
 		log.WithFields(log.Fields{"ein_op": "Insert", "type": typeName, "data": data}).Panic(err)
 	} else {
 		for rows.Next() {
@@ -40,12 +42,12 @@ func (dbHandler DatabaseHandlerImpl) insert(query string, data interface{}) (id 
 	return id
 }
 
-func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
+func (db DatabaseHandlerImpl) update(query string, data interface{}) (id int64) {
 	// model.TimeTrack(time.Now(), "update")
 	typeName := fmt.Sprintf("%T", data)
 
 	for i := 0; i < 5; i++ {
-		if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
+		if rows, err := db.getCachedStmt(query).Queryx(data); err != nil {
 			if isConnectionError(err) {
 				log.Errorf("Retry %d after error %s", i, err)
 				continue
@@ -75,21 +77,21 @@ func (dbHandler DatabaseHandlerImpl) update(query string, data interface{}) (id 
 	return id
 }
 
-func (dbHandler DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {
+func (db DatabaseHandlerImpl) upsert(insertQuery, updateQuery string, data interface{}) (id int64) {
 	// model.TimeTrack(time.Now(), "upsert")
 	upsertsCh <- 1
-	if id = dbHandler.update(updateQuery, data); id != 0 {
+	if id = db.update(updateQuery, data); id != 0 {
 	} else if id == 0 {
-		id = dbHandler.insert(insertQuery, data)
+		id = db.insert(insertQuery, data)
 	}
 	return
 }
 
-func (dbHandler DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
+func (db DatabaseHandlerImpl) exists(query string, data interface{}) (id int64) {
 	typeName := fmt.Sprintf("%T", data)
 	existentialCh <- 1
 
-	if rows, err := GetCachedStmt(query).Queryx(data); err != nil {
+	if rows, err := db.getCachedStmt(query).Queryx(data); err != nil {
 		log.WithFields(log.Fields{"ein_op": "Exists", "type": typeName, "data": data}).Panic(err)
 	} else {
 		count := 0
@@ -117,4 +119,64 @@ func isConnectionError(err error) bool {
 		}
 	}
 	return false
+}
+
+func (db DatabaseHandlerImpl) getCachedStmt(key string) *sqlx.NamedStmt {
+	return db.statements[key]
+}
+
+func (db DatabaseHandlerImpl) prepare(query string) *sqlx.NamedStmt {
+	if named, err := db.database.PrepareNamed(query); err != nil {
+		log.WithError(err).Fatalln("failed to prepare query:", query)
+		return nil
+	} else {
+		return named
+	}
+}
+
+func (db DatabaseHandlerImpl) prepareStatements() {
+	queries := []string{UniversityInsertQuery,
+		UniversityUpdateQuery,
+		SemesterInsertQuery,
+		SemesterUpdateQuery,
+		SubjectExistQuery,
+		SubjectInsertQuery,
+		SubjectUpdateQuery,
+		CourseUpdateQuery,
+		CourseExistQuery,
+		CourseInsertQuery,
+		SectionInsertQuery,
+		SectionUpdateQuery,
+		MeetingUpdateQuery,
+		MeetingInsertQuery,
+		MeetingExistQuery,
+		InstructorExistQuery,
+		InstructorUpdateQuery,
+		InstructorInsertQuery,
+		BookUpdateQuery,
+		BookInsertQuery,
+		RegistrationUpdateQuery,
+		RegistrationInsertQuery,
+		MetaUniExistQuery,
+		MetaUniUpdateQuery,
+		MetaUniInsertQuery,
+		MetaSubjectExistQuery,
+		MetaSubjectUpdateQuery,
+		MetaSubjectInsertQuery,
+		MetaCourseExistQuery,
+		MetaCourseUpdateQuery,
+		MetaCourseInsertQuery,
+		MetaSectionExistQuery,
+		MetaSectionInsertQuery,
+		MetaSectionUpdateQuery,
+		MetaSectionExistQuery,
+		MetaMeetingInsertQuery,
+		MetaMeetingUpdateQuery,
+		SerialSubjectUpdateQuery,
+		SerialCourseUpdateQuery,
+		SerialSectionUpdateQuery}
+
+	for _, query := range queries {
+		db.statements[query] = db.prepare(query)
+	}
 }
