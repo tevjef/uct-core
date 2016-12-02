@@ -6,17 +6,15 @@ import (
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
+	"uct/common/notification"
+	"uct/common/redis"
 	"uct/julia/notifier"
-	"uct/notification"
-	"uct/redis"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type julia struct {

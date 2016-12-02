@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"uct/ein/database"
+	"uct/common/database"
 
 	"github.com/gin-gonic/gin"
 )

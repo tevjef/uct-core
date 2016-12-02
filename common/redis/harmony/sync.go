@@ -3,11 +3,10 @@ package harmony
 import (
 	"fmt"
 	"os"
-	"time"
-	"uct/redis"
-
 	"sync"
-	"uct/redis/lock"
+	"time"
+	"uct/common/redis"
+	"uct/common/redis/lock"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"

@@ -2,7 +2,6 @@ package redis
 
 import (
 	"uct/common/conf"
-
 	"uct/common/model"
 
 	"github.com/Sirupsen/logrus"

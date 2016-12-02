@@ -6,10 +6,9 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"uct/common/database"
 	"uct/common/model"
 	"uct/spike/middleware"
-
-	"uct/ein/database"
 
 	"golang.org/x/net/context"
 )

@@ -3,26 +3,22 @@ package main
 import (
 	"bytes"
 	"errors"
+	"hash/fnv"
 	"io"
 	"io/ioutil"
 	_ "net/http/pprof"
 	"os"
+	"os/exec"
 	"strconv"
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"uct/redis"
-	"uct/redis/harmony"
-
-	"os/exec"
-
-	"hash/fnv"
+	"uct/common/redis"
+	"uct/common/redis/harmony"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type jet struct {

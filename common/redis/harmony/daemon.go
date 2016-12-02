@@ -2,7 +2,7 @@ package harmony
 
 import (
 	"time"
-	"uct/redis"
+	"uct/common/redis"
 
 	log "github.com/Sirupsen/logrus"
 )

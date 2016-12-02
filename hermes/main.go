@@ -1,30 +1,25 @@
 package main
 
 import (
+	"fmt"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 	"time"
 	"uct/common/conf"
+	"uct/common/database"
 	"uct/common/model"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"strconv"
+	"uct/common/notification"
+	"uct/common/redis"
 	"uct/common/try"
-	"uct/notification"
-	"uct/redis"
-
-	_ "github.com/lib/pq"
-	gcm "github.com/tevjef/go-gcm"
-
-	"fmt"
-
-	"uct/ein/database"
 
 	log "github.com/Sirupsen/logrus"
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
+	gcm "github.com/tevjef/go-gcm"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type hermes struct {

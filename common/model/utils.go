@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
 	"uct/common/try"
 
 	log "github.com/Sirupsen/logrus"

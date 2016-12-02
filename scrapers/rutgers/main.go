@@ -4,25 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	"sync"
-	"uct/common/model"
-
-	"io/ioutil"
+	"time"
 	"uct/common/conf"
+	"uct/common/model"
 	"uct/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type rutgersRequest struct {

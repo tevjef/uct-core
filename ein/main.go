@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -10,14 +10,10 @@ import (
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-	"uct/redis"
+	"uct/common/redis"
+	"uct/common/database"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"bytes"
-
-	"uct/ein/database"
-
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"

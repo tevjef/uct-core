@@ -6,19 +6,17 @@ import (
 	"strconv"
 	"time"
 	"uct/common/conf"
+	"uct/common/database"
 	"uct/common/model"
+	"uct/common/redis"
 	"uct/spike/middleware"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"uct/ein/database"
-	"uct/redis"
 	"uct/spike/middleware/cache"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type spike struct {

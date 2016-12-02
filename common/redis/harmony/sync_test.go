@@ -1,13 +1,12 @@
 package harmony
 
 import (
+	"sort"
 	"strconv"
 	"testing"
 	"time"
 	"uct/common/conf"
-	"uct/redis"
-
-	"sort"
+	"uct/common/redis"
 
 	_ "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"

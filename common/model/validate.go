@@ -1,14 +1,13 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
+	"hash/fnv"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-
-	"bytes"
-	"hash/fnv"
 	"unicode"
 
 	log "github.com/Sirupsen/logrus"
