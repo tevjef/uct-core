@@ -23,29 +23,49 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
-var (
-	app        = kingpin.New("njit", "A program for scraping information from NJIT serrvers.")
-	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
-	config     = conf.Config{}
-)
+type njit struct {
+	app    *kingpin.ApplicationModel
+	config *njitConfig
+	ctx    context.Context
+}
+
+type njitConfig struct {
+	service      conf.Config
+	campus       string
+	outputFormat string
+	latest       bool
+}
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
+	app := kingpin.New("njit", "A program for scraping information from NJIT serrvers.")
+	configFile := app.Flag("config", "configuration file for the application").Required().Short('c').File()
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	log.SetLevel(log.DebugLevel)
-
 	// Parse configuration file
-	config = conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	config := conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	var university model.University
+	(&njit{
+		app: app.Model(),
+		config: &njitConfig{
+			service: config,
+		},
+		ctx: context.TODO(),
+	}).init()
+}
 
-	university = njit
+func (njit *njit) init() {
+	university := njitBase
 
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
 

@@ -11,51 +11,75 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"uct/ein/database"
+	"uct/redis"
+	"uct/spike/middleware/cache"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"uct/spike/middleware/cache"
+	"golang.org/x/net/context"
 )
 
-var (
-	app        = kingpin.New("spike", "A command-line application to serve university course information")
-	port       = app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
-	logLevel   = app.Flag("log-level", "Log level").Short('l').Default("info").String()
-	configFile = app.Flag("config", "configuration file for the application").Short('c').File()
-	config     = conf.Config{}
-)
+type spike struct {
+	app      *kingpin.ApplicationModel
+	config   *spikeConfig
+	postgres database.Handler
+	redis    *redis.Helper
+	ctx      context.Context
+}
+
+type spikeConfig struct {
+	service conf.Config
+	port    uint16
+}
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
+	app := kingpin.New("spike", "A command-line application to serve university course information")
+	port := app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
+	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if lvl, err := log.ParseLevel(*logLevel); err != nil {
-		log.WithField("loglevel", *logLevel).Fatal(err)
-	} else {
-		log.SetLevel(lvl)
-	}
-
-	config = conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	config := conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	var err error
-
 	// Open database connection
-	if database, err = model.OpenPostgres(config.DatabaseConfig(app.Name)); err != nil {
+	pgdb, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	if err != nil {
 		log.WithError(err).Fatalln("failed to open connection to database")
 	}
+	pgdb.SetMaxOpenConns(config.Postgres.ConnMax)
 
-	// Prepare database connections
-	database.SetMaxOpenConns(config.Postgres.ConnMax)
-	prepareAllStmts()
+	(&spike{
+		app: app.Model(),
+		config: &spikeConfig{
+			service: config,
+			port:    *port,
+		},
+		redis:    redis.NewHelper(config, app.Name),
+		postgres: database.NewHandler(app.Name, pgdb, queries),
+		ctx:      context.TODO(),
+	}).init()
+}
 
+func (spike *spike) init() {
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Ginrus(log.StandardLogger(), time.RFC3339, true))
-	r.Use(cache.Cache(cache.NewRedisCache(config.RedisAddr(), config.Redis.Password, config.Spike.RedisDb, 10*time.Second)))
+	r.Use(middleware.Database(spike.postgres))
+	r.Use(cache.Cache(cache.NewRedisCache(
+		spike.config.service.RedisAddr(),
+		spike.config.service.Redis.Password,
+		spike.config.service.Spike.RedisDb,
+		10*time.Second)))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")
@@ -102,5 +126,5 @@ func main() {
 		v4.GET("/section/:topic", sectionHandler(10*time.Second))
 	}
 
-	r.Run(":" + strconv.Itoa(int(*port)))
+	r.Run(":" + strconv.Itoa(int(spike.config.port)))
 }

@@ -84,6 +84,10 @@ func init() {
 }
 
 func OpenConfig(file *os.File) Config {
+	return OpenConfigWithName(file, "")
+}
+
+func OpenConfigWithName(file *os.File, name string) Config {
 	c := Config{}
 	if _, err := toml.DecodeReader(file, &c); err != nil {
 		log.Fatalln("Error while decoding config file checking environment:", err)
@@ -92,6 +96,7 @@ func OpenConfig(file *os.File) Config {
 
 	c.fromEnvironment()
 
+	c.AppName = name
 	return c
 }
 

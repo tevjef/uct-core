@@ -6,15 +6,16 @@ import (
 	"uct/common/model"
 	"uct/spike/middleware"
 
-	"github.com/gin-gonic/gin"
 	"uct/spike/middleware/cache"
+
+	"github.com/gin-gonic/gin"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		topicName := strings.ToLower(c.ParamValue("topic"))
 
-		if u, err := SelectUniversity(topicName); err != nil {
+		if u, err := SelectUniversity(c, topicName); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -27,7 +28,7 @@ func universityHandler(expire time.Duration) gin.HandlerFunc {
 
 func universitiesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		if universities, err := SelectUniversities(); err != nil {
+		if universities, err := SelectUniversities(c); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -42,7 +43,7 @@ func subjectHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.ParamValue("topic"))
 
-		if sub, _, err := SelectSubject(subjectTopicName); err != nil {
+		if sub, _, err := SelectSubject(c, subjectTopicName); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -59,7 +60,7 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 		year := c.ParamValue("year")
 		uniTopicName := strings.ToLower(c.ParamValue("topic"))
 
-		if subjects, err := SelectSubjects(uniTopicName, season, year); err != nil {
+		if subjects, err := SelectSubjects(c, uniTopicName, season, year); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -74,7 +75,7 @@ func courseHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		courseTopicName := strings.ToLower(c.ParamValue("topic"))
 
-		if course, _, err := SelectCourse(courseTopicName); err != nil {
+		if course, _, err := SelectCourse(c, courseTopicName); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -89,7 +90,7 @@ func coursesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.ParamValue("topic"))
 
-		if courses, err := SelectCourses(subjectTopicName); err != nil {
+		if courses, err := SelectCourses(c, subjectTopicName); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{
@@ -104,7 +105,7 @@ func sectionHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		sectionTopicName := strings.ToLower(c.ParamValue("topic"))
 
-		if s, _, err := SelectSection(sectionTopicName); err != nil {
+		if s, _, err := SelectSection(c, sectionTopicName); err != nil {
 			middleware.ResolveErr(err, c)
 		} else {
 			response := model.Response{

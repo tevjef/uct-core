@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"uct/common/try"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/redis.v5"
-	"uct/common/try"
 )
 
 func TimeTrack(start time.Time, name string) {

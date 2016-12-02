@@ -3,9 +3,10 @@ package redis
 import (
 	"uct/common/conf"
 
+	"uct/common/model"
+
 	"github.com/Sirupsen/logrus"
 	redis "gopkg.in/redis.v5"
-	"uct/common/model"
 )
 
 type Helper struct {

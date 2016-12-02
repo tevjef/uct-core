@@ -5,7 +5,7 @@ import (
 	"uct/common/model"
 )
 
-var njit = model.University{
+var njitBase = model.University{
 	Name:             "New Jersey Institute of Technology",
 	Abbr:             "NJIT",
 	HomePage:         "http://www.njit.edu/",
