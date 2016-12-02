@@ -5,9 +5,7 @@ import (
 	"net"
 	"os"
 	"syscall"
-
 	"uct/common/try"
-
 	"sync/atomic"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,6 +22,7 @@ type Handler interface {
 	Select(query string, dest interface{}, args interface{}) error
 	Get(query string, dest interface{}, args interface{}) error
 	Stats() *Stats
+	ResetStats()
 }
 
 type handlerImpl struct {
@@ -168,6 +167,13 @@ func (db handlerImpl) Stats() *Stats {
 		Exists:     atomic.LoadInt64(&db.stats.Exists),
 		Upserts:    atomic.LoadInt64(&db.stats.Upserts),
 	}
+}
+
+func (db handlerImpl) ResetStats() {
+	atomic.SwapInt64(&db.stats.Insertions, 0)
+	atomic.SwapInt64(&db.stats.Updates, 0)
+	atomic.SwapInt64(&db.stats.Exists, 0)
+	atomic.SwapInt64(&db.stats.Upserts, 0)
 }
 
 func isConnectionError(err error) bool {

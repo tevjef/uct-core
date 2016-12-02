@@ -161,7 +161,7 @@ func (ein *ein) process(data []string) error {
 	ein.insertUniversity(university)
 	ein.updateSerial(raw, university)
 
-	collectDatabaseStats(ein.postgres.Stats())
+	collectDatabaseStats(ein.postgres)
 	doneAudit <- true
 	<-doneAudit
 	//break
