@@ -1,42 +1,51 @@
 package main
 
 import (
+	"fmt"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 	"time"
 	"uct/common/conf"
+	"uct/common/database"
 	"uct/common/model"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"strconv"
+	"uct/common/notification"
+	"uct/common/redis"
 	"uct/common/try"
-	"uct/notification"
-	"uct/redis"
-
-	_ "github.com/lib/pq"
-	gcm "github.com/tevjef/go-gcm"
-
-	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
+	gcm "github.com/tevjef/go-gcm"
+	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-var (
-	app           = kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	dryRun        = app.Flag("dry-run", "enable dry-run").Short('d').Default("true").Bool()
-	configFile    = app.Flag("config", "configuration file for the application").Short('c').File()
-	config        = conf.Config{}
-	database      *sqlx.DB
-	preparedStmts = make(map[string]*sqlx.NamedStmt)
-)
+type hermes struct {
+	app      *kingpin.ApplicationModel
+	config   *hermesConfig
+	redis    *redis.Helper
+	postgres database.Handler
+	ctx      context.Context
+}
 
-var helper *redis.Helper
+type hermesConfig struct {
+	service conf.Config
+	dryRun  bool
+}
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
+	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
+	dryRun := app.Flag("dry-run", "enable dry-run").Short('d').Default("true").Bool()
+	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+	config := conf.Config{}
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
@@ -48,30 +57,38 @@ func main() {
 		*dryRun = false
 	}
 
+	// Open database connection
+	pgDatabase, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	if err != nil {
+		log.WithError(err).Fatalln("failed to open database connection")
+	}
+
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	helper = redis.NewHelper(config, app.Name)
+	(&hermes{
+		app: app.Model(),
+		config: &hermesConfig{
+			service: config,
+			dryRun:  *dryRun,
+		},
+		redis:    redis.NewHelper(config, app.Name),
+		postgres: database.NewHandler(app.Name, pgDatabase, queries),
+	}).init()
+}
 
-	var err error
-	// Open database connection
-	if database, err = model.InitDB(config.DatabaseConfig(app.Name)); err != nil {
-		log.WithError(err).Fatalln("failed to open database connection")
-	} else {
-		prepareAllStmts()
-	}
-
-	resultChan := waitForPop()
+func (hermes *hermes) init() {
+	resultChan := hermes.waitForPop()
 
 	for {
 		select {
 		case pair := <-resultChan:
-			go recvNotification(pair)
+			go hermes.recvNotification(pair)
 		}
 	}
 }
 
-func recvNotification(pair notificationPair) {
+func (hermes *hermes) recvNotification(pair notificationPair) {
 	log.WithFields(log.Fields{"university_name": pair.n.University.TopicName,
 		"notification_id": pair.n.NotificationId, "status": pair.n.Status,
 		"topic": pair.n.TopicName}).Info("postgres_notification")
@@ -82,7 +99,7 @@ func recvNotification(pair notificationPair) {
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
 	err := try.Do(func(attempt int) (retry bool, err error) {
-		if err = sendGcmNotification(pair); err != nil {
+		if err = hermes.sendGcmNotification(pair); err != nil {
 			return true, err
 		}
 		return false, nil
@@ -93,11 +110,11 @@ func recvNotification(pair notificationPair) {
 	}
 }
 
-func waitForPop() chan notificationPair {
+func (hermes *hermes) waitForPop() chan notificationPair {
 	c := make(chan notificationPair)
 	go func() {
 		for {
-			if pair, err := popNotification(); err == nil {
+			if pair, err := hermes.popNotification(); err == nil {
 				c <- *pair
 			} else {
 				log.WithError(err).Warningln()
@@ -108,10 +125,9 @@ func waitForPop() chan notificationPair {
 	return c
 }
 
-func popNotification() (*notificationPair, error) {
-	if topic, err := helper.Client.BRPopLPush(notification.MainQueue, notification.DoneQueue, 0).Result(); err == nil {
-		dataNamespace := notification.MainQueueData + topic
-		if b, err := helper.Client.Get(dataNamespace).Bytes(); err != nil {
+func (hermes *hermes) popNotification() (*notificationPair, error) {
+	if topic, err := hermes.redis.Client.BRPopLPush(notification.MainQueue, notification.DoneQueue, 0).Result(); err == nil {
+		if b, err := hermes.redis.Client.Get(notification.MainQueueData + topic).Bytes(); err != nil {
 			return nil, errors.Wrap(err, "error getting notification data")
 		} else {
 			uctNotification := &model.UCTNotification{}
@@ -119,7 +135,7 @@ func popNotification() (*notificationPair, error) {
 				return nil, err
 			} else if jsonBytes, err := ffjson.Marshal(uctNotification); err != nil {
 				return nil, err
-			} else if _, err := helper.Client.Del(topic).Result(); err != nil {
+			} else if _, err := hermes.redis.Client.Del(topic).Result(); err != nil {
 				log.WithError(err).Warningln("failed to del topic data")
 				return &notificationPair{n: uctNotification, raw: string(jsonBytes)}, nil
 			} else {
@@ -131,17 +147,17 @@ func popNotification() (*notificationPair, error) {
 	}
 }
 
-func sendGcmNotification(pair notificationPair) (err error) {
+func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
 	httpMessage := gcm.HttpMessage{
 		To:               "/topics/" + pair.n.TopicName,
 		Data:             map[string]interface{}{"message": pair.raw},
 		ContentAvailable: true,
 		Priority:         "high",
-		DryRun:           *dryRun,
+		DryRun:           hermes.config.dryRun,
 	}
 
 	var httpResponse *gcm.HttpResponse
-	if httpResponse, err = gcm.SendHttp(config.Hermes.ApiKey, httpMessage); err != nil {
+	if httpResponse, err = gcm.SendHttp(hermes.config.service.Hermes.ApiKey, httpMessage); err != nil {
 		return
 	}
 
@@ -152,7 +168,7 @@ func sendGcmNotification(pair notificationPair) (err error) {
 		return fmt.Errorf(httpResponse.Error)
 	}
 
-	acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
+	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
 	return
 }
 
@@ -160,3 +176,14 @@ type notificationPair struct {
 	n   *model.UCTNotification
 	raw string
 }
+
+func (hermes *hermes) acknowledgeNotification(notificationId, messageId int64) int64 {
+	args := map[string]interface{}{"notification_id": notificationId, "message_id": messageId}
+	return hermes.postgres.Update(AckNotificationQuery, args)
+}
+
+var queries = []string{
+	AckNotificationQuery,
+}
+
+const AckNotificationQuery = `UPDATE notification SET (ack_at, message_id) = (now(), :message_id) WHERE id = :notification_id RETURNING notification.id`

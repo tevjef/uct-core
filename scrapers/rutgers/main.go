@@ -4,33 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	"sync"
-	"uct/common/model"
-
-	"io/ioutil"
+	"time"
 	"uct/common/conf"
+	"uct/common/model"
 	"uct/common/try"
 
 	log "github.com/Sirupsen/logrus"
-)
-
-var (
-	app        = kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campusFlag = app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
-	configFile = app.Flag("config", "configuration file for the application").Required().Short('c').File()
-	format     = app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Default("protobuf").String()
-	latest     = app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
-	config     conf.Config
+	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type rutgersRequest struct {
@@ -48,27 +37,62 @@ type courseRequest struct {
 	rutgersRequest
 }
 
+type rutgers struct {
+	app    *kingpin.ApplicationModel
+	config *rutgersConfig
+	ctx    context.Context
+}
+
+type rutgersConfig struct {
+	service      conf.Config
+	campus       string
+	outputFormat string
+	latest       bool
+}
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
+	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
+	campusFlag := app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
+	configFile := app.Flag("config", "configuration file for the application").Required().Short('c').File()
+	format := app.Flag("format", "choose output format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Default("protobuf").String()
+	latest := app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	*campusFlag = strings.ToUpper(*campusFlag)
 	app.Name = app.Name + "-" + strings.ToLower(*campusFlag)
-	log.SetLevel(log.DebugLevel)
 
 	// Parse configuration file
-	config = conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	config := conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	if reader, err := model.MarshalMessage(*format, getCampus(*campusFlag)); err != nil {
+	(&rutgers{
+		app: app.Model(),
+		config: &rutgersConfig{
+			service:      config,
+			campus:       *campusFlag,
+			outputFormat: *format,
+			latest:       *latest,
+		},
+		ctx: context.TODO(),
+	}).init()
+}
+
+func (rutgers *rutgers) init() {
+	if reader, err := model.MarshalMessage(rutgers.config.outputFormat, rutgers.getCampus(rutgers.config.campus)); err != nil {
 		log.WithError(err).Fatal()
 	} else {
 		io.Copy(os.Stdout, reader)
 	}
 }
 
-func getCampus(campus string) model.University {
+func (rutgers *rutgers) getCampus(campus string) model.University {
 	var university model.University
 
 	university = getRutgers(campus)
@@ -86,7 +110,7 @@ func getCampus(campus string) model.University {
 		university.ResolvedSemesters.Current,
 		university.ResolvedSemesters.Next}
 
-	if *latest {
+	if rutgers.config.latest {
 		semesters = semesters[1:]
 	}
 

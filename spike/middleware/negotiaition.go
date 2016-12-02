@@ -3,7 +3,6 @@ package middleware
 import (
 	"strconv"
 	"strings"
-	"time"
 	"uct/common/model"
 
 	log "github.com/Sirupsen/logrus"
@@ -72,67 +71,6 @@ func ContentNegotiation(contentType string) gin.HandlerFunc {
 				c.Writer.Write(responseData)
 				c.Writer.Flush()
 			}
-		}
-	}
-}
-
-// Each handler must either set a meta or response
-func Decorator(c *gin.Context) {
-	c.Next()
-	meta := model.Meta{}
-	var metaExists bool
-	var responseExists bool
-	var value interface{}
-
-	if value, metaExists = c.Get(MetaKey); metaExists {
-		meta = value.(model.Meta)
-	}
-
-	if value, responseExists = c.Get(ResponseKey); responseExists {
-		response, _ := value.(model.Response)
-		code := int32(200)
-		meta.Code = &code
-		response.Meta = &meta
-		c.Set(ResponseKey, response)
-	} else {
-		c.Set(ResponseKey, model.Response{Meta: &meta})
-	}
-}
-
-func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-		// some evil middlewares modify this values
-		path := c.Request.URL.Path
-
-		c.Next()
-
-		if header := c.Request.Header.Get("X-Health-Check"); header != "" {
-			return
-		}
-
-		end := time.Now()
-		latency := end.Sub(start)
-		if utc {
-			end = end.UTC()
-		}
-
-		entry := logger.WithFields(log.Fields{
-			"status":     c.Writer.Status(),
-			"method":     c.Request.Method,
-			"path":       path,
-			"ip":         c.ClientIP(),
-			"elapsed":    latency.Seconds() * 1e3,
-			"latency":    latency,
-			"user-agent": c.Request.UserAgent(),
-			"time":       end.Format(timeFormat),
-		})
-
-		if len(c.Errors) > 0 {
-			// Append error field if this is an erroneous request.
-			entry.Error(c.Errors.String())
-		} else {
-			entry.Info()
 		}
 	}
 }

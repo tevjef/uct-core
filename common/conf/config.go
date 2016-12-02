@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
@@ -12,6 +11,7 @@ import (
 )
 
 type pprof map[string]server
+
 type scrapers map[string]*scraper
 
 type Config struct {
@@ -83,13 +83,11 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func IsDebug() bool {
-	value := os.Getenv("UCT_DEBUG")
-	b, _ := strconv.ParseBool(value)
-	return b
+func OpenConfig(file *os.File) Config {
+	return OpenConfigWithName(file, "")
 }
 
-func OpenConfig(file *os.File) Config {
+func OpenConfigWithName(file *os.File, name string) Config {
 	c := Config{}
 	if _, err := toml.DecodeReader(file, &c); err != nil {
 		log.Fatalln("Error while decoding config file checking environment:", err)
@@ -98,6 +96,7 @@ func OpenConfig(file *os.File) Config {
 
 	c.fromEnvironment()
 
+	c.AppName = name
 	return c
 }
 

@@ -2,7 +2,9 @@ package redis
 
 import (
 	"uct/common/conf"
+	"uct/common/model"
 
+	"github.com/Sirupsen/logrus"
 	redis "gopkg.in/redis.v5"
 )
 
@@ -21,13 +23,16 @@ func nameSpaceForApp(appName string) string {
 }
 
 func NewHelper(config conf.Config, appName string) *Helper {
-	return &Helper{
-		NameSpace: nameSpaceForApp(appName),
-		Client: redis.NewClient(&redis.Options{
-			Addr:     config.RedisAddr(),
-			Password: config.Redis.Password,
-			DB:       config.Redis.Db}),
+	if client, err := model.OpenRedis(config.RedisAddr(), config.Redis.Password, config.Redis.Db); err != nil {
+		logrus.WithError(err).Fatalln()
+		return nil
+	} else {
+		return &Helper{
+			NameSpace: nameSpaceForApp(appName),
+			Client:    client,
+		}
 	}
+
 }
 
 func (r Helper) FindAll(key string) ([]string, error) {

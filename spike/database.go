@@ -6,40 +6,35 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"uct/common/database"
 	"uct/common/model"
 	"uct/spike/middleware"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmoiron/sqlx"
-)
-
-var (
-	database      *sqlx.DB
-	preparedStmts = make(map[string]*sqlx.NamedStmt)
+	"golang.org/x/net/context"
 )
 
 type Data struct {
 	Data []byte `db:"data"`
 }
 
-func SelectUniversity(topicName string) (university model.University, err error) {
+func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
-	if err = Get(SelectUniversityQuery, &university, m); err != nil {
+	if err = Get(ctx, SelectUniversityQuery, &university, m); err != nil {
 		return
 	}
-	if err = GetAvailableSemesters(topicName, &university); err != nil {
+	if err = GetAvailableSemesters(ctx, topicName, &university); err != nil {
 		return
 	}
-	if err = GetResolvedSemesters(topicName, &university); err != nil {
+	if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
 		return
 	}
 	return
 }
 
-func SelectUniversities() (universities []*model.University, err error) {
+func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
 	m := map[string]interface{}{}
-	if err = Select(ListUniversitiesQuery, &universities, m); err != nil {
+	if err = Select(ctx, ListUniversitiesQuery, &universities, m); err != nil {
 		return
 	}
 	if err == nil && len(universities) == 0 {
@@ -47,11 +42,11 @@ func SelectUniversities() (universities []*model.University, err error) {
 	}
 
 	for i := range universities {
-		if err = GetAvailableSemesters(universities[i].TopicName, universities[i]); err != nil {
+		if err = GetAvailableSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
 			return
 		}
 
-		if err = GetResolvedSemesters(universities[i].TopicName, universities[i]); err != nil {
+		if err = GetResolvedSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
 			return
 		}
 	}
@@ -59,8 +54,8 @@ func SelectUniversities() (universities []*model.University, err error) {
 	return
 }
 
-func GetResolvedSemesters(topicName string, university *model.University) error {
-	if r, err := SelectResolvedSemesters(topicName); err != nil {
+func GetResolvedSemesters(ctx context.Context, topicName string, university *model.University) error {
+	if r, err := SelectResolvedSemesters(ctx, topicName); err != nil {
 		return err
 	} else {
 		university.ResolvedSemesters = &r
@@ -68,29 +63,29 @@ func GetResolvedSemesters(topicName string, university *model.University) error 
 	}
 }
 
-func GetAvailableSemesters(topicName string, university *model.University) error {
-	if s, err := SelectAvailableSemesters(topicName); err != nil {
+func GetAvailableSemesters(ctx context.Context, topicName string, university *model.University) error {
+	if s, err := SelectAvailableSemesters(ctx, topicName); err != nil {
 		return err
 	} else {
 		university.AvailableSemesters = s
-		university.Metadata, err = SelectMetadata(university.Id, 0, 0, 0, 0)
+		university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0)
 		return err
 	}
 }
 
-func SelectAvailableSemesters(topicName string) (semesters []*model.Semester, err error) {
+func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters []*model.Semester, err error) {
 	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
-	err = Select(SelectAvailableSemestersQuery, &semesters, m)
+	err = Select(ctx, SelectAvailableSemestersQuery, &semesters, m)
 	sort.Sort(model.SemesterSorter(semesters))
 	return
 }
 
-func SelectResolvedSemesters(topicName string) (semesters model.ResolvedSemester, err error) {
+func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters model.ResolvedSemester, err error) {
 	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
 	m := map[string]interface{}{"topic_name": topicName}
 	rs := model.DBResolvedSemester{}
-	if err = Get(SelectResolvedSemestersQuery, &rs, m); err != nil {
+	if err = Get(ctx, SelectResolvedSemestersQuery, &rs, m); err != nil {
 		return
 	}
 	curr, _ := strconv.ParseInt(rs.CurrentYear, 10, 32)
@@ -102,11 +97,11 @@ func SelectResolvedSemesters(topicName string) (semesters model.ResolvedSemester
 	return
 }
 
-func SelectSubject(subjectTopicName string) (subject model.Subject, b []byte, err error) {
+func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := Data{}
-	if err = Get(SelectProtoSubjectQuery, &d, m); err != nil {
+	if err = Get(ctx, SelectProtoSubjectQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
@@ -114,21 +109,21 @@ func SelectSubject(subjectTopicName string) (subject model.Subject, b []byte, er
 	return
 }
 
-func SelectSubjects(uniTopicName, season, year string) (subjects []*model.Subject, err error) {
+func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSubjects")
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
-	err = Select(ListSubjectQuery, &subjects, m)
+	err = Select(ctx, ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
 		err = middleware.ErrNoRows{Uri: fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year)}
 	}
 	return
 }
 
-func SelectCourse(courseTopicName string) (course model.Course, b []byte, err error) {
+func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
 	d := Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
-	if err = Get(SelectCourseQuery, &d, m); err != nil {
+	if err = Get(ctx, SelectCourseQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
@@ -136,11 +131,11 @@ func SelectCourse(courseTopicName string) (course model.Course, b []byte, err er
 	return
 }
 
-func SelectCourses(subjectTopicName string) (courses []*model.Course, err error) {
+func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourses")
 	d := []Data{}
 	m := map[string]interface{}{"topic_name": subjectTopicName}
-	if err = Select(ListCoursesQuery, &d, m); err != nil {
+	if err = Select(ctx, ListCoursesQuery, &d, m); err != nil {
 		return
 	}
 	if err == nil && len(courses) == 0 {
@@ -157,11 +152,11 @@ func SelectCourses(subjectTopicName string) (courses []*model.Course, err error)
 	return
 }
 
-func SelectSection(sectionTopicName string) (section model.Section, b []byte, err error) {
+func SelectSection(ctx context.Context, sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
 	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
-	if err = Get(SelectProtoSectionQuery, &d, m); err != nil {
+	if err = Get(ctx, SelectProtoSectionQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
@@ -169,7 +164,7 @@ func SelectSection(sectionTopicName string) (section model.Section, b []byte, er
 	return
 }
 
-func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*model.Metadata, err error) {
+func SelectMetadata(ctx context.Context, universityId, subjectId, courseId, sectionId, meetingId int64) (metadata []*model.Metadata, err error) {
 	defer model.TimeTrack(time.Now(), "SelectMetadata")
 	m := map[string]interface{}{
 		"university_id": universityId,
@@ -179,21 +174,21 @@ func SelectMetadata(universityId, subjectId, courseId, sectionId, meetingId int6
 		"meeting_id":    meetingId,
 	}
 	if universityId != 0 {
-		err = Select(UniversityMetadataQuery, &metadata, m)
+		err = Select(ctx, UniversityMetadataQuery, &metadata, m)
 	} else if subjectId != 0 {
-		err = Select(SubjectMetadataQuery, &metadata, m)
+		err = Select(ctx, SubjectMetadataQuery, &metadata, m)
 	} else if courseId != 0 {
-		err = Select(CourseMetadataQuery, &metadata, m)
+		err = Select(ctx, CourseMetadataQuery, &metadata, m)
 	} else if sectionId != 0 {
-		err = Select(SectionMetadataQuery, &metadata, m)
+		err = Select(ctx, SectionMetadataQuery, &metadata, m)
 	} else if meetingId != 0 {
-		err = Select(MeetingMetadataQuery, &metadata, m)
+		err = Select(ctx, MeetingMetadataQuery, &metadata, m)
 	}
 	return
 }
 
-func Select(query string, dest interface{}, args interface{}) error {
-	if err := GetCachedStmt(query).Select(dest, args); err != nil {
+func Select(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	if err := database.FromContext(ctx).Select(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
 		}
@@ -202,8 +197,8 @@ func Select(query string, dest interface{}, args interface{}) error {
 	return nil
 }
 
-func Get(query string, dest interface{}, args interface{}) error {
-	if err := GetCachedStmt(query).Get(dest, args); err != nil {
+func Get(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	if err := database.FromContext(ctx).Get(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
 		}
@@ -212,50 +207,28 @@ func Get(query string, dest interface{}, args interface{}) error {
 	return nil
 }
 
-func GetCachedStmt(query string) *sqlx.NamedStmt {
-	if stmt := preparedStmts[query]; stmt == nil {
-		preparedStmts[query] = Prepare(query)
-	}
-	return preparedStmts[query]
+var queries = []string{
+	SelectUniversityQuery,
+	ListUniversitiesQuery,
+	SelectAvailableSemestersQuery,
+	SelectResolvedSemestersQuery,
+	SelectProtoSubjectQuery,
+	SelectProtoSectionQuery,
+	ListSubjectQuery,
+	SelectCourseQuery,
+	ListCoursesQuery,
+	SelectSectionQuery,
+	SelectMeeting,
+	SelectInstructor,
+	SelectBook,
+	UniversityMetadataQuery,
+	SubjectMetadataQuery,
+	CourseMetadataQuery,
+	SectionMetadataQuery,
+	MeetingMetadataQuery,
 }
 
-func Prepare(query string) *sqlx.NamedStmt {
-	if named, err := database.PrepareNamed(query); err != nil {
-		log.Panicln(fmt.Errorf("Error: %s Query: %s", query, err))
-		return nil
-	} else {
-		return named
-	}
-}
-
-func prepareAllStmts() {
-	queries := []string{
-		SelectUniversityQuery,
-		ListUniversitiesQuery,
-		SelectAvailableSemestersQuery,
-		SelectResolvedSemestersQuery,
-		SelectProtoSubjectQuery,
-		SelectProtoSectionQuery,
-		ListSubjectQuery,
-		SelectCourseQuery,
-		ListCoursesQuery,
-		SelectSectionQuery,
-		SelectMeeting,
-		SelectInstructor,
-		SelectBook,
-		UniversityMetadataQuery,
-		SubjectMetadataQuery,
-		CourseMetadataQuery,
-		SectionMetadataQuery,
-		MeetingMetadataQuery,
-	}
-
-	for _, query := range queries {
-		preparedStmts[query] = Prepare(query)
-	}
-}
-
-var (
+const (
 	SelectUniversityQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
 	ListUniversitiesQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
 	SelectAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id

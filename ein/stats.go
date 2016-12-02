@@ -2,12 +2,13 @@ package main
 
 import (
 	"time"
+	"uct/common/database"
 	"uct/common/model"
 
 	log "github.com/Sirupsen/logrus"
 )
 
-func audit(university string) {
+func statsCollector(university string) {
 	start := time.Now()
 
 	var insertions int
@@ -153,6 +154,13 @@ func countUniversity(uni model.University, subjectCh, courseCh, sectionCh, meeti
 			}
 		}
 	}
+}
+
+func collectDatabaseStats(stats *database.Stats) {
+	insertionsCh <- int(stats.Insertions)
+	updatesCh <- int(stats.Updates)
+	existentialCh <- int(stats.Exists)
+	upsertsCh <- int(stats.Upserts)
 }
 
 func countSubjects(subjects []*model.Subject, courses []*model.Course, subjectCh, courseCh, sectionCh, meetingCh, metadataCh chan int) {

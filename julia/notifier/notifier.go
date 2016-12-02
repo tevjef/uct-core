@@ -10,10 +10,10 @@ type pgNotifier struct {
 	ch chan string
 }
 
-func NewNotifier(listener *pq.Listener) *pgNotifier {
+func NewNotifier(listener *pq.Listener) Notifier {
 	pg := &pgNotifier{l: listener, ch: make(chan string)}
 	go func() {
-		for n := range pg.l.Notify {
+		for n := range pg.l.NotificationChannel() {
 			pg.ch <- n.Extra
 		}
 	}()

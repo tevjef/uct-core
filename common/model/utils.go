@@ -4,9 +4,11 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"uct/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"gopkg.in/redis.v5"
 )
 
 func TimeTrack(start time.Time, name string) {
@@ -19,10 +21,34 @@ func StartPprof(host *net.TCPAddr) {
 	log.Info(http.ListenAndServe((*host).String(), nil))
 }
 
-func InitDB(connection string) (database *sqlx.DB, err error) {
-	database, err = sqlx.Open("postgres", connection)
-	if err != nil {
-		return nil, err
-	}
-	return database, err
+func OpenPostgres(connection string) (database *sqlx.DB, err error) {
+	err = try.DoWithOptions(func(attempt int) (retry bool, err error) {
+		database, err = sqlx.Connect("postgres", connection)
+		if err != nil {
+			log.WithError(err).WithField("retry", attempt).Errorln("failed to open database connection")
+			return true, err
+		}
+
+		return false, err
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
+
+	return
+}
+
+func OpenRedis(addr, password string, database int) (client *redis.Client, err error) {
+	err = try.DoWithOptions(func(attempt int) (retry bool, err error) {
+		client = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       database})
+
+		if err := client.Ping().Err(); err != nil {
+			log.WithError(err).WithField("retry", attempt).Errorln("failed to open redis connection")
+			return true, err
+		}
+
+		return false, err
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
+
+	return
 }
