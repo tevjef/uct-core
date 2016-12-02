@@ -4,10 +4,10 @@ import (
 	"strings"
 	"time"
 	"uct/common/model"
-	"uct/spike/cache"
 	"uct/spike/middleware"
 
 	"github.com/gin-gonic/gin"
+	"uct/spike/middleware/cache"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {

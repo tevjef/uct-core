@@ -7,7 +7,6 @@ import (
 	"time"
 	"uct/common/conf"
 	"uct/common/model"
-	"uct/spike/cache"
 	"uct/spike/middleware"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -15,6 +14,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"uct/spike/middleware/cache"
 )
 
 var (
