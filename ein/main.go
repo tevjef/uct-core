@@ -19,6 +19,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -32,7 +33,6 @@ func main() {
 	fullUpsert := app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
 	format := app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Required().String()
 	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
-	config := conf.Config{}
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -41,21 +41,19 @@ func main() {
 	}
 
 	// Parse configuration file
-	config = conf.OpenConfig(*configFile)
+	config := conf.OpenConfig(*configFile)
 	config.AppName = app.Name
 
 	// Start profiling
 	go model.StartPprof(config.DebugSever(app.Name))
 
-	var database *sqlx.DB
-	var err error
-
-	// Initialize database connection
-	if database, err = model.OpenPostgres(config.DatabaseConfig(app.Name)); err != nil {
+	database, err := model.OpenPostgres(config.DatabaseConfig(app.Name));
+	if err != nil {
 		log.WithError(err).Fatalln()
-	} else {
-		database.SetMaxOpenConns(config.Postgres.ConnMax)
 	}
+
+	database.SetMaxOpenConns(config.Postgres.ConnMax)
+
 
 	ein := &ein{
 		app: app.Model(),
@@ -76,19 +74,23 @@ func main() {
 }
 
 func (ein *ein) init() {
+
 	ein.postgres.prepareStatements()
 
 	for {
-		log.Infoln("Waiting on queue...")
+		log.Infoln("waiting on queue:", redis.ScraperQueue)
 		if data, err := ein.redis.Client.BRPop(0, redis.ScraperQueue).Result(); err != nil {
 			log.WithError(err).Fatalln()
 		} else {
-			ein.process(data)
+			if err := ein.process(data); err != nil {
+				log.WithError(err).Errorln("failure while processing data")
+				continue
+			}
 		}
 	}
 }
 
-func (ein *ein) process(data []string) {
+func (ein *ein) process(data []string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			log.WithError(fmt.Errorf("Recovered from error in queue loop: %v", r)).Errorln()
@@ -96,67 +98,69 @@ func (ein *ein) process(data []string) {
 	}()
 
 	val := data[1]
-
 	latestData := val + ":data:latest"
 	oldData := val + ":data:old"
 
 	log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
 
-	if raw, err := ein.redis.Client.Get(latestData).Bytes(); err != nil {
-		log.WithError(err).Panic("Error getting latest data")
-	} else {
-		var university model.University
-
-		// Try getting older data from redis
-		var oldRaw string
-		if oldRaw, err = ein.redis.Client.Get(oldData).Result(); err != nil {
-			log.Warningln("There was no older data, did it expire or is this first run?")
-		}
-
-		// Decode new data
-		var newUniversity model.University
-		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
-			log.WithError(err).Panic("Error while unmarshalling new data")
-		}
-
-		// Make sure the data received is primed for the database
-		if err := model.ValidateAll(&newUniversity); err != nil {
-			log.WithError(err).Panic("Error while validating newUniversity")
-		}
-
-		// Decode old data if have some
-		if oldRaw != "" && !ein.config.noDiff {
-			var oldUniversity model.University
-			if err := model.UnmarshalMessage(ein.config.inputFormat, strings.NewReader(oldRaw), &oldUniversity); err != nil {
-				log.WithError(err).Panic("Error while unmarshalling old data")
-			}
-
-			if err := model.ValidateAll(&oldUniversity); err != nil {
-				log.WithError(err).Panic("Error while validating oldUniversity")
-			}
-
-			university = model.DiffAndFilter(oldUniversity, newUniversity)
-
-		} else {
-			university = newUniversity
-		}
-
-		// Set old data as the new data we just received. Important that this is after validating the new raw data
-		if _, err := ein.redis.Client.Set(oldData, raw, 0).Result(); err != nil {
-			log.WithError(err).Panic("Error updating old data")
-		}
-
-		go audit(university.TopicName)
-
-		ein.insertUniversity(university)
-		ein.updateSerial(raw, university)
-		// Log bytes received
-		log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
-
-		doneAudit <- true
-		<-doneAudit
-		//break
+	raw, err := ein.redis.Client.Get(latestData).Bytes()
+	if err != nil {
+		return errors.New("error while getting latest data")
 	}
+
+	var university model.University
+
+	// Try getting older data from redis
+	var oldRaw string
+	if oldRaw, err = ein.redis.Client.Get(oldData).Result(); err != nil {
+		log.Warningln("there was no older data, did it expire or is this first run?")
+	}
+
+	// Decode new data
+	var newUniversity model.University
+	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
+		return errors.Wrap(err, "error while unmarshalling new data")
+	}
+
+	// Make sure the data received is primed for the database
+	if err := model.ValidateAll(&newUniversity); err != nil {
+		return errors.Wrap(err, "error while validating newUniversity")
+	}
+
+	// Decode old data if have some
+	if oldRaw != "" && !ein.config.noDiff {
+		var oldUniversity model.University
+		if err := model.UnmarshalMessage(ein.config.inputFormat, strings.NewReader(oldRaw), &oldUniversity); err != nil {
+			return errors.Wrap(err, "error while unmarshalling old data")
+		}
+
+		if err := model.ValidateAll(&oldUniversity); err != nil {
+			return errors.Wrap(err, "error while validating oldUniversity")
+		}
+
+		university = model.DiffAndFilter(oldUniversity, newUniversity)
+
+	} else {
+		university = newUniversity
+	}
+
+	// Replace old data with new data we just received.
+	if _, err := ein.redis.Client.Set(oldData, raw, 0).Result(); err != nil {
+		return errors.Wrap(err, "error updating old data")
+	}
+
+	go audit(university.TopicName)
+
+	ein.insertUniversity(university)
+	ein.updateSerial(raw, university)
+	// Log bytes received
+	log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
+
+	doneAudit <- true
+	<-doneAudit
+	//break
+
+	return nil
 }
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
@@ -182,6 +186,7 @@ func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	countSubjects(newUniversity.Subjects, diffCourses, diffSerialSubjectCh, diffSerialCourseCh, diffSerialSectionCh, diffSerialMeetingCountCh, diffSerialMetadataCountCh)
 
 	sem := make(chan bool, ein.config.service.Postgres.ConnMax)
+
 	for subjectIndex := range newUniversity.Subjects {
 		subject := newUniversity.Subjects[subjectIndex]
 		ein.updateSerialSubject(subject)
