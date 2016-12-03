@@ -5,6 +5,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
@@ -12,6 +13,12 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 		start := time.Now()
 		// some evil middlewares modify this values
 		path := c.Request.URL.Path
+
+		parts := strings.Split(path, "/")
+		var handler string
+		if len(parts) > 2 {
+			handler = strings.Join(parts[:3], "/")
+		}
 
 		c.Next()
 
@@ -32,6 +39,7 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 			"ip":         c.ClientIP(),
 			"elapsed":    latency.Seconds() * 1e3,
 			"latency":    latency,
+			"handler":    handler,
 			"user-agent": c.Request.UserAgent(),
 			"time":       end.Format(timeFormat),
 		})
