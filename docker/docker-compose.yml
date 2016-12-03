@@ -123,7 +123,7 @@ services:
     image: tevjef/uct-core:julia${ENV}
     restart: always
     ports:
-      - '13200'
+      - '13201'
     depends_on:
       - postgresql
       - redis
@@ -340,6 +340,10 @@ services:
       - postgresql
       - redis
       - influxdb
+      - ein
+      - spike
+      - hermes
+      - julia
     volumes:
       - '/var/run/docker.sock:/tmp/docker.sock:ro'
       - '/var/run/utmp:/var/run/utmp:ro'
