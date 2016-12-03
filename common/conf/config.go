@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 
+	_ "expvar"
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
