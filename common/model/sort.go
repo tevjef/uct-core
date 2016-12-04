@@ -51,7 +51,15 @@ func (a courseSorter) Swap(i, j int) {
 func (a courseSorter) Less(i, j int) bool {
 	c1 := a.courses[i]
 	c2 := a.courses[j]
-	return (c1.Number + c1.Name) < (c2.Number + c2.Number)
+
+	left := c1.Name + c1.Number
+	right := c2.Name + c2.Number
+
+	if left == right {
+		return len(c1.Sections) < len(c2.Sections)
+	}
+
+	return left < right
 }
 
 type sectionSorter struct {
