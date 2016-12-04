@@ -40,6 +40,7 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 			"elapsed":    latency.Seconds() * 1e3,
 			"latency":    latency,
 			"handler":    handler,
+			"method":     c.Request.Method,
 			"user-agent": c.Request.UserAgent(),
 			"time":       end.Format(timeFormat),
 		})

@@ -63,6 +63,9 @@ func main() {
 	// Parse configuration file
 	config := conf.OpenConfigWithName(*configFile, app.Name)
 
+	// Start profiling
+	go model.StartPprof(config.DebugSever(app.Name))
+
 	(&jet{
 		app: app.Model(),
 		config: &jetConfig{

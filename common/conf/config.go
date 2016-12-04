@@ -5,7 +5,8 @@ import (
 	"net"
 	"os"
 
-	_ "expvar"
+	_ "net/http/pprof"
+	_ "github.com/tevjef/go-runtime-metrics/expvar"
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
