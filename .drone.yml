@@ -28,6 +28,8 @@ pipeline:
       - go install -v uct/scrapers/njit
       - go install -v uct/jet
       - go install -v uct/spike
+    when:
+      event: [push, pull_request, tag, deployment]
 
   common:
     image: library/docker:dind
@@ -56,6 +58,7 @@ pipeline:
       - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/njit/
     when:
       branch: [master, staging]
+      event: [push, tag, deployment]
 
   production:
     image: library/docker:dind
@@ -96,6 +99,7 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: master
+      event: [push, tag, deployment]
 
   staging:
     image: library/docker:dind
@@ -135,3 +139,4 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: staging
+      event: [push, tag, deployment]
