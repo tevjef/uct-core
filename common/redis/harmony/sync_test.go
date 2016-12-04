@@ -12,13 +12,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func getClient() *redis.Helper {
 	c := conf.Config{}
 	c.Redis.Host = "redis"
 	c.Redis.Port = "6379"
-	c.Redis.Db = 0
+	c.Redis.Db = 11
 	c.Redis.Password = ""
 	return redis.NewHelper(c, "sync_test")
 }
@@ -33,7 +34,7 @@ func setup(timeQuantum time.Duration, appId string) *redisSync {
 }
 
 func teardown() {
-	getClient().Client.FlushAll()
+	getClient().Client.FlushDb()
 }
 
 func TestClientConnection(t *testing.T) {
@@ -84,11 +85,10 @@ func TestRedisSync_registerMultipleInstance(t *testing.T) {
 }
 
 func TestRedisSync_Sync(t *testing.T) {
-	cancel := make(chan struct{})
 	results := make(chan time.Duration)
 	go func() {
 		rsync := setup(1*time.Minute, "instance1")
-		for instance := range rsync.sync(cancel) {
+		for instance := range rsync.sync(context.Background()) {
 			results <- instance.offset()
 		}
 
@@ -113,7 +113,7 @@ func TestRedisSync_SyncMultiple(t *testing.T) {
 
 	go func() {
 		rsync := setup(1*time.Minute, "instance1")
-		for instance := range rsync.sync(make(chan struct{})) {
+		for instance := range rsync.sync(context.Background()) {
 			results <- instance.offset()
 		}
 
@@ -121,7 +121,7 @@ func TestRedisSync_SyncMultiple(t *testing.T) {
 
 	go func() {
 		rsync := setup(1*time.Minute, "instance2")
-		for instance := range rsync.sync(make(chan struct{})) {
+		for instance := range rsync.sync(context.Background()) {
 			results <- instance.offset()
 		}
 	}()
@@ -144,11 +144,12 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		rsync := setup(1*time.Minute, "instance1")
 
-		for instance := range rsync.sync(make(chan struct{})) {
+		for instance := range rsync.sync(context.Background()) {
 			log.WithFields(log.Fields{
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position":  rsync.instance.count()}).Println("instance1")
+				"position":  rsync.instance.position(),
+				"id": instance.id}).Println()
 		}
 	}()
 
@@ -157,11 +158,12 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 
 		rsync := setup(1*time.Minute, "instance2")
 
-		for instance := range rsync.sync(make(chan struct{})) {
+		for instance := range rsync.sync(context.Background()) {
 			log.WithFields(log.Fields{
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position":  rsync.instance.count()}).Println("instance2")
+				"position":  rsync.instance.position(),
+				"id": instance.id}).Println()
 		}
 	}()
 
@@ -169,34 +171,33 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 		time.Sleep(5 * time.Second)
 
 		rsync := setup(1*time.Minute, "instance3")
-		channel := make(chan struct{})
+		ctx, cf := context.WithCancel(context.Background())
+
 		go func() {
 			time.Sleep(11 * time.Second)
-			channel <- struct{}{}
-			log.Println("BOOM!!! instance3")
+			log.Println("BOOM instance3")
+			cf()
 		}()
 
-		for instance := range rsync.sync(channel) {
+		for instance := range rsync.sync(ctx) {
 			log.WithFields(log.Fields{
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position":  rsync.instance.count()}).Println("instance3")
+				"position":  rsync.instance.position(),
+				"id": instance.id}).Println()
 		}
 
 	}()
 
 	go func() {
 		time.Sleep(9 * time.Second)
-
 		rsync := setup(1*time.Minute, "instance4")
-
-		channel := make(chan struct{})
-
-		for instance := range rsync.sync(channel) {
+		for instance := range rsync.sync(context.Background()) {
 			log.WithFields(log.Fields{
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
-				"position":  rsync.instance.count()}).Println("instance4")
+				"position":  rsync.instance.position(),
+				"id": instance.id}).Println()
 		}
 	}()
 
@@ -204,7 +205,7 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 	case <-time.After(time.Second * 30):
 	}
 
-	teardown()
+	//teardown()
 }
 
 func Test_calculateOffset(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
+	"golang.org/x/net/context"
 )
 
 type redisSync struct {
@@ -109,16 +110,19 @@ func newSync(helper *redis.Helper, options ...option) *redisSync {
 	return rs
 }
 
-func (rsync *redisSync) sync(cancel chan struct{}) <-chan instance {
+func (rsync *redisSync) sync(ctx context.Context) <-chan instance {
 	instanceConfigChan := make(chan instance)
 
-	go rsync.beginSync(instanceConfigChan, cancel)
+	go rsync.beginSync(ctx, instanceConfigChan)
 
 	return instanceConfigChan
 }
 
-func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan struct{}) {
+func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- instance) {
 
+	defer func() {
+		log.Warningln("SYNC ENDING!!!!!")
+	}()
 	// Clean up previous instances
 	if keys, err := rsync.uctRedis.FindAll(rsync.healthSpace + ":*"); err != nil {
 		log.WithError(err).Fatalln("failed to retrieve all keys during clean up", rsync.instance.id)
@@ -162,12 +166,19 @@ func (rsync *redisSync) beginSync(instanceConfig chan<- instance, cancel <-chan 
 					return
 				}
 
+				log.WithFields(log.Fields{
+					"offset":    rsync.instance.off.String(),
+					"instances": rsync.instance.count(),
+					"position":  rsync.instance.position(),
+					"id": rsync.instance.id,
+					"zlast": lastCount}).Infoln()
 				// Send instance
 				instanceConfig <- *rsync.instance
 			}()
-		case <-cancel:
-			ticker.Stop()
-			close(instanceConfig)
+		case <-ctx.Done():
+			log.Warningln("CONTEXT DONE!!!!!")
+
+			return
 		}
 	}
 }
@@ -194,6 +205,7 @@ func (rsync *redisSync) registerInstance() {
 		log.WithError(err).Fatalln("failed to aquire lock in registerInstance", rsync.instance.id)
 	} else if _, err = rsync.uctRedis.RPushNotExist(rsync.instanceList, rsync.instance.id); err != nil {
 		log.WithError(err).Fatalln("failed to claim position in list:", rsync.instance.id)
+	} else if err = rsync.listMu.Unlock(); err != nil {
 	} else if err = rsync.listMu.Unlock(); err != nil {
 		log.WithError(err).Fatalln("failed to release lock in registerInstance", rsync.instance.id)
 	} else {
@@ -254,6 +266,7 @@ func (inst *instance) count() int64 {
 }
 
 func (rsync *redisSync) ping() {
+
 	rsync.pingWithExpiration(rsync.syncExpiration)
 }
 
@@ -272,12 +285,12 @@ func (rsync *redisSync) updateOffset() {
 	position := rsync.instance.pos
 	rsync.instance.off = time.Duration(calculateOffset(t, instances, position)) * time.Second
 
-	log.WithFields(log.Fields{
-		"offset":      rsync.instance.off.Seconds(),
-		"interval":    rsync.instance.timeQuantum.Seconds(),
-		"instances":   rsync.instance.c,
-		"position":    rsync.instance.pos,
-		"instance_id": rsync.instance.id}).Debugln(rsync.instance.id)
+	//log.WithFields(log.Fields{
+	//	"offset":      rsync.instance.off.Seconds(),
+	//	"interval":    rsync.instance.timeQuantum.Seconds(),
+	//	"instances":   rsync.instance.c,
+	//	"position":    rsync.instance.pos,
+	//	"instance_id": rsync.instance.id}).Debugln(rsync.instance.id)
 
 }
 
