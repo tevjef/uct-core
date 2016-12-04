@@ -179,24 +179,6 @@ func TestResolveSemesters(t *testing.T) {
 
 }
 
-func TestMeetingSorter(t *testing.T) {
-	m := "Monday"
-	tu := "Tuesday"
-	w := "Wednesday"
-	th := "Thursday"
-	f := "Friday"
-
-	meetings := []Meeting{{Day: &tu},
-		{Day: &w}, {Day: &th}, {Day: &m}, {Day: &f}}
-
-	sort.Sort(meetingSorter{meetings})
-
-	if meetings[0].Day != &m {
-		log.Printf("%s != %s", meetings[0].Day, &m)
-		t.Fail()
-	}
-}
-
 func TestToTitle(t *testing.T) {
 	str := "ART APPRECIATION VIIIII"
 	expect := "Art Appreciation VIIIII"
