@@ -40,7 +40,7 @@ services:
         tag: "docker.core.ein"
     labels:
       fluentd.tag: "core.ein"
-      fluentd.influxdb.tags: "[\"university_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\"]"
 
   grafana:
     image: grafana/grafana:4.0.0
@@ -93,7 +93,7 @@ services:
         tag: "docker.core.hermes"
     labels:
       fluentd.tag: "core.hermes"
-      fluentd.influxdb.tags: "[\"status\", \"university_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"status\", \"university_name\"]"
 
   influxdb:
     image: tevjef/influxdb
@@ -140,7 +140,7 @@ services:
         tag: "docker.core.julia"
     labels:
       fluentd.tag: "core.julia"
-      fluentd.influxdb.tags: "[]"
+      fluentd.influxdb.tags: "[\"level\"]"
 
   nginx:
     container_name: nginx
@@ -218,7 +218,7 @@ services:
         tag: "docker.core.njit"
     labels:
       fluentd.tag: "core.njit"
-      fluentd.influxdb.tags: "[\"scraper_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   postgresql:
     image: tevjef/uct-core:postgresql${ENV}
@@ -268,7 +268,7 @@ services:
         tag: "docker.core.rutgers-cm"
     labels:
       fluentd.tag: "core.rutgers-cm"
-      fluentd.influxdb.tags: "[\"scraper_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nb:
     image: tevjef/uct-core:rutgers-nb${ENV}
@@ -286,7 +286,7 @@ services:
         tag: "docker.core.rutgers-nb"
     labels:
       fluentd.tag: "core.rutgers-nb"
-      fluentd.influxdb.tags: "[\"scraper_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nk:
     image: tevjef/uct-core:rutgers-nk${ENV}
@@ -304,7 +304,7 @@ services:
         tag: "docker.core.rutgers-nk"
     labels:
       fluentd.tag: "core.rutgers-nk"
-      fluentd.influxdb.tags: "[\"scraper_name\"]"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   spike:
     restart: on-failure:3
@@ -331,7 +331,7 @@ services:
         tag: "docker.core.spike"
     labels:
       fluentd.tag: "core.spike"
-      fluentd.influxdb.tags: "[\"university_name\", \"user-agent\", \"method\", \"status\", \"handler\"]"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\", \"user-agent\", \"method\", \"status\", \"handler\"]"
 
   telegraf:
     image: tevjef/uct-core:telegraf${ENV}

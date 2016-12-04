@@ -19,7 +19,7 @@ type Process struct {
 	out chan model.UCTNotification
 }
 
-func (p *Process) Run(fn Send) {
+func (p *Process) Run(fn DispatchFunc) {
 	var rutgersProcessor = rutgers.New(4 * time.Minute)
 	for {
 		select {
@@ -41,4 +41,4 @@ func (p *Process) Recv(uctNotification *model.UCTNotification) {
 	p.in <- *uctNotification
 }
 
-type Send func(uctNotification model.UCTNotification)
+type DispatchFunc func(uctNotification model.UCTNotification)
