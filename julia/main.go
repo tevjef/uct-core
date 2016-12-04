@@ -80,19 +80,21 @@ func main() {
 }
 
 func (julia *julia) init() {
-	go julia.process.Run(func(uctNotification model.UCTNotification) {
-		log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("queueing")
-		if b, err := uctNotification.Marshal(); err != nil {
-			log.WithError(err).Fatalln("failed to marshall notification")
-		} else if _, err := julia.redis.Client.Set(notification.MainQueueData+uctNotification.TopicName, b, 0).Result(); err != nil {
-			log.WithError(err).Warningln("failed to set notification data")
-		} else if julia.redis.RPush(notification.MainQueue, uctNotification.TopicName); err != nil {
-			log.WithError(err).Warningln("failed to push notification unto queue")
-		}
-	})
+	go julia.process.Run(julia.dispatch)
 
 	for {
 		waitForNotification(julia.ctx, julia.notifier, julia.process.Recv)
+	}
+}
+
+func (julia *julia) dispatch(uctNotification model.UCTNotification) {
+	log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("queueing")
+	if notificationBytes, err := uctNotification.Marshal(); err != nil {
+		log.WithError(err).Fatalln("failed to marshall notification")
+	} else if _, err := julia.redis.Client.Set(notification.MainQueueData+uctNotification.TopicName, notificationBytes, time.Hour).Result(); err != nil {
+		log.WithError(err).Warningln("failed to set notification data")
+	} else if julia.redis.RPush(notification.MainQueue, uctNotification.TopicName); err != nil {
+		log.WithError(err).Warningln("failed to push notification unto queue")
 	}
 }
 
