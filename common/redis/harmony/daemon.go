@@ -5,20 +5,22 @@ import (
 	"uct/common/redis"
 
 	log "github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
 var fields = log.Fields{}
 
-func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(cancel chan struct{})) {
+type Action func(ctx context.Context)
+
+func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) {
 	go func() {
 		rsync := newSync(wrapper, func(config *config) {
 			config.interval = interval
 		})
 
-		newInstanceConfig := rsync.sync(make(chan struct{}))
-
-		var cancelSync chan struct{}
+		var cancelFunc context.CancelFunc
 		var lastOffset time.Duration = -1
+		newInstanceConfig := rsync.sync(context.Background())
 
 		for {
 			select {
@@ -30,11 +32,19 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(can
 					log.WithFields(fields).Infoln("new offset recieved")
 
 					// No need to cancel the previous go routine, there isn't one
-					if cancelSync != nil {
-						cancelSync <- struct{}{}
+					if cancelFunc != nil {
+						cancelFunc()
 					}
-					cancelSync = make(chan struct{})
-					go prepareForSync(instance, start, interval, cancelSync)
+
+					var ctx context.Context
+					ctx, cancelFunc = context.WithCancel(context.Background())
+
+					go (&actionConfig{
+						action:start,
+						offset:instance.offset(),
+						interval:interval,
+						ctx: ctx,
+					}).prepareForSync(ctx)
 				}
 
 				lastOffset = instance.offset()
@@ -43,42 +53,43 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start func(can
 	}()
 }
 
-func prepareForSync(instance instance, start func(cancel chan struct{}), interval time.Duration, cancel chan struct{}) {
+type actionConfig struct {
+	action Action
+	offset time.Duration
+	interval time.Duration
+	ctx context.Context
+}
+
+func (ac *actionConfig) prepareForSync(ctx context.Context) {
 	secondsTilNextMinute := time.Duration(60-time.Now().Second()) * time.Second
 	// Sleeps until the next minute + the calculated offset
-	dur := secondsTilNextMinute + instance.off
+	dur := secondsTilNextMinute + ac.offset
 	log.Infoln("sleeping to syncronize for", dur.String())
 
-	cancelTicker := make(chan struct{}, 1)
+	syncTimer := time.AfterFunc(dur, ac.run)
 
-	syncTimer := time.AfterFunc(dur, func() {
-		log.Infoln("ticker for", interval.String())
-		ticker := time.NewTicker(interval)
-		scrapeOnTick(start, ticker, cancelTicker)
-	})
-
-	<-cancel
+	<-ctx.Done()
 
 	log.Infoln("cancelling previous ticker")
-	cancelTicker <- struct{}{}
 
 	// Stop timer if it has not stopped already
 	syncTimer.Stop()
 }
 
-func scrapeOnTick(start func(cancel chan struct{}), ticker *time.Ticker, cancel chan struct{}) {
-	notifyCancel := make(chan struct{}, 1)
-	for {
+func (ac *actionConfig) run() {
+	log.Infoln("ticker for", ac.interval.String())
+	ctx, _ := context.WithCancel(ac.ctx)
+
+	for c := time.Tick(ac.interval); ; {
+		log.WithFields(fields).Infoln("sync info")
+		ctx, _ := context.WithTimeout(ctx, time.Minute)
+		go ac.action(ctx)
+
 		select {
-		case <-ticker.C:
-			log.WithFields(fields).Infoln("sync info")
-			go start(notifyCancel)
-		case <-cancel:
+		case <-c:
+			continue
+		case <-ctx.Done():
 			log.Infoln("new offset received, cancelling old ticker")
-			// Clean up then break
-			ticker.Stop()
-			notifyCancel <- struct{}{}
-			close(cancel)
 			return
 		}
 	}

@@ -93,7 +93,7 @@ func (jet *jet) init() {
 			}
 		}
 
-		harmony.DaemonScraper(jet.redis, jet.config.daemonInterval, func(cancel chan struct{}) {
+		harmony.DaemonScraper(jet.redis, jet.config.daemonInterval, func(ctx context.Context) {
 			jet.entryPoint(resultChan)
 		})
 

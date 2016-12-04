@@ -94,7 +94,9 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 		"topic": pair.n.TopicName}).Info("postgres_notification")
 
 	defer func(start time.Time) {
-		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3, "name": "send_notification"}).Infoln()
+		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3,
+			"university_name": pair.n.University.TopicName,
+			"name": "send_notification"}).Infoln()
 	}(time.Now())
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
@@ -161,7 +163,7 @@ func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
 		return
 	}
 
-	log.WithFields(log.Fields{"topic": httpMessage.To,
+	log.WithFields(log.Fields{"topic": httpMessage.To, "university_name": pair.n.University.TopicName,
 		"message_id": httpResponse.MessageId, "error": httpResponse.Error}).Infoln("fcm_response")
 	// Print FCM errors, but don't panic
 	if httpResponse.Error != "" {

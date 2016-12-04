@@ -331,7 +331,7 @@ services:
         tag: "docker.core.spike"
     labels:
       fluentd.tag: "core.spike"
-      fluentd.influxdb.tags: "[\"university_name\", \"user-agent\", \"method\", \"status\"]"
+      fluentd.influxdb.tags: "[\"university_name\", \"user-agent\", \"method\", \"status\", \"handler\"]"
 
   telegraf:
     image: tevjef/uct-core:telegraf${ENV}
