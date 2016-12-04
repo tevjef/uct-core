@@ -166,12 +166,12 @@ func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- ins
 					return
 				}
 
-				log.WithFields(log.Fields{
-					"offset":    rsync.instance.off.String(),
-					"instances": rsync.instance.count(),
-					"position":  rsync.instance.position(),
-					"id": rsync.instance.id,
-					"zlast": lastCount}).Infoln()
+				//log.WithFields(log.Fields{
+				//	"offset":    rsync.instance.off.String(),
+				//	"instances": rsync.instance.count(),
+				//	"position":  rsync.instance.position(),
+				//	"id": rsync.instance.id,
+				//	"zlast": lastCount}).Infoln()
 				// Send instance
 				instanceConfig <- *rsync.instance
 			}()
