@@ -37,7 +37,6 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 			"method":     c.Request.Method,
 			"path":       path,
 			"ip":         c.ClientIP(),
-			"elapsed":    latency.Seconds() * 1e3,
 			"latency":    latency,
 			"handler":    handler,
 			"user-agent": c.Request.UserAgent(),
