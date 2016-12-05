@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"uct/common/conf"
-	"uct/common/redis"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/redis"
 
 	_ "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
@@ -149,7 +150,7 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
 				"position":  rsync.instance.position(),
-				"id": instance.id}).Println()
+				"id":        instance.id}).Println()
 		}
 	}()
 
@@ -163,7 +164,7 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
 				"position":  rsync.instance.position(),
-				"id": instance.id}).Println()
+				"id":        instance.id}).Println()
 		}
 	}()
 
@@ -184,7 +185,7 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
 				"position":  rsync.instance.position(),
-				"id": instance.id}).Println()
+				"id":        instance.id}).Println()
 		}
 
 	}()
@@ -197,7 +198,7 @@ func TestRedisSync_SyncMultipleWithDeath(t *testing.T) {
 				"offset":    instance.off.Seconds(),
 				"instances": rsync.instance.count(),
 				"position":  rsync.instance.position(),
-				"id": instance.id}).Println()
+				"id":        instance.id}).Println()
 		}
 	}()
 

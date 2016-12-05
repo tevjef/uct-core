@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"io"
 	"os"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 

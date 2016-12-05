@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/uct
+  path: src/github.com/tevjef/uct-core
 
 pipeline:
   core:
@@ -11,7 +11,6 @@ pipeline:
       - go version
       - export GOOS=linux
       - export GOARCH=amd64
-      - cd /go/src/uct
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
@@ -21,41 +20,40 @@ pipeline:
       - mv linux-amd64/glide /usr/bin
       - glide install
       - export PATH=$PATH:$GOPATH/bin
-      - go install -v uct/ein
-      - go install -v uct/hermes
-      - go install -v uct/julia
-      - go install -v uct/scrapers/rutgers
-      - go install -v uct/scrapers/njit
-      - go install -v uct/jet
-      - go install -v uct/spike
+      - go install -v uct-core/ein
+      - go install -v uct-core/hermes
+      - go install -v uct-core/julia
+      - go install -v uct-core/scrapers/rutgers
+      - go install -v uct-core/scrapers/njit
+      - go install -v uct-core/jet
+      - go install -v uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
 
   common:
     image: library/docker:dind
     commands:
-      - cd /go/src/uct
-      - cp /go/bin/ein /go/src/uct/docker/ein/
-      - cp /go/bin/spike /go/src/uct/docker/spike/
-      - cp /go/bin/hermes /go/src/uct/docker/hermes/
-      - cp /go/bin/julia /go/src/uct/docker/julia/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nk/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-cm/
-      - cp /go/bin/rutgers /go/src/uct/docker/rutgers-nb/
-      - cp /go/bin/njit /go/src/uct/docker/njit/
-      - cp /go/bin/jet /go/src/uct/docker/njit/
-      - cp /go/bin/jet /go/src/uct/docker/rutgers-nk/
-      - cp /go/bin/jet /go/src/uct/docker/rutgers-cm/
-      - cp /go/bin/jet /go/src/uct/docker/rutgers-nb/
+      - cp /go/bin/ein ein/
+      - cp /go/bin/spike docker/spike/
+      - cp /go/bin/hermes docker/hermes/
+      - cp /go/bin/julia docker/julia/
+      - cp /go/bin/rutgers docker/rutgers-nk/
+      - cp /go/bin/rutgers docker/rutgers-cm/
+      - cp /go/bin/rutgers docker/rutgers-nb/
+      - cp /go/bin/njit docker/njit/
+      - cp /go/bin/jet docker/njit/
+      - cp /go/bin/jet docker/rutgers-nk/
+      - cp /go/bin/jet docker/rutgers-cm/
+      - cp /go/bin/jet docker/rutgers-nb/
 
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/ein/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/spike/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/hermes/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/julia/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nk/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-cm/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/rutgers-nb/
-      - cp /go/src/uct/common/conf/config.toml /go/src/uct/docker/njit/
+      - cp common/conf/config.toml docker/ein/
+      - cp common/conf/config.toml docker/spike/
+      - cp common/conf/config.toml docker/hermes/
+      - cp common/conf/config.toml docker/julia/
+      - cp common/conf/config.toml docker/rutgers-nk/
+      - cp common/conf/config.toml docker/rutgers-cm/
+      - cp common/conf/config.toml docker/rutgers-nb/
+      - cp common/conf/config.toml docker/njit/
     when:
       branch: [master, staging]
       event: [push, tag, deployment]
@@ -63,7 +61,6 @@ pipeline:
   production:
     image: library/docker:dind
     commands:
-      - cd /go/src/uct
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
       - docker build -t tevjef/uct-core:ein -f docker/ein/Dockerfile docker/ein

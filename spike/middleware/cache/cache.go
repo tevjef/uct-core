@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"uct/common/model"
-	"uct/spike/middleware"
+
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/spike/middleware"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"

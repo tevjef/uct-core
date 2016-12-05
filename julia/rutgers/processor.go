@@ -3,8 +3,9 @@ package rutgers
 import (
 	"strings"
 	"time"
-	"uct/common/model"
-	"uct/julia/rutgers/topic"
+
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/julia/rutgers/topic"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"

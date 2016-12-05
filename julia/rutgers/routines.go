@@ -2,7 +2,8 @@ package rutgers
 
 import (
 	"sync"
-	"uct/julia/rutgers/topic"
+
+	"github.com/tevjef/uct-core/julia/rutgers/topic"
 )
 
 type Routines struct {

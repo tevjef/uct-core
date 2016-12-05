@@ -5,8 +5,9 @@ import (
 	"os"
 	"sync"
 	"time"
-	"uct/common/redis"
-	"uct/common/redis/lock"
+
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/redis/lock"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"

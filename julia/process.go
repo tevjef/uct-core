@@ -2,8 +2,9 @@ package main
 
 import (
 	"time"
-	"uct/common/model"
-	"uct/julia/rutgers"
+
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/julia/rutgers"
 
 	log "github.com/Sirupsen/logrus"
 )

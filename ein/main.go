@@ -8,16 +8,17 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"uct/common/conf"
-	"uct/common/model"
-	"uct/common/redis"
-	"uct/common/database"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/redis"
+
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type ein struct {

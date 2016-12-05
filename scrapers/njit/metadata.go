@@ -2,7 +2,8 @@ package main
 
 import (
 	"time"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 )
 
 var njitBase = model.University{

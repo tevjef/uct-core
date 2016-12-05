@@ -2,7 +2,8 @@ package redis
 
 import (
 	"testing"
-	"uct/common/conf"
+
+	"github.com/tevjef/uct-core/common/conf"
 )
 
 func TestClientConnection(t *testing.T) {

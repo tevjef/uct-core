@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"testing"
 	"time"

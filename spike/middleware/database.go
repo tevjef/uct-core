@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"uct/common/database"
+	"github.com/tevjef/uct-core/common/database"
 
 	"github.com/gin-gonic/gin"
 )

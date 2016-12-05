@@ -2,8 +2,9 @@ package main
 
 import (
 	"time"
-	"uct/common/database"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-core/common/model"
 
 	log "github.com/Sirupsen/logrus"
 )

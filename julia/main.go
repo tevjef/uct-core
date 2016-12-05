@@ -4,11 +4,12 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"time"
-	"uct/common/conf"
-	"uct/common/model"
-	"uct/common/notification"
-	"uct/common/redis"
-	"uct/julia/notifier"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/notification"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/julia/notifier"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"

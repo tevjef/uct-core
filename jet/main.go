@@ -11,10 +11,11 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
-	"uct/common/conf"
-	"uct/common/model"
-	"uct/common/redis"
-	"uct/common/redis/harmony"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/redis/harmony"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"

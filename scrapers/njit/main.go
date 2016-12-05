@@ -13,11 +13,12 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"uct/common/conf"
-	"uct/common/model"
-	"uct/common/proxy"
-	"uct/common/try"
-	"uct/scrapers/njit/cookie"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/proxy"
+	"github.com/tevjef/uct-core/common/try"
+	"github.com/tevjef/uct-core/scrapers/njit/cookie"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 

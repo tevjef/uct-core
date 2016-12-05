@@ -3,9 +3,10 @@ package middleware
 import (
 	"time"
 
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
