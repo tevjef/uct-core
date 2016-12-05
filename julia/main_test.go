@@ -3,8 +3,9 @@ package main
 import (
 	"sync/atomic"
 	"testing"
-	"uct/common/model"
-	"uct/julia/notifier"
+
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/julia/notifier"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

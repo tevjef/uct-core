@@ -4,7 +4,8 @@ import (
 	"net"
 	"net/http"
 	"time"
-	"uct/common/try"
+
+	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"

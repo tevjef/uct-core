@@ -2,7 +2,8 @@ package notifier
 
 import (
 	"encoding/json"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 
 	log "github.com/Sirupsen/logrus"
 )

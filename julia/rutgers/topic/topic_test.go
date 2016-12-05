@@ -3,7 +3,8 @@ package topic
 import (
 	"testing"
 	"time"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 
 	"log"
 

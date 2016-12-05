@@ -13,9 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"uct/common/conf"
-	"uct/common/model"
-	"uct/common/try"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"

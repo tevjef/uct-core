@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"uct/common/model"
+	"github.com/tevjef/uct-core/common/model"
 
 	"github.com/gin-gonic/gin"
 )

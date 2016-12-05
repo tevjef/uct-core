@@ -2,7 +2,8 @@ package topic
 
 import (
 	"time"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 
 	"golang.org/x/net/context"
 )

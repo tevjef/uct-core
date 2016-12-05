@@ -3,7 +3,8 @@ package middleware
 import (
 	"strconv"
 	"strings"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"

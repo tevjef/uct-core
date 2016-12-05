@@ -10,4 +10,4 @@ WHERE university.topic_name = :topic_name
 `
 const DeleteSubjectQuery = `
 DELETE FROM subject WHERE topic_name = :topic_name
-` 
+`

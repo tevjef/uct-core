@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"syscall"
-	"uct/common/try"
 	"sync/atomic"
+	"syscall"
+
+	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"

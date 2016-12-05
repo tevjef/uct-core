@@ -1,5 +1,5 @@
 hash: 45a3c6f7f33222f2cfb17746965e8771a944c20c34a76b3553c3820383ad4b90
-updated: 2016-12-05T08:17:35.605239531-05:00
+updated: 2016-12-05T15:06:30.185275655-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -62,7 +62,7 @@ imports:
 - name: github.com/tevjef/go-gcm
   version: 2f9e2682fa1359ee803b0d73065a6ffec6158b1c
 - name: github.com/tevjef/go-runtime-metrics
-  version: 9ce1933e040290f7fff2529b9dd359164020f1d3
+  version: eda8a54be31e2ceb5202a0590608afc9859ecbce
   subpackages:
   - expvar
   - influxdb
@@ -76,7 +76,7 @@ imports:
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: f5a6bd43051d3f1f5dd3e0dbd531721aa5e75d28
+  version: 478fcf54317e52ab69f40bb4c7a1520288d7f7ea
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2

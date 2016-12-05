@@ -6,12 +6,13 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"uct/common/conf"
-	"uct/common/database"
-	"uct/common/model"
-	"uct/common/notification"
-	"uct/common/redis"
-	"uct/common/try"
+
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/notification"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
@@ -96,7 +97,7 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 	defer func(start time.Time) {
 		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3,
 			"university_name": pair.n.University.TopicName,
-			"name": "send_notification"}).Infoln()
+			"name":            "send_notification"}).Infoln()
 	}(time.Now())
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid

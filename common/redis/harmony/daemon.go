@@ -2,7 +2,8 @@ package harmony
 
 import (
 	"time"
-	"uct/common/redis"
+
+	"github.com/tevjef/uct-core/common/redis"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -40,10 +41,10 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) 
 					ctx, cancelFunc = context.WithCancel(context.Background())
 
 					go (&actionConfig{
-						action:start,
-						offset:instance.offset(),
-						interval:interval,
-						ctx: ctx,
+						action:   start,
+						offset:   instance.offset(),
+						interval: interval,
+						ctx:      ctx,
 					}).prepareForSync(ctx)
 				}
 
@@ -54,10 +55,10 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) 
 }
 
 type actionConfig struct {
-	action Action
-	offset time.Duration
+	action   Action
+	offset   time.Duration
 	interval time.Duration
-	ctx context.Context
+	ctx      context.Context
 }
 
 func (ac *actionConfig) prepareForSync(ctx context.Context) {

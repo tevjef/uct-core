@@ -6,8 +6,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"uct/common/model"
 	"unicode"
+
+	"github.com/tevjef/uct-core/common/model"
 )
 
 var toTitle = model.ToTitle

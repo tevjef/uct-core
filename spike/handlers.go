@@ -3,10 +3,11 @@ package main
 import (
 	"strings"
 	"time"
-	"uct/common/model"
-	"uct/spike/middleware"
 
-	"uct/spike/middleware/cache"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/spike/middleware"
+
+	"github.com/tevjef/uct-core/spike/middleware/cache"
 
 	"github.com/gin-gonic/gin"
 )

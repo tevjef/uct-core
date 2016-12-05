@@ -6,10 +6,11 @@ import (
 	"os"
 
 	_ "net/http/pprof"
-	_ "github.com/tevjef/go-runtime-metrics/expvar"
+
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
+	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
 
 type pprof map[string]server
