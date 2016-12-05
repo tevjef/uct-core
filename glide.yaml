@@ -1,4 +1,4 @@
-package: uct
+package: uct-core
 import:
 - package: github.com/PuerkitoBio/goquery
   version: ^1.0.1
