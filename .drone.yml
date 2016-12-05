@@ -20,13 +20,13 @@ pipeline:
       - mv linux-amd64/glide /usr/bin
       - glide install
       - export PATH=$PATH:$GOPATH/bin
-      - go install -v uct-core/ein
-      - go install -v uct-core/hermes
-      - go install -v uct-core/julia
-      - go install -v uct-core/scrapers/rutgers
-      - go install -v uct-core/scrapers/njit
-      - go install -v uct-core/jet
-      - go install -v uct-core/spike
+      - go install -v github.com/tevjef/uct-core/ein
+      - go install -v github.com/tevjef/uct-core/hermes
+      - go install -v github.com/tevjef/uct-core/julia
+      - go install -v github.com/tevjef/uct-core/scrapers/rutgers
+      - go install -v github.com/tevjef/uct-core/scrapers/njit
+      - go install -v github.com/tevjef/uct-core/jet
+      - go install -v github.com/tevjef/uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
 
