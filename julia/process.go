@@ -25,10 +25,14 @@ func (p *Process) Run(fn DispatchFunc) {
 	for {
 		select {
 		case uctNotification := <-rutgersProcessor.Done():
-			log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("processor_out")
+			log.WithFields(log.Fields{
+				"topic": uctNotification.TopicName,
+				"university_name": uctNotification.University.TopicName}).Infoln("processor_out")
 			go func() { p.out <- uctNotification }()
 		case uctNotification := <-p.in:
-			log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("processor_in")
+			log.WithFields(log.Fields{
+				"topic": uctNotification.TopicName,
+				"university_name": uctNotification.University.TopicName}).Infoln("processor_in")
 			if rutgersProcessor.IsMatch(uctNotification.TopicName) {
 				rutgersProcessor.In(uctNotification)
 			}
