@@ -140,7 +140,7 @@ services:
         tag: "docker.core.julia"
     labels:
       fluentd.tag: "core.julia"
-      fluentd.influxdb.tags: "[\"level\"]"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\"]"
 
   nginx:
     container_name: nginx

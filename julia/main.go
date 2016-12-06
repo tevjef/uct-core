@@ -89,7 +89,7 @@ func (julia *julia) init() {
 }
 
 func (julia *julia) dispatch(uctNotification model.UCTNotification) {
-	log.WithFields(log.Fields{"topic": uctNotification.TopicName}).Infoln("queueing")
+	log.WithFields(log.Fields{"topic": uctNotification.TopicName, "university_name": uctNotification.University.TopicName}).Infoln("queueing")
 	if notificationBytes, err := uctNotification.Marshal(); err != nil {
 		log.WithError(err).Fatalln("failed to marshall notification")
 	} else if _, err := julia.redis.Client.Set(notification.MainQueueData+uctNotification.TopicName, notificationBytes, time.Hour).Result(); err != nil {

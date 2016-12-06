@@ -54,9 +54,11 @@ func (rp *RutgersProcessor) process(ctx context.Context) {
 			// When it starts and completes, as well as any messages sent out of the routine
 			go func() {
 				defer func(start time.Time) {
-					log.WithFields(log.Fields{"routines_count": rp.routines.Size(),
+					log.WithFields(log.Fields{
+						"routines_count": rp.routines.Size(),
 						"routine_elapsed": time.Since(start).Seconds(),
 						"routine_topic":   uctNotification.TopicName,
+						"university_name": uctNotification.University.TopicName,
 					}).Infoln("routine_done")
 				}(time.Now())
 
