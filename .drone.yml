@@ -33,7 +33,7 @@ pipeline:
   common:
     image: library/docker:dind
     commands:
-      - cp /go/bin/ein ein/
+      - cp /go/bin/ein docker/ein/
       - cp /go/bin/spike docker/spike/
       - cp /go/bin/hermes docker/hermes/
       - cp /go/bin/julia docker/julia/
