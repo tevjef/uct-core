@@ -51,3 +51,5 @@ secrets.go
 *.txt
 
 .env
+vendor
+scrapers/rutgers/rutgers

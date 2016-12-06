@@ -1,21 +1,17 @@
-package: uct
+package: uct-core
 import:
 - package: github.com/PuerkitoBio/goquery
   version: ^1.0.1
 - package: github.com/Sirupsen/logrus
-  version: a283a10442df8dc09befd873fab202bf8a253d6a
+  version: v0.11.0
 - package: github.com/boltdb/bolt
-  version: ^1.2.1
+  version: ^1.3.0
 - package: github.com/gin-gonic/gin
   version: v1.0rc1
 - package: github.com/gogo/protobuf
-  version: e33835a643a970c11ac74f6333f5f6866387a101
+  version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
   - proto
-- package: github.com/influxdata/influxdb
-  version: ^1.0.0-beta3
-  subpackages:
-  - client/v2
 - package: github.com/jmoiron/sqlx
 - package: github.com/lib/pq
 - package: github.com/pquerna/ffjson
@@ -30,6 +26,6 @@ import:
   version: ^2.2.2
 testImport:
 - package: github.com/stretchr/testify
-  version: ^1.1.3
+  version: ^1.1.4
   subpackages:
   - assert

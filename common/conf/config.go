@@ -2,22 +2,19 @@ package conf
 
 import (
 	"fmt"
+	"net"
+	"os"
+
+	_ "net/http/pprof"
+
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
-	"net"
-	"os"
-	"strconv"
-	"strings"
-)
-
-type Env int
-
-const (
-	UCT_SCRAPER_RUTGERS_INTERVAL = "UCT_SCRAPER_RUTGERS_INTERVAL"
+	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
 
 type pprof map[string]server
+
 type scrapers map[string]*scraper
 
 type Config struct {
@@ -27,11 +24,16 @@ type Config struct {
 	Pprof    pprof    `toml:"pprof"`
 	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
+	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
 	Scrapers scrapers `toml:"scrapers"`
 }
 
 type spike struct {
+	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
+}
+
+type julia struct {
 }
 
 type hermes struct {
@@ -81,15 +83,14 @@ func (scrapers scrapers) Get(key string) *scraper {
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
-}
-
-func IsDebug() bool {
-	value := os.Getenv("UCT_DEBUG")
-	b, _ := strconv.ParseBool(value)
-	return b
+	log.SetLevel(log.DebugLevel)
 }
 
 func OpenConfig(file *os.File) Config {
+	return OpenConfigWithName(file, "")
+}
+
+func OpenConfigWithName(file *os.File, name string) Config {
 	c := Config{}
 	if _, err := toml.DecodeReader(file, &c); err != nil {
 		log.Fatalln("Error while decoding config file checking environment:", err)
@@ -98,6 +99,7 @@ func OpenConfig(file *os.File) Config {
 
 	c.fromEnvironment()
 
+	c.AppName = name
 	return c
 }
 
@@ -123,16 +125,15 @@ func (c *Config) fromEnvironment() {
 		log.Fatal(err.Error())
 	}
 
-	// bind env for rutgers
-	if env := os.Getenv(UCT_SCRAPER_RUTGERS_INTERVAL); env != "" {
-		for key := range c.Scrapers {
-			if strings.Contains(key, "rutgers") {
-				log.Debugln(c.Scrapers[key])
-				c.Scrapers[key].Interval = env
-			}
-		}
+	err = envconfig.Process("", &c.Spike)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 
+	err = envconfig.Process("", &c.Julia)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func bindEnv(defValue string, env string) string {
@@ -144,7 +145,7 @@ func bindEnv(defValue string, env string) string {
 	}
 }
 
-func (c Config) GetDebugSever(appName string) *net.TCPAddr {
+func (c Config) DebugSever(appName string) *net.TCPAddr {
 	value := c.Pprof[appName].Host
 	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
 		log.Panicf("'%s' is not a valid TCP address: %s", value, err)
@@ -154,15 +155,11 @@ func (c Config) GetDebugSever(appName string) *net.TCPAddr {
 	}
 }
 
-func (c Config) GetDbConfig(appName string) string {
+func (c Config) DatabaseConfig(appName string) string {
 	return fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s fallback_application_name=%s sslmode=disable",
 		c.Postgres.User, c.Postgres.Name, c.Postgres.Password, c.Postgres.Host, c.Postgres.Port, appName)
 }
 
-func (c Config) GetInfluxAddr() string {
-	return "http://" + c.InfluxDb.Host + ":" + c.InfluxDb.Port
-}
-
-func (c Config) GetRedisAddr() string {
+func (c Config) RedisAddr() string {
 	return c.Redis.Host + ":" + c.Redis.Port
 }

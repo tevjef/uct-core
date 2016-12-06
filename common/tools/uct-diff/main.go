@@ -2,16 +2,19 @@ package main
 
 import (
 	"bufio"
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"os"
-	"uct/common/model"
+
+	"github.com/tevjef/uct-core/common/model"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
 	app      = kingpin.New("model-diff", "An application to filter unchanged objects")
-	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.PROTOBUF, model.JSON).PlaceHolder("[protobuf, json]").Required().String()
+	format   = app.Flag("format", "choose file input format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
 	old      = app.Arg("old", "the first file to compare").Required().File()
 	new      = app.Arg("new", "the second file to compare").File()
 	logLevel = app.Flag("log-level", "Log level").Short('l').Default("debug").String()
@@ -26,7 +29,7 @@ func main() {
 		log.SetLevel(lvl)
 	}
 
-	if *format != model.JSON && *format != model.PROTOBUF {
+	if *format != model.Json && *format != model.Protobuf {
 		log.Fatalln("Invalid format:", *format)
 	}
 
@@ -41,15 +44,21 @@ func main() {
 
 	var oldUniversity model.University
 
-	model.UnmarshallMessage(*format, firstFile, &oldUniversity)
+	if err := model.UnmarshalMessage(*format, firstFile, &oldUniversity); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	var newUniversity model.University
 
-	model.UnmarshallMessage(*format, secondFile, &newUniversity)
+	if err := model.UnmarshalMessage(*format, secondFile, &newUniversity); err != nil {
+		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
 
 	filteredUniversity := model.DiffAndFilter(oldUniversity, newUniversity)
 
-	buf := model.MarshalMessage(*format, filteredUniversity)
-
-	io.Copy(os.Stdout, buf)
+	if reader, err := model.MarshalMessage(*format, filteredUniversity); err != nil {
+		log.WithError(err).Fatal()
+	} else {
+		io.Copy(os.Stdout, reader)
+	}
 }
