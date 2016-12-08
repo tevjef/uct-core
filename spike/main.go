@@ -55,6 +55,7 @@ func main() {
 		log.WithError(err).Fatalln("failed to open connection to database")
 	}
 	pgdb.SetMaxOpenConns(config.Postgres.ConnMax)
+	pgdb.SetMaxIdleConns(config.Postgres.ConnMax)
 
 	(&spike{
 		app: app.Model(),
@@ -72,7 +73,7 @@ func (spike *spike) init() {
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.Use(middleware.Ginrus(log.StandardLogger(), time.RFC3339, true))
+	r.Use(middleware.Ginrus())
 	r.Use(middleware.Database(spike.postgres))
 	r.Use(cache.Cache(cache.NewRedisCache(
 		spike.config.service.RedisAddr(),
