@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
+func Ginrus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		// some evil middlewares modify this values
@@ -27,13 +27,9 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 			return
 		}
 
-		end := time.Now()
-		latency := end.Sub(start)
-		if utc {
-			end = end.UTC()
-		}
+		latency := time.Since(start)
 
-		entry := logger.WithFields(log.Fields{
+		entry := log.WithFields(log.Fields{
 			"status":     c.Writer.Status(),
 			"method":     c.Request.Method,
 			"path":       path,
@@ -41,7 +37,6 @@ func Ginrus(logger *log.Logger, timeFormat string, utc bool) gin.HandlerFunc {
 			"latency":    latency,
 			"handler":    handler,
 			"user-agent": c.Request.UserAgent(),
-			"time":       end.Format(timeFormat),
 		})
 
 		if len(c.Errors) > 0 {
