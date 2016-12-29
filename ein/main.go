@@ -9,14 +9,13 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
-
-	log "github.com/Sirupsen/logrus"
-	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )

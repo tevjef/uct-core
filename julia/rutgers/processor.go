@@ -4,10 +4,9 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/julia/rutgers/topic"
-
-	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -55,7 +54,7 @@ func (rp *RutgersProcessor) process(ctx context.Context) {
 			go func() {
 				defer func(start time.Time) {
 					log.WithFields(log.Fields{
-						"routines_count": rp.routines.Size(),
+						"routines_count":  rp.routines.Size(),
 						"routine_elapsed": time.Since(start).Seconds(),
 						"routine_topic":   uctNotification.TopicName,
 						"university_name": uctNotification.University.TopicName,

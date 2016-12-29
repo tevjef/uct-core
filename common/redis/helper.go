@@ -1,10 +1,9 @@
 package redis
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
-
-	"github.com/Sirupsen/logrus"
 	redis "gopkg.in/redis.v5"
 )
 

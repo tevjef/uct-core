@@ -3,9 +3,8 @@ package harmony
 import (
 	"time"
 
-	"github.com/tevjef/uct-core/common/redis"
-
 	log "github.com/Sirupsen/logrus"
+	"github.com/tevjef/uct-core/common/redis"
 	"golang.org/x/net/context"
 )
 

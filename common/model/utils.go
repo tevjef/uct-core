@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tevjef/uct-core/common/try"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"github.com/tevjef/uct-core/common/try"
 	"gopkg.in/redis.v5"
 )
 

@@ -12,12 +12,11 @@ import (
 	"strconv"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/common/redis/harmony"
-
-	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )

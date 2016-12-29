@@ -3,9 +3,8 @@ package conf
 import (
 	"fmt"
 	"net"
-	"os"
-
 	_ "net/http/pprof"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"

@@ -1,9 +1,8 @@
 package middleware
 
 import (
-	"time"
-
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"

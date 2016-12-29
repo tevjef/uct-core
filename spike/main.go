@@ -6,16 +6,15 @@ import (
 	"strconv"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/spike/middleware"
 	"github.com/tevjef/uct-core/spike/middleware/cache"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
