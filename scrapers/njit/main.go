@@ -14,17 +14,15 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/proxy"
 	"github.com/tevjef/uct-core/common/try"
 	"github.com/tevjef/uct-core/scrapers/njit/cookie"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type njit struct {

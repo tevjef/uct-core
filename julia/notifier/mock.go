@@ -3,9 +3,8 @@ package notifier
 import (
 	"encoding/json"
 
-	"github.com/tevjef/uct-core/common/model"
-
 	log "github.com/Sirupsen/logrus"
+	"github.com/tevjef/uct-core/common/model"
 )
 
 type FakeNotifier struct {

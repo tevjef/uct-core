@@ -9,14 +9,13 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
-
-	log "github.com/Sirupsen/logrus"
-	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -42,41 +41,53 @@ func init() {
 }
 
 func main() {
+	econf := &einConfig{}
+
 	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
-	noDiff := app.Flag("no-diff", "do not diff against last data").Default("false").Bool()
-	fullUpsert := app.Flag("insert-all", "full insert/update of all objects.").Default("true").Short('a').Bool()
-	format := app.Flag("format", "choose input format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Required().String()
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+
+	app.Flag("no-diff", "do not diff against last data").
+		Default("false").
+		Envar("EIN_NO_DIFF").
+		BoolVar(&econf.noDiff)
+
+	app.Flag("insert-all", "full insert/update of all objects.").
+		Default("true").
+		Short('a').
+		Envar("EIN_INSERT_ALL").
+		BoolVar(&econf.fullUpsert)
+
+	app.Flag("format", "choose input format").
+		Short('f').
+		HintOptions(model.Json, model.Protobuf).
+		PlaceHolder("[protobuf, json]").
+		Required().
+		Envar("EIN_INPUT_FORMAT").
+		StringVar(&econf.inputFormat)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("EIN_CONFIG").
+		File()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if *format != model.Json && *format != model.Protobuf {
-		log.Fatalln("Invalid format:", *format)
-	}
-
 	// Parse configuration file
-	config := conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	econf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(econf.service.DebugSever(app.Name))
 
-	pgDatabase, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	pgDatabase, err := model.OpenPostgres(econf.service.DatabaseConfig(app.Name))
 	if err != nil {
 		log.WithError(err).Fatalln()
 	}
 
-	pgDatabase.SetMaxOpenConns(config.Postgres.ConnMax)
+	pgDatabase.SetMaxOpenConns(econf.service.Postgres.ConnMax)
 
 	(&ein{
 		app: app.Model(),
-		config: &einConfig{
-			service:     config,
-			noDiff:      *noDiff,
-			fullUpsert:  *fullUpsert,
-			inputFormat: *format,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		config: econf,
+		redis:    redis.NewHelper(econf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()
 }

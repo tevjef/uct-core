@@ -4,21 +4,19 @@ import (
 	"fmt"
 	_ "net/http/pprof"
 	"os"
-	"strconv"
 	"time"
-
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/database"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/notification"
-	"github.com/tevjef/uct-core/common/redis"
-	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	gcm "github.com/tevjef/go-gcm"
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/notification"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -42,38 +40,43 @@ func init() {
 }
 
 func main() {
-	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	dryRun := app.Flag("dry-run", "enable dry-run").Short('d').Default("true").Bool()
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
-	config := conf.Config{}
+	hconf := &hermesConfig{}
+
+	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Firebase Cloud Messaging")
+
+	app.Flag("dry-run", "enable dry-run").
+		Short('d').
+		Default("true").
+		Envar("HERMES_ENABLE_FCM").
+		BoolVar(&hconf.dryRun)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("HERMES_CONFIG").
+		File()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
-	config = conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	hconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
-	if enableFcm, _ := strconv.ParseBool(os.Getenv("ENABLE_FCM")); enableFcm {
+	if hconf.dryRun {
 		log.Infoln("Enabling FCM in production mode")
-		*dryRun = false
 	}
 
 	// Open database connection
-	pgDatabase, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	pgDatabase, err := model.OpenPostgres(hconf.service.DatabaseConfig(app.Name))
 	if err != nil {
 		log.WithError(err).Fatalln("failed to open database connection")
 	}
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(hconf.service.DebugSever(app.Name))
 
 	(&hermes{
 		app: app.Model(),
-		config: &hermesConfig{
-			service: config,
-			dryRun:  *dryRun,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		config: hconf,
+		redis:    redis.NewHelper(hconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()
 }

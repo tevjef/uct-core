@@ -3,10 +3,9 @@ package main
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 func statsCollector(university string) {

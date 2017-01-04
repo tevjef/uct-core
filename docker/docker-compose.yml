@@ -253,7 +253,7 @@ services:
       fluentd.tag: "redis"
 
   rutgers-cm:
-    image: tevjef/uct-core:rutgers-cm${ENV}
+    image: tevjef/uct-core:rutgers${ENV}
     restart: on-failure:3
     ports:
       - '13302'
@@ -262,6 +262,9 @@ services:
       - fluentd
     links:
       - redis
+    environment:
+      - RUTGERS_CAMPUS=CM
+      - JET_SCRAPER_NAME=rutgers-cm
     logging:
       driver: fluentd
       options:
@@ -271,7 +274,7 @@ services:
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nb:
-    image: tevjef/uct-core:rutgers-nb${ENV}
+    image: tevjef/uct-core:rutgers${ENV}
     restart: on-failure:3
     ports:
       - '13303'
@@ -280,6 +283,9 @@ services:
       - fluentd
     links:
       - redis
+    environment:
+      - RUTGERS_CAMPUS=NB
+      - JET_SCRAPER_NAME=rutgers-nb
     logging:
       driver: fluentd
       options:
@@ -289,7 +295,7 @@ services:
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nk:
-    image: tevjef/uct-core:rutgers-nk${ENV}
+    image: tevjef/uct-core:rutgers${ENV}
     restart: on-failure:3
     ports:
       - '13301'
@@ -298,6 +304,9 @@ services:
       - fluentd
     links:
       - redis
+    environment:
+      - RUTGERS_CAMPUS=NK
+      - JET_SCRAPER_NAME=rutgers-nk
     logging:
       driver: fluentd
       options:

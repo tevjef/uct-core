@@ -9,11 +9,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/spike/middleware"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/spike/middleware"
 )
 
 const (
