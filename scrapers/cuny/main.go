@@ -51,6 +51,7 @@ func main() {
 
 	section := app.Flag("section", "Get all section data").
 		Short('s').
+		Envar("CUNY_ALL_SECTION").
 		Bool()
 
 	format := app.Flag("format", "Choose output format").
@@ -118,7 +119,7 @@ func (cuny *cuny) init() {
 		go func(subject *model.Subject) {
 			cs.run(subject)
 			wg := <-sem
-			defer wg.Done()
+			wg.Done()
 		}(subjects[i])
 	}
 
