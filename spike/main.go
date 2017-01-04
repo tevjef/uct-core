@@ -38,31 +38,40 @@ func init() {
 }
 
 func main() {
+	sconf := &spikeConfig{}
+
 	app := kingpin.New("spike", "A command-line application to serve university course information")
-	port := app.Flag("port", "port to start server on").Short('o').Default("9876").Uint16()
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+
+	app.Flag("port", "port to start server on").
+		Short('o').
+		Default("9876").
+		Envar("SPIKE_PORT").
+		Uint16Var(&sconf.port)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("SPIKE_CONFIG").
+		File()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	sconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(sconf.service.DebugSever(app.Name))
 
 	// Open database connection
-	pgdb, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	pgdb, err := model.OpenPostgres(sconf.service.DatabaseConfig(app.Name))
 	if err != nil {
 		log.WithError(err).Fatalln("failed to open connection to database")
 	}
-	pgdb.SetMaxOpenConns(config.Postgres.ConnMax)
-	pgdb.SetMaxIdleConns(config.Postgres.ConnMax)
+	pgdb.SetMaxOpenConns(sconf.service.Postgres.ConnMax)
+	pgdb.SetMaxIdleConns(sconf.service.Postgres.ConnMax)
 
 	(&spike{
 		app: app.Model(),
-		config: &spikeConfig{
-			service: config,
-			port:    *port,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		config: sconf,
+		redis:    redis.NewHelper(sconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgdb, queries),
 		ctx:      context.TODO(),
 	}).init()

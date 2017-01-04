@@ -44,40 +44,59 @@ func init() {
 }
 
 func main() {
+	jconf := jetConfig{}
 	app := kingpin.New("jet", "A program the wraps a uct scraper and collect it's output")
-	outputFormat := app.Flag("output-format", "Choose output format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
-	inputFormat := app.Flag("input-format", "Choose input format").HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
-	daemonInterval := app.Flag("daemon", "Run as a daemon with a refesh interval").Duration()
-	daemonFile := app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").ExistingDir()
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
-	scraperName := app.Flag("scraper-name", "The scraper name, used in logging").Required().String()
-	command := app.Flag("scraper", "The scraper this program wraps, the name of the executable").Required().String()
+
+	app.Flag("output-format", "Choose output format").Short('f').
+		HintOptions(model.Protobuf, model.Json).
+		PlaceHolder("[protobuf, json]").
+		Required().
+		Envar("JET_OUTPUT_FORMAT").
+		EnumVar(&jconf.outputFormat, "protobuf", "json")
+
+	app.Flag("input-format", "Choose input format").
+		HintOptions(model.Protobuf, model.Json).
+		PlaceHolder("[protobuf, json]").
+		Required().
+		Envar("JET_INPUT_FORMAT").
+		EnumVar(&jconf.inputFormat, "protobuf", "json")
+
+	app.Flag("daemon", "Run as a daemon with a refesh interval").
+		Envar("JET_DEAMON").
+		DurationVar(&jconf.daemonInterval)
+
+	app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").
+		Envar("JET_DAEMON_DIR").
+		ExistingDirVar(&jconf.daemonFile)
+
+	app.Flag("scraper-name", "The scraper name, used in logging").
+		Required().
+		Envar("JET_SCRAPER_NAME").
+		StringVar(&jconf.scraperName)
+
+	app.Flag("scraper", "The scraper this program wraps, the name of the executable").
+		Required().
+		Envar("JET_SCRAPER_PATH").
+		StringVar(&jconf.scraperCommand)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("JET_CONFIG").
+		File()
 
 	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
-	app.Name = *scraperName
-
-	if *outputFormat != model.Json && *outputFormat != model.Protobuf {
-		log.Fatalln("Invalid format:", *outputFormat)
-	}
+	app.Name = jconf.scraperName
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	jconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
 	(&jet{
 		app: app.Model(),
-		config: &jetConfig{
-			service:        config,
-			inputFormat:    *inputFormat,
-			outputFormat:   *outputFormat,
-			daemonInterval: *daemonInterval,
-			daemonFile:     *daemonFile,
-			scraperName:    *scraperName,
-			scraperCommand: *command,
-		},
-		redis: redis.NewHelper(config, app.Name),
+		config: &jconf,
+		redis: redis.NewHelper(jconf.service, app.Name),
 	}).init()
 }
 

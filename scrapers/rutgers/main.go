@@ -10,7 +10,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -56,30 +55,48 @@ func init() {
 }
 
 func main() {
+	rconf := &rutgersConfig{}
+
 	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
-	campusFlag := app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").HintOptions("CM", "NK", "NB").Short('u').PlaceHolder("[CM, NK, NB]").Required().String()
-	configFile := app.Flag("config", "configuration file for the application").Required().Short('c').File()
-	format := app.Flag("format", "choose output format").Short('f').HintOptions(model.Json, model.Protobuf).PlaceHolder("[protobuf, json]").Default("protobuf").String()
-	latest := app.Flag("latest", "Only output the current and next semester").Short('l').Bool()
+
+	app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").
+		Short('u').
+		PlaceHolder("[CM, NK, NB]").
+		Required().
+		Envar("RUTGERS_CAMPUS").
+		EnumVar(&rconf.campus, "CM", "NK", "NB")
+
+	app.Flag("format", "choose output format").
+		Short('f').
+		HintOptions(model.Json, model.Protobuf).
+		PlaceHolder("[protobuf, json]").
+		Default("protobuf").
+		Envar("RUTGERS_OUTPUT_FORMAT").
+		EnumVar(&rconf.outputFormat, "protobuf", "json")
+
+	app.Flag("latest", "Only output the current and next semester").
+		Short('l').
+		Envar("RUTGERS_LATEST").
+		BoolVar(&rconf.latest)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Required().
+		Short('c').
+		Envar("RUTGERS_CONFIG").
+		File()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	*campusFlag = strings.ToUpper(*campusFlag)
-	app.Name = app.Name + "-" + strings.ToLower(*campusFlag)
+	app.Name = app.Name + "-" + rconf.campus
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	rconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(rconf.service.DebugSever(app.Name))
 
 	(&rutgers{
 		app: app.Model(),
-		config: &rutgersConfig{
-			service:      config,
-			campus:       *campusFlag,
-			outputFormat: *format,
-			latest:       *latest,
-		},
+		config: rconf,
 		ctx: context.TODO(),
 	}).init()
 }
@@ -250,7 +267,7 @@ func getData(url string, model interface{}) error {
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})
 	fields.Debugln()
 
-	err := try.Do(func(attempt int) (retry bool, err error) {
+	err := try.Do(func(attempt int) (bool, error) {
 		startTime := time.Now()
 		time.Sleep(time.Duration((attempt-1)*2) * time.Second)
 		resp, err := httpClient.Do(req)
