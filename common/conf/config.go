@@ -12,6 +12,8 @@ import (
 	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
 
+var WorkingDir = os.Getenv("GOPATH") + "/src/github.com/tevjef/uct-core/scrapers/cuny/"
+
 type pprof map[string]server
 
 type scrapers map[string]*scraper
