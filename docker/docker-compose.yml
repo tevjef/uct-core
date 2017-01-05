@@ -315,6 +315,48 @@ services:
       fluentd.tag: "core.rutgers-nk"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
+  scraper-cuny-htr:
+    image: tevjef/uct-core:cuny{ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=HTR
+      - JET_SCRAPER_NAME=cuny-htr
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-htr"
+    labels:
+      fluentd.tag: "core.scraper.cuny-htr"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-nyt:
+    image: tevjef/uct-core:cuny{ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=nyt
+      - JET_SCRAPER_NAME=cuny-nyt
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-nyt"
+    labels:
+      fluentd.tag: "core.scraper.cuny-nyt"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
   spike:
     restart: on-failure:3
     depends_on:

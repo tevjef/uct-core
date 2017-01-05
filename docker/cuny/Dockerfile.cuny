@@ -2,8 +2,8 @@ FROM golang:1.6.3-alpine
 
 COPY . /go/src/uct
 
-ENV APP_PACKAGE="uct/scrapers/rutgers"
-ENV APP_NAME="rutgers"
+ENV APP_PACKAGE="uct/scrapers/cuny"
+ENV APP_NAME="cuny"
 
 RUN apk --no-cache add ca-certificates openssl git && \
     update-ca-certificates && \
@@ -18,6 +18,6 @@ RUN apk --no-cache add ca-certificates openssl git && \
 RUN go install -v ${APP_PACKAGE}
 
 WORKDIR /go/src/uct
-EXPOSE 13303
+EXPOSE 13304
 
-ENTRYPOINT ["rutgers", "--campus", "NB", "--daemon", "2m", "--latest", "-f" , "protobuf", "-c" , "/go/src/uct/common/conf/config.toml"]
+ENTRYPOINT ["cuny"]

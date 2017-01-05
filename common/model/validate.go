@@ -160,7 +160,7 @@ func ValidateAllCourses(subject *Subject) error {
 		}
 
 		if err := ValidateAllSections(course); err != nil {
-			return nil
+			return err
 		}
 
 		// Course []Metadata
