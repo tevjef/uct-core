@@ -79,7 +79,11 @@ func (pprof pprof) Get(key string) server {
 }
 
 func (scrapers scrapers) Get(key string) *scraper {
-	return scrapers[key]
+	if s := scrapers[key]; s == nil {
+		return &scraper{Interval:"30m"}
+	} else {
+		return s
+	}
 }
 
 func init() {
