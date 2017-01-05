@@ -384,7 +384,8 @@ func (cr *courseScraper) parseSection(doc *goquery.Selection, course *model.Cour
 	// Section instructor collects all instructors and returns a []model.Instructor
 	section.Instructors = parseInstructor(cr.findInstructor(doc.Find(selectGridRow).Eq(4)))
 
-	section.Credits = "N/A"
+	// Only numeric types allowed
+	section.Credits = "-1"
 
 	for i := range m {
 
