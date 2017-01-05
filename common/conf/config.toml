@@ -25,6 +25,10 @@ redis_db = 1
     host = "0.0.0.0:13303"
     enabled = true
 
+    [pprof.cuny-cty]
+    host = "0.0.0.0:13304"
+    enabled = true
+
     [pprof.spike]
     host = "0.0.0.0:13400"
     enabled = true

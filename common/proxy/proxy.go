@@ -13,6 +13,10 @@ var proxyUser = os.Getenv("HTTP_PROXY_USER")
 var proxyPass = os.Getenv("HTTP_PROXY_PASS")
 
 func ProxyUrl() func(*http.Request) (*url.URL, error) {
+	if proxyUrl == "" {
+		return nil
+	}
+
 	if proxyURL, err := url.Parse(proxyUrl); err != nil {
 		log.Fatalln(err)
 	} else {

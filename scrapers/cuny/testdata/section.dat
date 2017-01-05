@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html class='   psc_dir-ltr psc_form-xlarge' dir='ltr' lang='en'>
+<!-- Copyright (client) 2000, 2014, Oracle and/or its affiliates. All rights reserved. -->
+<head>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script language='JavaScript'>
+        var  totalTimeoutMilliseconds = 2073600000;
+        var  warningTimeoutMilliseconds = 2073600000;
+        var timeOutURL = 'https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/?cmd=expire';
+        var timeoutWarningPageURL = 'https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/s/WEBLIB_TIMEOUT.PT_TIMEOUTWARNING.FieldFormula.IScript_TIMEOUTWARNING';
+        var sRCRequestURL = 'https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/s/WEBLIB_PTRC.ISCRIPT1.FieldFormula.IScript_RC_REQUEST';
+    </script>
+
+    <link id=PSSTYLEREQ_1_css rel='stylesheet' type='text/css' href='/cs/cnyhcprd/cache850/PSSTYLEREQ_1.css' />
+    <link id=SSS_STYLESHEET_1_css rel='stylesheet' type='text/css' href='/cs/cnyhcprd/cache850/SSS_STYLESHEET_1.css' />
+    <title>Class Search</title>
+    <script LANGUAGE='JavaScript'>
+        try {
+            document.domain = "cunyfirst.cuny.edu";
+        }
+        catch(err) {;}
+    </script>
+    <script language='JavaScript'>
+        var winName='win0';
+        var winParent = null;
+        var modalID = null;
+        var modalZoomName = null;
+        var baseKey_win0 = "\x1b";
+        var altKey_win0 = "05678\xbc\xbe\xbf\xde";
+        var ctrlKey_win0 = "JKM";
+        var saveWarningKeys_win0 = "";
+        var firstFocusID = null;
+        var isNewSaveWarn = true;
+        var bAccessibility_win0 =false;
+        var bFMode =false;
+        var bDoModal_win0 = false;
+        var bJSModal_win0 = false;
+        var bPromptPage_win0 = false;
+        var bTabOverTB_win0 = false;
+        var bTabOverPg_win0 = false;
+        var bTabOverNonPS_win0 = false;
+        var strCurrUrl='https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL?&PAGE=SSR_CLSRCH_DTL';
+        var bIncInNavigation='T';
+        var szCrefID='yyy';
+        var szCrefReged='F';
+        var szCrefVisible='F';
+        var szCrefLabel='zzz';
+        var localNodes = ['HRMS', 'PSFT_CNYHCPRD'];
+        bGenDomInfo = false;
+        var szCalendarType = 'G';
+        var bMenuSrchPage = false;
+        var bWSRP=0;var szMenuSrchText = "-999999-";
+        var disablePNSubscriptions=1;var modalCloseUrl = '/cs/cnyhcprd/cache850/PT_TRANS_16PIX_1.png';
+        var modalCloseAlt = 'Close';
+        var modalResizeUrl= '/cs/cnyhcprd/cache850/PT_RESIZE_IMG_1.gif';
+        var modalResizeAlt = 'Drag to resize';
+        var modalMoveAlt = 'Drag to move';
+    </script>
+    <script language='JavaScript'>
+        var gridRowSelRgbColor_win0 ='rgb(212,219,217)';
+    </script>
+    <script LANGUAGE='JavaScript'>
+        try {
+            document.domain = "cunyfirst.cuny.edu";
+        }
+        catch(err) {;}
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_COMMON_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_AJAX_NET_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_SAVEWARNINGSCRIPT_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_PAGESCRIPT_win0_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_EDITSCRIPT_win0_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_RC_JS_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_POPUPSCRIPT_win0_MIN_1.js'>
+    </script>
+    <script language='JavaScript' type='text/javascript' src='/cs/cnyhcprd/cache850/PT_GRIDSCRIPT_win0_MIN_1.js'>
+    </script>
+    <script language='JavaScript'>
+        var nResubmit=0;
+        var nLastAction=0;
+        var loader=null;
+        if (typeof(bCleanHtml) == 'undefined')
+            var bCleanHtml = false;
+        setupTimeout2();
+        var postUrl_win0='https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL';
+        function aAction_win0(form, id, params, bAjax, bPrompt)
+        {
+            setupTimeout2();
+            if ((id != '#ICSave'))
+                processing_win0(1,3000);
+            aAction0_win0(form, id, params, bAjax, bPrompt);
+        }
+        function submitAction_win0(form, id, event)
+        {
+            setupTimeout2();
+            if (!ptCommonObj2.isICQryDownload(form, id))
+            { processing_win0(1,3000); }
+            preSubmitProcess_win0(form, id);
+            var spellcheckpos = id.indexOf('$spellcheck');
+            if ((spellcheckpos != -1) && (id.indexOf('#KEYA5') != -1))
+                form.ICAction.value = id.substring(0,spellcheckpos);
+            else
+                form.ICAction.value=id;
+            var actionName = form.ICAction.value;
+            form.ICXPos.value=ptCommonObj2.getScrollX();
+            form.ICYPos.value=ptCommonObj2.getScrollY();
+            bcUpdater.storeBcDomData();
+            if ((typeof(bAutoSave) != 'undefined') && bAutoSave)
+                form.ICAutoSave.value = '1';
+            if (!ptCommonObj2.isAJAXReq(form, id) && !ptCommonObj2.isPromptReq(id)){
+                if (nLastAction == 1 && nResubmit > 0) return;
+                form.ICResubmit.value=nResubmit;
+                form.submit();
+                if (!ptCommonObj2.isICQryDownload(form, id))
+                    nResubmit++;
+            }
+            else if (ptCommonObj2.isPromptReq(id))
+                pAction_win0(form, id, arguments[2]);
+            else
+                aAction_win0(form, actionName);
+            cancelBubble(event);
+        }
+    </script>
+    <script language='javascript'>
+        var pt_calHeadstyle=" class='PTCALHEAD' "
+        var pt_calWeekHeadstyle=" class='PTCALWEEKHEAD' "
+        function dateitemrefs()
+        {
+            this.pt_dateheader = "/cs/cnyhcprd/cache850/PT_PORTAL_IC_CLOSE_SD_1.gif";
+            this.pt_datering = "/cs/cnyhcprd/cache850/PT_CURRENT_DATE_SD_1.gif";
+            this.pt_datesel = "/cs/cnyhcprd/cache850/PT_SELECTED_DATE_SD_1.gif";
+            this.pt_nextmonth = "/cs/cnyhcprd/cache850/PT_RIGHT_SCROLL_SD_1.gif";
+            this.pt_prevmonth= "/cs/cnyhcprd/cache850/PT_LEFT_SCROLL_SD_1.gif";
+            this.pt_daystitle_hijri = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_S6_1.GIF";
+            this.pt_daystitle_thai = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_S0_1.GIF";
+            this.pt_daystitle_s0 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_S0_1.GIF";
+            this.pt_daystitle_m1 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_M1_1.GIF";
+            this.pt_daystitle_t2 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_T2_1.GIF";
+            this.pt_daystitle_w3 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_W3_1.GIF";
+            this.pt_daystitle_t4 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_T4_1.GIF";
+            this.pt_daystitle_f5 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_F5_1.gif";
+            this.pt_daystitle_s6 = "/cs/cnyhcprd/cache850/PT_DATE_TITLE_S6_1.GIF";
+        }
+
+        function LoadCalendar()
+        {
+            var dateitems = new dateitemrefs();
+            loadImages(dateitems);
+        }
+        function DatePrompt_win0(dtfield,promptfield,yrfmt,bsubmit)
+        {
+            setupTimeout2();
+            openDate_win0(dtfield, promptfield, "MDY/"+yrfmt,bsubmit,"G",0);
+        }
+    </script>
+    <script language='JavaScript'  ptdefer='defer'>
+        if (typeof ptStyleSheet == "undefined") {
+            ptStyleSheet = 'SSS_STYLESHEET';
+        }
+        function onLoadExt_win0() {
+            modalZoomName = null;
+            var pt_pageinfo = document.getElementById('pt_pageinfo_win0');
+            if (pt_pageinfo) {
+                pt_pageinfo.setAttribute('Page', 'SSR_CLSRCH_DTL');
+                pt_pageinfo.setAttribute('Component', 'CLASS_SEARCH');
+                pt_pageinfo.setAttribute('Menu', 'COMMUNITY_ACCESS');
+                pt_pageinfo.setAttribute('Mode', 'CLASSIC');
+            }
+            g_bAccessibilityMode=false;
+            var actn='';
+            if (!isCrossDomainTop()) top.document.title=document.title;
+            setKeyEventHandler_win0();ptEvent.add(window,'scroll',positionWAIT_win0);
+            ptCommonObj2.generateABNSearchResults(document.win0);
+            getGblSrchPageNum(actn);
+            if (gSrchRsltPageNum <= 5) getAllRelatedActions();
+
+            ptCommonObj2.moveUnivSrchDiv();
+            if (typeof(ptLongEditCounter) != 'undefined' && ptLongEditCounter != null)
+                ptLongEditCounter.onLoadLongEditCounter();
+            if (typeof(HelppopupObj_win0) != 'undefined' && HelppopupObj_win0 != null)
+                HelppopupObj_win0.StopPopup('win0');
+            doModalOnLoad_win0(false, false);
+            ResetGlyph_win0();
+            self.scroll(0,0);
+            objToBeFocus = null;
+            if (typeof oWin == 'undefined') setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+            else
+                oWin.setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+            setFocus_win0('DERIVED_SSTSNAV_SSTS_MAIN_GOTO$7$',-1);
+            ptLoadingStatus_empty(0);
+            setupTimeout2();
+            processing_win0(0,3000);
+            ptConsole2.enable();
+
+            UpdateBreadCrumbs();
+            GenerateABN();
+            GenerateFakeBC();
+            bcUpdateForPTF();if (typeof(myAppsWindowOpenJS) != 'undefined' && myAppsWindowOpenJS != null && myAppsWindowOpenJS != '')
+            {
+                try {eval(myAppsWindowOpenJS);} catch(e) {}
+                myAppsWindowOpenJS=null;
+            }
+            ResetGlyph_win0();setPageletInfoInCtxmenu_win0("false");
+            GetDomData(win0, "TargetContent", "#GetDomInfo");
+        }
+        try{ptEvent.load(onLoadExt_win0);}catch(e){}
+    </script></head>
+<body tabindex='-1'  class='PSPAGE' >
+<DIV id='pt_pageinfo_win0' Page='SSR_CLSRCH_DTL' Component='CLASS_SEARCH' Menu='COMMUNITY_ACCESS' Mode='%Mode'></DIV>
+<form id='CLASS_SEARCH' name='win0' method='post' action="https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL"  autocomplete='off' class='PSForm'>
+    <DIV class='ps_box-toolshiddens'  id='win0divPSTOOLSHIDDENS'><div class='ps_modalmask_cover psc_hidden' id='pt_modalMaskCover'>&nbsp;</div><div class='ps_modalmask psc_hidden' id='pt_modalMask'>&nbsp;</div><div id='pt_modals' class='PSMODAL'><div id='ptModalShadow' class='popupDragFrame' style='cursor:nw-resize'>&nbsp;</div></div>
+        <div class='ps_ajax_console psc_hidden' id='pt_console'></div><div class='ps_typeahead psc_hidden' id='pt_typeahead0'><span id='pt_typeahead' class='spanTextDropdown'>&nbsp;</span></div><div id='WAIT_win0' style='display:none;position:absolute;right:0;'><img id='processing' align='left' src='/cs/cnyhcprd/cache850/PT_PROCESSING_1.gif' alt='Processing... please wait' title='Processing... please wait' /></div>
+        <div id='SAVED_win0' style='display:none;position:absolute;right:0;'><table border='0' cellpadding='0' cellspacing='0'><tr><td><img src='/cs/cnyhcprd/cache850/PTPORTAL_POPBOX_LEFT_1.gif' width='7' height='39' border='0' alt=''/></td><td id='saveWait_win0' width='35' align='center' valign='middle' background='/cs/cnyhcprd/cache850/PTPORTAL_POPBOX_CENTER_1.gif'><img src='/cs/cnyhcprd/cache850/PT_LOADER_1.gif' width='24' height='24' alt=''/></td><td nowrap='nowrap' background='/cs/cnyhcprd/cache850/PTPORTAL_POPBOX_CENTER_1.gif'><span id='ptStatusText_win0' dir='ltr' class='PSPROCESSING'>&nbsp;</span></td><td><img src='/cs/cnyhcprd/cache850/PTPORTAL_POPBOX_RIGHT_1.gif' width='6' height='39' alt=''/></td><td>&nbsp;</td></tr></table></div><DIV class='x'  id='win0divPSHIDDENFIELDS' style='display:none'><input type='hidden' name='ICType' id='ICType' value='Panel' />
+            <input type='hidden' name='ICElementNum' id='ICElementNum' value='0' />
+            <input type='hidden' name='ICStateNum' id='ICStateNum' value='4' />
+            <input type='hidden' name='ICAction' id='ICAction' value='None' />
+            <input type='hidden' name='ICXPos' id='ICXPos' value='0' />
+            <input type='hidden' name='ICYPos' id='ICYPos' value='0' />
+            <input type='hidden' name='ResponsetoDiffFrame' id='ResponsetoDiffFrame' value='-1' />
+            <input type='hidden' name='TargetFrameName' id='TargetFrameName' value='None' />
+            <input type='hidden' name='FacetPath' id='FacetPath' value='None' />
+            <input type='hidden' name='ICFocus' id='ICFocus' value='' />
+            <input type='hidden' name='ICSaveWarningFilter' id='ICSaveWarningFilter' value='0' />
+            <input type='hidden' name='ICChanged' id='ICChanged' value='-1' />
+            <input type='hidden' name='ICAutoSave' id='ICAutoSave' value='0' />
+            <input type='hidden' name='ICResubmit' id='ICResubmit' value='0' />
+            <input type='hidden' name='ICSID' id='ICSID' value='EzeGwYSsrSj4XSGsTeqiB3WTUjJe7INLBqlbjUWpAcQ=' />
+            <input type='hidden' name='ICActionPrompt' id='ICActionPrompt' value='false' />
+            <input type='hidden' name='ICBcDomData' id='ICBcDomData' value='' />
+            <input type='hidden' name='ICFind' id='ICFind' value='' />
+            <input type='hidden' name='ICAddCount' id='ICAddCount' value='' />
+            <input type='hidden' name='ICAPPCLSDATA' id='ICAPPCLSDATA' value='' />
+        </DIV>
+    </DIV>
+    <a name='ICFirstAnchor_win0' id='ICFirstAnchor_win0'></a>
+    <DIV class='ps_header_panel' id='PT_HEADER_PANEL'></DIV>
+    <DIV class='' id='win0divPAGEBAR'></DIV>
+    <DIV class='ps_box-pagetabs' id='win0divPSPANELTABS'></DIV>
+    <DIV class='ps_pagecontainer' id='win0divPAGECONTAINER'><table class='PSPAGECONTAINER' role='main' aria-labelledby='app_label'><tr><td>
+        <DIV class='ps_pspagecontainer' id='win0divPSPAGECONTAINER'><table role='presentation'  border='0' id='ACE_width' cellpadding='0' cellspacing='0' class='PSPAGECONTAINER' cols='10' width='667'>
+            <tr>
+                <td width='8' height='3'></td>
+                <td width='5'></td>
+                <td width='227'></td>
+                <td width='72'></td>
+                <td width='200'></td>
+                <td width='12'></td>
+                <td width='16'></td>
+                <td width='4'></td>
+                <td width='8'></td>
+                <td width='115'></td>
+            </tr>
+            <tr>
+                <td height='48'></td>
+                <td colspan='5'  valign='top' align='left'>
+                    <DIV  id='win0divDERIVED_CLSRCH_GROUPBOX2'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='515'>
+                        <tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Groupbox</td></tr>
+                        <tr><td width='513'>
+                            <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUPBOX2' cellpadding='0' cellspacing='0' cols='4' width='513' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                <tr>
+                                    <td width='0' height='0'></td>
+                                    <td width='2'></td>
+                                    <td width='307'></td>
+                                    <td width='205'></td>
+                                </tr>
+                                <tr>
+                                    <td height='18' colspan='2'></td>
+                                    <td colspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divDERIVED_CLSRCH_SS_TRANSACT_TITLE'><span role='heading' aria-level='1'  class='PATRANSACTIONTITLE' id='DERIVED_CLSRCH_SS_TRANSACT_TITLE'>Search for Classes</span>
+                                        </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='5'></td>
+                                    <td colspan='2' rowspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl'><span  class='PAPAGETITLE' >Class Detail</span> </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='13'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divDERIVED_CLSRCH_SSR_CLASS_LBL'><span  class='PSEDITBOX_DISPONLY' id='DERIVED_CLSRCH_SSR_CLASS_LBL'>&nbsp;</span>
+                                        </DIV></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='4' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='8'></td>
+                <td colspan='2'  valign='top' align='left'>
+                    <DIV  id='win0div$ICField152'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='232'>
+                        <tr><td width='230' height='6'>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='4' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='7' colspan='5'></td>
+                <td colspan='2' rowspan='2'  valign='top' align='left'>
+                    <DIV  id='win0div$ICField225'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='28'>
+                        <tr><td width='26' height='10'>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='5' colspan='2'></td>
+                <td colspan='3' rowspan='2'  valign='top' align='left'>
+                    <DIV  id='win0divDERIVED_CLSRCH_DESCR200'><span  class='PALEVEL0SECONDARY' id='DERIVED_CLSRCH_DESCR200'>AES 12300 - V1&nbsp;&nbsp; Visual Studies 2</span>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='10' colspan='2'></td>
+            </tr>
+            <tr>
+                <td height='14' colspan='2'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divDERIVED_CLSRCH_SSS_PAGE_KEYDESCR'><span  class='SSSKEYTEXT' id='DERIVED_CLSRCH_SSS_PAGE_KEYDESCR'>City College | 2017 Spring Term | Lecture</span>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='8' colspan='4'></td>
+                <td colspan='4'  valign='top' align='left'>
+                    <DIV  id='win0div$ICField151'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='232'>
+                        <tr><td width='230' height='6'>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='125'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLS_DTL_WRK_GROUP1'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='543'>
+                        <tr><td class='PAGROUPBOXLABELLEVEL1'  align='left'>Class Details</td></tr>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP1' cellpadding='0' cellspacing='0' cols='5' width='541' class='PSGROUPBOX' style='border-style:none' >
+                                <tr>
+                                    <td width='3' height='1'></td>
+                                    <td width='292'></td>
+                                    <td width='8'></td>
+                                    <td width='232'></td>
+                                    <td width='6'></td>
+                                </tr>
+                                <tr>
+                                    <td height='105'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0div$ICField193'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='291'>
+                                            <tr><td width='289'>
+                                                <table role='presentation'  border='0' id='ACE_$ICField193' cellpadding='0' cellspacing='0' cols='10' width='289' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                    <tr>
+                                                        <td width='7' height='8'></td>
+                                                        <td width='97'></td>
+                                                        <td width='11'></td>
+                                                        <td width='4'></td>
+                                                        <td width='1'></td>
+                                                        <td width='11'></td>
+                                                        <td width='16'></td>
+                                                        <td width='1'></td>
+                                                        <td width='135'></td>
+                                                        <td width='6'></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td colspan='2' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_DESCRSHORTlbl'><span  class='PSEDITBOXLABEL' >Status</span> </DIV></td>
+                                                        <td colspan='3' rowspan='3'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_STATUS_LONG'><div style="width:16px; " >
+                                                                <!-- Begin HTML Area Name Undisclosed -->
+                                                                <img src="/cs/cnyhcprd/cache850/PS_CS_STATUS_CLOSED_ICN_1.gif" width="16" height="16" alt="Closed" class="SSSIMAGECENTER">
+                                                                <!-- End HTML Area -->
+                                                            </div>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td colspan='2' rowspan='2'></td>
+                                                        <td colspan='2' rowspan='4'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_DESCRSHORT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_SSR_DESCRSHORT'>Closed</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_CLASS_NBRlbl'><span  class='PSEDITBOXLABEL' >Class Number</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td colspan='5'  valign='top' align='right'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_CLASS_NBR'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_CLASS_NBR'>24077</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td colspan='4' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SESSION_CODElbl'><span  class='PSEDITBOXLABEL' >Session</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td colspan='5' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divPSXLATITEM_XLATLONGNAME$31$'><span  class='PSEDITBOX_DISPONLY' id='PSXLATITEM_XLATLONGNAME$31$'>Regular Academic Session</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td colspan='4' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_UNITS_RANGElbl'><span  class='PSEDITBOXLABEL' >Units</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td colspan='5' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_UNITS_RANGE'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_UNITS_RANGE'>2 units</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td colspan='4' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_INSTRUCTION_MODElbl'><span  class='PSEDITBOXLABEL' >Instruction Mode</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td colspan='5'  valign='top' align='left'>
+                                                            <DIV  id='win0divINSTRUCT_MODE_DESCR'><span  class='PSEDITBOX_DISPONLY' id='INSTRUCT_MODE_DESCR'>In Person</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='4' colspan='4'></td>
+                                                        <td colspan='5' rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_COMPONENT_LONG'><div style="width:164px; " >
+                                                                <!-- Begin HTML Area Name Undisclosed -->
+                                                                <table class="PSTEXT"><tr><td>Lecture Required</td></tr></table>
+                                                                <!-- End HTML Area -->
+                                                            </div>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='11'></td>
+                                                        <td colspan='3'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_COMPONENT_LONG$273$lbl'><span  class='PSEDITBOXLABEL' >Class Components</span> </DIV></td>
+                                                    </tr>
+                                                </table>
+                                            </td></tr>
+                                        </table>
+                                        </DIV></td>
+                                    <td rowspan='2'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0div$ICField191'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='231'>
+                                            <tr><td width='229'>
+                                                <table role='presentation'  border='0' id='ACE_$ICField191' cellpadding='0' cellspacing='0' cols='3' width='229' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                    <tr>
+                                                        <td width='11' height='8'></td>
+                                                        <td width='65'></td>
+                                                        <td width='153'></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_ACAD_CAREERlbl'><span  class='PSEDITBOXLABEL' >Career</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divPSXLATITEM_XLATLONGNAME'><span  class='PSEDITBOX_DISPONLY' id='PSXLATITEM_XLATLONGNAME'>Undergraduate</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_DATE_LONGlbl'><span  class='PSEDITBOXLABEL' >Dates</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_DATE_LONG'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_SSR_DATE_LONG'>1/30/2017 - 5/26/2017</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_GRADING_BASISlbl'><span  class='PSEDITBOXLABEL' >Grading</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divGRADE_BASIS_TBL_DESCRFORMAL'><span  class='PSEDITBOX_DISPONLY' id='GRADE_BASIS_TBL_DESCRFORMAL'>Undergraduate Letter Grades</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_LOCATIONlbl'><span  class='PSEDITBOXLABEL' >Location</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='15'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divCAMPUS_LOC_VW_DESCR'><span  class='PSEDITBOX_DISPONLY' id='CAMPUS_LOC_VW_DESCR'>Main - City College</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='1'></td>
+                                                        <td rowspan='2'  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_CAMPUSlbl'><span  class='PSEDITBOXLABEL' >Campus</span> </DIV></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='14'></td>
+                                                        <td  valign='top' align='left'>
+                                                            <DIV  id='win0divCAMPUS_TBL_DESCR'><span  class='PSEDITBOX_DISPONLY' id='CAMPUS_TBL_DESCR'>City College</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                </table>
+                                            </td></tr>
+                                        </table>
+                                        </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='2' colspan='2'></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='8' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='54'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLSRCH_MTG$0'>
+                        <table border='1' cellspacing='0' class='PSLEVEL1GRIDWBO'  id='SSR_CLSRCH_MTG$scroll$0' dir='ltr' cols='4' width='544' cellpadding='2'>
+                            <tr><td class='PAGROUPBOXLABELLEVEL1'  colspan='4' align='left'><DIV  id='win0divSSR_CLSRCH_MTGGP$0'>Meeting Information</DIV></td></tr>
+                            <tr>
+                                <th scope='col' abbr='Days &amp; Times' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Days &amp; Times</th>
+                                <th scope='col' abbr='Room' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Room</th>
+                                <th scope='col' abbr='Instructor' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Instructor</th>
+                                <th scope='col' abbr='Meeting Dates' width='98' align='left' class='PSLEVEL1GRIDCOLUMNHDR' >Meeting Dates</th>
+                            </tr>
+                            <tr id='trSSR_CLSRCH_MTG$0_row1' valign='center' onClick="HighLightTR('rgb(212,219,217)','','trSSR_CLSRCH_MTG$0_row1');" onMouseOver="hoverLightTR('rgb(249,254,203)','',0,'trSSR_CLSRCH_MTG$0_row1');" onmouseout="hoverLightTR('rgb(249,254,203)','',1,'trSSR_CLSRCH_MTG$0_row1');">
+                                <td align='left'  height='13' class='PSLEVEL1GRIDODDROW' >
+                                    <DIV  id='win0divMTG_SCHED$0'><span  class='PSLONGEDITBOX' id='MTG_SCHED$0'>Mo 10:00AM - 12:50PM</span>
+                                    </DIV></td>
+                                <td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+                                    <DIV  id='win0divMTG_LOC$0'><span  class='PSLONGEDITBOX' id='MTG_LOC$0'>SSA 101C</span>
+                                    </DIV></td>
+                                <td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+                                    <DIV  id='win0divMTG_INSTR$0'><span  class='PSLONGEDITBOX' id='MTG_INSTR$0'>Paul Ruppert</span>
+                                    </DIV></td>
+                                <td class='PSLEVEL1GRIDODDROW'  align='left'  class='PSLEVEL1GRIDODDROW' >
+                                    <DIV  id='win0divMTG_DATE$0'><span  class='PSLONGEDITBOX' id='MTG_DATE$0'>01/30/2017 - 05/26/2017</span>
+                                    </DIV></td>
+                            </tr>
+                        </table>
+                    </DIV>
+                </td>
+            </tr>
+            <tr>
+                <td height='4' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='45'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLS_DTL_WRK_GROUP2'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='543'>
+                        <tr><td class='PAGROUPBOXLABELLEVEL1'  align='left'>Enrollment Information</td></tr>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP2' cellpadding='0' cellspacing='0' cols='3' width='541' class='PSGROUPBOX' style='border-style:none' >
+                                <tr>
+                                    <td width='7' height='10'></td>
+                                    <td width='165'></td>
+                                    <td width='369'></td>
+                                </tr>
+                                <tr>
+                                    <td height='18'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_REQUISITE_LONGlbl'><label for='SSR_CLS_DTL_WRK_SSR_REQUISITE_LONG' id='SSR_CLS_DTL_WRK_SSR_REQUISITE_LONG_LBL' class='PSEDITBOXLABEL' >Enrollment Requirements</label>
+                                        </DIV></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_REQUISITE_LONG'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:368px;  overflow:auto;' id='SSR_CLS_DTL_WRK_SSR_REQUISITE_LONG'>Pre- AES 11300 or Dept Approval</span>
+                                        </DIV></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='4' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='76'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLS_DTL_WRK_GROUP3'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='543'>
+                        <tr><td class='PAGROUPBOXLABELLEVEL1'  align='left'>Class Availability</td></tr>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP3' cellpadding='0' cellspacing='0' cols='11' width='541' class='PSGROUPBOX' style='border-style:none' >
+                                <tr>
+                                    <td width='7' height='10'></td>
+                                    <td width='157'></td>
+                                    <td width='3'></td>
+                                    <td width='2'></td>
+                                    <td width='44'></td>
+                                    <td width='1'></td>
+                                    <td width='65'></td>
+                                    <td width='126'></td>
+                                    <td width='5'></td>
+                                    <td width='32'></td>
+                                    <td width='99'></td>
+                                </tr>
+                                <tr>
+                                    <td height='1'></td>
+                                    <td rowspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_ENRL_CAPlbl'><span  class='PSEDITBOXLABEL' >Class Capacity</span> </DIV></td>
+                                    <td colspan='5'></td>
+                                    <td colspan='2' rowspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_WAIT_CAPlbl'><span  class='PSEDITBOXLABEL' >Wait List Capacity</span> </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='15'></td>
+                                    <td colspan='4'  valign='top' align='right'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_ENRL_CAP'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_ENRL_CAP'>18</span>
+                                        </DIV></td>
+                                    <td rowspan='5'></td>
+                                    <td rowspan='2'  valign='top' align='right'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_WAIT_CAP'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_WAIT_CAP'>0</span>
+                                        </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='1'></td>
+                                    <td colspan='3' rowspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_ENRL_TOTlbl'><span  class='PSEDITBOXLABEL' >Enrollment Total</span> </DIV></td>
+                                    <td colspan='2'></td>
+                                    <td rowspan='4'  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_WAIT_TOTlbl'><span  class='PSEDITBOXLABEL' >Wait List Total</span> </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='15'></td>
+                                    <td colspan='2' rowspan='2'  valign='top' align='right'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_ENRL_TOT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_ENRL_TOT'>18</span>
+                                        </DIV></td>
+                                    <td colspan='2' rowspan='3'  valign='top' align='right'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_WAIT_TOT'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_WAIT_TOT'>0</span>
+                                        </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='1'></td>
+                                    <td colspan='2' rowspan='2'  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_AVAILABLE_SEATSlbl'><span  class='PSEDITBOXLABEL' >Available Seats</span> </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='16'></td>
+                                    <td colspan='2'  valign='top' align='right'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_AVAILABLE_SEATS'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_AVAILABLE_SEATS'>0</span>
+                                        </DIV></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='8' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='56'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLS_DTL_WRK_GROUP6'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='543'>
+                        <tr><td class='PAGROUPBOXLABELLEVEL1'  align='left'>Description</td></tr>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_GROUP6' cellpadding='0' cellspacing='0' cols='2' width='541' class='PSGROUPBOX' style='border-style:none' >
+                                <tr>
+                                    <td width='16' height='10'></td>
+                                    <td width='525'></td>
+                                </tr>
+                                <tr>
+                                    <td height='29'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divDERIVED_CLSRCH_DESCRLONG'><span  class='PSLONGEDITBOX' style='word-wrap:break-word;overflow:hidden;display:block; width:520px;  overflow:auto;' id='DERIVED_CLSRCH_DESCRLONG'>Visual Studies 2 is a continuation of the introductory Visual Studies course sequence that focuses on the topics of analog and digital drawing and modeling in architectural design. The course emphasizes how the computer can be engaged in architectural design and visualization methods, and introduces students to operative procedures, techniques and technologies for constructing drawings and models that support and promote formal and spatial discoveries. Principles in descriptive geometry will provide the underpinnings for creating visual expressions of shapes and volumes that explore the relationship between analog/digital and two-dimensional/three-dimensional information. The communication of design intent will be established through the understanding of line work, tone, color and other drawing conventions rooted in historical and contemporary modes of architectural representation.</span>
+                                        </DIV></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='8' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='45'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_GROUP2'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='543'>
+                        <tr><td class='PAGROUPBOXLABELLEVEL1'  align='left'>Textbook/Other Materials</td></tr>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_SSR_GROUP2' cellpadding='0' cellspacing='0' cols='3' width='541' class='PSGROUPBOX' style='border-style:none' >
+                                <tr>
+                                    <td width='3' height='0'></td>
+                                    <td width='524'></td>
+                                    <td width='14'></td>
+                                </tr>
+                                <tr>
+                                    <td height='23'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_GROUP1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='523'>
+                                            <tr><td width='521'>
+                                                <table role='presentation'  border='0' id='ACE_SSR_CLS_DTL_WRK_SSR_GROUP1' cellpadding='0' cellspacing='0' cols='2' width='521' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                    <tr>
+                                                        <td width='8' height='0'></td>
+                                                        <td width='513'></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height='9'></td>
+                                                        <td  valign='top' align='left'>
+                                                            <DIV  id='win0divSSR_CLS_DTL_WRK_SSR_CLS_TXB_MSG'><span  class='PSEDITBOX_DISPONLY' id='SSR_CLS_DTL_WRK_SSR_CLS_TXB_MSG'>Textbooks to be determined</span>
+                                                            </DIV></td>
+                                                    </tr>
+                                                </table>
+                                            </td></tr>
+                                        </table>
+                                        </DIV></td>
+                                </tr>
+                                <tr>
+                                    <td height='8' colspan='3'></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='10' colspan='10'></td>
+            </tr>
+            <tr>
+                <td height='24'></td>
+                <td colspan='8'  valign='top' align='left'>
+                    <DIV  id='win0div$ICField241'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='543'>
+                        <tr><td width='541'>
+                            <table role='presentation'  border='0' id='ACE_$ICField241' cellpadding='0' cellspacing='0' cols='2' width='541' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                <tr>
+                                    <td width='295' height='9'></td>
+                                    <td width='246'></td>
+                                </tr>
+                                <tr>
+                                    <td height='13'></td>
+                                    <td  valign='top' align='left'>
+                                        <DIV  id='win0divCLASS_SRCH_WRK2_SSR_PB_BACK'><span id='CLASS_SRCH_WRK2_SSR_PB_BACK$span'  class='SSSBUTTON_CANCELLINK'  title='Return to Results' ><a name='CLASS_SRCH_WRK2_SSR_PB_BACK' id='CLASS_SRCH_WRK2_SSR_PB_BACK'  ptlinktgt='pt_peoplecode' tabindex='543' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'CLASS_SRCH_WRK2_SSR_PB_BACK');"  class='SSSBUTTON_CANCELLINK' >View Search Results</a></span>
+                                        </DIV></td>
+                                </tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                    </DIV></td>
+            </tr>
+            <tr>
+                <td height='10' colspan='10'></td>
+            </tr>
+        </table>
+        </DIV>
+    </td></tr>
+    </table>
+        <DIV class='x'  id='pt_dragtxt' class='PSLEVEL1GRIDCOLUMNHDR'></div><div onmouseup='ptGridResizeObj_win0.TDselUp();' onmousemove='ptGridResizeObj_win0.TDselMove();' id='pt_dragResize' onmouseout='ptGridResizeObj_win0.dragTD=false;' onmbouseover='ptGridResizeObj_win0.dragTD=true;'></div></DIV>
+    <DIV class='ps_box-pagetabs' id='win0divPSPANELTABLINKS'></DIV>
+    <div id='DetachDiv' height=0 width=0 frameborder=0></div>
+    <a name='ICLastAnchor_win0' id='ICLastAnchor_win0'></a>
+
+    <!-- Embedded Help popup Begin -->
+    <div id='HelppopupDiv_win0' style='display:none; position:absolute; top:0; left:0'>t</div>
+    <div id='HelpDragFrame_win0' class='popupDragFrame'>&nbsp;</div><table id='HelppopupContainer_win0' width='20' border='0' cellpadding='0' cellspacing='0' style='opacity:1; display:none; position:absolute; top:0; left:0' >
+    <tr>
+        <td id='HelppopupInner_win0' class='HelppopupInner' align='left' valign='top' style='position:absolute;z-Index:302;'>
+            <div id='HelppopupTitleBar_win0' class='PTPOPUP_HEADER HelppopupTitleBar' style='width:341px'><div id='HelppopupTitleBarLeftImage'></div><div id='HelppopupTitleBarMiddle_win0' style='width:333px' class='HelppopupTitleBarMiddle' dir='ltr'>
+                <table>
+                    <td id='HelppopupTitle_win0' style='width:290px; cursor: move;'><span class='PTPOPUP_TITLE'>Help</span></td>
+                    <td style='width:45px'><img id='#HELPPOPUPCLOSE' style='cursor:pointer' title='Close' alt='Close' align='right' onclick='HelppopupObj_win0.StopPopup("win0");' src='/cs/cnyhcprd/cache850/PT_PORTAL_IC_CLOSE_1.gif'/></td>
+                </table>
+            </div><div id='HelppopupTitleBarRightImage'></div></div><div id='HelpdivpopupFrame_win0' class='MOBGImage HelpdivpopupFrame' tabindex='-1' onclick='HelppopupObj_win0.SetFocusFlag(false);' style='border: 1px #bcbaba solid; padding:12px; overflow:auto;'>test</div><div id='HelppopupShadow' class='popupShadow' style='position:absolute;z-index:-1;'><div id='HelppopupShadowTopRightCorner' class='popupShadowTopRightCorner' style='height:10px;'>&nbsp;</div><div id='HelppopupShadowTop' class='popupShadowTop' >&nbsp;</div><div id='HelppopupShadowBottom' class='popupShadowBottom' style='height:10px'><div id='HelppopupShadowBottomLeftCorner' class='popupShadowBottomLeftCorner' style='height:10px;width:10px'>&nbsp;</div><div id='HelppopupShadowBottomMiddle' class='popupShadowBottomMiddle' style='height:10px;'>&nbsp;</div><div id='HelppopupShadowBottomRightCorner' class='popupShadowBottomRightCorner' style='height:10px;width:10px'>&nbsp;</div></div></div></td>
+    </tr>
+</table>
+    <!-- Embedded Help popup End  -->
+    <div id='pt_fakeBC' style='display:none'><ul><li class="pthnavhiearchysep pthbcdispiblock">&nbsp;</li>
+        <li class="pthnavbarcref ptabncrefbc ptfakercfbc pthbcdispiblock" id="pthnavbccref_PT_FAKE_CLASS_SEARCH_GBL" ><a class=abnanchor href="https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL?" role="menuitem" target="TargetContent">View Schedule of Classes</a><div class="pthnavcrefimg">&nbsp;</div></li>
+    </ul></div><div id='ptus_universalSrch' style='display:none;'><span>Default Local Node:</span><input type='text' readonly='readonly' name='ptus_defaultlocalnode' id='ptus_defaultlocalnode' value='PSFT_CNYHCPRD' /><br /><span>DbName:</span><input type='text' readonly='readonly' name='ptus_dbname' id='ptus_dbname' value='CNYHCPRD' /><br /><span>Portal:</span><input type='text' readonly='readonly' name='ptus_portal' id='ptus_portal' value='GUEST' /><br /><span>Node:</span><input type='text' readonly='readonly' name='ptus_node' id='ptus_node' value='HRMS' /><br /><span>WorkCenter Id:</span><input type='text' readonly='readonly' name='ptus_workcenterid' id='ptus_workcenterid' value='' /><br /><span>Url:</span><input type='text' readonly='readonly' name='ptus_componenturl' id='ptus_componenturl' value='https://hrsa.cunyfirst.cuny.edu/psp/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL' /><br /></div></form>
+<div id='popupDragFrame' class='popupDragFrame'>&nbsp;</div>
+<!-- Mouse-over popup Begin -->
+<table id='win0MOpopupContainer' width='20' border='0' cellpadding='0' cellspacing='0' style='display:none; position:absolute; top:0; left:0;' onMouseOver="MOpopupObj_win0.StartPopup('win0MOpopupContainer', '');" onMouseOut="MOpopupObj_win0.StopPopup();"><tr>
+    <td id='win0MOpopupInner' height='25' width='20' align='left' valign='top' class='MOBGImage'>
+        <div id='win0MOdivpopupFrame' tabindex='-1' onclick='MOpopupObj_win0.SetFocusFlag(false);' style='overflow:auto; width:20px; height: 60px; padding:8px; box-shadow:0 0 5px #000000; background-color:white; border: 1px solid #666666;'>test</div></td>
+</tr>
+</table>
+<!-- Mouse-over popup End  -->
+</body>
+<script language='JavaScript'>
+    var nMaxSavedStates=5;
+    var sHistURL="https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL?page=SSR_CLSRCH_DTL&";
+    var bHtml5Doc = true;
+    var bClearBackState=false;
+    var bPageTransfered=true;
+    var bTransferAnimate=false;
+    var bCleanHtml = false;
+    var bDefer = true;
+    document.deferFldArr_win0 = new Array();
+    document.hiddenFldArr_win0 =new Array('ICType','ICElementNum','ICStateNum','ICAction','ICXPos','ICYPos','ResponsetoDiffFrame','TargetFrameName','FacetPath','ICFocus','ICSaveWarningFilter','ICChanged','ICAutoSave','ICResubmit','ICSID','ICActionPrompt','ICBcDomData','ICFind','ICAddCount','ICAPPCLSDATA');
+    document.chgFldArr_win0 = new Array();
+    AddToHistory('Class Detail', '', '', 'SSR_CLSRCH_DTL', 4, 0, 1);
+    var bCleanHtml = false;
+    var bDefer = true;
+    document.hiddenFldArr_win0 =new Array('ICType','ICElementNum','ICStateNum','ICAction','ICXPos','ICYPos','ResponsetoDiffFrame','TargetFrameName','FacetPath','ICFocus','ICSaveWarningFilter','ICChanged','ICAutoSave','ICResubmit','ICSID','ICActionPrompt','ICBcDomData','ICFind','ICAddCount','ICAPPCLSDATA');
+    document.chgFldArr_win0 = new Array();
+    var bCDATA = false;
+    var bAccessibleLayout = false;
+    var bLoadCompleted = true;
+</script></html>

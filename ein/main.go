@@ -62,7 +62,7 @@ func main() {
 		PlaceHolder("[protobuf, json]").
 		Required().
 		Envar("EIN_INPUT_FORMAT").
-		StringVar(&econf.inputFormat)
+		EnumVar(&econf.inputFormat, "protobuf", "json")
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').

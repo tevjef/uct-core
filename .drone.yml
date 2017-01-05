@@ -25,6 +25,7 @@ pipeline:
       - go install -v github.com/tevjef/uct-core/julia
       - go install -v github.com/tevjef/uct-core/scrapers/rutgers
       - go install -v github.com/tevjef/uct-core/scrapers/njit
+      - go install -v github.com/tevjef/uct-core/scrapers/cuny
       - go install -v github.com/tevjef/uct-core/jet
       - go install -v github.com/tevjef/uct-core/spike
     when:
@@ -37,10 +38,14 @@ pipeline:
       - cp /go/bin/spike docker/spike/
       - cp /go/bin/hermes docker/hermes/
       - cp /go/bin/julia docker/julia/
+
       - cp /go/bin/rutgers docker/rutgers/
       - cp /go/bin/njit docker/njit/
-      - cp /go/bin/jet docker/njit/
+      - cp /go/bin/njit docker/cuny/
+
       - cp /go/bin/jet docker/rutgers/
+      - cp /go/bin/jet docker/njit/
+      - cp /go/bin/jet docker/cuny/
 
       - cp common/conf/config.toml docker/ein/
       - cp common/conf/config.toml docker/spike/
@@ -48,6 +53,7 @@ pipeline:
       - cp common/conf/config.toml docker/julia/
       - cp common/conf/config.toml docker/rutgers/
       - cp common/conf/config.toml docker/njit/
+      - cp common/conf/config.toml docker/cuny/
     when:
       branch: [master, staging]
       event: [push, tag, deployment]
@@ -63,6 +69,7 @@ pipeline:
       - docker build -t tevjef/uct-core:julia -f docker/julia/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers -f docker/rutgers-cm/Dockerfile docker/rutgers
       - docker build -t tevjef/uct-core:njit -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/uct-core:cuny -f docker/cuny/Dockerfile docker/cuny
       - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
@@ -76,6 +83,7 @@ pipeline:
       - docker push tevjef/uct-core:julia
       - docker push tevjef/uct-core:rutgers
       - docker push tevjef/uct-core:njit
+      - docker push tevjef/uct-core:cuny
       - docker push tevjef/uct-core:fluentd
       - docker push tevjef/uct-core:fluentd-gen
       - docker push tevjef/uct-core:nginx
@@ -99,6 +107,7 @@ pipeline:
       - docker build -t tevjef/uct-core:julia-staging -f docker/julia/Dockerfile docker/julia
       - docker build -t tevjef/uct-core:rutgers-staging -f docker/rutgers/Dockerfile docker/rutgers
       - docker build -t tevjef/uct-core:njit-staging -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/uct-core:cuny-staging -f docker/cuny/Dockerfile docker/cuny
       - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
       - docker build -t tevjef/uct-core:nginx-staging -f support/nginx/Dockerfile support/nginx
@@ -112,6 +121,7 @@ pipeline:
       - docker push tevjef/uct-core:julia-staging
       - docker push tevjef/uct-core:rutgers-staging
       - docker push tevjef/uct-core:njit-staging
+      - docker push tevjef/uct-core:cuny-staging
       - docker push tevjef/uct-core:fluentd-staging
       - docker push tevjef/uct-core:fluentd-gen-staging
       - docker push tevjef/uct-core:nginx-staging
