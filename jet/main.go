@@ -50,13 +50,13 @@ func main() {
 	app.Flag("output-format", "Choose output format").Short('f').
 		HintOptions(model.Protobuf, model.Json).
 		PlaceHolder("[protobuf, json]").
-		Required().
+		Default("protobuf").
 		EnumVar(&jconf.outputFormat, "protobuf", "json")
 
 	app.Flag("input-format", "Choose input format").
 		HintOptions(model.Protobuf, model.Json).
 		PlaceHolder("[protobuf, json]").
-		Required().
+		Default("protobuf").
 		EnumVar(&jconf.inputFormat, "protobuf", "json")
 
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
@@ -198,6 +198,7 @@ func (jet *jet) entryPoint(result chan model.University) {
 	}
 
 	if school.Name == "" {
+		log.Info("no school data returned:", err)
 		return
 	} else {
 		log.WithFields(log.Fields{"scraper_name": jet.app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()

@@ -82,7 +82,6 @@ func (ac *actionConfig) run() {
 
 	for c := time.Tick(ac.interval); ; {
 		log.WithFields(fields).Infoln("sync info")
-		ctx, _ := context.WithTimeout(ctx, time.Minute)
 		go ac.action(ctx)
 
 		select {
