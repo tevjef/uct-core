@@ -62,7 +62,7 @@ func main() {
 		EnumVar(&jconf.inputFormat, "protobuf", "json")
 
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
-		Envar("JET_DEAMON").
+		Envar("JET_DAEMON").
 		Default("10m").
 		DurationVar(&jconf.daemonInterval)
 
