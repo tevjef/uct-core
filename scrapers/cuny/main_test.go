@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -116,14 +115,6 @@ func TestParseSection(t *testing.T) {
 	doc := sr.scrapeSection("")
 
 	fmt.Printf("%#v", sr.parseSection(doc, &model.Course{}))
-}
-
-func docFromBytes(data []byte) *goquery.Document {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return doc
 }
 
 func setUpTestMux() http.Handler {

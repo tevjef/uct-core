@@ -68,17 +68,17 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document
 		formValues[key] = val
 	}
 
-	if len(formValues[subjectKey]) > 0 {
-		log.WithFields(log.Fields{"subject": formValues[subjectKey]}).Debugln("subject")
-
-	}
-	log.WithFields(log.Fields{"action": formValues["ICAction"]}).Debugln("scrapeCourses")
+	//if len(formValues[subjectKey]) > 0 {
+	//	log.WithFields(log.Fields{"subject": formValues[subjectKey]}).Debugln("subject")
+//
+	//}
+	//log.WithFields(log.Fields{"action": formValues["ICAction"]}).Debugln("scrapeCourses")
 
 	var resp *http.Response
 	try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		resp, err = cf.httpClient.PostForm(url, formValues)
 		if err != nil {
-			log.WithError(err).Errorln("could not reach cunyfirst")
+			log.WithError(err).WithField("form", values).Errorln("could not reach cunyfirst")
 			return true, err
 		}
 
@@ -87,7 +87,7 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document
 
 	doc, err := goquery.NewDocumentFromResponse(resp)
 	if err != nil {
-		log.WithError(err).Errorln("error reading erpsonse body")
+		log.WithError(err).Errorln("error reading response body")
 	}
 
 	if doc != nil {
@@ -99,6 +99,7 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document
 
 func (cf *CunyFirstClient) Get(url string) *goquery.Document {
 	var resp *http.Response
+
 	try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		resp, err = cf.httpClient.Get(url)
 		if err != nil {
@@ -156,6 +157,9 @@ var (
 	selectAvailableSeats  = "SSR_CLS_DTL_WRK_AVAILABLE_SEATS"
 	selectWaitCap         = "SSR_CLS_DTL_WRK_WAIT_CAP"
 	selectWaitTotal       = "SSR_CLS_DTL_WRK_WAIT_TOT"
+	selectGridRow = ".PSLEVEL3GRIDROW"
+	selectSectionLink = "a.PSHYPERLINK"
+
 )
 
 func parseDay(day string) string {
@@ -188,12 +192,6 @@ func splitMeeting(meeting string) [3]string {
 	}
 
 	return tups
-}
-
-func parseMeeting(meeting string) []string {
-	m := []string{}
-	m = append(m, expandMeeting(meeting)...)
-	return m
 }
 
 func parseTime(s string) string {

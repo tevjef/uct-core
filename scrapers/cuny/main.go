@@ -21,6 +21,7 @@ import (
 	"github.com/tevjef/uct-core/common/proxy"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/pkg/errors"
 )
 
 type cuny struct {
@@ -31,102 +32,107 @@ type cuny struct {
 
 type cunyConfig struct {
 	service      conf.Config
-	university   CunyUniversity
+	university   string
 	full         bool
 	outputFormat string
 	latest       bool
 }
 
 func init() {
-	log.SetFormatter(&log.TextFormatter{})
+	log.SetFormatter(&log.JSONFormatter{})
 }
 
 func main() {
+	cconf := &cunyConfig{}
+
 	app := kingpin.New("cuny", "A program for scraping information from CunyFirst.")
 
-	abbr := app.Flag("university", "Choose a cuny university"+abbrMap()).
+	app.Flag("campus", "Choose a cuny campus"+abbrMap()).
 		Short('u').
 		Required().
-		String()
+		Envar("CUNY_UNIVERSITY").
+		HintOptions(cunyUniversityAbbr...).
+		EnumVar(&cconf.university, cunyUniversityAbbr...)
 
-	section := app.Flag("section", "Get all section data").
+	app.Flag("section", "Get all section data").
 		Short('s').
 		Envar("CUNY_ALL_SECTION").
-		Bool()
+		BoolVar(&cconf.full)
 
-	format := app.Flag("format", "Choose output format").
+	app.Flag("format", "Choose output format").
 		Short('f').
 		HintOptions(model.Json, model.Protobuf).
 		PlaceHolder("[protobuf, json]").
 		Default("protobuf").
-		String()
+		Envar("CUNY_OUTPUT_FORMAT").
+		EnumVar(&cconf.outputFormat, "protobuf", "json")
 
 	configFile := app.Flag("config", "Configuration file for the application").
-		Required().
 		Short('c').
+		Required().
+		Envar("CUNY_CONFIG").
 		File()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+	app.Name = app.Name + "-" + strings.ToLower(cconf.university)
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	cconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
-
-	upperAbbr := strings.ToUpper(*abbr)
+	go model.StartPprof(cconf.service.DebugSever(app.Name))
 
 	(&cuny{
-		app: app.Model(),
-		config: &cunyConfig{
-			service:      config,
-			full:         *section,
-			outputFormat: *format,
-			university:   abbrToCunyUniversity(upperAbbr),
-		},
-		ctx: context.TODO(),
+		app:    app.Model(),
+		config: cconf,
+		ctx:    context.TODO(),
 	}).init()
 }
 
 func (cuny *cuny) init() {
-	cs := &cunyScraper{
-		university: cuny.config.university,
-		client: &CunyFirstClient{
-			values:     map[string][]string{},
-			httpClient: newClient(),
-		},
-		full: cuny.config.full,
+	university := cunyMetadata[cuny.config.university]
+	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), registrations)
+
+	semesters := [2]*model.Semester{university.ResolvedSemesters.Current, university.ResolvedSemesters.Next}
+
+	for _, sem := range semesters {
+		// Do not scrape winter and summer semesters
+		if sem.Season == model.Winter || sem.Season == model.Summer {
+			continue
+		}
+
+		scraper := &cunyScraper{
+			university: abbrToCunyUniversity(cuny.config.university),
+			client: &CunyFirstClient{
+				values:     map[string][]string{},
+				httpClient: newClient(),
+			},
+			full: cuny.config.full,
+		}
+
+		sr := &subjectScraper{
+			scraper: scraper,
+			url:     initalPage,
+			semester: *sem,
+		}
+
+		subjects := sr.parseSubjects(sr.scrapeSubjects())
+
+		var wg sync.WaitGroup
+		sem := make(chan *sync.WaitGroup, 5)
+		wg.Add(len(subjects))
+		for i := range subjects {
+			sem <- &wg
+			go func(subject *model.Subject) {
+				scraper.run(subject)
+				wg := <-sem
+				wg.Done()
+			}(subjects[i])
+		}
+		wg.Wait()
+
+		university.Subjects = append(university.Subjects, subjects...)
 	}
-
-	sr := &subjectScraper{
-		scraper: cs,
-		url:     initalPage,
-		semester: model.Semester{
-			Year:   2017,
-			Season: model.Spring,
-		},
-	}
-
-	subjects := sr.parseSubjects(sr.scrapeSubjects())
-
-	var wg sync.WaitGroup
-
-	sem := make(chan *sync.WaitGroup, 20)
-
-	wg.Add(len(subjects))
-	for i := range subjects {
-		sem <- &wg
-		go func(subject *model.Subject) {
-			cs.run(subject)
-			wg := <-sem
-			wg.Done()
-		}(subjects[i])
-	}
-
-	wg.Wait()
-
-	university := model.University{}
-	university.Subjects = subjects
 
 	if reader, err := model.MarshalMessage(cuny.config.outputFormat, university); err != nil {
 		log.WithError(err).Fatalln()
@@ -158,8 +164,6 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 		full: cs.full,
 	}
 
-	scraper.client.Get(initalPage)
-
 	sr := &subjectScraper{
 		scraper: scraper,
 		url:     initalPage,
@@ -170,9 +174,15 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 		full: cs.full,
 	}
 
+	// Scrape subjects again to initialize cookies necessary to scrape courses
 	sr.scrapeSubjects()
 
-	cr := courseScraper{scraper, initalPage, subject.Number, cs.full}
+	cr := courseScraper{
+		scraper: scraper,
+		url: initalPage,
+		subjectId: subject.Number,
+		full: cs.full,
+		semester: sr.semester}
 	doc := cr.scrapeCourses()
 
 	if doc == nil {
@@ -185,20 +195,28 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 
 type subjectScraper struct {
 	scraper  *cunyScraper
-	url      string
 	semester model.Semester
+	url      string
 	full     bool
 }
 
 func (sr *subjectScraper) scrapeSubjects() *goquery.Document {
+	defer func(start time.Time) {
+		log.WithFields(log.Fields{
+			"season": sr.semester.GetSeason(),
+			"year": sr.semester.GetYear(),
+			"elapsed":  time.Since(start).Seconds()}).
+			Infoln("scrape subjects")
+	}(time.Now())
+
 	sr.scraper.client.Get(initalPage)
 
-	cunyForm := cunyForm{}
-	cunyForm.setUniversity(sr.scraper.university)
-	cunyForm.setAction(universityKey)
-	cunyForm.setTerm(parseSemester(sr.semester))
+	form := cunyForm{}
+	form.setUniversity(sr.scraper.university)
+	form.setAction(universityKey)
+	form.setTerm(parseSemester(sr.semester))
 
-	doc := sr.scraper.client.Post(sr.url, url.Values(cunyForm))
+	doc := sr.scraper.client.Post(sr.url, url.Values(form))
 
 	return doc
 }
@@ -211,15 +229,15 @@ func (sr *subjectScraper) parseSubjects(doc *goquery.Document) (subjects []*mode
 		s = strings.TrimSpace(s)
 
 		if s != "" && strings.Contains(s, "-") {
-			pair := strings.Split(s, " - ")
+			pair := strings.SplitN(s, "-",2)
 
 			if len(pair) != 2 {
-				log.Fatalln("expected subject number-name pair")
+				log.Fatalln("unexpected subject number-name pair", s)
 			}
 
 			sub := &model.Subject{
-				Name:   pair[1],
-				Number: pair[0],
+				Name:   strings.TrimSpace(pair[1]),
+				Number: strings.TrimSpace(pair[0]),
 				Season: sr.semester.Season,
 				Year:   strconv.Itoa(int(sr.semester.Year)),
 			}
@@ -232,15 +250,28 @@ func (sr *subjectScraper) parseSubjects(doc *goquery.Document) (subjects []*mode
 
 type courseScraper struct {
 	scraper   *cunyScraper
+	semester model.Semester
 	url       string
 	subjectId string
 	full      bool
+
 }
 
 func (cr *courseScraper) scrapeCourses() *goquery.Document {
+	defer func(start time.Time) {
+		log.WithFields(log.Fields{
+			"subject": cr.subjectId,
+			"season": cr.semester.GetSeason(),
+			"year": cr.semester.GetYear(),
+			"elapsed": time.Since(start).Seconds()}).
+			Infoln("scrape courses")
+	}(time.Now())
+
 	form := cunyForm{}
 	form.setAction(searchAction)
 	form.setSubject(cr.subjectId)
+	form.setUniversity(cr.scraper.university)
+	form.setTerm(parseSemester(cr.semester))
 
 	return cr.scraper.client.Post(cr.url, url.Values(form))
 }
@@ -254,53 +285,57 @@ func (cr *courseScraper) resetCourses() *goquery.Document {
 
 func (cr *courseScraper) parseCourses(doc *goquery.Document) (courses []*model.Course) {
 	findCourses(doc.Selection, func(index int, s *goquery.Selection) {
+		// Every even index contains the course data
 		if index%2 == 0 {
-			c := cr.parseCourse(s)
-			namenum := strings.Split(strings.TrimSpace(s.Find(".PAGROUPBOXLABELLEVEL1").Text()), " - ")
-
-			if len(namenum) == 1 {
-				var last rune
-				index = strings.IndexFunc(namenum[0], func(r rune) bool {
-					if unicode.IsSpace(r) && unicode.IsSpace(last) {
-						return true
-					}
-					last = r
-					return false
-				})
-
-				namenum = []string{namenum[0][:index], namenum[0][index+1:]}
-			}
-
-			if len(namenum) > 2 {
-				namenum = []string{namenum[0], strings.Trim(fmt.Sprint(namenum[1:]), "[]")}
-			}
-
-			if len(namenum) != 2 {
-				log.Errorln(namenum, len(namenum))
-				for _, val := range namenum {
-					log.Errorln(val)
-				}
-			}
-
-			namenum[0] = strings.Split(namenum[0], " ")[1]
-
-			c.Number = namenum[0]
-			c.Name = namenum[1]
-			courses = append(courses, c)
+			courses = append(courses, cr.parseCourse(s))
 		}
 	})
 	return
 }
 
-func (cr *courseScraper) parseCourse(doc *goquery.Selection) (course *model.Course) {
+func (cr *courseScraper) parseCourse(s *goquery.Selection) (course *model.Course) {
 	course = &model.Course{}
-	sections := []*model.Section{}
 
-	findSections(doc, func(index int, s *goquery.Selection) {
-		sections = append(sections, cr.parseSection(s, course))
+	// Attempts to find the course name and number
+	rawstr := strings.TrimSpace(s.Find(".PAGROUPBOXLABELLEVEL1").Text())
+	namenum := strings.Split(rawstr, "-")
+
+	if len(namenum) == 1 {
+		var last rune
+		index := strings.IndexFunc(namenum[0], func(r rune) bool {
+			if unicode.IsSpace(r) && unicode.IsSpace(last) {
+				return true
+			}
+			last = r
+			return false
+		})
+
+		namenum = []string{namenum[0][:index], namenum[0][index+1:]}
+	}
+
+	if len(namenum) >= 2 {
+		namenum = []string{model.TrimAll(namenum[0]), strings.Trim(fmt.Sprint(namenum[1:]), "[] ")}
+	}
+
+	if len(namenum) != 2 {
+		log.WithError(errors.New("failed to find course name and number")).Errorln(rawstr)
+	}
+
+	namenum[0] = strings.Split(namenum[0], " ")[1]
+
+	course.Number = namenum[0]
+	course.Name = namenum[1]
+
+	if course.Number == ""{
+		fmt.Print(s.Html())
+		log.Fatalln()
+	}
+
+	// Compile all the sections for this course
+	findSections(s, func(index int, s *goquery.Selection) {
+		course.Sections = append(course.Sections, cr.parseSection(s, course))
 	})
 
-	course.Sections = sections
 	return
 }
 
@@ -326,43 +361,74 @@ func parseInstructor(s []string) (instructors []*model.Instructor) {
 	return
 }
 
+// Within the context of some course, parses all sections.
 func (cr *courseScraper) parseSection(doc *goquery.Selection, course *model.Course) (section *model.Section) {
 	section = &model.Section{}
-	rawSection := cr.findSection(doc.Find(".PSLEVEL3GRIDROW").Eq(1))
+
+	// findSection returns an array like ["01", "LEC\nRegular"] where the first index is the section number
+	rawSection := cr.findSection(doc.Find(selectGridRow).Eq(1))
 	section.Number = rawSection[0]
 
-	m := cr.findMeetings(doc.Find(".PSLEVEL3GRIDROW").Eq(2))
+	// Section meeting times, contains an unexpanded meeting time string e.g MoWe 8:00AM - 9:50AM
+	m := cr.findMeetings(doc.Find(selectGridRow).Eq(2))
 
-	section.CallNumber = cr.findClass(doc.Find(".PSLEVEL3GRIDROW").Eq(0))[0]
+	// Section call number, should uniquely identify a section within a course
+	section.CallNumber = cr.findClass(doc.Find(selectGridRow).Eq(0))[0]
 
-	room := cr.findRoom(doc.Find(".PSLEVEL3GRIDROW").Eq(3))
+	// Section room number
+	room := cr.findRoom(doc.Find(selectGridRow).Eq(3))
 
-	section.Status = cr.findStatus(doc.Find(".PSLEVEL3GRIDROW").Eq(6))
-	section.Instructors = parseInstructor(cr.findInstructor(doc.Find(".PSLEVEL3GRIDROW").Eq(4)))
+	// Section status,
+	section.Status = cr.findStatus(doc.Find(selectGridRow).Eq(6))
+
+	// Section instructor collects all instructors and returns a []model.Instructor
+	section.Instructors = parseInstructor(cr.findInstructor(doc.Find(selectGridRow).Eq(4)))
+
+	section.Credits = "N/A"
 
 	for i := range m {
+
+		// Expand meetings from e.g MoWe 8:00AM - 9:50AM to e.g ["Monday 8:00AM - 9:50AM", "Wednesday 8:00AM - 9:50AM"]
 		meetings := []string{}
-		meetings = append(meetings, parseMeeting(m[i])...)
+		meetings = append(meetings, expandMeeting(m[i])...)
+
+		// For each expanded meeting, create a model.Meeting and append it to the list
 		for j := range meetings {
 			meeting := &model.Meeting{}
+
+			// Split a meeting into its components Day, Start, End
 			tups := splitMeeting(meetings[j])
+
 			meeting.Day = &tups[0]
 			meeting.StartTime = &tups[1]
 			meeting.EndTime = &tups[2]
 
-			if len(room) < i && room[i] != "" {
+			if room[i] != "" {
 				meeting.Room = &room[i]
+			}
+
+			if *meeting.Day == "" && *meeting.StartTime == "" && *meeting.EndTime == "" {
+				continue
 			}
 
 			section.Meetings = append(section.Meetings, meeting)
 		}
 	}
 
+	// This routine with retrieve all data about a section and will increase the time to scrape significantly.
+	// This is disables by default
 	if cr.full {
-		sectionId := doc.Find(".PSLEVEL3GRIDROW").Eq(1).Find("a.PSHYPERLINK").AttrOr("name", "")
+		// Find the id of the section to be scraped
+		sectionId := doc.Find(selectGridRow).Eq(1).Find(selectSectionLink).AttrOr("name", "")
 		sr := &sectionScraper{cr.scraper, cr.url}
+
+		//
 		sectionDoc := sr.scrapeSection(sectionId)
+
+		// Parses section in the context of some course
 		extraSectionInfo := sr.parseSection(sectionDoc, course)
+
+		// Merge new section returned after parsing.
 		section.Now = extraSectionInfo.Now
 		section.Max = extraSectionInfo.Max
 		section.Metadata = extraSectionInfo.Metadata
@@ -370,6 +436,18 @@ func (cr *courseScraper) parseSection(doc *goquery.Selection, course *model.Cour
 	}
 
 	return
+}
+
+func (cr *courseScraper) parseRoom(room string) string {
+	switch cr.scraper.university {
+	case BaruchCollege:
+		return strings.Replace(room, "B - Vert ", "V", 1)
+	default:
+		room = strings.Replace(room, "Bldg ", "", 1)
+		room = strings.Replace(room, "Hall", "H", 1)
+
+		return room
+	}
 }
 
 func (cr *courseScraper) findClass(s *goquery.Selection) []string {
@@ -411,19 +489,23 @@ type sectionScraper struct {
 }
 
 func (sr *sectionScraper) scrapeSection(sectionId string) *goquery.Document {
-	formValues := cunyForm{}
-	formValues.setAction(sectionId)
+	form := cunyForm{}
+	form.setAction(sectionId)
 
-	doc := sr.scraper.client.Post(sr.url, url.Values(formValues))
-	// Go back after search
-	formValues = cunyForm{}
-	formValues.setAction(sectionBackAction)
+	doc := sr.scraper.client.Post(sr.url, url.Values(form))
 
-	_ = sr.scraper.client.Post(sr.url, url.Values(formValues))
+	// Go back after search. Is necessary since the website
+	// uses cookies to track resource requests
+	form = cunyForm{}
+	form.setAction(sectionBackAction)
+
+	_ = sr.scraper.client.Post(sr.url, url.Values(form))
 
 	return doc
 }
 
+// Parses section in the context of some course, returns a section containing
+// information that could not be parse from the course page
 func (sr *sectionScraper) parseSection(doc *goquery.Document, course *model.Course) (section model.Section) {
 	if course.Synopsis == nil {
 		s := sr.findDescription(doc.Selection)
@@ -581,7 +663,7 @@ func newClient() *http.Client {
 	jar, _ := cookiejar.New(nil)
 
 	return &http.Client{
-		Timeout:   15 * time.Second,
+		Timeout:   30 * time.Second,
 		Jar:       jar,
 		Transport: &http.Transport{Proxy: proxy.ProxyUrl(), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}

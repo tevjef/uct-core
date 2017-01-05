@@ -85,7 +85,7 @@ func TestParseMeeting(t *testing.T) {
 				"Saturday 8:50AM - 9:50AM"}},
 	}
 	for _, tt := range tests {
-		if got := parseMeeting(tt.args.meeting); !reflect.DeepEqual(got, tt.want) {
+		if got := expandMeeting(tt.args.meeting); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. expandMeeting() = %v, want %v", tt.name, got, tt.want)
 		}
 	}
