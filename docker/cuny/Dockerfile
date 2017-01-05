@@ -13,4 +13,4 @@ RUN apk --no-cache add ca-certificates && update-ca-certificates
 
 EXPOSE 13304
 
-CMD ["jet", "--input-format", "protobuf", "--output-format", "protobuf", "-c", "/uct/config.toml", "--scraper", "cuny", "-c", "/uct/config.toml"]
+CMD ["jet", "-c", "/uct/config.toml", "--scraper", "cuny", "-c", "/uct/config.toml"]
