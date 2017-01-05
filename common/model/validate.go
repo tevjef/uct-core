@@ -398,9 +398,11 @@ func (section *Section) Validate(course *Course) error {
 		}
 	}
 
-	// Credits
+	// Credits must be a numeric type
 	if section.Credits == "" {
 		return errors.New("Credits == is empty")
+	} else if _, err := strconv.ParseFloat(section.Credits, 64); err != nil {
+		return err
 	}
 
 	section.TopicName = strings.Join([]string{course.TopicName, section.Number, section.CallNumber}, ".")

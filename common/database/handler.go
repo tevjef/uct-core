@@ -103,7 +103,7 @@ func isRetriable(err error) (bool, error) {
 		return true, errors.New("connection error")
 	}
 
-	return false, nil
+	return false, err
 }
 
 func (db handlerImpl) Insert(query string, data interface{}) (id int64) {
