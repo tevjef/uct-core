@@ -316,7 +316,7 @@ services:
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-htr:
-    image: tevjef/uct-core:cuny{ENV}
+    image: tevjef/uct-core:cuny${ENV}
     restart: on-failure:3
     ports:
       - '13304'
@@ -337,7 +337,7 @@ services:
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-nyt:
-    image: tevjef/uct-core:cuny{ENV}
+    image: tevjef/uct-core:cuny${ENV}
     restart: on-failure:3
     ports:
       - '13304'
