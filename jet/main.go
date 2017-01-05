@@ -63,7 +63,6 @@ func main() {
 
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
 		Envar("JET_DAEMON").
-		Default("10m").
 		DurationVar(&jconf.daemonInterval)
 
 	app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").
