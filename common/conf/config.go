@@ -16,8 +16,6 @@ var WorkingDir = os.Getenv("GOPATH") + "/src/github.com/tevjef/uct-core/scrapers
 
 type pprof map[string]server
 
-type scrapers map[string]*scraper
-
 type Config struct {
 	AppName  string
 	Postgres Postgres `toml:"postgres"`
@@ -27,7 +25,6 @@ type Config struct {
 	Spike    spike    `toml:"spike"`
 	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
-	Scrapers scrapers `toml:"scrapers"`
 }
 
 type spike struct {
@@ -45,10 +42,6 @@ type server struct {
 	Host     string `toml:"host"`
 	Password string `toml:"password"`
 	Enabled  bool
-}
-
-type scraper struct {
-	Interval string `toml:"interval"`
 }
 
 type Postgres struct {
@@ -76,14 +69,6 @@ type InfluxDb struct {
 
 func (pprof pprof) Get(key string) server {
 	return pprof[key]
-}
-
-func (scrapers scrapers) Get(key string) *scraper {
-	if s := scrapers[key]; s == nil {
-		return &scraper{Interval:"30m"}
-	} else {
-		return s
-	}
 }
 
 func init() {
