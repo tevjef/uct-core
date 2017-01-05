@@ -328,6 +328,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=HTR
       - JET_SCRAPER_NAME=cuny-htr
+      - JET_DAEMON=15m
     logging:
       driver: fluentd
       options:
@@ -349,6 +350,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=nyt
       - JET_SCRAPER_NAME=cuny-nyt
+      - JET_DAEMON=15m
     logging:
       driver: fluentd
       options:

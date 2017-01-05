@@ -61,8 +61,9 @@ func main() {
 		Envar("JET_INPUT_FORMAT").
 		EnumVar(&jconf.inputFormat, "protobuf", "json")
 
-	app.Flag("daemon", "Run as a daemon with a refesh interval").
+	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
 		Envar("JET_DEAMON").
+		Default("10m").
 		DurationVar(&jconf.daemonInterval)
 
 	app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").
@@ -106,19 +107,9 @@ func (jet *jet) init() {
 
 	// Runs at regular intervals
 	if jet.config.daemonInterval > 0 {
-		// Override cli arg with environment variable
-		if intervalFromEnv := jet.config.service.Scrapers.Get(jet.app.Name).Interval; intervalFromEnv != "" {
-			if interval, err := time.ParseDuration(intervalFromEnv); err != nil {
-				log.WithError(err).Fatalln("failed to parse duration")
-			} else if interval > 0 {
-				jet.config.daemonInterval = interval
-			}
-		}
-
 		harmony.DaemonScraper(jet.redis, jet.config.daemonInterval, func(ctx context.Context) {
 			jet.entryPoint(resultChan)
 		})
-
 	} else {
 		go func() {
 			jet.entryPoint(resultChan)

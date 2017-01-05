@@ -49,20 +49,6 @@ redis_db = 1
     host = "0.0.0.0:13304"
     enabled = true
 
-[scrapers]
-    [scrapers.rutgers-cm]
-    interval = "1m"
-
-    [scrapers.rutgers-nb]
-    interval = "1m"
-
-    [scrapers.rutgers-nk]
-    interval = "1m"
-
-    [scrapers.njit]
-    interval = "1m"
-
-
 [influxdb]
 host = "influxdb"
 user = ""
