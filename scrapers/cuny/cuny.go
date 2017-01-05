@@ -9,6 +9,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/try"
+	"net"
+	"github.com/pkg/errors"
 )
 
 type cunyForm url.Values
@@ -61,7 +63,9 @@ func (cf *CunyFirstClient) extractValues(doc *goquery.Document) {
 	})
 }
 
-func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document {
+var ErrTimeout error = errors.New("http connection timed out")
+
+func (cf *CunyFirstClient) Post(url string, values url.Values) (*goquery.Document, error) {
 	// Merge form
 	formValues := cf.values
 	for key, val := range values {
@@ -75,8 +79,13 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document
 	//log.WithFields(log.Fields{"action": formValues["ICAction"]}).Debugln("scrapeCourses")
 
 	var resp *http.Response
-	try.DoWithOptions(func(attempt int) (retry bool, err error) {
+	err := try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		resp, err = cf.httpClient.PostForm(url, formValues)
+
+		// If request timed out do not retry
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return false, ErrTimeout
+		}
 		if err != nil {
 			log.WithError(err).WithField("form", values).Errorln("could not reach cunyfirst")
 			return true, err
@@ -85,23 +94,29 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) *goquery.Document
 		return false, nil
 	}, &try.Options{try.ExponentialJitterBackoff, 5})
 
-	doc, err := goquery.NewDocumentFromResponse(resp)
-	if err != nil {
+
+	if doc, err := goquery.NewDocumentFromResponse(resp); err != nil {
 		log.WithError(err).Errorln("error reading response body")
+	} else {
+		if doc != nil {
+			cf.extractValues(doc)
+		}
+
+		return doc, nil
 	}
 
-	if doc != nil {
-		cf.extractValues(doc)
-	}
-
-	return doc
+	return nil, err
 }
 
-func (cf *CunyFirstClient) Get(url string) *goquery.Document {
+func (cf *CunyFirstClient) Get(url string) (*goquery.Document, error) {
 	var resp *http.Response
 
-	try.DoWithOptions(func(attempt int) (retry bool, err error) {
+	err := try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		resp, err = cf.httpClient.Get(url)
+		// If request timed out do not retry
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return false, ErrTimeout
+		}
 		if err != nil {
 			log.WithError(err).Errorln("could not reach cunyfirst")
 			return true, err
@@ -110,16 +125,18 @@ func (cf *CunyFirstClient) Get(url string) *goquery.Document {
 		return false, nil
 	}, &try.Options{try.ExponentialJitterBackoff, 5})
 
-	doc, err := goquery.NewDocumentFromResponse(resp)
-	if err != nil {
+
+	if doc, err := goquery.NewDocumentFromResponse(resp); err != nil {
 		log.WithError(err).Errorln("error reading erpsonse body")
+	} else {
+		if doc != nil {
+			cf.extractValues(doc)
+		}
+
+		return doc, err
 	}
 
-	if doc != nil {
-		cf.extractValues(doc)
-	}
-
-	return doc
+	return nil, err
 }
 
 const (
