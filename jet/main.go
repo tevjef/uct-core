@@ -45,43 +45,36 @@ func init() {
 
 func main() {
 	jconf := jetConfig{}
-	app := kingpin.New("jet", "A program the wraps a uct scraper and collect it's output")
+	app := kingpin.New("jet", "A program the wraps a uct scraper and collect it's output").DefaultEnvars()
 
 	app.Flag("output-format", "Choose output format").Short('f').
 		HintOptions(model.Protobuf, model.Json).
 		PlaceHolder("[protobuf, json]").
 		Required().
-		Envar("JET_OUTPUT_FORMAT").
 		EnumVar(&jconf.outputFormat, "protobuf", "json")
 
 	app.Flag("input-format", "Choose input format").
 		HintOptions(model.Protobuf, model.Json).
 		PlaceHolder("[protobuf, json]").
 		Required().
-		Envar("JET_INPUT_FORMAT").
 		EnumVar(&jconf.inputFormat, "protobuf", "json")
 
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
-		Envar("JET_DAEMON").
 		DurationVar(&jconf.daemonInterval)
 
 	app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").
-		Envar("JET_DAEMON_DIR").
 		ExistingDirVar(&jconf.daemonFile)
 
 	app.Flag("scraper-name", "The scraper name, used in logging").
 		Required().
-		Envar("JET_SCRAPER_NAME").
 		StringVar(&jconf.scraperName)
 
 	app.Flag("scraper", "The scraper this program wraps, the name of the executable").
 		Required().
-		Envar("JET_SCRAPER_PATH").
 		StringVar(&jconf.scraperCommand)
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').
-		Envar("JET_CONFIG").
 		File()
 
 	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
