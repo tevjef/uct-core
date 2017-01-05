@@ -21,12 +21,10 @@ type Process struct {
 
 func (p *Process) Run(fn DispatchFunc) {
 	var rutgersProcessor = rutgers.New(4 * time.Minute)
+
 	for {
 		select {
 		case uctNotification := <-rutgersProcessor.Done():
-			log.WithFields(log.Fields{
-				"topic":           uctNotification.TopicName,
-				"university_name": uctNotification.University.TopicName}).Infoln("processor_out")
 			go func() { p.out <- uctNotification }()
 		case uctNotification := <-p.in:
 			log.WithFields(log.Fields{
@@ -34,8 +32,13 @@ func (p *Process) Run(fn DispatchFunc) {
 				"university_name": uctNotification.University.TopicName}).Infoln("processor_in")
 			if rutgersProcessor.IsMatch(uctNotification.TopicName) {
 				rutgersProcessor.In(uctNotification)
+			} else {
+				go func() { p.out <- uctNotification }()
 			}
 		case uctNotification := <-p.out:
+			log.WithFields(log.Fields{
+				"topic":           uctNotification.TopicName,
+				"university_name": uctNotification.University.TopicName}).Infoln("processor_out")
 			fn(uctNotification)
 		}
 	}
