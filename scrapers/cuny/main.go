@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	"github.com/pkg/errors"
+	"github.com/tevjef/uct-core/common/try"
 )
 
 type cuny struct {
@@ -116,7 +117,12 @@ func (cuny *cuny) init() {
 			semester: *sem,
 		}
 
-		subjects := sr.parseSubjects(sr.scrapeSubjects())
+		doc, err := sr.scrapeSubjects()
+		if err != nil {
+			continue
+		}
+
+		subjects := sr.parseSubjects(doc)
 
 		var wg sync.WaitGroup
 		sem := make(chan *sync.WaitGroup, 5)
@@ -124,7 +130,17 @@ func (cuny *cuny) init() {
 		for i := range subjects {
 			sem <- &wg
 			go func(subject *model.Subject) {
-				scraper.run(subject)
+				// Retry when a request times out. A timeout makes the cookie jar go stale,
+				// blocking future requests from completing. Retry the entire procedure
+				// request in that case
+				try.DoN(func(attempt int) (bool, error) {
+					err := scraper.run(subject)
+					if err != nil && err == ErrTimeout {
+						log.Warningln("retrying a timed out request")
+						return true, err
+					}
+					return false, nil
+				}, 3)
 				wg := <-sem
 				wg.Done()
 			}(subjects[i])
@@ -147,7 +163,7 @@ type cunyScraper struct {
 	full       bool
 }
 
-func (cs *cunyScraper) run(subject *model.Subject) {
+func (cs *cunyScraper) run(subject *model.Subject) error {
 	httpClient := newClient()
 
 	newMap := map[string][]string{}
@@ -175,7 +191,10 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 	}
 
 	// Scrape subjects again to initialize cookies necessary to scrape courses
-	sr.scrapeSubjects()
+	_, err := sr.scrapeSubjects()
+	if err != nil {
+		return err
+	}
 
 	cr := courseScraper{
 		scraper: scraper,
@@ -183,7 +202,11 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 		subjectId: subject.Number,
 		full: cs.full,
 		semester: sr.semester}
-	doc := cr.scrapeCourses()
+
+	doc, err := cr.scrapeCourses()
+	if err != nil {
+		return err
+	}
 
 	if doc == nil {
 		log.Warnln("skipping courses for", subject.Name)
@@ -191,6 +214,7 @@ func (cs *cunyScraper) run(subject *model.Subject) {
 		subject.Courses = cr.parseCourses(doc)
 	}
 
+	return nil
 }
 
 type subjectScraper struct {
@@ -200,7 +224,7 @@ type subjectScraper struct {
 	full     bool
 }
 
-func (sr *subjectScraper) scrapeSubjects() *goquery.Document {
+func (sr *subjectScraper) scrapeSubjects() (*goquery.Document, error) {
 	defer func(start time.Time) {
 		log.WithFields(log.Fields{
 			"season": sr.semester.GetSeason(),
@@ -216,9 +240,7 @@ func (sr *subjectScraper) scrapeSubjects() *goquery.Document {
 	form.setAction(universityKey)
 	form.setTerm(parseSemester(sr.semester))
 
-	doc := sr.scraper.client.Post(sr.url, url.Values(form))
-
-	return doc
+	return sr.scraper.client.Post(sr.url, url.Values(form))
 }
 
 func (sr *subjectScraper) parseSubjects(doc *goquery.Document) (subjects []*model.Subject) {
@@ -257,7 +279,7 @@ type courseScraper struct {
 
 }
 
-func (cr *courseScraper) scrapeCourses() *goquery.Document {
+func (cr *courseScraper) scrapeCourses() (*goquery.Document, error) {
 	defer func(start time.Time) {
 		log.WithFields(log.Fields{
 			"subject": cr.subjectId,
@@ -276,7 +298,7 @@ func (cr *courseScraper) scrapeCourses() *goquery.Document {
 	return cr.scraper.client.Post(cr.url, url.Values(form))
 }
 
-func (cr *courseScraper) resetCourses() *goquery.Document {
+func (cr *courseScraper) resetCourses() (*goquery.Document, error) {
 	form := cunyForm{}
 	form.setAction(modifySearchAction)
 
@@ -493,14 +515,14 @@ func (sr *sectionScraper) scrapeSection(sectionId string) *goquery.Document {
 	form := cunyForm{}
 	form.setAction(sectionId)
 
-	doc := sr.scraper.client.Post(sr.url, url.Values(form))
+	doc, _ := sr.scraper.client.Post(sr.url, url.Values(form))
 
 	// Go back after search. Is necessary since the website
 	// uses cookies to track resource requests
 	form = cunyForm{}
 	form.setAction(sectionBackAction)
 
-	_ = sr.scraper.client.Post(sr.url, url.Values(form))
+	sr.scraper.client.Post(sr.url, url.Values(form))
 
 	return doc
 }
