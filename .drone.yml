@@ -41,7 +41,7 @@ pipeline:
 
       - cp /go/bin/rutgers docker/rutgers/
       - cp /go/bin/njit docker/njit/
-      - cp /go/bin/njit docker/cuny/
+      - cp /go/bin/cuny docker/cuny/
 
       - cp /go/bin/jet docker/rutgers/
       - cp /go/bin/jet docker/njit/
