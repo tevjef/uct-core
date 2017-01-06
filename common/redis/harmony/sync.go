@@ -41,17 +41,17 @@ const (
 	envRedisSyncExpiration = "UCT_REDIS_SYNC_EXPIRATION"
 )
 
-type config struct {
+type syncConfig struct {
 	id            string
 	interval      time.Duration
 	syncFrequency time.Duration
 	expiration    time.Duration
 }
 
-type option func(*config)
+type option func(*syncConfig)
 
 func newSync(helper *redis.Helper, options ...option) *redisSync {
-	var config config
+	var config syncConfig
 
 	for _, option := range options {
 		option(&config)

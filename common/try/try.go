@@ -76,7 +76,7 @@ func DefaultBackoff(_ int) time.Duration {
 }
 
 // ExponentialJitterBackoff returns ever increasing backoffs by a power of 2
-// with +/- 0-33% to prevent sychronized reuqests.
+// with +/- 0-33% to prevent sychronized reqests.
 func ExponentialJitterBackoff(i int) time.Duration {
 	return jitter(int(math.Pow(2, float64(i))))
 }
@@ -87,7 +87,7 @@ func jitter(i int) time.Duration {
 
 	maxJitter := ms / 3
 
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	jitter := rand.Intn(maxJitter + 1)
 
 	if rand.Intn(2) == 1 {

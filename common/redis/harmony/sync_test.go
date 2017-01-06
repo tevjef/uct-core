@@ -27,7 +27,7 @@ func getClient() *redis.Helper {
 func setup(timeQuantum time.Duration, appId string) *redisSync {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.TextFormatter{})
-	return newSync(getClient(), func(config *config) {
+	return newSync(getClient(), func(config *syncConfig) {
 		config.interval = timeQuantum
 		config.id = appId
 	})
