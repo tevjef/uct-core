@@ -33,6 +33,7 @@ type jetConfig struct {
 	inputFormat    string
 	outputFormat   string
 	daemonInterval time.Duration
+	daemonJitter   int
 	daemonFile     string
 	scraperName    string
 	scraperCommand string
@@ -62,6 +63,9 @@ func main() {
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
 		DurationVar(&jconf.daemonInterval)
 
+	app.Flag("daemon-jitter", "Jitter to add to the daemon interval").
+		IntVar(&jconf.daemonJitter)
+
 	app.Flag("daemon-dir", "If supplied the deamon will write files to this directory").
 		ExistingDirVar(&jconf.daemonFile)
 
@@ -87,9 +91,9 @@ func main() {
 	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
 	(&jet{
-		app: app.Model(),
+		app:    app.Model(),
 		config: &jconf,
-		redis: redis.NewHelper(jconf.service, app.Name),
+		redis:  redis.NewHelper(jconf.service, app.Name),
 	}).init()
 }
 
@@ -99,8 +103,14 @@ func (jet *jet) init() {
 
 	// Runs at regular intervals
 	if jet.config.daemonInterval > 0 {
-		harmony.DaemonScraper(jet.redis, jet.config.daemonInterval, func(ctx context.Context) {
-			jet.entryPoint(resultChan)
+		harmony.DaemonScraper(&harmony.Config{
+			Redis:    jet.redis,
+			Interval: jet.config.daemonInterval,
+			Action: func(ctx context.Context) {
+				jet.entryPoint(resultChan)
+			},
+			Jitter: jet.config.daemonJitter,
+			Ctx:    context.Background(),
 		})
 	} else {
 		go func() {
