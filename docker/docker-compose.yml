@@ -211,6 +211,8 @@ services:
       - HTTP_PROXY_URL=${HTTP_PROXY_URL}
       - HTTP_PROXY_USER=${HTTP_PROXY_USER}
       - HTTP_PROXY_PASS=${HTTP_PROXY_PASS}
+      - JET_SCRAPER_NAME=njit
+      - JET_DAEMON=15m
 
     logging:
       driver: fluentd
