@@ -41,6 +41,7 @@ type cunyConfig struct {
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {
@@ -230,7 +231,7 @@ func (sr *subjectScraper) scrapeSubjects() (*goquery.Document, error) {
 			"season": sr.semester.GetSeason(),
 			"year": sr.semester.GetYear(),
 			"elapsed":  time.Since(start).Seconds()}).
-			Infoln("scrape subjects")
+			Debugln("scrape subjects")
 	}(time.Now())
 
 	sr.scraper.client.Get(initalPage)
@@ -286,7 +287,7 @@ func (cr *courseScraper) scrapeCourses() (*goquery.Document, error) {
 			"season": cr.semester.GetSeason(),
 			"year": cr.semester.GetYear(),
 			"elapsed": time.Since(start).Seconds()}).
-			Infoln("scrape courses")
+			Debugln("scrape courses")
 	}(time.Now())
 
 	form := cunyForm{}

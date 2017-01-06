@@ -459,7 +459,288 @@ services:
     labels:
       fluentd.tag: "core.scraper.cuny-csi"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
-      
+
+  scraper-cuny-bmc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BMC
+      - JET_SCRAPER_NAME=cuny-bmc
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bmc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bmc"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-kcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=KCC
+      - JET_SCRAPER_NAME=cuny-kcc
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-kcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-kcc"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-qcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=QCC
+      - JET_SCRAPER_NAME=cuny-qcc
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-qcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-qcc"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bar:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BAR
+      - JET_SCRAPER_NAME=cuny-bar
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bar"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BCC
+      - JET_SCRAPER_NAME=cuny-bcc
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bcc"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-leh:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=LEH
+      - JET_SCRAPER_NAME=cuny-leh
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-leh"
+    labels:
+      fluentd.tag: "core.scraper.cuny-leh"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-jjc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=JJC
+      - JET_SCRAPER_NAME=cuny-jjc
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-jjc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-jjc"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bkl:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BKL
+      - JET_SCRAPER_NAME=cuny-bkl
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bkl"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bkl"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bar:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BAR
+      - JET_SCRAPER_NAME=cuny-bar
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bar"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-yrk:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=YRK
+      - JET_SCRAPER_NAME=cuny-yrk
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-yrk"
+    labels:
+      fluentd.tag: "core.scraper.cuny-yrk"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-mec:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=MEC
+      - JET_SCRAPER_NAME=cuny-mec
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-mec"
+    labels:
+      fluentd.tag: "core.scraper.cuny-mec"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-hos:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=HOS
+      - JET_SCRAPER_NAME=cuny-hos
+      - JET_DAEMON=15m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-hos"
+    labels:
+      fluentd.tag: "core.scraper.cuny-hos"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
   spike:
     restart: on-failure:3
     depends_on:
