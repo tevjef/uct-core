@@ -63,7 +63,7 @@ func DaemonScraper(c *Config) {
 }
 
 func addJitter(jitter int, interval time.Duration, source rand.Source) time.Duration {
-	if jitter == 0 || jitter > 50 {
+	if jitter == 0 {
 		return interval
 	}
 

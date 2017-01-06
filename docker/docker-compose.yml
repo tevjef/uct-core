@@ -331,6 +331,7 @@ services:
       - CUNY_UNIVERSITY=HTR
       - JET_SCRAPER_NAME=cuny-htr
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
       options:
@@ -353,6 +354,8 @@ services:
       - CUNY_UNIVERSITY=NYT
       - JET_SCRAPER_NAME=cuny-nyt
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
     logging:
       driver: fluentd
       options:
@@ -375,6 +378,8 @@ services:
       - CUNY_UNIVERSITY=LAG
       - JET_SCRAPER_NAME=cuny-lag
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
     logging:
       driver: fluentd
       options:
@@ -397,6 +402,8 @@ services:
       - CUNY_UNIVERSITY=QNS
       - JET_SCRAPER_NAME=cuny-qns
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
     logging:
       driver: fluentd
       options:
@@ -419,6 +426,8 @@ services:
       - CUNY_UNIVERSITY=CTY
       - JET_SCRAPER_NAME=cuny-cty
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
     logging:
       driver: fluentd
       options:
@@ -441,6 +450,8 @@ services:
       - CUNY_UNIVERSITY=CSI
       - JET_SCRAPER_NAME=cuny-csi
       - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
     logging:
       driver: fluentd
       options:
