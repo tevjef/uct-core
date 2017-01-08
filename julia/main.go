@@ -15,6 +15,7 @@ import (
 	"github.com/tevjef/uct-core/julia/notifier"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/tevjef/uct-core/common/try"
 )
 
 type julia struct {
@@ -61,11 +62,27 @@ func main() {
 
 	// Open connection to postgresql
 	log.Infoln("Start monitoring PostgreSQL...")
-	listener := pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+
+	// Create a Postgresql event listener
+	var listener *pq.Listener
+	err := try.DoWithOptions(func (attempt int) (bool, error) {
+		listener = pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+			if err != nil {
+				log.WithError(err).Warningln("failure in listener", ev)
+			}
+		})
+
+		err := listener.Ping()
 		if err != nil {
-			log.WithError(err).Fatalln("failure in listener")
+			return true, err
 		}
-	})
+
+		return false, nil
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
+
+	if err != nil {
+		log.WithError(err).Fatalln("failed to create listener")
+	}
 
 	if err := listener.Listen("status_events"); err != nil {
 		log.WithError(err).Fatalln("failed to listen on channel")
