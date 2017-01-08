@@ -46,16 +46,16 @@ type server struct {
 
 type Postgres struct {
 	User     string `toml:"user" envconfig:"POSTGRES_USER"`
-	Host     string `toml:"host"  envconfig:"POSTGRES_PORT_5432_TCP_ADDR"`
-	Port     string `toml:"port" envconfig:"POSTGRES_PORT_5432_TCP_PORT"`
+	Host     string `toml:"host"  envconfig:"POSTGRES_HOST"`
+	Port     string `toml:"port" envconfig:"POSTGRES_PORT"`
 	Password string `toml:"password" envconfig:"POSTGRES_PASSWORD"`
 	Name     string `toml:"name" envconfig:"POSTGRES_DB"`
 	ConnMax  int    `toml:"connection_max" envconfig:"POSTGRES_MAX_CONNECTIONS"`
 }
 
 type Redis struct {
-	Host     string `toml:"host" envconfig:"REDIS_PORT_6379_TCP_ADDR"`
-	Port     string `toml:"port" envconfig:"REDIS_PORT_6379_TCP_PORT"`
+	Host     string `toml:"host" envconfig:"REDIS_HOST"`
+	Port     string `toml:"port" envconfig:"REDIS_PORT"`
 	Password string `toml:"password" envconfig:"REDIS_PASSWORD"`
 	Db       int    `toml:"db" envconfig:"REDIS_DB"`
 }
