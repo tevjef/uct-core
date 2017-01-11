@@ -15,7 +15,6 @@ import (
 	"github.com/tevjef/uct-core/julia/notifier"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"github.com/tevjef/uct-core/common/try"
 )
 
 type julia struct {
@@ -60,28 +59,20 @@ func main() {
 	// Start profiling
 	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
-	// Open connection to postgresql
-	log.Infoln("Start monitoring PostgreSQL...")
-
 	// Create a Postgresql event listener
-	var listener *pq.Listener
-	err := try.DoWithOptions(func (attempt int) (bool, error) {
-		listener = pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
-			if err != nil {
-				log.WithError(err).Warningln("failure in listener", ev)
-			}
-		})
-
-		err := listener.Ping()
-		if err != nil {
-			return true, err
+	ch := make(chan struct{})
+	listener := pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+		if ev != pq.ListenerEventConnectionAttemptFailed {
+			ch <- struct{}{}
+		} else {
+			log.WithError(err).Warningln("listener failed to establish connection")
 		}
+	})
 
-		return false, nil
-	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
-
-	if err != nil {
-		log.WithError(err).Fatalln("failed to create listener")
+	select {
+	case <-ch:
+	case <-time.After(2 * time.Minute):
+		log.Fatalln("failed to create listener")
 	}
 
 	if err := listener.Listen("status_events"); err != nil {
@@ -103,6 +94,9 @@ func main() {
 
 func (julia *julia) init() {
 	go julia.process.Run(julia.dispatch)
+
+	// Open connection to postgresql
+	log.Infoln("start monitoring PostgreSQL...")
 
 	for {
 		waitForNotification(julia.ctx, julia.notifier, julia.process.Recv)
