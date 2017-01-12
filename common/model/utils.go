@@ -35,7 +35,7 @@ func OpenPostgres(connection string) (database *sqlx.DB, err error) {
 	return
 }
 
-func OpenRedis(addr, password string, database int) (client *redis.Client, err error) {
+func OpenRedis(addr, password string, database int, retry int) (client *redis.Client, err error) {
 	err = try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		client = redis.NewClient(&redis.Options{
 			Addr:     addr,
@@ -48,7 +48,7 @@ func OpenRedis(addr, password string, database int) (client *redis.Client, err e
 		}
 
 		return false, err
-	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: retry})
 
 	return
 }

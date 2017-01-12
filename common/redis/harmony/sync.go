@@ -7,9 +7,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/common/redis/lock"
+	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
 )
 
@@ -112,26 +114,41 @@ func newSync(helper *redis.Helper, options ...option) *redisSync {
 
 func (rsync *redisSync) sync(ctx context.Context) <-chan instance {
 	instanceConfigChan := make(chan instance)
+	go func() {
+		select {
+		case <-ctx.Done():
+		default:
+			ctx, _ := context.WithCancel(ctx)
+			err := try.DoN(func(attempt int) (bool, error) {
+				if err := rsync.beginSync(ctx, instanceConfigChan); err != nil {
+					log.WithError(err).Warningln("sync failed, restarting")
+					return true, err
+				}
+				return false, nil
+			}, 5)
 
-	go rsync.beginSync(ctx, instanceConfigChan)
+			if err != nil {
+				log.WithError(err).Fatalln("sync failed")
+			}
+		}
+	}()
 
 	return instanceConfigChan
 }
 
-func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- instance) {
-
+func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- instance) error {
 	defer func() {
 		log.Warningln("SYNC ENDING!!!!!")
 	}()
 	// Clean up previous instances
 	if keys, err := rsync.uctRedis.FindAll(rsync.healthSpace + ":*"); err != nil {
-		log.WithError(err).Fatalln("failed to retrieve all keys during clean up", rsync.instance.id)
+		return errors.Wrap(err, "failed to retrieve all keys during clean up")
 	} else if len(keys) == 0 {
 		// do nothing
 	} else if err := rsync.uctRedis.Client.Del(keys...).Err(); err != nil {
-		log.WithError(err).WithField("keys", keys).Fatalln("failed to delete all keys during clean up", rsync.instance.id)
+		return errors.Wrap(err, "failed to delete all keys during clean up")
 	} else if err := rsync.uctRedis.Client.Del(rsync.instanceList).Err(); err != nil {
-		log.WithError(err).Fatalln("failed to delete instance list", rsync.instance.id)
+		return errors.Wrap(err, "failed to delete instance list")
 	}
 
 	ticker := time.NewTicker(rsync.syncInterval)
@@ -141,7 +158,7 @@ func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- ins
 	for {
 		select {
 		case <-ticker.C:
-			func() {
+			err := func() error {
 				defer func() {
 					if r := recover(); r != nil {
 						log.Error("Recovered from panic", r)
@@ -156,14 +173,15 @@ func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- ins
 
 				// A list maintains the number of running instances.
 				// Register instance to list if not already exists
-				rsync.registerInstance()
+				if err := rsync.registerInstance(); err != nil {
+					return err
+				}
 
 				// Get the number of currently alive instances, if its less than the last count and not 0
 				// Unregister all instances. They will all register themselves on their next ping
 				//log.WithFields(log.Fields{"count": rsync.instance.count(), "last_count": lastCount}).Println()
 				if currentCount := rsync.instance.count(); currentCount < lastCount && lastCount != 0 {
-					rsync.unregisterAll() /* */
-					return
+					return rsync.unregisterAll()
 				}
 
 				//log.WithFields(log.Fields{
@@ -174,60 +192,91 @@ func (rsync *redisSync) beginSync(ctx context.Context, instanceConfig chan<- ins
 				//	"zlast": lastCount}).Infoln()
 				// Send instance
 				instanceConfig <- *rsync.instance
-			}()
-		case <-ctx.Done():
-			log.Warningln("CONTEXT DONE!!!!!")
 
-			return
+				return nil
+			}()
+
+			if err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			return nil
 		}
 	}
 }
 
-func (rsync *redisSync) unregisterAll() {
-	rsync.listMu.Lock()
-	defer rsync.listMu.Unlock()
-
-	if _, err := rsync.uctRedis.ListSize(rsync.instanceList); err == nil {
-		log.Debugln("Deleting list", rsync.instance.id)
-		rsync.uctRedis.Client.Del(rsync.instanceList)
+func (rsync *redisSync) unregisterAll() (err error) {
+	if _, err = rsync.listMu.Lock(); err != nil {
+		return err
 	}
+
+	defer func() {
+		if e := rsync.listMu.Unlock(); err != nil {
+			err = errors.Wrap(e, err.Error())
+		}
+	}()
+
+	if _, err := rsync.uctRedis.ListSize(rsync.instanceList); err != nil {
+		log.Debugln("Deleting list", rsync.instance.id)
+	} else if err := rsync.uctRedis.Client.Del(rsync.instanceList).Err(); err != nil {
+		return err
+	}
+
+	return err
 }
 
 // Pushes this instance.Id for this instance on the list nsInstances if the
 // instance.Id is not already on the list.
-func (rsync *redisSync) registerInstance() {
+func (rsync *redisSync) registerInstance() error {
 	// Place health marker to say this instance is still alive
 	// If "some time" goes by without another ping, this instance
 	// is considered to be dead
-	rsync.ping()
-
-	if _, err := rsync.listMu.Lock(); err != nil {
-		log.WithError(err).Fatalln("failed to aquire lock in registerInstance", rsync.instance.id)
-	} else if _, err = rsync.uctRedis.RPushNotExist(rsync.instanceList, rsync.instance.id); err != nil {
-		log.WithError(err).Fatalln("failed to claim position in list:", rsync.instance.id)
-	} else if err = rsync.listMu.Unlock(); err != nil {
-	} else if err = rsync.listMu.Unlock(); err != nil {
-		log.WithError(err).Fatalln("failed to release lock in registerInstance", rsync.instance.id)
-	} else {
-		rsync.updateInstanceCount()
-		rsync.updatePosition()
+	err := rsync.ping()
+	if err != nil {
+		return err
 	}
 
+	if _, err := rsync.listMu.Lock(); err != nil {
+		return errors.Wrap(err, "failed to aquire lock in registerInstance")
+	} else if _, err = rsync.uctRedis.RPushNotExist(rsync.instanceList, rsync.instance.id); err != nil {
+		return errors.Wrap(err, "failed to claim position in list")
+	} else if err = rsync.listMu.Unlock(); err != nil {
+		return errors.Wrap(err, "failed to release lock in registerInstance")
+	} else {
+		if err := rsync.updateInstanceCount(); err != nil {
+			return err
+		}
+
+		if err := rsync.updatePosition(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Get the index position on the list where the instance resides
-func (rsync *redisSync) updatePosition() {
-	rsync.listMu.Lock()
-	defer rsync.listMu.Unlock()
+func (rsync *redisSync) updatePosition() (err error) {
+	if _, err = rsync.listMu.Lock(); err != nil {
+		return err
+	}
+
+	defer func() {
+		if e := rsync.listMu.Unlock(); err != nil {
+			err = errors.Wrap(e, err.Error())
+		}
+	}()
 
 	if index, err := rsync.uctRedis.Exists(rsync.instanceList, rsync.instance.id); err != nil {
-		log.WithError(err).Fatalln("failed to check if key exists in list:", rsync.instanceList)
+		return errors.Wrap(err, "failed to check if key exists in list")
 	} else {
 		rsync.instance.mu.Lock()
 		rsync.instance.pos = index
 		rsync.updateOffset()
 		rsync.instance.mu.Unlock()
 	}
+
+	return nil
 }
 
 func (inst *instance) position() int64 {
@@ -244,18 +293,20 @@ func (inst *instance) offset() time.Duration {
 
 // Get the number of instance that have performed a ping, it finds
 // instances by pattern matching the prefix of the instanceId
-func (rsync *redisSync) updateInstanceCount() {
+func (rsync *redisSync) updateInstanceCount() error {
 	rsync.countMu.Lock()
 	defer rsync.countMu.Unlock()
 
 	if count, err := rsync.uctRedis.Count(rsync.healthSpace + ":*"); err != nil {
-		log.WithError(err).Fatalln("failed to get number of instances")
+		return errors.Wrap(err, "failed to get number of instances")
 	} else {
 		rsync.instance.mu.Lock()
 		rsync.instance.c = count
 		rsync.updateOffset()
 		rsync.instance.mu.Unlock()
 	}
+
+	return nil
 }
 
 func (inst *instance) count() int64 {
@@ -265,18 +316,19 @@ func (inst *instance) count() int64 {
 	return inst.c
 }
 
-func (rsync *redisSync) ping() {
-
-	rsync.pingWithExpiration(rsync.syncExpiration)
+func (rsync *redisSync) ping() error {
+	return rsync.pingWithExpiration(rsync.syncExpiration)
 }
 
 // Ping sets its instanceId on the redis.
-func (rsync *redisSync) pingWithExpiration(duration time.Duration) {
+func (rsync *redisSync) pingWithExpiration(duration time.Duration) error {
 	if err := rsync.uctRedis.Client.Set(rsync.instance.id, 1, duration).Err(); err != nil {
-		log.WithError(err).Fatalln("failed to perform health check for this instance")
+		return errors.Wrap(err, "failed to perform health check for this instance")
 	} else if err := rsync.uctRedis.Client.Expire(rsync.instanceList, 5*time.Second).Err(); err != nil {
-		log.WithError(err).Fatalln("failed to reset list expiration")
+		return errors.Wrap(err, "failed to reset list expiration")
 	}
+
+	return nil
 }
 
 func (rsync *redisSync) updateOffset() {

@@ -22,7 +22,7 @@ func nameSpaceForApp(appName string) string {
 }
 
 func NewHelper(config conf.Config, appName string) *Helper {
-	if client, err := model.OpenRedis(config.RedisAddr(), config.Redis.Password, config.Redis.Db); err != nil {
+	if client, err := model.OpenRedis(config.RedisAddr(), config.Redis.Password, config.Redis.Db, 5); err != nil {
 		logrus.WithError(err).Fatalln()
 		return nil
 	} else {
