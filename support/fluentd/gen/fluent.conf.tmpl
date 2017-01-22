@@ -98,6 +98,9 @@ time_format %Y-%m-%dT%H:%M:%S%z
              password {{$GenContainer.Env.INFLUXDB_ADMIN_PASSWORD}}
              time_precision s
              tag_keys {{index $CurrentContainer.Labels "fluentd.influxdb.tags"}}
+             {{if index $CurrentContainer.Labels "fluentd.influxdb.measurement"}}
+             measurement {{index $CurrentContainer.Labels "fluentd.influxdb.measurement"}}
+             {{end}}
           </store>
          {{end}}
          {{end}}
