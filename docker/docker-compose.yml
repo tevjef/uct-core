@@ -212,8 +212,7 @@ services:
       - HTTP_PROXY_USER=${HTTP_PROXY_USER}
       - HTTP_PROXY_PASS=${HTTP_PROXY_PASS}
       - JET_SCRAPER_NAME=njit
-      - JET_DAEMON=15m
-
+      - JET_DAEMON=10m
     logging:
       driver: fluentd
       options:
@@ -273,6 +272,7 @@ services:
         tag: "docker.core.rutgers-cm"
     labels:
       fluentd.tag: "core.rutgers-cm"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nb:
@@ -294,6 +294,7 @@ services:
         tag: "docker.core.rutgers-nb"
     labels:
       fluentd.tag: "core.rutgers-nb"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nk:
@@ -315,6 +316,7 @@ services:
         tag: "docker.core.rutgers-nk"
     labels:
       fluentd.tag: "core.rutgers-nk"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-htr:
@@ -338,6 +340,7 @@ services:
         tag: "docker.core.scraper.cuny-htr"
     labels:
       fluentd.tag: "core.scraper.cuny-htr"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-nyt:
@@ -362,6 +365,7 @@ services:
         tag: "docker.core.scraper.cuny-nyt"
     labels:
       fluentd.tag: "core.scraper.cuny-nyt"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-lag:
@@ -386,6 +390,7 @@ services:
         tag: "docker.core.scraper.cuny-lag"
     labels:
       fluentd.tag: "core.scraper.cuny-lag"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-qns:
@@ -410,6 +415,7 @@ services:
         tag: "docker.core.scraper.cuny-qns"
     labels:
       fluentd.tag: "core.scraper.cuny-qns"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-cty:
@@ -434,6 +440,7 @@ services:
         tag: "docker.core.scraper.cuny-cty"
     labels:
       fluentd.tag: "core.scraper.cuny-cty"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-csi:
@@ -458,6 +465,7 @@ services:
         tag: "docker.core.scraper.cuny-csi"
     labels:
       fluentd.tag: "core.scraper.cuny-csi"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bmc:
@@ -473,7 +481,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=BMC
       - JET_SCRAPER_NAME=cuny-bmc
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
 
     logging:
@@ -482,6 +490,7 @@ services:
         tag: "docker.core.scraper.cuny-bmc"
     labels:
       fluentd.tag: "core.scraper.cuny-bmc"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-kcc:
@@ -497,7 +506,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=KCC
       - JET_SCRAPER_NAME=cuny-kcc
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
 
     logging:
@@ -506,6 +515,7 @@ services:
         tag: "docker.core.scraper.cuny-kcc"
     labels:
       fluentd.tag: "core.scraper.cuny-kcc"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-qcc:
@@ -521,7 +531,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=QCC
       - JET_SCRAPER_NAME=cuny-qcc
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
 
     logging:
@@ -530,6 +540,7 @@ services:
         tag: "docker.core.scraper.cuny-qcc"
     labels:
       fluentd.tag: "core.scraper.cuny-qcc"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bar:
@@ -545,7 +556,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=BAR
       - JET_SCRAPER_NAME=cuny-bar
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
 
     logging:
@@ -554,6 +565,7 @@ services:
         tag: "docker.core.scraper.cuny-bar"
     labels:
       fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bcc:
@@ -569,7 +581,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=BCC
       - JET_SCRAPER_NAME=cuny-bcc
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
 
     logging:
@@ -578,6 +590,7 @@ services:
         tag: "docker.core.scraper.cuny-bcc"
     labels:
       fluentd.tag: "core.scraper.cuny-bcc"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-leh:
@@ -593,7 +606,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=LEH
       - JET_SCRAPER_NAME=cuny-leh
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -601,6 +614,7 @@ services:
         tag: "docker.core.scraper.cuny-leh"
     labels:
       fluentd.tag: "core.scraper.cuny-leh"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-jjc:
@@ -616,7 +630,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=JJC
       - JET_SCRAPER_NAME=cuny-jjc
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -624,6 +638,7 @@ services:
         tag: "docker.core.scraper.cuny-jjc"
     labels:
       fluentd.tag: "core.scraper.cuny-jjc"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bkl:
@@ -639,7 +654,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=BKL
       - JET_SCRAPER_NAME=cuny-bkl
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -647,6 +662,7 @@ services:
         tag: "docker.core.scraper.cuny-bkl"
     labels:
       fluentd.tag: "core.scraper.cuny-bkl"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bar:
@@ -662,7 +678,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=BAR
       - JET_SCRAPER_NAME=cuny-bar
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -670,6 +686,7 @@ services:
         tag: "docker.core.scraper.cuny-bar"
     labels:
       fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-yrk:
@@ -685,7 +702,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=YRK
       - JET_SCRAPER_NAME=cuny-yrk
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -693,6 +710,7 @@ services:
         tag: "docker.core.scraper.cuny-yrk"
     labels:
       fluentd.tag: "core.scraper.cuny-yrk"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-mec:
@@ -708,7 +726,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=MEC
       - JET_SCRAPER_NAME=cuny-mec
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -716,6 +734,7 @@ services:
         tag: "docker.core.scraper.cuny-mec"
     labels:
       fluentd.tag: "core.scraper.cuny-mec"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-hos:
@@ -731,7 +750,7 @@ services:
     environment:
       - CUNY_UNIVERSITY=HOS
       - JET_SCRAPER_NAME=cuny-hos
-      - JET_DAEMON=15m
+      - JET_DAEMON=10m
       - JET_DAEMON_JITTER=50
     logging:
       driver: fluentd
@@ -739,6 +758,7 @@ services:
         tag: "docker.core.scraper.cuny-hos"
     labels:
       fluentd.tag: "core.scraper.cuny-hos"
+      fluentd.influxdb.measurement: "core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   spike:
