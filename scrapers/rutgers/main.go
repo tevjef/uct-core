@@ -245,7 +245,8 @@ func buildSections(rutgerSections []*RSection) (s []*model.Section) {
 			newSection.Instructors = append(newSection.Instructors, newInstructor)
 		}
 
-		for _, meeting := range section.MeetingTimes {
+		for i := range section.MeetingTimes {
+			meeting := section.MeetingTimes[i]
 			newMeeting := &model.Meeting{
 				Room:      &meeting.RoomNumber,
 				Day:       &meeting.MeetingDay,
