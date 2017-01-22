@@ -15,7 +15,7 @@ RUN apk --no-cache --update add \
     gem install fluentd -v 0.12.29 && \
     gem install fluent-plugin-concat -v 1.0.0 && \
     gem install fluent-plugin-multi-format-parser && \
-    gem install fluent-plugin-influxdb && \
+    gem install fluent-plugin-influxdb -v 0.3.2 && \
     gem install fluent-plugin-parser && \
     gem install fluent-plugin-s3 && \
     gem install fluent-plugin-cloudwatch-logs && \
