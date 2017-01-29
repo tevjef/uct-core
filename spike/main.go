@@ -42,10 +42,10 @@ func main() {
 
 	app := kingpin.New("spike", "A command-line application to serve university course information")
 
-	app.Flag("port", "port to start server on").
-		Short('o').
+	app.Flag("listen", "port to start server on").
+		Short('l').
 		Default("9876").
-		Envar("SPIKE_PORT").
+		Envar("SPIKE_LISTEN").
 		Uint16Var(&sconf.port)
 
 	configFile := app.Flag("config", "configuration file for the application").
