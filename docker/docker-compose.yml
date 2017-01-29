@@ -272,7 +272,7 @@ services:
         tag: "docker.core.rutgers-cm"
     labels:
       fluentd.tag: "core.rutgers-cm"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nb:
@@ -294,7 +294,7 @@ services:
         tag: "docker.core.rutgers-nb"
     labels:
       fluentd.tag: "core.rutgers-nb"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   rutgers-nk:
@@ -316,7 +316,7 @@ services:
         tag: "docker.core.rutgers-nk"
     labels:
       fluentd.tag: "core.rutgers-nk"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-htr:
@@ -340,7 +340,7 @@ services:
         tag: "docker.core.scraper.cuny-htr"
     labels:
       fluentd.tag: "core.scraper.cuny-htr"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-nyt:
@@ -365,7 +365,7 @@ services:
         tag: "docker.core.scraper.cuny-nyt"
     labels:
       fluentd.tag: "core.scraper.cuny-nyt"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-lag:
@@ -390,7 +390,7 @@ services:
         tag: "docker.core.scraper.cuny-lag"
     labels:
       fluentd.tag: "core.scraper.cuny-lag"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-qns:
@@ -415,7 +415,7 @@ services:
         tag: "docker.core.scraper.cuny-qns"
     labels:
       fluentd.tag: "core.scraper.cuny-qns"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-cty:
@@ -440,7 +440,7 @@ services:
         tag: "docker.core.scraper.cuny-cty"
     labels:
       fluentd.tag: "core.scraper.cuny-cty"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-csi:
@@ -465,7 +465,7 @@ services:
         tag: "docker.core.scraper.cuny-csi"
     labels:
       fluentd.tag: "core.scraper.cuny-csi"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bmc:
@@ -490,7 +490,7 @@ services:
         tag: "docker.core.scraper.cuny-bmc"
     labels:
       fluentd.tag: "core.scraper.cuny-bmc"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-kcc:
@@ -515,7 +515,7 @@ services:
         tag: "docker.core.scraper.cuny-kcc"
     labels:
       fluentd.tag: "core.scraper.cuny-kcc"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-qcc:
@@ -540,7 +540,7 @@ services:
         tag: "docker.core.scraper.cuny-qcc"
     labels:
       fluentd.tag: "core.scraper.cuny-qcc"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bar:
@@ -565,7 +565,7 @@ services:
         tag: "docker.core.scraper.cuny-bar"
     labels:
       fluentd.tag: "core.scraper.cuny-bar"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bcc:
@@ -590,7 +590,7 @@ services:
         tag: "docker.core.scraper.cuny-bcc"
     labels:
       fluentd.tag: "core.scraper.cuny-bcc"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-leh:
@@ -614,7 +614,7 @@ services:
         tag: "docker.core.scraper.cuny-leh"
     labels:
       fluentd.tag: "core.scraper.cuny-leh"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-jjc:
@@ -638,7 +638,7 @@ services:
         tag: "docker.core.scraper.cuny-jjc"
     labels:
       fluentd.tag: "core.scraper.cuny-jjc"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bkl:
@@ -662,7 +662,7 @@ services:
         tag: "docker.core.scraper.cuny-bkl"
     labels:
       fluentd.tag: "core.scraper.cuny-bkl"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-bar:
@@ -686,7 +686,7 @@ services:
         tag: "docker.core.scraper.cuny-bar"
     labels:
       fluentd.tag: "core.scraper.cuny-bar"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-yrk:
@@ -710,7 +710,7 @@ services:
         tag: "docker.core.scraper.cuny-yrk"
     labels:
       fluentd.tag: "core.scraper.cuny-yrk"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-mec:
@@ -734,7 +734,7 @@ services:
         tag: "docker.core.scraper.cuny-mec"
     labels:
       fluentd.tag: "core.scraper.cuny-mec"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   scraper-cuny-hos:
@@ -758,7 +758,7 @@ services:
         tag: "docker.core.scraper.cuny-hos"
     labels:
       fluentd.tag: "core.scraper.cuny-hos"
-      fluentd.influxdb.measurement: "core.scraper"
+      fluentd.influxdb.measurement: "docker.core.scraper"
       fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
 
   spike:

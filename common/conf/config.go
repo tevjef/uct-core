@@ -54,8 +54,8 @@ type Postgres struct {
 }
 
 type Redis struct {
-	Host     string `toml:"host" envconfig:"REDIS_HOST"`
-	Port     string `toml:"port" envconfig:"REDIS_PORT"`
+	Host     string `toml:"host" envconfig:"REDIS_SERVICE_HOST"`
+	Port     string `toml:"port" envconfig:"REDIS_SERVICE_PORT"`
 	Password string `toml:"password" envconfig:"REDIS_PASSWORD"`
 	Db       int    `toml:"db" envconfig:"REDIS_DB"`
 }
