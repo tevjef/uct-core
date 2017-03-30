@@ -143,7 +143,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 
 	// Spring: Winter - StartFall
 	log.Println(winterReg.month(), winterReg.day(), startFallReg.month(), startFallReg.day(), month, day)
-	if (month >= winterReg.month() && day >= winterReg.day()) || month <= startFallReg.month() || (month <= startFallReg.month() && day <= startFallReg.day()) {
+	if yearDay >= winterReg.dayOfYear() || yearDay < startFallReg.dayOfYear() {
 		if winterReg.month()-month <= 0 {
 			spring.Year = spring.Year + 1
 			summer.Year = summer.Year + 1
