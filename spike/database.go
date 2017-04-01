@@ -77,9 +77,7 @@ func SelectUniversities(ctx context.Context) (universities []*model.University, 
 	wg.Wait()
 	close(uniChan)
 
-	sort.Slice(universities, func(i, j int) bool {
-		return universities[i].Name < universities[j].Name
-	})
+	sort.Sort(model.UniversityByName(universities))
 
 	return
 }
