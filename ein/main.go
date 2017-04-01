@@ -85,8 +85,8 @@ func main() {
 	pgDatabase.SetMaxOpenConns(econf.service.Postgres.ConnMax)
 
 	(&ein{
-		app: app.Model(),
-		config: econf,
+		app:      app.Model(),
+		config:   econf,
 		redis:    redis.NewHelper(econf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()

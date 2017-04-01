@@ -69,8 +69,8 @@ func main() {
 	pgdb.SetMaxIdleConns(sconf.service.Postgres.ConnMax)
 
 	(&spike{
-		app: app.Model(),
-		config: sconf,
+		app:      app.Model(),
+		config:   sconf,
 		redis:    redis.NewHelper(sconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgdb, queries),
 		ctx:      context.TODO(),

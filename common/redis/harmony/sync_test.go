@@ -23,7 +23,6 @@ func getClient(t *testing.T) *redis.Helper {
 	c.Redis.Db = 11
 	c.Redis.Password = ""
 
-
 	if client, err := model.OpenRedis(c.RedisAddr(), c.Redis.Password, c.Redis.Db, 1); err != nil {
 		t.Fatal(err.Error())
 		return nil

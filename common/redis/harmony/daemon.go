@@ -14,11 +14,11 @@ var fields = log.Fields{}
 type Action func(ctx context.Context)
 
 type Config struct {
-	Jitter int
+	Jitter   int
 	Interval time.Duration
-	Action Action
-	Redis *redis.Helper
-	Ctx context.Context
+	Action   Action
+	Redis    *redis.Helper
+	Ctx      context.Context
 }
 
 func DaemonScraper(c *Config) {
@@ -67,7 +67,7 @@ func addJitter(jitter int, interval time.Duration, source rand.Source) time.Dura
 		return interval
 	}
 
-	maxJitter := interval.Nanoseconds() + int64(float64(interval.Nanoseconds()) * 1/float64(jitter))
+	maxJitter := interval.Nanoseconds() + int64(float64(interval.Nanoseconds())*1/float64(jitter))
 	newJitter := rand.New(source).Int63n(maxJitter)
 	return time.Duration(newJitter) + interval
 }

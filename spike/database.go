@@ -12,6 +12,7 @@ import (
 	"github.com/tevjef/uct-core/spike/middleware"
 
 	"golang.org/x/net/context"
+	"sync"
 )
 
 type Data struct {
@@ -30,27 +31,55 @@ func SelectUniversity(ctx context.Context, topicName string) (university model.U
 	if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
 		return
 	}
+
+	if university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0); err != nil {
+		return
+	}
+
 	return
 }
 
 func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
+	var topics []string
 	m := map[string]interface{}{}
-	if err = Select(ctx, ListUniversitiesQuery, &universities, m); err != nil {
+	if err = Select(ctx, ListUniversitiesQuery, &topics, m); err != nil {
 		return
 	}
-	if err == nil && len(universities) == 0 {
+
+	if err == nil && len(topics) == 0 {
 		err = middleware.ErrNoRows{Uri: "No data found a list of universities"}
 	}
 
-	for i := range universities {
-		if err = GetAvailableSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
-			return
+	uniChan := make(chan model.University)
+	go func() {
+		for uni := range uniChan {
+			u := uni
+			universities = append(universities, &u)
 		}
+	}()
 
-		if err = GetResolvedSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
-			return
-		}
+	var wg sync.WaitGroup
+	wg.Add(len(topics))
+	for i := range topics {
+		u := topics[i]
+
+		go func() {
+			defer wg.Done()
+			var uni model.University
+			if uni, err = SelectUniversity(ctx, u); err != nil {
+				return
+			} else {
+				uniChan <- uni
+			}
+		}()
 	}
+
+	wg.Wait()
+	close(uniChan)
+
+	sort.Slice(universities, func(i, j int) bool {
+		return universities[i].Name < universities[j].Name
+	})
 
 	return
 }
@@ -69,7 +98,6 @@ func GetAvailableSemesters(ctx context.Context, topicName string, university *mo
 		return err
 	} else {
 		university.AvailableSemesters = s
-		university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0)
 		return err
 	}
 }
@@ -231,7 +259,7 @@ var queries = []string{
 
 const (
 	SelectUniversityQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
-	ListUniversitiesQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
+	ListUniversitiesQuery         = `SELECT topic_name FROM university ORDER BY name`
 	SelectAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
 									WHERE university.topic_name = :topic_name GROUP BY season, year`
 
