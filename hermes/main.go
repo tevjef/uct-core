@@ -74,8 +74,8 @@ func main() {
 	go model.StartPprof(hconf.service.DebugSever(app.Name))
 
 	(&hermes{
-		app: app.Model(),
-		config: hconf,
+		app:      app.Model(),
+		config:   hconf,
 		redis:    redis.NewHelper(hconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()

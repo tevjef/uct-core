@@ -8,9 +8,9 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/try"
 	"net"
-	"github.com/pkg/errors"
 )
 
 type cunyForm url.Values
@@ -74,7 +74,7 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) (*goquery.Documen
 
 	//if len(formValues[subjectKey]) > 0 {
 	//	log.WithFields(log.Fields{"subject": formValues[subjectKey]}).Debugln("subject")
-//
+	//
 	//}
 	//log.WithFields(log.Fields{"action": formValues["ICAction"]}).Debugln("scrapeCourses")
 
@@ -93,7 +93,6 @@ func (cf *CunyFirstClient) Post(url string, values url.Values) (*goquery.Documen
 
 		return false, nil
 	}, &try.Options{try.ExponentialJitterBackoff, 5})
-
 
 	if doc, err := goquery.NewDocumentFromResponse(resp); err != nil {
 		log.WithError(err).Errorln("error reading response body")
@@ -124,7 +123,6 @@ func (cf *CunyFirstClient) Get(url string) (*goquery.Document, error) {
 
 		return false, nil
 	}, &try.Options{try.ExponentialJitterBackoff, 5})
-
 
 	if doc, err := goquery.NewDocumentFromResponse(resp); err != nil {
 		log.WithError(err).Errorln("error reading erpsonse body")
@@ -174,9 +172,8 @@ var (
 	selectAvailableSeats  = "SSR_CLS_DTL_WRK_AVAILABLE_SEATS"
 	selectWaitCap         = "SSR_CLS_DTL_WRK_WAIT_CAP"
 	selectWaitTotal       = "SSR_CLS_DTL_WRK_WAIT_TOT"
-	selectGridRow = ".PSLEVEL3GRIDROW"
-	selectSectionLink = "a.PSHYPERLINK"
-
+	selectGridRow         = ".PSLEVEL3GRIDROW"
+	selectSectionLink     = "a.PSHYPERLINK"
 )
 
 func parseDay(day string) string {
@@ -366,7 +363,6 @@ var cunyUniversityAbbr = []string{
 	"GRD",
 	"YRK",
 }
-
 
 func abbrToCunyUniversity(abbr string) CunyUniversity {
 	for i, val := range cunyUniversityAbbr {

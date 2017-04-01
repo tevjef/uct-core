@@ -12,7 +12,7 @@ func TestAddJitter(t *testing.T) {
 		interval := 1 * time.Minute
 
 		newOffset := addJitter(jitter, interval, rand.NewSource(1))
-		if newOffset < interval || newOffset > interval * 2 {
+		if newOffset < interval || newOffset > interval*2 {
 			t.Error("jitter is out of range")
 		}
 	})

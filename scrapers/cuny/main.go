@@ -16,13 +16,13 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/proxy"
+	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/try"
 )
 
 type cuny struct {
@@ -113,8 +113,8 @@ func (cuny *cuny) init() {
 		}
 
 		sr := &subjectScraper{
-			scraper: scraper,
-			url:     initalPage,
+			scraper:  scraper,
+			url:      initalPage,
 			semester: *sem,
 		}
 
@@ -198,11 +198,11 @@ func (cs *cunyScraper) run(subject *model.Subject) error {
 	}
 
 	cr := courseScraper{
-		scraper: scraper,
-		url: initalPage,
+		scraper:   scraper,
+		url:       initalPage,
 		subjectId: subject.Number,
-		full: cs.full,
-		semester: sr.semester}
+		full:      cs.full,
+		semester:  sr.semester}
 
 	doc, err := cr.scrapeCourses()
 	if err != nil {
@@ -228,9 +228,9 @@ type subjectScraper struct {
 func (sr *subjectScraper) scrapeSubjects() (*goquery.Document, error) {
 	defer func(start time.Time) {
 		log.WithFields(log.Fields{
-			"season": sr.semester.GetSeason(),
-			"year": sr.semester.GetYear(),
-			"elapsed":  time.Since(start).Seconds()}).
+			"season":  sr.semester.GetSeason(),
+			"year":    sr.semester.GetYear(),
+			"elapsed": time.Since(start).Seconds()}).
 			Debugln("scrape subjects")
 	}(time.Now())
 
@@ -252,7 +252,7 @@ func (sr *subjectScraper) parseSubjects(doc *goquery.Document) (subjects []*mode
 		s = strings.TrimSpace(s)
 
 		if s != "" && strings.Contains(s, "-") {
-			pair := strings.SplitN(s, "-",2)
+			pair := strings.SplitN(s, "-", 2)
 
 			if len(pair) != 2 {
 				log.Fatalln("unexpected subject number-name pair", s)
@@ -273,19 +273,18 @@ func (sr *subjectScraper) parseSubjects(doc *goquery.Document) (subjects []*mode
 
 type courseScraper struct {
 	scraper   *cunyScraper
-	semester model.Semester
+	semester  model.Semester
 	url       string
 	subjectId string
 	full      bool
-
 }
 
 func (cr *courseScraper) scrapeCourses() (*goquery.Document, error) {
 	defer func(start time.Time) {
 		log.WithFields(log.Fields{
 			"subject": cr.subjectId,
-			"season": cr.semester.GetSeason(),
-			"year": cr.semester.GetYear(),
+			"season":  cr.semester.GetSeason(),
+			"year":    cr.semester.GetYear(),
 			"elapsed": time.Since(start).Seconds()}).
 			Debugln("scrape courses")
 	}(time.Now())
@@ -349,7 +348,7 @@ func (cr *courseScraper) parseCourse(s *goquery.Selection) (course *model.Course
 	course.Number = namenum[0]
 	course.Name = namenum[1]
 
-	if course.Number == ""{
+	if course.Number == "" {
 		fmt.Print(s.Html())
 		log.Fatalln()
 	}

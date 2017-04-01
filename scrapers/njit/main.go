@@ -68,9 +68,9 @@ func main() {
 	go model.StartPprof(nconf.service.DebugSever(app.Name))
 
 	(&njit{
-		app: app.Model(),
+		app:    app.Model(),
 		config: nconf,
-		ctx: context.TODO(),
+		ctx:    context.TODO(),
 	}).init()
 }
 

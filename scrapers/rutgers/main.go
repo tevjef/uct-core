@@ -95,9 +95,9 @@ func main() {
 	go model.StartPprof(rconf.service.DebugSever(app.Name))
 
 	(&rutgers{
-		app: app.Model(),
+		app:    app.Model(),
 		config: rconf,
-		ctx: context.TODO(),
+		ctx:    context.TODO(),
 	}).init()
 }
 

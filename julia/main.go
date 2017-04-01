@@ -42,7 +42,7 @@ func init() {
 }
 
 func main() {
-	jconf :=  &juliaConfig{}
+	jconf := &juliaConfig{}
 
 	app := kingpin.New("julia", "An application that queue messages from the database")
 
@@ -80,8 +80,8 @@ func main() {
 	}
 
 	(&julia{
-		app: app.Model(),
-		config: jconf,
+		app:      app.Model(),
+		config:   jconf,
 		redis:    redis.NewHelper(jconf.service, app.Name),
 		notifier: notifier.NewNotifier(listener),
 		process: &Process{
