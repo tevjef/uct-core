@@ -25,17 +25,35 @@ func SelectUniversity(ctx context.Context, topicName string) (university model.U
 	if err = Get(ctx, SelectUniversityQuery, &university, m); err != nil {
 		return
 	}
-	if err = GetAvailableSemesters(ctx, topicName, &university); err != nil {
-		return
-	}
-	if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
-		return
-	}
 
-	if university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0); err != nil {
-		return
-	}
+	var wg sync.WaitGroup
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err = GetAvailableSemesters(ctx, topicName, &university); err != nil {
+			return
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
+			return
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0); err != nil {
+			return
+		}
+	}()
+
+	wg.Wait()
+	
 	return
 }
 
