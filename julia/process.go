@@ -3,10 +3,9 @@ package main
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/julia/rutgers"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 type Processor interface {
@@ -26,12 +25,12 @@ func (p *Process) Run(fn DispatchFunc) {
 		select {
 		case uctNotification := <-rutgersProcessor.Done():
 			log.WithFields(log.Fields{
-				"topic": uctNotification.TopicName,
+				"topic":           uctNotification.TopicName,
 				"university_name": uctNotification.University.TopicName}).Infoln("processor_out")
 			go func() { p.out <- uctNotification }()
 		case uctNotification := <-p.in:
 			log.WithFields(log.Fields{
-				"topic": uctNotification.TopicName,
+				"topic":           uctNotification.TopicName,
 				"university_name": uctNotification.University.TopicName}).Infoln("processor_in")
 			if rutgersProcessor.IsMatch(uctNotification.TopicName) {
 				rutgersProcessor.In(uctNotification)

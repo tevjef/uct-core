@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/tevjef/uct-core/common/model"
 )
 
 func TestRequestSubjects(t *testing.T) {

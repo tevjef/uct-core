@@ -6,11 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tevjef/uct-core/common/redis"
-	"github.com/tevjef/uct-core/common/redis/lock"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/redis/lock"
 	"golang.org/x/net/context"
 )
 

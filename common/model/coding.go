@@ -15,7 +15,7 @@ func MarshalMessage(format string, m University) (*bytes.Reader, error) {
 	var out []byte
 	var err error
 	if format == Json {
-		out, err = json.Marshal(m)
+		out, err = json.MarshalIndent(m, "", "  ")
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to encode message")
 		}

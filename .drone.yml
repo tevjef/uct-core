@@ -37,22 +37,16 @@ pipeline:
       - cp /go/bin/spike docker/spike/
       - cp /go/bin/hermes docker/hermes/
       - cp /go/bin/julia docker/julia/
-      - cp /go/bin/rutgers docker/rutgers-nk/
-      - cp /go/bin/rutgers docker/rutgers-cm/
-      - cp /go/bin/rutgers docker/rutgers-nb/
+      - cp /go/bin/rutgers docker/rutgers/
       - cp /go/bin/njit docker/njit/
       - cp /go/bin/jet docker/njit/
-      - cp /go/bin/jet docker/rutgers-nk/
-      - cp /go/bin/jet docker/rutgers-cm/
-      - cp /go/bin/jet docker/rutgers-nb/
+      - cp /go/bin/jet docker/rutgers/
 
       - cp common/conf/config.toml docker/ein/
       - cp common/conf/config.toml docker/spike/
       - cp common/conf/config.toml docker/hermes/
       - cp common/conf/config.toml docker/julia/
-      - cp common/conf/config.toml docker/rutgers-nk/
-      - cp common/conf/config.toml docker/rutgers-cm/
-      - cp common/conf/config.toml docker/rutgers-nb/
+      - cp common/conf/config.toml docker/rutgers/
       - cp common/conf/config.toml docker/njit/
     when:
       branch: [master, staging]
@@ -67,9 +61,7 @@ pipeline:
       - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
       - docker build -t tevjef/uct-core:julia -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:rutgers -f docker/rutgers-cm/Dockerfile docker/rutgers
       - docker build -t tevjef/uct-core:njit -f docker/njit/Dockerfile docker/njit
       - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
@@ -82,9 +74,7 @@ pipeline:
       - docker push tevjef/uct-core:spike
       - docker push tevjef/uct-core:hermes
       - docker push tevjef/uct-core:julia
-      - docker push tevjef/uct-core:rutgers-cm
-      - docker push tevjef/uct-core:rutgers-nb
-      - docker push tevjef/uct-core:rutgers-nk
+      - docker push tevjef/uct-core:rutgers
       - docker push tevjef/uct-core:njit
       - docker push tevjef/uct-core:fluentd
       - docker push tevjef/uct-core:fluentd-gen
@@ -107,9 +97,7 @@ pipeline:
       - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
       - docker build -t tevjef/uct-core:julia-staging -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
+      - docker build -t tevjef/uct-core:rutgers-staging -f docker/rutgers/Dockerfile docker/rutgers
       - docker build -t tevjef/uct-core:njit-staging -f docker/njit/Dockerfile docker/njit
       - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
       - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
@@ -122,9 +110,7 @@ pipeline:
       - docker push tevjef/uct-core:spike-staging
       - docker push tevjef/uct-core:hermes-staging
       - docker push tevjef/uct-core:julia-staging
-      - docker push tevjef/uct-core:rutgers-cm-staging
-      - docker push tevjef/uct-core:rutgers-nb-staging
-      - docker push tevjef/uct-core:rutgers-nk-staging
+      - docker push tevjef/uct-core:rutgers-staging
       - docker push tevjef/uct-core:njit-staging
       - docker push tevjef/uct-core:fluentd-staging
       - docker push tevjef/uct-core:fluentd-gen-staging

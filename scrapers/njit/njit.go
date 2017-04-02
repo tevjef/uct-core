@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
-
 	"github.com/Sirupsen/logrus"
+	"github.com/tevjef/uct-core/common/model"
 )
 
 type NSemesters struct {

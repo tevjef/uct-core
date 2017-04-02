@@ -1,9 +1,8 @@
 package middleware
 
 import (
-	"github.com/tevjef/uct-core/common/model"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-core/common/model"
 )
 
 type ErrNoRows struct {

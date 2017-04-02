@@ -5,15 +5,14 @@ import (
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/notification"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/julia/notifier"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -43,19 +42,26 @@ func init() {
 }
 
 func main() {
+	jconf :=  &juliaConfig{}
+
 	app := kingpin.New("julia", "An application that queue messages from the database")
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("JULIA_CONFIG").
+		File()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	jconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
 	// Open connection to postgresql
 	log.Infoln("Start monitoring PostgreSQL...")
-	listener := pq.NewListener(config.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+	listener := pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.WithError(err).Fatalln("failure in listener")
 		}
@@ -67,10 +73,8 @@ func main() {
 
 	(&julia{
 		app: app.Model(),
-		config: &juliaConfig{
-			service: config,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		config: jconf,
+		redis:    redis.NewHelper(jconf.service, app.Name),
 		notifier: notifier.NewNotifier(listener),
 		process: &Process{
 			in:  make(chan model.UCTNotification),

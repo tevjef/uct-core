@@ -3,15 +3,16 @@ package conf
 import (
 	"fmt"
 	"net"
-	"os"
-
 	_ "net/http/pprof"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
+
+var WorkingDir = os.Getenv("GOPATH") + "/src/github.com/tevjef/uct-core/scrapers/cuny/"
 
 type pprof map[string]server
 

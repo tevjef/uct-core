@@ -27,19 +27,19 @@
 */
 package model
 
-import proto "github.com/gogo/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import "github.com/gogo/protobuf/proto"
+import "fmt"
+import "math"
 
-import bytes "bytes"
+import "bytes"
 
-import strings "strings"
+import "strings"
 import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-import sort "sort"
-import strconv "strconv"
-import reflect "reflect"
+import "sort"
+import "strconv"
+import "reflect"
 
-import io "io"
+import "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

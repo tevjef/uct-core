@@ -4,11 +4,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/julia/notifier"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/julia/notifier"
 )
 
 func Test_waitForNotification(t *testing.T) {
