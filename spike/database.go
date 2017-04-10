@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/net/context"
 	"sync"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 type Data struct {
@@ -22,38 +23,14 @@ type Data struct {
 func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
 	m := map[string]interface{}{"topic_name": topicName}
-	if err = Get(ctx, SelectUniversityQuery, &university, m); err != nil {
+	d := Data{}
+	if err = Get(ctx, SelectUniversityCTE, &d, m); err != nil {
 		return
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err = GetAvailableSemesters(ctx, topicName, &university); err != nil {
-			return
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
-			return
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0); err != nil {
-			return
-		}
-	}()
-
-	wg.Wait()
-	
+	if err = ffjson.Unmarshal([]byte(d.Data), &university); err != nil {
+		return
+	}
 	return
 }
 
@@ -271,6 +248,7 @@ var queries = []string{
 	CourseMetadataQuery,
 	SectionMetadataQuery,
 	MeetingMetadataQuery,
+	SelectUniversityCTE,
 }
 
 const (
@@ -306,4 +284,60 @@ const (
 	CourseMetadataQuery     = `SELECT title, content FROM metadata WHERE course_id = :course_id ORDER BY id`
 	SectionMetadataQuery    = `SELECT title, content FROM metadata WHERE section_id = :section_id ORDER BY id`
 	MeetingMetadataQuery    = `SELECT title, content FROM metadata WHERE meeting_id = :meeting_id ORDER BY id`
+
+	SelectUniversityCTE = `WITH resolved_semesters AS (
+    SELECT json_build_object(
+        'current', json_build_object(
+            'year', cast(s.current_year as INT),
+            'season', s.current_season
+        ),
+        'next', json_build_object(
+            'year', cast(s.next_year as INT),
+            'season', s.next_season
+        ),
+        'last', json_build_object(
+            'year', cast(s.last_year as INT),
+            'season', s.last_season
+        )
+    )
+    FROM semester s
+      JOIN university ON university.id = s.university_id
+    WHERE university.topic_name = :topic_name
+), metadata AS (
+    SELECT json_build_array(json_build_object(
+        'title', m.title,
+        'content', m.content))
+    FROM metadata m
+      LEFT JOIN university ON university.id = m.university_id
+    WHERE university.topic_name = :topic_name
+), available_semesters AS (
+    SELECT array_to_json(array_agg(rawSemesters))
+    FROM (SELECT
+            season,
+            cast(year as INT)
+          FROM subject s
+            JOIN university ON university.id = s.university_id
+          WHERE university.topic_name = :topic_name
+          GROUP BY season, year) rawSemesters
+)
+SELECT json_build_object(
+    'name', u.name,
+    'abbr', u.abbr,
+    'home_page', u.home_page,
+    'registration_page', u.registration_page,
+    'main_color', u.main_color,
+    'accent_color', u.accent_color,
+    'topic_name', u.topic_name,
+    'topic_id', u.topic_id,
+    'available_semesters', (SELECT *
+                           FROM available_semesters),
+    'resolved_semesters', (SELECT *
+                           FROM resolved_semesters),
+    'metadata', (SELECT *
+                 FROM metadata)
+) as data
+FROM university u
+WHERE u.topic_name = :topic_name
+GROUP BY u.id;
+`
 )

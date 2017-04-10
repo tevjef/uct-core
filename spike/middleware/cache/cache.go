@@ -142,6 +142,7 @@ func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc
 		c.Header(policy.CacheControl())
 		if policy.ServerMaxAge == 0 {
 			handle(c)
+			return
 		}
 
 		key := urlEscape(PageCachePrefix, c.Request.URL.RequestURI())

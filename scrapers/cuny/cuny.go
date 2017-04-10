@@ -122,7 +122,7 @@ func (cf *CunyFirstClient) Get(url string) (*goquery.Document, error) {
 		}
 
 		return false, nil
-	}, &try.Options{try.ExponentialJitterBackoff, 5})
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
 
 	if doc, err := goquery.NewDocumentFromResponse(resp); err != nil {
 		log.WithError(err).Errorln("error reading erpsonse body")
