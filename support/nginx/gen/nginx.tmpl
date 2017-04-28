@@ -221,6 +221,13 @@ server {
                 include /etc/nginx/json.d/default_location;
                 {{ end }}
 	}
+
+	location ^~ /.well-known/acme-challenge/ {
+        allow all;
+        root /usr/share/nginx/html;
+        try_files $uri =404;
+        break;
+    }
 }
 
 {{ if (and (not $is_https) (exists "/etc/nginx/certs/default.crt") (exists "/etc/nginx/certs/default.key")) }}
