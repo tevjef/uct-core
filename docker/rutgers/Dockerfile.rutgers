@@ -7,12 +7,9 @@ ENV APP_NAME="rutgers"
 
 RUN apk --no-cache add ca-certificates openssl git && \
     update-ca-certificates && \
-    wget https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz && \
-    tar -xzf glide-v0.12.3-linux-amd64.tar.gz && \
-    mv linux-amd64/glide /usr/bin && \
+    go get -u github.com/golang/dep/cmd/dep && \
     cd /go/src/uct && \
-    glide install && \
-    rm -rf *.tar.gz* && \
+    dep ensure && \
     apk del git openssl
 
 RUN go install -v ${APP_PACKAGE}
