@@ -182,12 +182,9 @@ func (jet *jet) entryPoint(result chan model.University) {
 	var school model.University
 
 	cmd := exec.Command(jet.config.scraperCommand, parseArgs(os.Args)...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
+	cmd.Stderr = os.Stdout
 
-	stderr, err := cmd.StderrPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,9 +192,6 @@ func (jet *jet) entryPoint(result chan model.University) {
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
-
-	// DATA RACE!!!
-	go io.Copy(os.Stderr, stderr)
 
 	if err = model.UnmarshalMessage(jet.config.inputFormat, stdout, &school); err != nil {
 		school = model.University{}
