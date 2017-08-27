@@ -1,20 +1,21 @@
 FROM golang:1.9-alpine
 
-COPY . /go/src/uct
+COPY . /go/src/github.com/tevjef/uct-core
+WORKDIR /go/src/github.com/tevjef/uct-core
 
-ENV APP_PACKAGE="uct/scrapers/rutgers"
-ENV APP_NAME="rutgers"
+ENV APP_PACKAGE="github.com/tevjef/uct-core/scrapers/rutgers"
 
 RUN apk --no-cache add ca-certificates openssl git && \
     update-ca-certificates && \
     go get -u github.com/golang/dep/cmd/dep && \
-    cd /go/src/uct && \
+    cd /go/src/github.com/tevjef/uct-core && \
     dep ensure && \
     apk del git openssl
 
 RUN go install -v ${APP_PACKAGE}
+RUN go install -v "github.com/tevjef/uct-core/jet"
 
-WORKDIR /go/src/uct
+
 EXPOSE 13302
 
-ENTRYPOINT ["rutgers", "--daemon", "2m", "--latest", "-f" , "protobuf", "-c" , "/go/src/uct/common/conf/config.toml"]
+CMD ["jet", "--input-format", "protobuf", "--output-format", "protobuf", "--daemon", "1m", "-c", "/go/src/github.com/tevjef/uct-core/common/conf/config.toml", "--scraper", "rutgers", "-c", "/uct/config.toml", "--latest"]
