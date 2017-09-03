@@ -12,8 +12,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/common/conf"
+	_ "github.com/tevjef/uct-core/common/metrics"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/common/redis/harmony"
@@ -22,10 +25,17 @@ import (
 )
 
 type jet struct {
-	app    *kingpin.ApplicationModel
-	config *jetConfig
-	redis  *redis.Helper
-	ctx    context.Context
+	app     *kingpin.ApplicationModel
+	config  *jetConfig
+	redis   *redis.Helper
+	metrics metrics
+	ctx     context.Context
+}
+
+type metrics struct {
+	scraperBytes    *prometheus.GaugeVec
+	scraperDuration *prometheus.GaugeVec
+	scrapeCount     *prometheus.CounterVec
 }
 
 type jetConfig struct {
@@ -91,10 +101,34 @@ func main() {
 	// Start profiling
 	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
+	appMetrics := metrics{
+		scraperBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "scraper_payload_bytes",
+			Help: "Bytes scraped by the scraper",
+		}, []string{"scraper_name"}),
+
+		scraperDuration: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "scraper_duration_seconds",
+			Help: "Time taken for the scraper to scrape.",
+		}, []string{"scraper_name"}),
+
+		scrapeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "scraper_trigger_count",
+			Help: "Times the scraper has been triggered",
+		}, []string{"scraper_name"}),
+	}
+
+	prometheus.MustRegister(
+		appMetrics.scrapeCount,
+		appMetrics.scraperBytes,
+		appMetrics.scraperDuration,
+	)
+
 	(&jet{
-		app:    app.Model(),
-		config: &jconf,
-		redis:  redis.NewHelper(jconf.service, app.Name),
+		app:     app.Model(),
+		config:  &jconf,
+		redis:   redis.NewHelper(jconf.service, app.Name),
+		metrics: appMetrics,
 	}).init()
 }
 
@@ -160,6 +194,7 @@ func (jet *jet) pushToRedis(reader *bytes.Reader) {
 	if data, err := ioutil.ReadAll(reader); err != nil {
 		log.WithError(err).Fatalln("failed to read all data")
 	} else {
+		jet.metrics.scraperBytes.WithLabelValues(jet.app.Name).Set(float64(len(data)))
 		log.WithFields(log.Fields{"scraper_name": jet.app.Name, "bytes": len(data), "hash": hash(data)}).Info()
 		if err := jet.redis.Client.Set(jet.redis.NameSpace+":data:latest", data, 0).Err(); err != nil {
 			log.Fatalln(errors.New("failed to connect to redis server"))
@@ -179,6 +214,7 @@ func hash(s []byte) string {
 
 func (jet *jet) entryPoint(result chan model.University) {
 	starTime := time.Now()
+	jet.metrics.scrapeCount.WithLabelValues(jet.app.Name).Inc()
 
 	var school model.University
 
@@ -206,6 +242,7 @@ func (jet *jet) entryPoint(result chan model.University) {
 		log.Info("no school data returned:", err)
 		return
 	} else {
+		jet.metrics.scraperDuration.WithLabelValues(jet.app.Name).Set(time.Since(starTime).Seconds())
 		log.WithFields(log.Fields{"scraper_name": jet.app.Name, "elapsed": time.Since(starTime).Seconds()}).Info()
 		result <- school
 	}

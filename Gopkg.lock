@@ -37,6 +37,12 @@
   revision = "349dd0209470eabd9514242c688c403c0926d266"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "6d212800a42e8ab5c146b8ace3490ee17e5225f9"
@@ -51,6 +57,12 @@
   name = "github.com/gogo/protobuf"
   packages = ["jsonpb","proto"]
   revision = "909568be09de550ed094403c2bf8a261b5bb730a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  revision = "17ce1425424ab154092bbb43af630bd647f3bb0d"
 
 [[projects]]
   name = "github.com/jmoiron/sqlx"
@@ -93,6 +105,12 @@
   revision = "f4550b5399387339df5ce4c3f88c1ef85333bdd5"
 
 [[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/pborman/uuid"
   packages = ["."]
   revision = "5007efa264d92316c43112bc573e754bc889b7b1"
@@ -111,6 +129,30 @@
   name = "github.com/pquerna/ffjson"
   packages = ["ffjson","fflib/v1","fflib/v1/internal"]
   revision = "c24ab9baf274473906fbdba5fccb594aec4b9ff1"
+
+[[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = ["prometheus","prometheus/promhttp"]
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "6f3806018612930941127f2a7c6c453ba2c527d2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = ["expfmt","internal/bitbucket.org/ww/goautoneg","model"]
+  revision = "bc8b88226a1210b016e9993b1d75f858c9c8f778"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [".","xfs"]
+  revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
   branch = "master"
@@ -170,6 +212,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5619e7db183bb8472cefb93811c319e47da42ebee211da36efd84741f279719"
+  inputs-digest = "93116de8d26b4af10b02e9cfe9b6870c4265519723cbc1ecc9201a49b644b88e"
   solver-name = "gps-cdcl"
   solver-version = 1

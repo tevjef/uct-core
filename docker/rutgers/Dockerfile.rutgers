@@ -17,5 +17,5 @@ RUN go install -v "github.com/tevjef/uct-core/jet"
 
 
 EXPOSE 13302
-
+# jet --input-format protobuf --output-format protobuf --daemon 1m -c config.toml --scraper rutgers -c config.toml --latest
 CMD ["jet", "--input-format", "protobuf", "--output-format", "protobuf", "--daemon", "1m", "-c", "/go/src/github.com/tevjef/uct-core/common/conf/config.toml", "--scraper", "rutgers", "-c", "/uct/config.toml", "--latest"]
