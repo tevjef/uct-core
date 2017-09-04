@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
+	_ "github.com/tevjef/uct-core/common/metrics"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/spike/middleware"
