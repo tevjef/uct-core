@@ -21,12 +21,12 @@ import (
 
 var (
 	notificationsIn = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "julia_notifications_count",
+		Name: "julia_notifications_in_count",
 		Help: "Number notifications received by Julia",
 	}, []string{"university_name", "status"})
 
 	notificationsOut = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "julia_notifications_count",
+		Name: "julia_notifications_out_count",
 		Help: "Number notifications processed by Julia",
 	}, []string{"university_name", "status"})
 )

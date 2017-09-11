@@ -13,12 +13,12 @@ import (
 
 var (
 	httpResponsesLatency = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "http_response_latency",
+		Name: "spike_http_response_latency",
 		Help: "Measure http response latencies",
 	}, []string{"status", "method", "handler"})
 
 	httpRequestTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_request_total_count",
+		Name: "spike_http_request_total_count",
 		Help: "Counts request total",
 	}, []string{"status", "method", "handler"})
 )
