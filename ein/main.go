@@ -68,6 +68,7 @@ type einConfig struct {
 }
 
 func init() {
+	log.SetOutput(os.Stdout)	
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 }
