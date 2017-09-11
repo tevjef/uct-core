@@ -8,13 +8,27 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tevjef/uct-core/common/conf"
+	_ "github.com/tevjef/uct-core/common/metrics"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/notification"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/julia/notifier"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+)
+
+var (
+	notificationsIn = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "julia_notifications_count",
+		Help: "Number notifications received by Julia",
+	}, []string{"university_name", "status"})
+
+	notificationsOut = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "julia_notifications_count",
+		Help: "Number notifications processed by Julia",
+	}, []string{"university_name", "status"})
 )
 
 type julia struct {
@@ -40,6 +54,8 @@ func init() {
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
+
+	prometheus.MustRegister(notificationsIn, notificationsOut)
 }
 
 func main() {
@@ -105,6 +121,11 @@ func (julia *julia) init() {
 }
 
 func (julia *julia) dispatch(uctNotification model.UCTNotification) {
+	label := prometheus.Labels{
+		"university_name": uctNotification.University.TopicName,
+		"status":          uctNotification.Status,
+	}
+	notificationsOut.With(label).Inc()
 	log.WithFields(log.Fields{"topic": uctNotification.TopicName, "university_name": uctNotification.University.TopicName}).Infoln("queueing")
 	if notificationBytes, err := uctNotification.Marshal(); err != nil {
 		log.WithError(err).Fatalln("failed to marshall notification")
@@ -132,6 +153,13 @@ func waitForNotification(ctx context.Context, l notifier.Notifier, onNotify func
 					log.WithError(err).Errorln("failed to unmarsahll notification")
 					return
 				}
+
+				label := prometheus.Labels{
+					"university_name": uctNotification.University.TopicName,
+					"status":          uctNotification.Status,
+				}
+
+				notificationsIn.With(label).Inc()
 
 				onNotify(&uctNotification)
 			}()

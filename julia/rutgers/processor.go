@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/julia/rutgers/topic"
 	"golang.org/x/net/context"
@@ -15,6 +16,22 @@ type RutgersProcessor struct {
 	out        chan model.UCTNotification
 	expiration time.Duration
 	routines   *Routines
+}
+
+var (
+	waitingRoutines = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "julia_waiting_routines_count",
+		Help: "Number notifications being held in a waiting routine",
+	}, []string{"university_name", "status"})
+
+	routineElapsed = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "julia_routine_elapsed_second",
+		Help: "Time taken for routines to complete",
+	}, []string{"university_name", "status"})
+)
+
+func init() {
+	prometheus.MustRegister(waitingRoutines, routineElapsed)
 }
 
 func New(expiration time.Duration) *RutgersProcessor {
@@ -53,6 +70,14 @@ func (rp *RutgersProcessor) process(ctx context.Context) {
 			// When it starts and completes, as well as any messages sent out of the routine
 			go func() {
 				defer func(start time.Time) {
+					label := prometheus.Labels{
+						"university_name": uctNotification.University.TopicName,
+						"status":          uctNotification.Status,
+					}
+
+					waitingRoutines.With(label).Set(float64(rp.routines.Size()))
+					routineElapsed.With(label).Observe(float64(time.Since(start).Seconds()))
+
 					log.WithFields(log.Fields{
 						"routines_count":  rp.routines.Size(),
 						"routine_elapsed": time.Since(start).Seconds(),
