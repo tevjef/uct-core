@@ -1,0 +1,34 @@
+kind: Service
+metadata:
+  namespace: staging
+  name: julia
+  labels:
+    app: julia
+spec:
+  selector:
+    app: julia
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: julia
+  labels:
+    metrics: julia
+spec:
+  jobLabel: julia
+  selector:
+    matchLabels:
+      app: julia
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 15s
+    honorLabels: true
