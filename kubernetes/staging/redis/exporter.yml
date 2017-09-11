@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: redis-exporter
+  labels:
+    app: redis-exporter
+spec:
+  ports:
+  - port: 9121
+    protocol: TCP
+    targetPort: redis-exporter-port
+    name: redis-exporter-port
+  selector:
+    app: redis-exporter
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  name: redis-exporter
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-exporter
+    spec:
+      containers:
+      - image: oliver006/redis_exporter
+        name: redis-exporter
+        ports: 
+        - containerPort: 9121
+          name: redis-exporter-port
+        env:
+         - name: REDIS_ADDR
+           value: "redis://redis:6379"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: redis-exporter
+  labels:
+    metrics: redis-exporter
+spec:
+  jobLabel: redis-exporter
+  selector:
+    matchLabels:
+      app: redis-exporter
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: redis-exporter-port
+    interval: 15s
+    honorLabels: true

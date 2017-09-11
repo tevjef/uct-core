@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: spike
+  labels:
+    metrics: spike
+spec:
+  jobLabel: spike
+  selector:
+    matchLabels:
+      app: spike
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 15s
+    honorLabels: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: spike
+  labels:
+    app: spike
+spec:
+  selector:
+    app: spike
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics

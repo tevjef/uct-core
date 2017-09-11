@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: cuny-qcc
+  labels:
+    app: cuny-qcc
+spec:
+  selector:
+    app: cuny-qcc
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  labels:
+    app: cuny-qcc
+  name: cuny-qcc
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cuny-qcc
+    spec:
+      containers:
+        - name: cuny-qcc
+          image: docker.io/tevjef/uct-core:cuny-staging
+          ports:
+          - containerPort: 13000
+            name: uct-metrics
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: CUNY_UNIVERSITY
+            value: QCC
+          - name: JET_DAEMON
+            value: 10m
+          - name: JET_DAEMON_JITTER
+            value: "50"
+          - name: JET_SCRAPER_NAME
+            value: cuny-qcc
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: cuny-qcc
+  labels:
+    metrics: cuny-qcc
+spec:
+  jobLabel: cuny-qcc
+  selector:
+    matchLabels:
+      app: cuny-qcc
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 2m
+    honorLabels: true

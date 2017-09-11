@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: cuny-htr
+  labels:
+    app: cuny-htr
+spec:
+  selector:
+    app: cuny-htr
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  labels:
+    app: cuny-htr
+  name: cuny-htr
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cuny-htr
+    spec:
+      containers:
+        - name: cuny-htr
+          image: docker.io/tevjef/uct-core:cuny-staging
+          ports:
+          - containerPort: 13000
+            name: uct-metrics
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: CUNY_UNIVERSITY
+            value: HTR
+          - name: JET_DAEMON
+            value: 10m
+          - name: JET_DAEMON_JITTER
+            value: "50"
+          - name: JET_SCRAPER_NAME
+            value: cuny-htr
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: cuny-htr
+  labels:
+    metrics: cuny-htr
+spec:
+  jobLabel: cuny-htr
+  selector:
+    matchLabels:
+      app: cuny-htr
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 2m
+    honorLabels: true

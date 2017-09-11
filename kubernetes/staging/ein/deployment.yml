@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ein
+  name: ein
+  namespace: staging
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ein
+    spec:
+      containers:
+      - image: tevjef/uct-core:ein-staging
+        name: ein
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 13000
+          name: uct-metrics
+          protocol: TCP
+        env:
+        - name: POSTGRES_HOST
+          value: postgresql
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: pg-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-cred
+              key: password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: pg-cred
+              key: database-name

@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: spike-http
+spec:
+  type: NodePort
+  ports:
+  - port: 9876
+    protocol: "TCP"
+    targetPort: 9876
+    name: spike-port
+  selector:
+    app: spike
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: spike-http
+spec:
+  type: NodePort
+  ports:
+  - port: 9876
+    protocol: "TCP"
+    targetPort: 9876
+    name: spike-port
+  selector:
+    app: spike
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  name: spike
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: spike
+    spec:
+      containers:
+        - name: spike
+          image: tevjef/uct-core:spike-staging
+          imagePullPolicy: "Always"
+          ports:
+          - containerPort: 13000
+            name: uct-metrics
+            protocol: TCP
+          - containerPort: 9876
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /v1/universities
+              port: 9876
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: POSTGRES_HOST
+              value: postgresql
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: database-name

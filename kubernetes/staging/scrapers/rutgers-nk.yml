@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: rutgers-nk
+  labels:
+    app: rutgers-nk
+spec:
+  selector:
+    app: rutgers-nk
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  labels:
+    app: rutgers-nk
+  name: rutgers-nk
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rutgers-nk
+    spec:
+      containers:
+        - name: rutgers-nk
+          image: docker.io/tevjef/uct-core:rutgers-staging
+          ports:
+          - containerPort: 13000
+            name: uct-metrics
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: RUTGERS_CAMPUS
+            value: NK
+          - name: JET_SCRAPER_NAME
+            value: rutgers-nk
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: rutgers-nk
+  labels:
+    metrics: rutgers-nk
+spec:
+  jobLabel: rutgers-nk
+  selector:
+    matchLabels:
+      app: rutgers-nk
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 15s
+    honorLabels: true

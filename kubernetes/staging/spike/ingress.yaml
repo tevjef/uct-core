@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: spike-ingress
+  namespace: staging
+  labels:
+    stable.k8s.psg.io/kcm.class: "default"
+  annotations:
+    stable.k8s.psg.io/kcm.provider: "namecheap"
+    stable.k8s.psg.io/kcm.email: "tev.jeffrey@gmail.com"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  tls:
+    - hosts:
+      - spike.tevinjeffrey.me
+      secretName: spike-tls
+  rules:
+  - host: spike.tevinjeffrey.me
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: spike-http
+          servicePort: spike-port
