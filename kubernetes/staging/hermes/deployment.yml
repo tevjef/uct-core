@@ -25,6 +25,8 @@ spec:
         env:
         - name: POSTGRES_HOST
           value: postgresql
+        - name: HERMES_ENABLE_FCM
+          value: "false"
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
@@ -40,3 +42,8 @@ spec:
             secretKeyRef:
               name: pg-cred
               key: database-name
+        - name: FCM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hermes-cred
+              key: fcm-key
