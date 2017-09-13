@@ -131,7 +131,7 @@ func (c Config) DebugSever(appName string) net.Listener {
 	listener, err := net.Listen("tcp", ":13100")
 	if err != nil {
 		listener, _ = net.Listen("tcp", ":0")
-		fmt.Println("pprof on port...", listener.Addr().(*net.TCPAddr).Port)
+		log.Println("pprof on port...", listener.Addr().(*net.TCPAddr).Port)
 	}
 
 	return listener
