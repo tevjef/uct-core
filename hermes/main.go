@@ -73,7 +73,7 @@ func main() {
 	app.Flag("dry-run", "enable dry-run").
 		Short('d').
 		Default("true").
-		Envar("HERMES_ENABLE_FCM").
+		Envar("HERMES_DRY_RUN").
 		BoolVar(&hconf.dryRun)
 
 	configFile := app.Flag("config", "configuration file for the application").
@@ -87,6 +87,8 @@ func main() {
 	hconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	if hconf.dryRun {
+		log.Infoln("Enabling FCM in dry run mode")
+	} else {
 		log.Infoln("Enabling FCM in production mode")
 	}
 
