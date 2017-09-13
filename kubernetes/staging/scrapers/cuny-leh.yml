@@ -32,6 +32,8 @@ spec:
         - name: cuny-leh
           image: docker.io/tevjef/uct-core:cuny-staging
           ports:
+          - containerPort: 13100
+            name: pprof
           - containerPort: 13000
             name: uct-metrics
             protocol: TCP

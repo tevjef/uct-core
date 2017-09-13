@@ -12,47 +12,6 @@ api_key = ""
 [spike]
 redis_db = 1
 
-[pprof]
-    [pprof.rutgers-nk]
-    host = "0.0.0.0:13301"
-    enabled = true
-
-    [pprof.rutgers-cm]
-    host = "0.0.0.0:13302"
-    enabled = true
-
-    [pprof.rutgers-nb]
-    host = "0.0.0.0:13303"
-    enabled = true
-
-    [pprof.cuny-nyt]
-    host = "0.0.0.0:13304"
-    enabled = true
-
-    [pprof.cuny-htr]
-    host = "0.0.0.0:13304"
-    enabled = true
-
-    [pprof.njit]
-    host = "0.0.0.0:13304"
-    enabled = true
-
-    [pprof.spike]
-    host = "0.0.0.0:13400"
-    enabled = true
-
-    [pprof.hermes]
-    host = "0.0.0.0:13200"
-    enabled = true
-
-    [pprof.ein]
-    host = "0.0.0.0:13100"
-    enabled = true
-
-    [pprof.julia]
-    host = "0.0.0.0:13201"
-    enabled = true
-
 [influxdb]
 host = "influxdb"
 user = ""

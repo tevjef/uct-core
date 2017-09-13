@@ -14,13 +14,10 @@ import (
 
 var WorkingDir = os.Getenv("GOPATH") + "/src/github.com/tevjef/uct-core/scrapers/cuny/"
 
-type pprof map[string]server
-
 type Config struct {
 	AppName  string
 	Postgres Postgres `toml:"postgres"`
 	Redis    Redis    `toml:"redis"`
-	Pprof    pprof    `toml:"pprof"`
 	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
 	Julia    julia    `toml:"julia"`
@@ -65,10 +62,6 @@ type InfluxDb struct {
 	Port     string `toml:"port" envconfig:"INFLUXDB_PORT_8086_TCP_PORT"`
 	Host     string `toml:"host" envconfig:"INFLUXDB_PORT_8086_TCP_ADDR"`
 	Password string `toml:"password" envconfig:"INFLUXDB_ADMIN_PASSWORD"`
-}
-
-func (pprof pprof) Get(key string) server {
-	return pprof[key]
 }
 
 func init() {
@@ -134,14 +127,14 @@ func bindEnv(defValue string, env string) string {
 	}
 }
 
-func (c Config) DebugSever(appName string) *net.TCPAddr {
-	value := c.Pprof[appName].Host
-	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
-		log.Panicf("'%s' is not a valid TCP address: %s", value, err)
-		return nil
-	} else {
-		return addr
+func (c Config) DebugSever(appName string) net.Listener {
+	listener, err := net.Listen("tcp", ":13100")
+	if err != nil {
+		listener, _ = net.Listen("tcp", ":0")
+		fmt.Println("pprof on port...", listener.Addr().(*net.TCPAddr).Port)
 	}
+
+	return listener
 }
 
 func (c Config) DatabaseConfig(appName string) string {

@@ -12,10 +12,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - spike.tevinjeffrey.me
-      secretName: spike-tls
+      - api.staging.coursetrakr.io
+      secretName: api-staging-tls
   rules:
-  - host: spike.tevinjeffrey.me
+  - host: api.staging.coursetrakr.io
     http:
       paths:
       - path: /*

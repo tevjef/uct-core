@@ -33,6 +33,8 @@ spec:
           image: docker.io/tevjef/uct-core:rutgers-staging
           imagePullPolicy: Always
           ports:
+          - containerPort: 13100
+            name: pprof
           - containerPort: 13000
             name: uct-metrics
             protocol: TCP

@@ -16,9 +16,8 @@ func TimeTrack(start time.Time, name string) {
 	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debug("")
 }
 
-func StartPprof(host *net.TCPAddr) {
-	log.Info("starting debug server on...", (*host).String())
-	log.Info(http.ListenAndServe((*host).String(), nil))
+func StartPprof(listener net.Listener) {
+	log.Info(http.Serve(listener, nil))
 }
 
 func OpenPostgres(connection string) (database *sqlx.DB, err error) {

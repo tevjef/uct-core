@@ -44,6 +44,8 @@ spec:
           image: tevjef/uct-core:spike-staging
           imagePullPolicy: "Always"
           ports:
+          - containerPort: 13100
+            name: pprof
           - containerPort: 13000
             name: uct-metrics
             protocol: TCP
@@ -51,7 +53,7 @@ spec:
             protocol: TCP
           readinessProbe:
             httpGet:
-              path: /v1/universities
+              path: /v2/universities
               port: 9876
             initialDelaySeconds: 5
             periodSeconds: 5
