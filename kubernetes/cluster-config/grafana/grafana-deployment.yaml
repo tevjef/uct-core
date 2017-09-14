@@ -12,8 +12,13 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: grafana/grafana:4.4.1
+        image: grafana/grafana:4.5.0
         env:
+        - name: GF_SERVER_ROOT_URL
+          valueFrom:
+            secretKeyRef:
+              name: grafana-credentials
+              key: root-url
         - name: GF_AUTH_BASIC_ENABLED
           value: "true"
         - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -42,7 +47,8 @@ spec:
             memory: 200Mi
             cpu: 200m
       - name: grafana-watcher
-        image: quay.io/coreos/grafana-watcher:v0.0.8
+        image: tevjef/grafana-watcher:latest
+        imagePullPolicy: Always
         args:
           - '--watch-dir=/var/grafana-dashboards'
           - '--grafana-url=http://localhost:3000'

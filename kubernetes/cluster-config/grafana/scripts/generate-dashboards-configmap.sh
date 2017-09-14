@@ -5,6 +5,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboards
+  namespace: monitoring
 data:
 EOF
 
@@ -14,7 +15,7 @@ do
   scripts/wrap-dashboard.sh $f | sed "s/^/    /g"
 done
 
-for f in dashboards/*-datasource.json
+for f in datasources/*-datasource.json
 do
   echo "  $(basename $f): |+"
   cat $f | sed "s/^/    /g"

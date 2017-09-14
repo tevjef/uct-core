@@ -16,14 +16,6 @@ cat $dashboardjson
 
 cat <<EOF
 ,
-  "inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "pluginId": "prometheus",
-      "type": "datasource",
-      "value": "prometheus"
-    }
-  ],
   "overwrite": true
 }
 EOF
