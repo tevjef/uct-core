@@ -14,17 +14,17 @@ pipeline:
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
-      - go get -u github.com/golang/dep/cmd/dep && \
+      - go get -u github.com/golang/dep/cmd/dep
       - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
-      - go install -v github.com/tevjef/uct-core/ein
-      - go install -v github.com/tevjef/uct-core/hermes
-      - go install -v github.com/tevjef/uct-core/julia
-      - go install -v github.com/tevjef/uct-core/scrapers/rutgers
-      - go install -v github.com/tevjef/uct-core/scrapers/njit
-      - go install -v github.com/tevjef/uct-core/scrapers/cuny
-      - go install -v github.com/tevjef/uct-core/jet
-      - go install -v github.com/tevjef/uct-core/spike
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
 
@@ -98,33 +98,23 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/uct-core:ein-staging -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia-staging -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers-staging -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/uct-core:njit-staging -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/uct-core:cuny-staging -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
-      - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
-      - docker build -t tevjef/uct-core:nginx-staging -f support/nginx/Dockerfile support/nginx
-      - docker build -t tevjef/uct-core:nginx-gen-staging -f support/nginx/gen/Dockerfile support/nginx/gen
-      - docker build -t tevjef/uct-core:postgresql-staging -f support/postgresql/Dockerfile support/postgresql
-      - docker build -t tevjef/uct-core:telegraf-staging -f support/telegraf/Dockerfile support/telegraf
+      - docker build -t tevjef/ein:staging -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:staging -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:staging -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:staging -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:staging -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:staging -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:staging -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:staging -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/uct-core:ein-staging
-      - docker push tevjef/uct-core:spike-staging
-      - docker push tevjef/uct-core:hermes-staging
-      - docker push tevjef/uct-core:julia-staging
-      - docker push tevjef/uct-core:rutgers-staging
-      - docker push tevjef/uct-core:njit-staging
-      - docker push tevjef/uct-core:cuny-staging
-      - docker push tevjef/uct-core:fluentd-staging
-      - docker push tevjef/uct-core:fluentd-gen-staging
-      - docker push tevjef/uct-core:nginx-staging
-      - docker push tevjef/uct-core:nginx-gen-staging
-      - docker push tevjef/uct-core:postgresql-staging
-      - docker push tevjef/uct-core:telegraf-staging
+      - docker push tevjef/ein:staging
+      - docker push tevjef/spike:staging
+      - docker push tevjef/hermes:staging
+      - docker push tevjef/julia:staging
+      - docker push tevjef/rutgers:staging
+      - docker push tevjef/njit:staging
+      - docker push tevjef/cuny:staging
+      - docker push tevjef/postgresql:staging
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
