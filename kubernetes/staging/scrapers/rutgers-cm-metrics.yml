@@ -14,7 +14,7 @@ spec:
     matchNames:
     - staging
   endpoints:
-  - port: uct-metrics
+  - port: metrics-port
     interval: 15s
     honorLabels: true
 ---
@@ -25,11 +25,12 @@ metadata:
   name: rutgers-cm
   labels:
     app: rutgers-cm
+    metrics: "true"
 spec:
   selector:
     app: rutgers-cm
   ports:
-  - name: uct-metrics
+  - name: metrics-port
     port: 13000
     protocol: TCP
-    targetPort: uct-metrics
+    targetPort: metrics-port

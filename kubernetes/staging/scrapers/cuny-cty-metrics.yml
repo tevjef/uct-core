@@ -14,7 +14,7 @@ spec:
     matchNames:
     - staging
   endpoints:
-  - port: uct-metrics
+  - port: metrics-port
     interval: 2m
     honorLabels: true
 ---
@@ -28,8 +28,9 @@ metadata:
 spec:
   selector:
     app: cuny-cty
+    metrics: "true"
   ports:
-  - name: uct-metrics
+  - name: metrics-port
     port: 13000
     protocol: TCP
-    targetPort: uct-metrics
+    targetPort: metrics-port

@@ -14,7 +14,7 @@ spec:
         image: telegraf:1.4-alpine
         ports:
         - containerPort: 13000
-          name: telegraf-port
+          name: metrics-port
         env:
           - name: POSTGRES_USER
             valueFrom:
@@ -66,11 +66,12 @@ metadata:
   name: telegraf-exporter
   labels:
     app: telegraf-exporter
+    metrics: "true"
 spec:
   ports:
   - port: 13000
     protocol: TCP
-    targetPort: telegraf-port
+    targetPort: metrics-port
     name: telegraf-port
   selector:
     app: telegraf-exporter

@@ -4,14 +4,15 @@ metadata:
   name: julia
   labels:
     app: julia
+    metrics: "true"
 spec:
   selector:
     app: julia
   ports:
-  - name: uct-metrics
+  - name: metrics-port
     port: 13000
     protocol: TCP
-    targetPort: uct-metrics
+    targetPort: metrics-port
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -29,6 +30,6 @@ spec:
     matchNames:
     - staging
   endpoints:
-  - port: uct-metrics
+  - port: metrics-port
     interval: 15s
     honorLabels: true

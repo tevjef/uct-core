@@ -3,6 +3,9 @@ kind: Service
 metadata:
   namespace: staging
   name: spike-http
+  labels:
+    app: spike
+    host: api.staging.coursetrakr.io
 spec:
   type: NodePort
   ports:
