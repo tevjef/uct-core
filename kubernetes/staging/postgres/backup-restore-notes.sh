@@ -1,4 +1,3 @@
-
 pg_dump --host=A -d dbname -v -w -c -Z 9 > dbname.sql.gz
 
 dropdb --host=B dbname
