@@ -5,6 +5,7 @@ metadata:
     app: node-exporter
     k8s-app: node-exporter
   name: node-exporter
+  namespace: monitoring
 spec:
   type: ClusterIP
   clusterIP: None

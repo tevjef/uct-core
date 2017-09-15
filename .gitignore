@@ -53,3 +53,5 @@ secrets.go
 .env
 vendor
 secrets
+*-secret.yml
+*-secret.yaml

@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: rutgers-nb
+  labels:
+    metrics: rutgers-nb
+spec:
+  jobLabel: rutgers-nb
+  selector:
+    matchLabels:
+      app: rutgers-nb
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 15s
+    honorLabels: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: rutgers-nb
+  labels:
+    app: rutgers-nb
+spec:
+  selector:
+    app: rutgers-nb
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics

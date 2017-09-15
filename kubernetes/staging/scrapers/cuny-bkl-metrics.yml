@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: cuny-bkl
+  labels:
+    metrics: cuny-bkl
+spec:
+  jobLabel: cuny-bkl
+  selector:
+    matchLabels:
+      app: cuny-bkl
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: uct-metrics
+    interval: 2m
+    honorLabels: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: cuny-bkl
+  labels:
+    app: cuny-bkl
+spec:
+  selector:
+    app: cuny-bkl
+  ports:
+  - name: uct-metrics
+    port: 13000
+    protocol: TCP
+    targetPort: uct-metrics
+---
