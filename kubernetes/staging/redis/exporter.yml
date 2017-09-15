@@ -9,8 +9,8 @@ spec:
   ports:
   - port: 9121
     protocol: TCP
-    targetPort: redis-exporter-port
-    name: redis-exporter-port
+    targetPort: redis-exporter
+    name: redis-exporter
   selector:
     app: redis-exporter
 ---
@@ -31,7 +31,7 @@ spec:
         name: redis-exporter
         ports: 
         - containerPort: 9121
-          name: redis-exporter-port
+          name: redis-exporter
         env:
          - name: REDIS_ADDR
            value: "redis://redis:6379"
@@ -51,7 +51,8 @@ spec:
   namespaceSelector:
     matchNames:
     - staging
+    - production
   endpoints:
-  - port: redis-exporter-port
+  - port: redis-exporter
     interval: 15s
     honorLabels: true
