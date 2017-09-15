@@ -52,7 +52,7 @@ pipeline:
       - cp common/conf/config.toml docker/njit/
       - cp common/conf/config.toml docker/cuny/
     when:
-      branch: [master, staging]
+      branch: [master, staging, develop]
       event: [push, tag, deployment]
 
   production:
@@ -138,3 +138,32 @@ pipeline:
     when:
       branch: staging
       event: [push, tag, deployment]
+
+  develop:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      - docker build -t tevjef/ein -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql -f support/postgresql/Dockerfile support/postgresql
+
+      - docker push tevjef/ein
+      - docker push tevjef/spike
+      - docker push tevjef/hermes
+      - docker push tevjef/julia
+      - docker push tevjef/rutgers
+      - docker push tevjef/njit
+      - docker push tevjef/cuny
+      - docker push tevjef/postgresql
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      branch: develop
+      event: [push]
