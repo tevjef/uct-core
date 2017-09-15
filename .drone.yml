@@ -115,6 +115,24 @@ pipeline:
       - docker push tevjef/njit:staging
       - docker push tevjef/cuny:staging
       - docker push tevjef/postgresql:staging
+
+      - docker build -t tevjef/ein:production -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:production -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:production -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:production -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:production -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:production -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:production -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:production -f support/postgresql/Dockerfile support/postgresql
+
+      - docker push tevjef/ein:production
+      - docker push tevjef/spike:production
+      - docker push tevjef/hermes:production
+      - docker push tevjef/julia:production
+      - docker push tevjef/rutgers:production
+      - docker push tevjef/njit:production
+      - docker push tevjef/cuny:production
+      - docker push tevjef/postgresql:production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
