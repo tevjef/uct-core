@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: cuny-htr
+  labels:
+    metrics: cuny-htr
+spec:
+  jobLabel: cuny-htr
+  selector:
+    matchLabels:
+      app: cuny-htr
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: metrics-port
+    interval: 2m
+    honorLabels: true
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: production
+  name: cuny-htr
+  labels:
+    app: cuny-htr
+    metrics: "true"
+spec:
+  selector:
+    app: cuny-htr
+  ports:
+  - name: metrics-port
+    port: 13000
+    protocol: TCP
+    targetPort: metrics-port

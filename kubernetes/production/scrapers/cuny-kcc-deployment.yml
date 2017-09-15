@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: production
+  labels:
+    app: cuny-kcc
+  name: cuny-kcc
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cuny-kcc
+    spec:
+      containers:
+        - name: cuny-kcc
+          image: docker.io/tevjef/cuny:production
+          ports:
+          - containerPort: 13100
+            name: pprof
+          - containerPort: 13000
+            name: metrics-port
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: CUNY_UNIVERSITY
+            value: KCC
+          - name: JET_DAEMON
+            value: 10m
+          - name: JET_DAEMON_JITTER
+            value: "50"
+          - name: JET_SCRAPER_NAME
+            value: cuny-kcc

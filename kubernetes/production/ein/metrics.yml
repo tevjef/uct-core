@@ -1,0 +1,35 @@
+kind: Service
+metadata:
+  namespace: production
+  name: ein
+  labels:
+    app: ein
+    metrics: "true"
+spec:
+  selector:
+    app: ein
+  ports:
+  - name: metrics-port
+    port: 13000
+    protocol: TCP
+    targetPort: metrics-port
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: ein
+  labels:
+    metrics: ein
+spec:
+  jobLabel: ein
+  selector:
+    matchLabels:
+      app: ein
+  namespaceSelector:
+    matchNames:
+    - staging
+  endpoints:
+  - port: metrics-port
+    interval: 15s
+    honorLabels: true
