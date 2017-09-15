@@ -50,7 +50,7 @@ spec:
       app: redis-exporter
   namespaceSelector:
     matchNames:
-    - staging
+    - production
   endpoints:
   - port: redis-exporter-port
     interval: 15s

@@ -53,7 +53,7 @@ spec:
       app: telegraf-exporter
   namespaceSelector:
     matchNames:
-    - staging
+    - production
   endpoints:
   - port: telegraf-port
     interval: 10s

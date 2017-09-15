@@ -12,7 +12,7 @@ spec:
       app: rutgers-nb
   namespaceSelector:
     matchNames:
-    - staging
+    - production
   endpoints:
   - port: metrics-port
     interval: 15s

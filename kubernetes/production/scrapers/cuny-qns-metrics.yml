@@ -12,7 +12,7 @@ spec:
       app: cuny-qns
   namespaceSelector:
     matchNames:
-    - staging
+    - production
   endpoints:
   - port: metrics-port
     interval: 2m
