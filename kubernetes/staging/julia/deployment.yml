@@ -13,7 +13,7 @@ spec:
         app: julia
     spec:
       containers:
-      - image: tevjef/uct-core:julia-staging
+      - image: docker.io/tevjef/julia:staging
         name: julia
         imagePullPolicy: Always
         ports:

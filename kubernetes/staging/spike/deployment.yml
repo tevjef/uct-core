@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: spike
-          image: tevjef/uct-core:spike-staging
+          image: docker.io/tevjef/spike:staging
           imagePullPolicy: "Always"
           ports:
           - containerPort: 13100

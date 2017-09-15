@@ -23,7 +23,7 @@ spec:
         app: postgresql
     spec:
       containers:
-      - image: tevjef/uct-core:postgresql-staging
+      - image: docker.io/tevjef/postgresql:staging
         imagePullPolicy: Always    
         name: postgresql
         env:

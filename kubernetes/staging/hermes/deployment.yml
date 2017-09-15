@@ -13,7 +13,7 @@ spec:
         app: hermes
     spec:
       containers:
-      - image: tevjef/uct-core:hermes-staging
+      - image: docker.io/tevjef/hermes:staging
         name: hermes
         imagePullPolicy: Always
         ports:

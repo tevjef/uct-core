@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: cuny-hos
-          image: docker.io/tevjef/uct-core:cuny-staging
+          image: docker.io/tevjef/cuny:staging
           ports:
           - containerPort: 13100
             name: pprof

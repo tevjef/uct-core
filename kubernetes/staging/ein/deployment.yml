@@ -13,7 +13,7 @@ spec:
         app: ein
     spec:
       containers:
-      - image: tevjef/uct-core:ein-staging
+      - image: docker.io/tevjef/ein:staging
         name: ein
         imagePullPolicy: Always
         ports:
