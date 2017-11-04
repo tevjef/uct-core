@@ -310,12 +310,13 @@ const (
 ), available_semesters AS (
     SELECT array_to_json(array_agg(rawSemesters))
     FROM (SELECT
-            season,
-            cast(year as INT)
+            s.season,
+            cast(s.year as INT)
           FROM subject s
             JOIN university ON university.id = s.university_id
           WHERE university.topic_name = :topic_name
-          GROUP BY season, year) rawSemesters
+		  GROUP BY season, year
+		  ORDER BY s.year DESC) rawSemesters
 )
 SELECT json_build_object(
     'name', u.name,
