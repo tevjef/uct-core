@@ -11,9 +11,10 @@ import (
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/spike/middleware"
 
-	"golang.org/x/net/context"
 	"sync"
+
 	"github.com/pquerna/ffjson/ffjson"
+	"golang.org/x/net/context"
 )
 
 type Data struct {
@@ -47,33 +48,29 @@ func SelectUniversities(ctx context.Context) (universities []*model.University, 
 
 	uniChan := make(chan model.University)
 	go func() {
-		for uni := range uniChan {
-			u := uni
-			universities = append(universities, &u)
+		var wg sync.WaitGroup
+		for i := range topics {
+			wg.Add(1)
+			u := topics[i]
+			go func() {
+				defer wg.Done()
+				uni, err := SelectUniversity(ctx, u)
+				if err != nil {
+					panic(err)
+				}
+				uniChan <- uni
+			}()
 		}
+		wg.Wait()
+		close(uniChan)
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(len(topics))
-	for i := range topics {
-		u := topics[i]
-
-		go func() {
-			defer wg.Done()
-			var uni model.University
-			if uni, err = SelectUniversity(ctx, u); err != nil {
-				return
-			} else {
-				uniChan <- uni
-			}
-		}()
+	for uni := range uniChan {
+		u := uni
+		universities = append(universities, &u)
 	}
 
-	wg.Wait()
-	close(uniChan)
-
 	sort.Sort(model.UniversityByName(universities))
-
 	return
 }
 
