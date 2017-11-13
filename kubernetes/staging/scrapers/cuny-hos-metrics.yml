@@ -26,10 +26,10 @@ metadata:
   name: cuny-hos
   labels:
     app: cuny-hos
+    metrics: "true"
 spec:
   selector:
     app: cuny-hos
-    metrics: "true"
   ports:
   - name: metrics-port
     port: 13000

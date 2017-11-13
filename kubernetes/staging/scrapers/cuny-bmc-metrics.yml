@@ -26,10 +26,10 @@ metadata:
   name: cuny-bmc
   labels:
     app: cuny-bmc
+    metrics: "true"
 spec:
   selector:
     app: cuny-bmc
-    metrics: "true"
   ports:
   - name: metrics-port
     port: 13000

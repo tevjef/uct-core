@@ -26,10 +26,10 @@ metadata:
   name: cuny-csi
   labels:
     app: cuny-csi
+    metrics: "true"
 spec:
   selector:
     app: cuny-csi
-    metrics: "true"
   ports:
   - name: metrics-port
     port: 13000

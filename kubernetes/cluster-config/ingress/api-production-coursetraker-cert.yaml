@@ -7,4 +7,4 @@ spec:
   domain: "api.staging.coursetrakr.io"
   email: "tev.jeffrey@gmail.com"
   provider: "namecheap"
-  secretName: api-staging-tls
+  secretName: api-production-tls

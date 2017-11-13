@@ -62,7 +62,7 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 
-	prometheus.MustRegister(notificationsIn, notificationsOut, fcmElapsed)
+	prometheus.MustRegister(notificationsIn, notificationsOut, fcmElapsed, fcmElapsedHistogram)
 }
 
 func main() {

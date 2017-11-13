@@ -26,10 +26,10 @@ metadata:
   name: cuny-cty
   labels:
     app: cuny-cty
+    metrics: "true"
 spec:
   selector:
     app: cuny-cty
-    metrics: "true"
   ports:
   - name: metrics-port
     port: 13000

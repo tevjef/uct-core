@@ -13,7 +13,7 @@ spec:
   tls:
     - hosts:
       - api.coursetrakr.io
-      secretName: api-staging-tls
+      secretName: api-production-tls
   rules:
   - host: api.coursetrakr.io
     http:
