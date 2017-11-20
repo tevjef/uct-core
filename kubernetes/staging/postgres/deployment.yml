@@ -42,12 +42,15 @@ spec:
             secretKeyRef:
               name: pg-cred
               key: database-name
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         ports:
         - containerPort: 5432
           name: postgresql
         volumeMounts:
         - name: postgres-persistent-storage
-          mountPath: /var/lib/postgresql
+          mountPath: /var/lib/postgresql/data/pgdata
+          subPath: postgresql-db
       volumes:
       - name: postgres-persistent-storage
         persistentVolumeClaim:
