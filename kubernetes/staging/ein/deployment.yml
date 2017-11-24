@@ -40,3 +40,9 @@ spec:
             secretKeyRef:
               name: pg-cred
               key: database-name
+        resources:
+          limits:
+            cpu: "10m"
+          requests:
+            cpu: "5m"
+            memory: 150Mi

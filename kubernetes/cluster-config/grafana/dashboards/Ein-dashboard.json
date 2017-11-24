@@ -6,7 +6,7 @@
   "gnetId": null,
   "graphTooltip": 1,
   "hideControls": false,
-  "id": 8,
+  "id": 3,
   "links": [],
   "refresh": "30s",
   "rows": [
@@ -1013,5 +1013,5 @@
   },
   "timezone": "utc",
   "title": "Ein",
-  "version": 15
+  "version": 1
 }

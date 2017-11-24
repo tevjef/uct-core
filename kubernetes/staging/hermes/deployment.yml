@@ -50,3 +50,9 @@ spec:
             secretKeyRef:
               name: hermes-cred
               key: dry-run
+        resources:
+          limits:
+            cpu: "10m"
+          requests:
+            cpu: "5m"
+            memory: 50Mi

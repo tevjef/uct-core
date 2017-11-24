@@ -26,8 +26,14 @@ spec:
           - name: CUNY_UNIVERSITY
             value: BKL
           - name: JET_DAEMON
-            value: 10m
+            value: 15m
           - name: JET_DAEMON_JITTER
             value: "50"
           - name: JET_SCRAPER_NAME
             value: cuny-bkl
+          resources:
+            limits:
+              cpu: "5m"
+            requests:
+              cpu: "5m"
+              memory: 50Mi

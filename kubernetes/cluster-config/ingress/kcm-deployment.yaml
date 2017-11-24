@@ -17,6 +17,7 @@ spec:
       containers:
         - name: kube-cert-manager
           image: gcr.io/universitycoursetracker/kube-cert-manager:latest
+          imagePullPolicy: "Always"
           env:
           - name: DNSIMPLE_OAUTH_TOKEN
             valueFrom:
@@ -39,6 +40,7 @@ spec:
           volumeMounts:
             - name: kcm-data
               mountPath: /var/lib/cert-manager
+              subPath: cert-manager
       volumes:
         - name: "kcm-data"
           persistentVolumeClaim:

@@ -27,3 +27,9 @@ spec:
             value: CM
           - name: JET_SCRAPER_NAME
             value: rutgers-cm
+          resources:
+            limits:
+              cpu: "5m"
+            requests:
+              cpu: "5m"
+              memory: 50Mi

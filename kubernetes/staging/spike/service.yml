@@ -15,17 +15,3 @@ spec:
     name: spike-port
   selector:
     app: spike
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: staging
-  name: spike-http
-spec:
-  type: NodePort
-  ports:
-  - port: 9876
-    protocol: "TCP"
-    targetPort: 9876
-    name: spike-port
-  selector:
-    app: spike

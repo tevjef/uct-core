@@ -27,3 +27,9 @@ spec:
             value: NK
           - name: JET_SCRAPER_NAME
             value: rutgers-nk
+          resources:
+            limits:
+              cpu: "5m"
+            requests:
+              cpu: "5m"
+              memory: 50Mi

@@ -6,7 +6,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "hideControls": false,
-  "id": 6,
+  "id": 10,
   "links": [],
   "rows": [
     {
@@ -289,5 +289,5 @@
   },
   "timezone": "utc",
   "title": "Scrapers",
-  "version": 12
+  "version": 1
 }
