@@ -59,34 +59,24 @@ pipeline:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+      - printenv
+      - docker build -t tevjef/ein:production -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:production -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:production -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:production -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:production -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:production -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:production -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:production -f support/postgresql/Dockerfile support/postgresql
 
-      - docker build -t tevjef/uct-core:ein -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers -f docker/rutgers-cm/Dockerfile docker/rutgers
-      - docker build -t tevjef/uct-core:njit -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/uct-core:cuny -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
-      - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
-      - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
-      - docker build -t tevjef/uct-core:nginx-gen -f support/nginx/gen/Dockerfile support/nginx/gen
-      - docker build -t tevjef/uct-core:postgresql -f support/postgresql/Dockerfile support/postgresql
-      - docker build -t tevjef/uct-core:telegraf -f support/telegraf/Dockerfile support/telegraf
-
-      - docker push tevjef/uct-core:ein
-      - docker push tevjef/uct-core:spike
-      - docker push tevjef/uct-core:hermes
-      - docker push tevjef/uct-core:julia
-      - docker push tevjef/uct-core:rutgers
-      - docker push tevjef/uct-core:njit
-      - docker push tevjef/uct-core:cuny
-      - docker push tevjef/uct-core:fluentd
-      - docker push tevjef/uct-core:fluentd-gen
-      - docker push tevjef/uct-core:nginx
-      - docker push tevjef/uct-core:nginx-gen
-      - docker push tevjef/uct-core:postgresql
-      - docker push tevjef/uct-core:telegraf
+      - docker push tevjef/ein:production
+      - docker push tevjef/spike:production
+      - docker push tevjef/hermes:production
+      - docker push tevjef/julia:production
+      - docker push tevjef/rutgers:production
+      - docker push tevjef/njit:production
+      - docker push tevjef/cuny:production
+      - docker push tevjef/postgresql:production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -115,24 +105,6 @@ pipeline:
       - docker push tevjef/njit:staging
       - docker push tevjef/cuny:staging
       - docker push tevjef/postgresql:staging
-
-      - docker build -t tevjef/ein:production -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:production -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:production -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:production -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:production -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:production -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:production -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/postgresql:production -f support/postgresql/Dockerfile support/postgresql
-
-      - docker push tevjef/ein:production
-      - docker push tevjef/spike:production
-      - docker push tevjef/hermes:production
-      - docker push tevjef/julia:production
-      - docker push tevjef/rutgers:production
-      - docker push tevjef/njit:production
-      - docker push tevjef/cuny:production
-      - docker push tevjef/postgresql:production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -144,23 +116,23 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/postgresql -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/ein:develop -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:develop -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:develop -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:develop -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:develop -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:develop -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:develop -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:develop -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/ein
-      - docker push tevjef/spike
-      - docker push tevjef/hermes
-      - docker push tevjef/julia
-      - docker push tevjef/rutgers
-      - docker push tevjef/njit
-      - docker push tevjef/cuny
-      - docker push tevjef/postgresql
+      - docker push tevjef/ein:develop
+      - docker push tevjef/spike:develop
+      - docker push tevjef/hermes:develop
+      - docker push tevjef/julia:develop
+      - docker push tevjef/rutgers:develop
+      - docker push tevjef/njit:develop
+      - docker push tevjef/cuny:develop
+      - docker push tevjef/postgresql:develop
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
