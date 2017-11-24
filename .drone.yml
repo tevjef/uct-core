@@ -196,6 +196,34 @@ pipeline:
   
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:staging)
       - kubectl -n staging set image deployment/julia julia=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:staging)
+      - kubectl -n staging set image deployment/rutgers-cm rutgers-cm=$DIGEST
+      - kubectl -n staging set image deployment/rutgers-nb rutgers-nb=$DIGEST
+      - kubectl -n staging set image deployment/rutgers-nk rutgers-nk=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/njit:staging)
+      - kubectl -n staging set image deployment/njit njit=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/cuny:staging)
+      - kubectl -n staging set image deployment/cuny-bar cuny-bar=$DIGEST
+      - kubectl -n staging set image deployment/cuny-bcc cuny-bcc=$DIGEST
+      - kubectl -n staging set image deployment/cuny-bkl cuny-bkl=$DIGEST
+      - kubectl -n staging set image deployment/cuny-bmc cuny-bmc=$DIGEST
+      - kubectl -n staging set image deployment/cuny-csi cuny-csi=$DIGEST
+      - kubectl -n staging set image deployment/cuny-cty cuny-cty=$DIGEST
+      - kubectl -n staging set image deployment/cuny-hos cuny-hos=$DIGEST
+      - kubectl -n staging set image deployment/cuny-htr cuny-htr=$DIGEST
+      - kubectl -n staging set image deployment/cuny-jjc cuny-jjc=$DIGEST
+      - kubectl -n staging set image deployment/cuny-kcc cuny-kcc=$DIGEST
+      - kubectl -n staging set image deployment/cuny-lag cuny-lag=$DIGEST
+      - kubectl -n staging set image deployment/cuny-leh cuny-leh=$DIGEST
+      - kubectl -n staging set image deployment/cuny-mec cuny-mec=$DIGEST
+      - kubectl -n staging set image deployment/cuny-nyt cuny-nyt=$DIGEST
+      - kubectl -n staging set image deployment/cuny-qcc cuny-qcc=$DIGEST
+      - kubectl -n staging set image deployment/cuny-qns cuny-qns=$DIGEST
+      - kubectl -n staging set image deployment/cuny-yrk cuny-yrk=$DIGEST
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
