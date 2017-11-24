@@ -185,16 +185,16 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - DIGEST=docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:staging
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:staging)
       - kubectl -n staging set image deployment/ein ein=$DIGEST
   
-      - DIGEST=docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:staging
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:staging)
       - kubectl -n staging set image deployment/spike spike=$DIGEST
   
-      - DIGEST=docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:staging
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:staging)
       - kubectl -n staging set image deployment/hermes hermes=$DIGEST
   
-      - DIGEST=docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:staging
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:staging)
       - kubectl -n staging set image deployment/julia julia=$DIGEST
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
