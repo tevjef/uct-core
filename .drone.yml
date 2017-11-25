@@ -158,7 +158,7 @@ pipeline:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/staging
+      - kubectl apply -R -f kubernetes/staging
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
@@ -222,20 +222,20 @@ kubernetes-deploy-production:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/ein
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/hermes
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/julia
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/postgres
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/redis
+      - kubectl apply -R -f kubernetes/production/ein
+      - kubectl apply -R -f kubernetes/production/hermes
+      - kubectl apply -R -f kubernetes/production/julia
+      - kubectl apply -R -f kubernetes/production/postgres
+      - kubectl apply -R -f kubernetes/production/redis
 
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/njit-deployment.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/njit-metrics.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-cm-deployment.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-cm-metrics.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nb-deployment.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nb-metrics.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nk-deployment.yml
-      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nk-metrics.yml
+      - kubectl apply -R -f kubernetes/production/njit-deployment.yml
+      - kubectl apply -R -f kubernetes/production/njit-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-cm-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-cm-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nb-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
