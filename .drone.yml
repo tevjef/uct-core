@@ -52,7 +52,7 @@ pipeline:
       - cp common/conf/config.toml docker/njit/
       - cp common/conf/config.toml docker/cuny/
     when:
-      branch: [master, staging, develop]
+      branch: [production, staging, develop]
       event: [push, tag, deployment]
 
   production:
@@ -60,27 +60,27 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:production -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:production -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:production -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:production -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:production -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:production -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:production -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/postgresql:production -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/ein:production
-      - docker push tevjef/spike:production
-      - docker push tevjef/hermes:production
-      - docker push tevjef/julia:production
-      - docker push tevjef/rutgers:production
-      - docker push tevjef/njit:production
-      - docker push tevjef/cuny:production
-      - docker push tevjef/postgresql:production
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      branch: master
+      branch: production
       event: [push, tag, deployment]
 
   staging:
@@ -88,23 +88,23 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:staging -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:staging -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:staging -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:staging -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:staging -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:staging -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:staging -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/postgresql:staging -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/ein:staging
-      - docker push tevjef/spike:staging
-      - docker push tevjef/hermes:staging
-      - docker push tevjef/julia:staging
-      - docker push tevjef/rutgers:staging
-      - docker push tevjef/njit:staging
-      - docker push tevjef/cuny:staging
-      - docker push tevjef/postgresql:staging
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -116,23 +116,23 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:develop -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:develop -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:develop -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:develop -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:develop -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:develop -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:develop -f docker/cuny/Dockerfile docker/cuny
-      - docker build -t tevjef/postgresql:develop -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/ein:develop
-      - docker push tevjef/spike:develop
-      - docker push tevjef/hermes:develop
-      - docker push tevjef/julia:develop
-      - docker push tevjef/rutgers:develop
-      - docker push tevjef/njit:develop
-      - docker push tevjef/cuny:develop
-      - docker push tevjef/postgresql:develop
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -140,7 +140,7 @@ pipeline:
       branch: develop
       event: [push]
 
-  kubernetes:
+  kubernetes-deploy-staging:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
@@ -157,47 +157,107 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:staging)
-      - kubectl -n staging set image deployment/ein ein=$DIGEST
+      - cd /go/src/github.com/tevjef/uct-core
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/staging
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
   
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:staging)
-      - kubectl -n staging set image deployment/spike spike=$DIGEST
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
   
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:staging)
-      - kubectl -n staging set image deployment/hermes hermes=$DIGEST
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
   
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:staging)
-      - kubectl -n staging set image deployment/julia julia=$DIGEST
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
   
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:staging)
-      - kubectl -n staging set image deployment/rutgers-cm rutgers-cm=$DIGEST
-      - kubectl -n staging set image deployment/rutgers-nb rutgers-nb=$DIGEST
-      - kubectl -n staging set image deployment/rutgers-nk rutgers-nk=$DIGEST
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nk rutgers-nk=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/njit:staging)
-      - kubectl -n staging set image deployment/njit njit=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/njit njit=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/cuny:staging)
-      - kubectl -n staging set image deployment/cuny-bar cuny-bar=$DIGEST
-      - kubectl -n staging set image deployment/cuny-bcc cuny-bcc=$DIGEST
-      - kubectl -n staging set image deployment/cuny-bkl cuny-bkl=$DIGEST
-      - kubectl -n staging set image deployment/cuny-bmc cuny-bmc=$DIGEST
-      - kubectl -n staging set image deployment/cuny-csi cuny-csi=$DIGEST
-      - kubectl -n staging set image deployment/cuny-cty cuny-cty=$DIGEST
-      - kubectl -n staging set image deployment/cuny-hos cuny-hos=$DIGEST
-      - kubectl -n staging set image deployment/cuny-htr cuny-htr=$DIGEST
-      - kubectl -n staging set image deployment/cuny-jjc cuny-jjc=$DIGEST
-      - kubectl -n staging set image deployment/cuny-kcc cuny-kcc=$DIGEST
-      - kubectl -n staging set image deployment/cuny-lag cuny-lag=$DIGEST
-      - kubectl -n staging set image deployment/cuny-leh cuny-leh=$DIGEST
-      - kubectl -n staging set image deployment/cuny-mec cuny-mec=$DIGEST
-      - kubectl -n staging set image deployment/cuny-nyt cuny-nyt=$DIGEST
-      - kubectl -n staging set image deployment/cuny-qcc cuny-qcc=$DIGEST
-      - kubectl -n staging set image deployment/cuny-qns cuny-qns=$DIGEST
-      - kubectl -n staging set image deployment/cuny-yrk cuny-yrk=$DIGEST
-
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bar cuny-bar=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bcc cuny-bcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bkl cuny-bkl=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bmc cuny-bmc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-csi cuny-csi=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-cty cuny-cty=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-hos cuny-hos=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-htr cuny-htr=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-jjc cuny-jjc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-kcc cuny-kcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-lag cuny-lag=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-leh cuny-leh=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-mec cuny-mec=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-nyt cuny-nyt=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-qcc cuny-qcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-qns cuny-qns=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-yrk cuny-yrk=$DIGEST
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: staging
-      event: [push]
+      event: [push, tag, deployment]
+
+kubernetes-deploy-production:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      # Install Kubectl
+      - apk update
+      - apk add curl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
+
+      # Setup Kubectl
+      - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-context default --cluster=default --user=default
+      - kubectl config use-context default
+
+      - cd /go/src/github.com/tevjef/uct-core
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/ein
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/hermes
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/julia
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/postgres
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/redis
+
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/njit-deployment.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/njit-metrics.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-cm-deployment.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-cm-metrics.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nb-deployment.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nb-metrics.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nk-deployment.yml
+      - kubectl -n $DRONE_COMMIT_BRANCH apply -R -f kubernetes/production/rutgers-nk-metrics.yml
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nk rutgers-nk=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/njit:staging)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/njit njit=$DIGEST
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      branch: production
+      event: [push, tag, deployment]
