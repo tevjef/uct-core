@@ -35,8 +35,6 @@ spec:
           - name: telegraf-conf-volume
             mountPath: /etc/telegraf
         resources:
-          limits:
-            cpu: "5m"
           requests:
             cpu: "5m"
             memory: 50Mi
