@@ -55,5 +55,3 @@ vendor
 secrets
 *-secret.yml
 *-secret.yaml
-
-kubernetes/production
