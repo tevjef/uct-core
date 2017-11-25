@@ -116,7 +116,6 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - printenv
       - docker build -t tevjef/ein:develop -f docker/ein/Dockerfile docker/ein
       - docker build -t tevjef/spike:develop -f docker/spike/Dockerfile docker/spike
       - docker build -t tevjef/hermes:develop -f docker/hermes/Dockerfile docker/hermes
