@@ -24,7 +24,7 @@ type Data struct {
 
 func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
-	span := mtrace.NewSpan(ctx,"database.SelectUniversity")
+	span := mtrace.NewSpan(ctx, "database.SelectUniversity")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
@@ -41,7 +41,7 @@ func SelectUniversity(ctx context.Context, topicName string) (university model.U
 }
 
 func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
-	span := mtrace.NewSpan(ctx,"database.SelectUniversities" )
+	span := mtrace.NewSpan(ctx, "database.SelectUniversities")
 	defer span.Finish()
 
 	var topics []string
@@ -102,7 +102,7 @@ func GetAvailableSemesters(ctx context.Context, topicName string, university *mo
 
 func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters []*model.Semester, err error) {
 	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
-	span := mtrace.NewSpan(ctx,"database.SelectAvailableSemesters")
+	span := mtrace.NewSpan(ctx, "database.SelectAvailableSemesters")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
@@ -114,7 +114,7 @@ func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters 
 
 func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters model.ResolvedSemester, err error) {
 	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
-	span := mtrace.NewSpan(ctx,"database.SelectResolvedSemesters")
+	span := mtrace.NewSpan(ctx, "database.SelectResolvedSemesters")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
@@ -134,7 +134,7 @@ func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters m
 
 func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
-	span := mtrace.NewSpan(ctx,"database.SelectSubject")
+	span := mtrace.NewSpan(ctx, "database.SelectSubject")
 	span.SetLabel("topicName", subjectTopicName)
 	defer span.Finish()
 
@@ -150,7 +150,7 @@ func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.
 
 func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSubjects")
-	span := mtrace.NewSpan(ctx,"database.SelectSubjects")
+	span := mtrace.NewSpan(ctx, "database.SelectSubjects")
 	span.SetLabel("topicName", uniTopicName)
 	span.SetLabel("year", year)
 	span.SetLabel("season", season)
@@ -166,7 +166,7 @@ func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (sub
 
 func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
-	span := mtrace.NewSpan(ctx,"database.SelectCourse")
+	span := mtrace.NewSpan(ctx, "database.SelectCourse")
 	span.SetLabel("topicName", courseTopicName)
 	defer span.Finish()
 
@@ -182,7 +182,7 @@ func SelectCourse(ctx context.Context, courseTopicName string) (course model.Cou
 
 func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourses")
-	span := mtrace.NewSpan(ctx,"database.SelectCourses")
+	span := mtrace.NewSpan(ctx, "database.SelectCourses")
 	span.SetLabel("topicName", subjectTopicName)
 	defer span.Finish()
 
@@ -207,7 +207,7 @@ func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*mod
 
 func SelectSection(ctx context.Context, sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
-	span := mtrace.NewSpan(ctx,"database.SelectSection")
+	span := mtrace.NewSpan(ctx, "database.SelectSection")
 	span.SetLabel("topicName", sectionTopicName)
 	defer span.Finish()
 
@@ -245,7 +245,7 @@ func SelectMetadata(ctx context.Context, universityId, subjectId, courseId, sect
 }
 
 func Select(ctx context.Context, query string, dest interface{}, args interface{}) error {
-	span := mtrace.NewSpan(ctx,"database.Select")
+	span := mtrace.NewSpan(ctx, "database.Select")
 	span.SetLabel("query", query)
 	defer span.Finish()
 
@@ -259,7 +259,7 @@ func Select(ctx context.Context, query string, dest interface{}, args interface{
 }
 
 func Get(ctx context.Context, query string, dest interface{}, args interface{}) error {
-	span := mtrace.NewSpan(ctx,"database.Get")
+	span := mtrace.NewSpan(ctx, "database.Get")
 	span.SetLabel("query", query)
 	defer span.Finish()
 

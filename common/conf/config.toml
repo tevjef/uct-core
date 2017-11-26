@@ -1,9 +1,9 @@
 [postgres]
-host = "postgresql"
+host = "localhost"
 port = "5432"
-user = ""
-password = ""
-name = ""
+user = "universityct"
+password = "universityct"
+name = "universityct"
 connection_max = 10
 
 [hermes]
@@ -13,7 +13,7 @@ api_key = ""
 redis_db = 1
 
 [redis]
-host = "redis"
+host = "localhost"
 port =  "6379"
 db = 0
 password = ""

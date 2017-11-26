@@ -27,8 +27,7 @@ type spike struct {
 	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
 }
 
-type julia struct {
-}
+type julia struct{}
 
 type hermes struct {
 	ApiKey string `toml:"api_key" envconfig:"FCM_API_KEY"`

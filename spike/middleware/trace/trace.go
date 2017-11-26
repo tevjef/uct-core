@@ -1,10 +1,10 @@
 package trace
 
 import (
-	"github.com/gin-gonic/gin"
 	"cloud.google.com/go/trace"
-	"strings"
 	"context"
+	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 // Setter defines a context that enables setting values.
@@ -15,7 +15,11 @@ type Setter interface {
 const key = "tracespan"
 
 func FromContext(ctx context.Context) *trace.Span {
-	return ctx.Value(key).(*trace.Span)
+	if span := ctx.Value(key); span == nil {
+		return nil
+	} else {
+		return span.(*trace.Span)
+	}
 }
 
 func ToContext(s Setter, span *trace.Span) {

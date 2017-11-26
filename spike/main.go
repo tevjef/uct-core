@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"cloud.google.com/go/trace"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -19,7 +20,6 @@ import (
 	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"cloud.google.com/go/trace"
 )
 
 type spike struct {
@@ -31,8 +31,9 @@ type spike struct {
 }
 
 type spikeConfig struct {
-	service conf.Config
-	port    uint16
+	service    conf.Config
+	gcpProject string
+	port       uint16
 }
 
 func init() {
@@ -51,6 +52,11 @@ func main() {
 		Default("9876").
 		Envar("SPIKE_LISTEN").
 		Uint16Var(&sconf.port)
+
+	app.Flag("project", "Google Cloud Platform project for tracing").
+		Short('p').
+		Envar("SPIKE_GCP_PROJECT").
+		StringVar(&sconf.gcpProject)
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').
@@ -95,12 +101,13 @@ func (spike *spike) init() {
 		spike.config.service.Spike.RedisDb,
 		10*time.Second)))
 
-	traceClient, err := trace.NewClient(ctx, "universitycoursetracker")
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
+	if spike.config.gcpProject != "" {
+		traceClient, err := trace.NewClient(ctx, spike.config.gcpProject)
+		if err != nil {
+			log.Fatalf("failed to create client: %v", err)
+		}
+		r.Use(mtrace.Trace(traceClient))
 	}
-
-	r.Use(mtrace.Trace(traceClient))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")

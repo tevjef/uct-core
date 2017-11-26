@@ -14,7 +14,6 @@ import (
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/spike/middleware"
 	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
-
 )
 
 const (
@@ -138,7 +137,7 @@ func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc
 	}
 
 	return func(c *gin.Context) {
-		span := mtrace.NewSpan(c,"cache.CachePageWithPolicy" )
+		span := mtrace.NewSpan(c, "cache.CachePageWithPolicy")
 		defer span.Finish()
 
 		var cache responseCache
