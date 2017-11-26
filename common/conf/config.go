@@ -18,7 +18,6 @@ type Config struct {
 	AppName  string
 	Postgres Postgres `toml:"postgres"`
 	Redis    Redis    `toml:"redis"`
-	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
 	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
@@ -57,13 +56,6 @@ type Redis struct {
 	Db       int    `toml:"db" envconfig:"REDIS_DB"`
 }
 
-type InfluxDb struct {
-	User     string `toml:"user" envconfig:"INFLUXDB_ADMIN_USER"`
-	Port     string `toml:"port" envconfig:"INFLUXDB_PORT_8086_TCP_PORT"`
-	Host     string `toml:"host" envconfig:"INFLUXDB_PORT_8086_TCP_ADDR"`
-	Password string `toml:"password" envconfig:"INFLUXDB_ADMIN_PASSWORD"`
-}
-
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.DebugLevel)
@@ -86,13 +78,7 @@ func OpenConfigWithName(file *os.File, name string) Config {
 }
 
 func (c *Config) fromEnvironment() {
-
-	err := envconfig.Process("", &c.InfluxDb)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = envconfig.Process("", &c.Postgres)
+	err := envconfig.Process("", &c.Postgres)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

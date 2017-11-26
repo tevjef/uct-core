@@ -65,3 +65,7 @@
 [[constraint]]
   name = "gopkg.in/redis.v5"
   version = "5.1.6"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  version = "1.8.x"

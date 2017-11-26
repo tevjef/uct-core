@@ -12,17 +12,8 @@ api_key = ""
 [spike]
 redis_db = 1
 
-[influxdb]
-host = "influxdb"
-user = ""
-port =  "8086"
-password = ""
-
 [redis]
 host = "redis"
 port =  "6379"
 db = 0
 password = ""
-
-[all]
-loglevel = "debug"

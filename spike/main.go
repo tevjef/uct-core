@@ -18,6 +18,7 @@ import (
 	"github.com/tevjef/uct-core/spike/middleware/cache"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"cloud.google.com/go/trace"
 )
 
 type spike struct {
@@ -80,6 +81,8 @@ func main() {
 }
 
 func (spike *spike) init() {
+	ctx := context.Background()
+
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -90,6 +93,13 @@ func (spike *spike) init() {
 		spike.config.service.Redis.Password,
 		spike.config.service.Spike.RedisDb,
 		10*time.Second)))
+
+	traceClient, err := trace.NewClient(ctx, "universitycoursetracker")
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
+
+	r.Use(middleware.Trace(traceClient))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")
@@ -119,21 +129,6 @@ func (spike *spike) init() {
 		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
 		v2.GET("/course/:topic", courseHandler(10*time.Second))
 		v2.GET("/section/:topic", sectionHandler(10*time.Second))
-	}
-
-	// Legacy, some version android and iOS clients use this endpoint. Investigate redirecting traffic to /v2 with nginx
-	v4 := r.Group("/v4")
-	{
-		v4.Use(middleware.ContentNegotiation(middleware.ProtobufContentType))
-		v4.Use(middleware.Decorator)
-
-		v4.GET("/universities", universitiesHandler(time.Minute))
-		v4.GET("/university/:topic", universityHandler(time.Minute))
-		v4.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
-		v4.GET("/subject/:topic", subjectHandler(10*time.Second))
-		v4.GET("/courses/:topic", coursesHandler(10*time.Second))
-		v4.GET("/course/:topic", courseHandler(10*time.Second))
-		v4.GET("/section/:topic", sectionHandler(10*time.Second))
 	}
 
 	r.Run(":" + strconv.Itoa(int(spike.config.port)))
