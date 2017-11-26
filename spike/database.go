@@ -245,7 +245,8 @@ func SelectMetadata(ctx context.Context, universityId, subjectId, courseId, sect
 }
 
 func Select(ctx context.Context, query string, dest interface{}, args interface{}) error {
-	span := mtrace.NewSpan(ctx,"database.Select" )
+	span := mtrace.NewSpan(ctx,"database.Select")
+	span.SetLabel("query", query)
 	defer span.Finish()
 
 	if err := database.FromContext(ctx).Select(query, dest, args); err != nil {
@@ -258,7 +259,8 @@ func Select(ctx context.Context, query string, dest interface{}, args interface{
 }
 
 func Get(ctx context.Context, query string, dest interface{}, args interface{}) error {
-	span := mtrace.NewSpan(ctx,"database.Get" )
+	span := mtrace.NewSpan(ctx,"database.Get")
+	span.SetLabel("query", query)
 	defer span.Finish()
 
 	if err := database.FromContext(ctx).Get(query, dest, args); err != nil {
