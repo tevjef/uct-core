@@ -24,7 +24,8 @@ type Data struct {
 
 func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
-	span := mtrace.NewSpan(ctx,"database.SelectUniversity" )
+	span := mtrace.NewSpan(ctx,"database.SelectUniversity")
+	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": topicName}
@@ -101,7 +102,8 @@ func GetAvailableSemesters(ctx context.Context, topicName string, university *mo
 
 func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters []*model.Semester, err error) {
 	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
-	span := mtrace.NewSpan(ctx,"database.SelectAvailableSemesters" )
+	span := mtrace.NewSpan(ctx,"database.SelectAvailableSemesters")
+	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": topicName}
@@ -112,7 +114,8 @@ func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters 
 
 func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters model.ResolvedSemester, err error) {
 	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
-	span := mtrace.NewSpan(ctx,"database.SelectResolvedSemesters" )
+	span := mtrace.NewSpan(ctx,"database.SelectResolvedSemesters")
+	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": topicName}
@@ -131,7 +134,8 @@ func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters m
 
 func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
-	span := mtrace.NewSpan(ctx,"database.SelectSubject" )
+	span := mtrace.NewSpan(ctx,"database.SelectSubject")
+	span.SetLabel("topicName", subjectTopicName)
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": subjectTopicName}
@@ -146,7 +150,10 @@ func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.
 
 func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSubjects")
-	span := mtrace.NewSpan(ctx,"database.SelectSubjects" )
+	span := mtrace.NewSpan(ctx,"database.SelectSubjects")
+	span.SetLabel("topicName", uniTopicName)
+	span.SetLabel("year", year)
+	span.SetLabel("season", season)
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
@@ -159,7 +166,8 @@ func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (sub
 
 func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
-	span := mtrace.NewSpan(ctx,"database.SelectCourse" )
+	span := mtrace.NewSpan(ctx,"database.SelectCourse")
+	span.SetLabel("topicName", courseTopicName)
 	defer span.Finish()
 
 	d := Data{}
@@ -174,7 +182,8 @@ func SelectCourse(ctx context.Context, courseTopicName string) (course model.Cou
 
 func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourses")
-	span := mtrace.NewSpan(ctx,"database.SelectCourses" )
+	span := mtrace.NewSpan(ctx,"database.SelectCourses")
+	span.SetLabel("topicName", subjectTopicName)
 	defer span.Finish()
 
 	var d []Data
@@ -198,7 +207,8 @@ func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*mod
 
 func SelectSection(ctx context.Context, sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
-	span := mtrace.NewSpan(ctx,"database.SelectSection" )
+	span := mtrace.NewSpan(ctx,"database.SelectSection")
+	span.SetLabel("topicName", sectionTopicName)
 	defer span.Finish()
 
 	d := Data{}
