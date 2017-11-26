@@ -16,6 +16,7 @@ import (
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/spike/middleware"
 	"github.com/tevjef/uct-core/spike/middleware/cache"
+	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	"cloud.google.com/go/trace"
@@ -99,7 +100,7 @@ func (spike *spike) init() {
 		log.Fatalf("failed to create client: %v", err)
 	}
 
-	r.Use(middleware.Trace(traceClient))
+	r.Use(mtrace.Trace(traceClient))
 
 	// does not cache and defaults to json
 	v1 := r.Group("/v1")

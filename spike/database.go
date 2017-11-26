@@ -10,6 +10,7 @@ import (
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/spike/middleware"
+	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
 
 	"sync"
 
@@ -23,6 +24,9 @@ type Data struct {
 
 func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
+	span := mtrace.NewSpan(ctx,"database.SelectUniversity" )
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
 	d := Data{}
 	if err = Get(ctx, SelectUniversityCTE, &d, m); err != nil {
@@ -36,6 +40,9 @@ func SelectUniversity(ctx context.Context, topicName string) (university model.U
 }
 
 func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
+	span := mtrace.NewSpan(ctx,"database.SelectUniversities" )
+	defer span.Finish()
+
 	var topics []string
 	m := map[string]interface{}{}
 	if err = Select(ctx, ListUniversitiesQuery, &topics, m); err != nil {
@@ -94,6 +101,9 @@ func GetAvailableSemesters(ctx context.Context, topicName string, university *mo
 
 func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters []*model.Semester, err error) {
 	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
+	span := mtrace.NewSpan(ctx,"database.SelectAvailableSemesters" )
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(ctx, SelectAvailableSemestersQuery, &semesters, m)
 	sort.Sort(model.SemesterSorter(semesters))
@@ -102,6 +112,9 @@ func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters 
 
 func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters model.ResolvedSemester, err error) {
 	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
+	span := mtrace.NewSpan(ctx,"database.SelectResolvedSemesters" )
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
 	rs := model.DBResolvedSemester{}
 	if err = Get(ctx, SelectResolvedSemestersQuery, &rs, m); err != nil {
@@ -118,6 +131,9 @@ func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters m
 
 func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
+	span := mtrace.NewSpan(ctx,"database.SelectSubject" )
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := Data{}
 	if err = Get(ctx, SelectProtoSubjectQuery, &d, m); err != nil {
@@ -130,6 +146,9 @@ func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.
 
 func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSubjects")
+	span := mtrace.NewSpan(ctx,"database.SelectSubjects" )
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ctx, ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
@@ -140,6 +159,9 @@ func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (sub
 
 func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
+	span := mtrace.NewSpan(ctx,"database.SelectCourse" )
+	defer span.Finish()
+
 	d := Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
 	if err = Get(ctx, SelectCourseQuery, &d, m); err != nil {
@@ -152,7 +174,10 @@ func SelectCourse(ctx context.Context, courseTopicName string) (course model.Cou
 
 func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourses")
-	d := []Data{}
+	span := mtrace.NewSpan(ctx,"database.SelectCourses" )
+	defer span.Finish()
+
+	var d []Data
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	if err = Select(ctx, ListCoursesQuery, &d, m); err != nil {
 		return
@@ -173,6 +198,9 @@ func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*mod
 
 func SelectSection(ctx context.Context, sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
+	span := mtrace.NewSpan(ctx,"database.SelectSection" )
+	defer span.Finish()
+
 	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
 	if err = Get(ctx, SelectProtoSectionQuery, &d, m); err != nil {
@@ -207,6 +235,9 @@ func SelectMetadata(ctx context.Context, universityId, subjectId, courseId, sect
 }
 
 func Select(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	span := mtrace.NewSpan(ctx,"database.Select" )
+	defer span.Finish()
+
 	if err := database.FromContext(ctx).Select(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
@@ -217,6 +248,9 @@ func Select(ctx context.Context, query string, dest interface{}, args interface{
 }
 
 func Get(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	span := mtrace.NewSpan(ctx,"database.Get" )
+	defer span.Finish()
+
 	if err := database.FromContext(ctx).Get(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
