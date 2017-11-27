@@ -4,7 +4,7 @@ steps:
     - 'build'
     - '--cache-from'
     - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
-    - '--file=build/$_UCT_SERVICE/Dockerfile'
+    - '--file=build/$_UCT_SERVICE/Dockerfile.$_UCT_SERVICE'
     - '--tag=gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
     - '.'
 
