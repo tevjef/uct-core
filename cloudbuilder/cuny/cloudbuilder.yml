@@ -1,5 +1,9 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['-f', 'cloudbuilder/cuny/Dockerfile', '-t', '--tag=gcr.io/$PROJECT_ID/cuny:$BRANCH_NAME', '.']
+    args:
+    - 'build'
+    - '-file=cloudbuilder/cuny/Dockerfile'
+    - '--tag=gcr.io/$PROJECT_ID/cuny:$BRANCH_NAME'
+    - '.'
 
 images: ['gcr.io/$PROJECT_ID/cuny:$BRANCH_NAME']
