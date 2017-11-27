@@ -31,26 +31,26 @@ pipeline:
   common:
     image: library/docker:dind
     commands:
-      - cp /go/bin/ein docker/ein/
-      - cp /go/bin/spike docker/spike/
-      - cp /go/bin/hermes docker/hermes/
-      - cp /go/bin/julia docker/julia/
+      - cp /go/bin/ein build/ein/
+      - cp /go/bin/spike build/spike/
+      - cp /go/bin/hermes build/hermes/
+      - cp /go/bin/julia build/julia/
 
-      - cp /go/bin/rutgers docker/rutgers/
-      - cp /go/bin/njit docker/njit/
-      - cp /go/bin/cuny docker/cuny/
+      - cp /go/bin/rutgers build/rutgers/
+      - cp /go/bin/njit build/njit/
+      - cp /go/bin/cuny build/cuny/
 
-      - cp /go/bin/jet docker/rutgers/
-      - cp /go/bin/jet docker/njit/
-      - cp /go/bin/jet docker/cuny/
+      - cp /go/bin/jet build/rutgers/
+      - cp /go/bin/jet build/njit/
+      - cp /go/bin/jet build/cuny/
 
-      - cp common/conf/config.toml docker/ein/
-      - cp common/conf/config.toml docker/spike/
-      - cp common/conf/config.toml docker/hermes/
-      - cp common/conf/config.toml docker/julia/
-      - cp common/conf/config.toml docker/rutgers/
-      - cp common/conf/config.toml docker/njit/
-      - cp common/conf/config.toml docker/cuny/
+      - cp common/conf/config.toml build/ein/
+      - cp common/conf/config.toml build/spike/
+      - cp common/conf/config.toml build/hermes/
+      - cp common/conf/config.toml build/julia/
+      - cp common/conf/config.toml build/rutgers/
+      - cp common/conf/config.toml build/njit/
+      - cp common/conf/config.toml build/cuny/
     when:
       branch: [production, staging, develop]
       event: [push, tag, deployment]
@@ -60,13 +60,13 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
@@ -88,13 +88,13 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
@@ -116,13 +116,13 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f docker/rutgers/Dockerfile docker/rutgers
-      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f docker/cuny/Dockerfile docker/cuny
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
