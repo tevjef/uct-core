@@ -12,7 +12,7 @@ RUN apk --no-cache add ca-certificates openssl git && \
 
 WORKDIR /go/src/github.com/tevjef/uct-core
 
-RUN go install -v github.com/tevjef/uct-core/hermes
+RUN go install -ldflags "-s -w" -v github.com/tevjef/uct-core/hermes
 
 FROM alpine
 ENV PATH /:$PATH

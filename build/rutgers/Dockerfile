@@ -12,8 +12,8 @@ RUN apk --no-cache add ca-certificates openssl git && \
 
 WORKDIR /go/src/github.com/tevjef/uct-core
 
-RUN go install -v github.com/tevjef/uct-core/jet
-RUN go install -v github.com/tevjef/uct-core/scrapers/rutgers
+RUN go install -ldflags "-s -w" -v github.com/tevjef/uct-core/jet
+RUN go install -ldflags "-s -w" -v github.com/tevjef/uct-core/scrapers/rutgers
 
 FROM alpine
 ENV PATH /:$PATH

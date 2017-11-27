@@ -12,7 +12,7 @@ RUN apk --no-cache add ca-certificates openssl git && \
 
 WORKDIR /go/src/github.com/tevjef/uct-core
 
-RUN go install -v github.com/tevjef/uct-core/julia
+RUN go install -ldflags "-s -w" -v github.com/tevjef/uct-core/julia
 
 FROM alpine
 ENV PATH /:$PATH
