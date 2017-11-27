@@ -2,7 +2,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
     - 'build'
-    - '-file=cloudbuilder/cuny/Dockerfile'
+    - '--file=cloudbuilder/cuny/Dockerfile'
     - '--tag=gcr.io/$PROJECT_ID/cuny:$BRANCH_NAME'
     - '.'
 
