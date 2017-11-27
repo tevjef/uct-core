@@ -62,9 +62,10 @@ func SelectUniversities(ctx context.Context) (universities []*model.University, 
 			u := topics[i]
 			go func() {
 				defer wg.Done()
-				uni, err := SelectUniversity(ctx, u)
+				var uni model.University
+				uni, err = SelectUniversity(ctx, u)
 				if err != nil {
-					panic(err)
+					return
 				}
 				uniChan <- uni
 			}()

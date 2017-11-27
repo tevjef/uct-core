@@ -1,7 +1,3 @@
-pg_dump --host=A -d dbname -v -w -c -Z 9 > dbname.sql.gz
+PGPASSWORD=passs pg_dump --host=foreman.tevindev.me -U universityct -v -w -c -Z 9 > universityct.sql.gz
 
-dropdb --host=B dbname
-
-createdb --host=B dbname
-
-cat dbname.sql.gz | gunzip |  psql --host=B -d dbname
+cat universityct.sql.gz | gunzip |  psql --host=localhost -U universityct -d universityct

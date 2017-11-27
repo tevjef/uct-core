@@ -55,3 +55,14 @@ vendor
 secrets
 *-secret.yml
 *-secret.yaml
+
+spike/spike
+hermes/hermes
+ein/ein
+julia/julia
+scrapers/rutgers/rutgers
+scrapers/njit/njit
+scrapers/cuny/cunt
+
+!common/conf/config.toml
+config.toml
