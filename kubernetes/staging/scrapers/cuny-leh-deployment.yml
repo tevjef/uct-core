@@ -33,5 +33,4 @@ spec:
             value: cuny-leh
           resources:
             requests:
-              cpu: "5m"
               memory: 50Mi

@@ -50,5 +50,4 @@ spec:
               value: universitycoursetracker
           resources:
             requests:
-              cpu: "5m"
               memory: 50Mi

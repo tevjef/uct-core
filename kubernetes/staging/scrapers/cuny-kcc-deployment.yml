@@ -33,5 +33,4 @@ spec:
             value: cuny-kcc
           resources:
             requests:
-              cpu: "5m"
               memory: 50Mi

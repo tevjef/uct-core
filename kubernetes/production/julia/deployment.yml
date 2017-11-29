@@ -42,5 +42,4 @@ spec:
               key: database-name
         resources:
           requests:
-            cpu: "5m"
             memory: 50Mi

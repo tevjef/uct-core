@@ -52,5 +52,4 @@ spec:
               key: dry-run
         resources:
           requests:
-            cpu: "5m"
             memory: 50Mi
