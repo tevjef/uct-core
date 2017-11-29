@@ -205,7 +205,7 @@ pipeline:
       branch: staging
       event: [push, tag, deployment]
 
-kubernetes-deploy-production:
+  kubernetes-deploy-production:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
