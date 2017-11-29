@@ -6,7 +6,7 @@ metadata:
     app: rutgers-nk
   name: rutgers-nk
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -28,8 +28,6 @@ spec:
           - name: JET_SCRAPER_NAME
             value: rutgers-nk
           resources:
-            limits:
-              cpu: "5m"
             requests:
               cpu: "5m"
               memory: 50Mi

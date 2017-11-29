@@ -4,7 +4,7 @@ metadata:
   namespace: production
   name: spike
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -46,9 +46,9 @@ spec:
                 secretKeyRef:
                   name: pg-cred
                   key: database-name
+            - name: SPIKE_GCP_PROJECT
+              value: universitycoursetracker
           resources:
-            limits:
-              cpu: "5m"
             requests:
               cpu: "5m"
               memory: 50Mi

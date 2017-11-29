@@ -28,8 +28,6 @@ spec:
           - name: JET_SCRAPER_NAME
             value: njit
           resources:
-            limits:
-              cpu: "5m"
             requests:
               cpu: "5m"
               memory: 50Mi
