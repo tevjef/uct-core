@@ -1,0 +1,10 @@
+apiVersion: "stable.k8s.psg.io/v1"
+kind: "Certificate"
+metadata:
+  name: "api-coursetraker-cert"
+  namespace: "production"
+spec:
+  domain: "api.staging.coursetrakr.io"
+  email: "tev.jeffrey@gmail.com"
+  provider: "namecheap"
+  secretName: api-production-tls

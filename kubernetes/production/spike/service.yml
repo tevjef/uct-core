@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: production
+  name: spike-http
+  labels:
+    app: spike
+    host: api.staging.coursetrakr.io
+spec:
+  type: NodePort
+  ports:
+  - port: 9876
+    protocol: "TCP"
+    targetPort: 9876
+    name: spike-port
+  selector:
+    app: spike

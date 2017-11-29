@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/tevjef/uct-core/common/model"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-core/common/model"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
 )
 
 // Each handler must either set a meta or response
@@ -25,6 +26,7 @@ func Decorator(c *gin.Context) {
 		response.Meta = &meta
 		c.Set(ResponseKey, response)
 	} else {
+		log.WithError(fmt.Errorf("%s", *meta.Message)).Error("response does not exist")
 		c.Set(ResponseKey, model.Response{Meta: &meta})
 	}
 }

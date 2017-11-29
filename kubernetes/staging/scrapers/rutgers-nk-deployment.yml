@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  labels:
+    app: rutgers-nk
+  name: rutgers-nk
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: rutgers-nk
+    spec:
+      containers:
+        - name: rutgers-nk
+          image: docker.io/tevjef/rutgers:staging
+          ports:
+          - containerPort: 13100
+            name: pprof
+          - containerPort: 13000
+            name: metrics-port
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: RUTGERS_CAMPUS
+            value: NK
+          - name: JET_SCRAPER_NAME
+            value: rutgers-nk
+          resources:
+            requests:
+              cpu: "5m"
+              memory: 50Mi

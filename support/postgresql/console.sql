@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.university
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.university OWNER TO postgres;
+ALTER TABLE public.university OWNER TO universityct;
 
 COMMENT ON COLUMN public.university.abbr IS 'Abbreviation of the university name';
 COMMENT ON COLUMN public.university.home_page IS 'The homepage page of the university';
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS public.subject
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.subject OWNER TO postgres;
+ALTER TABLE public.subject OWNER TO universityct;
 
 COMMENT ON COLUMN public.subject.university_id IS 'The university this subject belongs to';
 COMMENT ON COLUMN public.subject.name IS 'The name of the subject';
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS public.course
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.course OWNER TO postgres;
+ALTER TABLE public.course OWNER TO universityct;
 
 COMMENT ON COLUMN public.course.subject_id IS 'The subject this course belongs to';
 COMMENT ON COLUMN public.course.name IS 'The name of the course';
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS public.section
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.section OWNER TO postgres;
+ALTER TABLE public.section OWNER TO universityct;
 
 COMMENT ON COLUMN public.section.course_id IS 'The course this section belongs to';
 COMMENT ON COLUMN public.section.number IS 'Courses may have multiple sections and may choose to have this number to uniquely identify it. If the university doesn’t have a section number, assign one.';
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS public.meeting
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.meeting OWNER TO postgres;
+ALTER TABLE public.meeting OWNER TO universityct;
 
 COMMENT ON COLUMN public.meeting.section_id IS 'The section this meeting belongs to';
 COMMENT ON COLUMN public.meeting.room IS 'This may include the full name, e.g Central King Building Room 356. To take great care when designing the UI.';
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS public.instructor
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.instructor OWNER TO postgres;
+ALTER TABLE public.instructor OWNER TO universityct;
 
 COMMENT ON COLUMN public.instructor.section_id IS 'The section this instructor belongs to.';
 COMMENT ON COLUMN public.instructor.name IS 'The name of instructor';
@@ -223,7 +223,7 @@ CREATE TABLE IF NOT EXISTS public.book
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.book OWNER TO postgres;
+ALTER TABLE public.book OWNER TO universityct;
 
 COMMENT ON COLUMN public.book.title IS 'The title of book';
 COMMENT ON COLUMN public.book.url IS 'The url of the book';
@@ -256,7 +256,7 @@ CREATE TABLE IF NOT EXISTS public.metadata
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.metadata OWNER TO postgres;
+ALTER TABLE public.metadata OWNER TO universityct;
 
 COMMENT ON COLUMN public.metadata.content IS 'The title of metadata';
 COMMENT ON COLUMN public.metadata.title IS 'The url of the metadata';
@@ -278,7 +278,7 @@ CREATE TABLE IF NOT EXISTS public.registration
 
 )WITH (OIDS = FALSE);
 
-ALTER TABLE public.registration OWNER TO postgres;
+ALTER TABLE public.registration OWNER TO universityct;
 
 COMMENT ON COLUMN public.registration.period IS 'The period for which a season lasts for a specific university. This has to be manually updated. Comparable with season using ::text';
 COMMENT ON COLUMN public.registration.period_date IS 'The url of the registration';

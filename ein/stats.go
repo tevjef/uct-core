@@ -3,13 +3,14 @@ package main
 import (
 	"time"
 
-	"github.com/tevjef/uct-core/common/database"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-core/common/model"
 )
 
-func statsCollector(university string) {
+func statsCollector(ein *ein, university string) {
 	start := time.Now()
 
 	var insertions int
@@ -79,6 +80,31 @@ func statsCollector(university string) {
 		case count := <-diffSerialMetadataCountCh:
 			diffSerialMetadata += count
 		case <-doneAudit:
+
+			universityLabel := prometheus.Labels{"university_name": university}
+			ein.metrics.insertions.With(universityLabel).Set(float64(insertions))
+			ein.metrics.updates.With(universityLabel).Set(float64(updates))
+			ein.metrics.upserts.With(universityLabel).Set(float64(upserts))
+			ein.metrics.existential.With(universityLabel).Set(float64(existential))
+
+			ein.metrics.subject.With(universityLabel).Set(float64(subject))
+			ein.metrics.course.With(universityLabel).Set(float64(course))
+			ein.metrics.section.With(universityLabel).Set(float64(section))
+			ein.metrics.meeting.With(universityLabel).Set(float64(meeting))
+			ein.metrics.metadata.With(universityLabel).Set(float64(metadata))
+
+			ein.metrics.diffSubject.With(universityLabel).Set(float64(diffSubject))
+			ein.metrics.diffCourse.With(universityLabel).Set(float64(diffCourse))
+			ein.metrics.diffSection.With(universityLabel).Set(float64(diffSection))
+			ein.metrics.diffMeeting.With(universityLabel).Set(float64(diffMeeting))
+			ein.metrics.diffMetadata.With(universityLabel).Set(float64(diffMetadata))
+
+			ein.metrics.diffSerialSubject.With(universityLabel).Set(float64(diffSerialSubject))
+			ein.metrics.diffSerialCourse.With(universityLabel).Set(float64(diffSerialCourse))
+			ein.metrics.diffSerialSection.With(universityLabel).Set(float64(diffSerialSection))
+			ein.metrics.diffSerialMeeting.With(universityLabel).Set(float64(diffSerialMeeting))
+			ein.metrics.diffSerialMetadata.With(universityLabel).Set(float64(diffSerialMetadata))
+			ein.metrics.elapsed.With(universityLabel).Set(time.Since(start).Seconds())
 
 			log.WithFields(log.Fields{
 				"university_name": university,

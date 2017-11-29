@@ -5,17 +5,30 @@ import (
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/lib/pq"
+	"github.com/pquerna/ffjson/ffjson"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tevjef/uct-core/common/conf"
+	_ "github.com/tevjef/uct-core/common/metrics"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/notification"
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/julia/notifier"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/lib/pq"
-	"github.com/pquerna/ffjson/ffjson"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+)
+
+var (
+	notificationsIn = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "julia_notifications_in_count",
+		Help: "Number notifications received by Julia",
+	}, []string{"university_name", "status"})
+
+	notificationsOut = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "julia_notifications_out_count",
+		Help: "Number notifications processed by Julia",
+	}, []string{"university_name", "status"})
 )
 
 type julia struct {
@@ -38,39 +51,55 @@ type juliaConfig struct {
 }
 
 func init() {
+	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
+
+	prometheus.MustRegister(notificationsIn, notificationsOut)
 }
 
 func main() {
+	jconf := &juliaConfig{}
+
 	app := kingpin.New("julia", "An application that queue messages from the database")
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("JULIA_CONFIG").
+		File()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	jconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
-	// Open connection to postgresql
-	log.Infoln("Start monitoring PostgreSQL...")
-	listener := pq.NewListener(config.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
-		if err != nil {
-			log.WithError(err).Fatalln("failure in listener")
+	// Create a Postgresql event listener
+	ch := make(chan struct{})
+	listener := pq.NewListener(jconf.service.DatabaseConfig(app.Name), 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+		if ev != pq.ListenerEventConnectionAttemptFailed {
+			ch <- struct{}{}
+		} else {
+			log.WithError(err).Warningln("listener failed to establish connection")
 		}
 	})
+
+	select {
+	case <-ch:
+	case <-time.After(2 * time.Minute):
+		log.Fatalln("failed to create listener")
+	}
 
 	if err := listener.Listen("status_events"); err != nil {
 		log.WithError(err).Fatalln("failed to listen on channel")
 	}
 
 	(&julia{
-		app: app.Model(),
-		config: &juliaConfig{
-			service: config,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		app:      app.Model(),
+		config:   jconf,
+		redis:    redis.NewHelper(jconf.service, app.Name),
 		notifier: notifier.NewNotifier(listener),
 		process: &Process{
 			in:  make(chan model.UCTNotification),
@@ -83,12 +112,20 @@ func main() {
 func (julia *julia) init() {
 	go julia.process.Run(julia.dispatch)
 
+	// Open connection to postgresql
+	log.Infoln("start monitoring PostgreSQL...")
+
 	for {
 		waitForNotification(julia.ctx, julia.notifier, julia.process.Recv)
 	}
 }
 
 func (julia *julia) dispatch(uctNotification model.UCTNotification) {
+	label := prometheus.Labels{
+		"university_name": uctNotification.University.TopicName,
+		"status":          uctNotification.Status,
+	}
+	notificationsOut.With(label).Inc()
 	log.WithFields(log.Fields{"topic": uctNotification.TopicName, "university_name": uctNotification.University.TopicName}).Infoln("queueing")
 	if notificationBytes, err := uctNotification.Marshal(); err != nil {
 		log.WithError(err).Fatalln("failed to marshall notification")
@@ -116,6 +153,13 @@ func waitForNotification(ctx context.Context, l notifier.Notifier, onNotify func
 					log.WithError(err).Errorln("failed to unmarsahll notification")
 					return
 				}
+
+				label := prometheus.Labels{
+					"university_name": uctNotification.University.TopicName,
+					"status":          uctNotification.Status,
+				}
+
+				notificationsIn.With(label).Inc()
 
 				onNotify(&uctNotification)
 			}()

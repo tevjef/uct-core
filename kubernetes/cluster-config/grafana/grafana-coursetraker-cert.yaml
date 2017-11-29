@@ -1,0 +1,10 @@
+apiVersion: "stable.k8s.psg.io/v1"
+kind: "Certificate"
+metadata:
+  name: "grafana-coursetraker-cert"
+  namespace: "monitoring"
+spec:
+  domain: "grafana.staging.coursetrakr.io"
+  email: "tev.jeffrey@gmail.com"
+  provider: "namecheap"
+  secretName: grafana-tls

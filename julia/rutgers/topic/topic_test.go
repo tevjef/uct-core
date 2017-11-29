@@ -1,14 +1,12 @@
 package topic
 
 import (
+	"log"
 	"testing"
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
-
-	"log"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/tevjef/uct-core/common/model"
 	"golang.org/x/net/context"
 )
 

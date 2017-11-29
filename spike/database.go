@@ -10,7 +10,11 @@ import (
 	"github.com/tevjef/uct-core/common/database"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/spike/middleware"
+	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
 
+	"sync"
+
+	"github.com/pquerna/ffjson/ffjson"
 	"golang.org/x/net/context"
 )
 
@@ -20,38 +24,62 @@ type Data struct {
 
 func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
 	defer model.TimeTrack(time.Now(), "SelectUniversity")
+	span := mtrace.NewSpan(ctx, "database.SelectUniversity")
+	span.SetLabel("topicName", topicName)
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
-	if err = Get(ctx, SelectUniversityQuery, &university, m); err != nil {
+	d := Data{}
+	if err = Get(ctx, SelectUniversityCTE, &d, m); err != nil {
 		return
 	}
-	if err = GetAvailableSemesters(ctx, topicName, &university); err != nil {
-		return
-	}
-	if err = GetResolvedSemesters(ctx, topicName, &university); err != nil {
+
+	if err = ffjson.Unmarshal([]byte(d.Data), &university); err != nil {
 		return
 	}
 	return
 }
 
 func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
+	span := mtrace.NewSpan(ctx, "database.SelectUniversities")
+	defer span.Finish()
+
+	var topics []string
 	m := map[string]interface{}{}
-	if err = Select(ctx, ListUniversitiesQuery, &universities, m); err != nil {
+	if err = Select(ctx, ListUniversitiesQuery, &topics, m); err != nil {
 		return
 	}
-	if err == nil && len(universities) == 0 {
+
+	if err == nil && len(topics) == 0 {
 		err = middleware.ErrNoRows{Uri: "No data found a list of universities"}
 	}
 
-	for i := range universities {
-		if err = GetAvailableSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
-			return
+	uniChan := make(chan model.University)
+	go func() {
+		var wg sync.WaitGroup
+		for i := range topics {
+			wg.Add(1)
+			u := topics[i]
+			go func() {
+				defer wg.Done()
+				var uni model.University
+				uni, err = SelectUniversity(ctx, u)
+				if err != nil {
+					return
+				}
+				uniChan <- uni
+			}()
 		}
+		wg.Wait()
+		close(uniChan)
+	}()
 
-		if err = GetResolvedSemesters(ctx, universities[i].TopicName, universities[i]); err != nil {
-			return
-		}
+	for uni := range uniChan {
+		u := uni
+		universities = append(universities, &u)
 	}
 
+	sort.Sort(model.UniversityByName(universities))
 	return
 }
 
@@ -69,13 +97,16 @@ func GetAvailableSemesters(ctx context.Context, topicName string, university *mo
 		return err
 	} else {
 		university.AvailableSemesters = s
-		university.Metadata, err = SelectMetadata(ctx, university.Id, 0, 0, 0, 0)
 		return err
 	}
 }
 
 func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters []*model.Semester, err error) {
 	defer model.TimeTrack(time.Now(), "GetAvailableSemesters")
+	span := mtrace.NewSpan(ctx, "database.SelectAvailableSemesters")
+	span.SetLabel("topicName", topicName)
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
 	err = Select(ctx, SelectAvailableSemestersQuery, &semesters, m)
 	sort.Sort(model.SemesterSorter(semesters))
@@ -84,6 +115,10 @@ func SelectAvailableSemesters(ctx context.Context, topicName string) (semesters 
 
 func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters model.ResolvedSemester, err error) {
 	defer model.TimeTrack(time.Now(), "SelectResolvedSemesters")
+	span := mtrace.NewSpan(ctx, "database.SelectResolvedSemesters")
+	span.SetLabel("topicName", topicName)
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": topicName}
 	rs := model.DBResolvedSemester{}
 	if err = Get(ctx, SelectResolvedSemestersQuery, &rs, m); err != nil {
@@ -100,6 +135,10 @@ func SelectResolvedSemesters(ctx context.Context, topicName string) (semesters m
 
 func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
+	span := mtrace.NewSpan(ctx, "database.SelectSubject")
+	span.SetLabel("topicName", subjectTopicName)
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := Data{}
 	if err = Get(ctx, SelectProtoSubjectQuery, &d, m); err != nil {
@@ -112,6 +151,12 @@ func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.
 
 func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSubjects")
+	span := mtrace.NewSpan(ctx, "database.SelectSubjects")
+	span.SetLabel("topicName", uniTopicName)
+	span.SetLabel("year", year)
+	span.SetLabel("season", season)
+	defer span.Finish()
+
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
 	err = Select(ctx, ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
@@ -122,6 +167,10 @@ func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (sub
 
 func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
+	span := mtrace.NewSpan(ctx, "database.SelectCourse")
+	span.SetLabel("topicName", courseTopicName)
+	defer span.Finish()
+
 	d := Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
 	if err = Get(ctx, SelectCourseQuery, &d, m); err != nil {
@@ -134,7 +183,11 @@ func SelectCourse(ctx context.Context, courseTopicName string) (course model.Cou
 
 func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourses")
-	d := []Data{}
+	span := mtrace.NewSpan(ctx, "database.SelectCourses")
+	span.SetLabel("topicName", subjectTopicName)
+	defer span.Finish()
+
+	var d []Data
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	if err = Select(ctx, ListCoursesQuery, &d, m); err != nil {
 		return
@@ -155,6 +208,10 @@ func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*mod
 
 func SelectSection(ctx context.Context, sectionTopicName string) (section model.Section, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
+	span := mtrace.NewSpan(ctx, "database.SelectSection")
+	span.SetLabel("topicName", sectionTopicName)
+	defer span.Finish()
+
 	d := Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
 	if err = Get(ctx, SelectProtoSectionQuery, &d, m); err != nil {
@@ -189,6 +246,10 @@ func SelectMetadata(ctx context.Context, universityId, subjectId, courseId, sect
 }
 
 func Select(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	span := mtrace.NewSpan(ctx, "database.Select")
+	span.SetLabel("query", query)
+	defer span.Finish()
+
 	if err := database.FromContext(ctx).Select(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
@@ -199,6 +260,10 @@ func Select(ctx context.Context, query string, dest interface{}, args interface{
 }
 
 func Get(ctx context.Context, query string, dest interface{}, args interface{}) error {
+	span := mtrace.NewSpan(ctx, "database.Get")
+	span.SetLabel("query", query)
+	defer span.Finish()
+
 	if err := database.FromContext(ctx).Get(query, dest, args); err != nil {
 		if err == sql.ErrNoRows {
 			err = middleware.ErrNoRows{Uri: err.Error()}
@@ -227,11 +292,12 @@ var queries = []string{
 	CourseMetadataQuery,
 	SectionMetadataQuery,
 	MeetingMetadataQuery,
+	SelectUniversityCTE,
 }
 
 const (
 	SelectUniversityQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university WHERE topic_name = :topic_name ORDER BY name`
-	ListUniversitiesQuery         = `SELECT id, name, abbr, home_page, registration_page, main_color, accent_color, topic_name, topic_id FROM university ORDER BY name`
+	ListUniversitiesQuery         = `SELECT topic_name FROM university ORDER BY name`
 	SelectAvailableSemestersQuery = `SELECT season, year FROM subject JOIN university ON university.id = subject.university_id
 									WHERE university.topic_name = :topic_name GROUP BY season, year`
 
@@ -262,4 +328,61 @@ const (
 	CourseMetadataQuery     = `SELECT title, content FROM metadata WHERE course_id = :course_id ORDER BY id`
 	SectionMetadataQuery    = `SELECT title, content FROM metadata WHERE section_id = :section_id ORDER BY id`
 	MeetingMetadataQuery    = `SELECT title, content FROM metadata WHERE meeting_id = :meeting_id ORDER BY id`
+
+	SelectUniversityCTE = `WITH resolved_semesters AS (
+    SELECT json_build_object(
+        'current', json_build_object(
+            'year', cast(s.current_year as INT),
+            'season', s.current_season
+        ),
+        'next', json_build_object(
+            'year', cast(s.next_year as INT),
+            'season', s.next_season
+        ),
+        'last', json_build_object(
+            'year', cast(s.last_year as INT),
+            'season', s.last_season
+        )
+    )
+    FROM semester s
+      JOIN university ON university.id = s.university_id
+    WHERE university.topic_name = :topic_name
+), metadata AS (
+    SELECT json_build_array(json_build_object(
+        'title', m.title,
+        'content', m.content))
+    FROM metadata m
+      LEFT JOIN university ON university.id = m.university_id
+    WHERE university.topic_name = :topic_name
+), available_semesters AS (
+    SELECT array_to_json(array_agg(rawSemesters))
+    FROM (SELECT
+            s.season,
+            cast(s.year as INT)
+          FROM subject s
+            JOIN university ON university.id = s.university_id
+          WHERE university.topic_name = :topic_name
+		  GROUP BY season, year
+		  ORDER BY s.year DESC) rawSemesters
+)
+SELECT json_build_object(
+    'name', u.name,
+    'abbr', u.abbr,
+    'home_page', u.home_page,
+    'registration_page', u.registration_page,
+    'main_color', u.main_color,
+    'accent_color', u.accent_color,
+    'topic_name', u.topic_name,
+    'topic_id', u.topic_id,
+    'available_semesters', (SELECT *
+                           FROM available_semesters),
+    'resolved_semesters', (SELECT *
+                           FROM resolved_semesters),
+    'metadata', (SELECT *
+                 FROM metadata)
+) as data
+FROM university u
+WHERE u.topic_name = :topic_name
+GROUP BY u.id;
+`
 )

@@ -48,7 +48,7 @@ func (p *Policy) CacheHeader() string {
 	var buffer bytes.Buffer
 
 	writeMaxAge := func() {
-		buffer.WriteString("max-age=")
+		buffer.WriteString("public, max-age=")
 		buffer.WriteString(strconv.Itoa(int(p.ClientMaxAge.Seconds())))
 	}
 

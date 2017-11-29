@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  labels:
+    app: cuny-cty
+  name: cuny-cty
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cuny-cty
+    spec:
+      containers:
+        - name: cuny-cty
+          image: docker.io/tevjef/cuny:staging
+          ports:
+          - containerPort: 13100
+            name: pprof
+          - containerPort: 13000
+            name: metrics-port
+            protocol: TCP
+          imagePullPolicy: Always
+          env:
+          - name: CUNY_UNIVERSITY
+            value: CTY
+          - name: JET_DAEMON
+            value: 15m
+          - name: JET_DAEMON_JITTER
+            value: "50"
+          - name: JET_SCRAPER_NAME
+            value: cuny-cty
+          resources:
+            requests:
+              cpu: "5m"
+              memory: 50Mi

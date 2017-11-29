@@ -1,11 +1,11 @@
 package harmony
 
 import (
+	"math/rand"
 	"time"
 
-	"github.com/tevjef/uct-core/common/redis"
-
 	log "github.com/Sirupsen/logrus"
+	"github.com/tevjef/uct-core/common/redis"
 	"golang.org/x/net/context"
 )
 
@@ -13,10 +13,18 @@ var fields = log.Fields{}
 
 type Action func(ctx context.Context)
 
-func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) {
+type Config struct {
+	Jitter   int
+	Interval time.Duration
+	Action   Action
+	Redis    *redis.Helper
+	Ctx      context.Context
+}
+
+func DaemonScraper(c *Config) {
 	go func() {
-		rsync := newSync(wrapper, func(config *config) {
-			config.interval = interval
+		rsync := newSync(c.Redis, func(config *syncConfig) {
+			config.interval = c.Interval
 		})
 
 		var cancelFunc context.CancelFunc
@@ -26,7 +34,7 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) 
 		for {
 			select {
 			case instance := <-newInstanceConfig:
-				fields = log.Fields{"offset": instance.offset().Seconds(), "instances": instance.count(),
+				fields = log.Fields{"interval": c.Interval.String(), "offset": instance.offset().Seconds(), "instances": instance.count(),
 					"position": instance.position(), "instance_id": instance.id}
 
 				if instance.offset() != lastOffset {
@@ -38,12 +46,12 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) 
 					}
 
 					var ctx context.Context
-					ctx, cancelFunc = context.WithCancel(context.Background())
+					ctx, cancelFunc = context.WithCancel(c.Ctx)
 
 					go (&actionConfig{
-						action:   start,
-						offset:   instance.offset(),
-						interval: interval,
+						action:   c.Action,
+						offset:   addJitter(c.Jitter, c.Interval, rand.NewSource(time.Now().UnixNano())),
+						interval: c.Interval,
 						ctx:      ctx,
 					}).prepareForSync(ctx)
 				}
@@ -52,6 +60,16 @@ func DaemonScraper(wrapper *redis.Helper, interval time.Duration, start Action) 
 			}
 		}
 	}()
+}
+
+func addJitter(jitter int, interval time.Duration, source rand.Source) time.Duration {
+	if jitter == 0 {
+		return interval
+	}
+
+	maxJitter := interval.Nanoseconds() + int64(float64(interval.Nanoseconds())*1/float64(jitter))
+	newJitter := rand.New(source).Int63n(maxJitter)
+	return time.Duration(newJitter) + interval
 }
 
 type actionConfig struct {
@@ -83,7 +101,6 @@ func (ac *actionConfig) run() {
 
 	for c := time.Tick(ac.interval); ; {
 		log.WithFields(fields).Infoln("sync info")
-		ctx, _ := context.WithTimeout(ctx, time.Minute)
 		go ac.action(ctx)
 
 		select {

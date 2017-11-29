@@ -145,6 +145,20 @@ func (a SectionByNumber) Less(i, j int) bool {
 	return strings.Compare(a[i].Number, a[j].Number) < 0
 }
 
+type UniversityByName []*University
+
+func (a UniversityByName) Len() int {
+	return len(a)
+}
+
+func (a UniversityByName) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a UniversityByName) Less(i, j int) bool {
+	return strings.Compare(a[i].Name, a[j].Name) < 0
+}
+
 type CourseByName []Course
 
 func (a CourseByName) Len() int {

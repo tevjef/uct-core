@@ -4,7 +4,7 @@ workspace:
 
 pipeline:
   core:
-    image: golang:1.6.3-alpine
+    image: golang:1.9-alpine
     environment:
       - GOPATH=/go
     commands:
@@ -14,48 +14,45 @@ pipeline:
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
+      - go get -u github.com/golang/dep/cmd/dep
+      - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
-      - wget -q https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz
-      - tar -xzf glide-v0.12.3-linux-amd64.tar.gz
-      - mv linux-amd64/glide /usr/bin
-      - glide install
-      - export PATH=$PATH:$GOPATH/bin
-      - go install -v github.com/tevjef/uct-core/ein
-      - go install -v github.com/tevjef/uct-core/hermes
-      - go install -v github.com/tevjef/uct-core/julia
-      - go install -v github.com/tevjef/uct-core/scrapers/rutgers
-      - go install -v github.com/tevjef/uct-core/scrapers/njit
-      - go install -v github.com/tevjef/uct-core/jet
-      - go install -v github.com/tevjef/uct-core/spike
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
 
   common:
     image: library/docker:dind
     commands:
-      - cp /go/bin/ein docker/ein/
-      - cp /go/bin/spike docker/spike/
-      - cp /go/bin/hermes docker/hermes/
-      - cp /go/bin/julia docker/julia/
-      - cp /go/bin/rutgers docker/rutgers-nk/
-      - cp /go/bin/rutgers docker/rutgers-cm/
-      - cp /go/bin/rutgers docker/rutgers-nb/
-      - cp /go/bin/njit docker/njit/
-      - cp /go/bin/jet docker/njit/
-      - cp /go/bin/jet docker/rutgers-nk/
-      - cp /go/bin/jet docker/rutgers-cm/
-      - cp /go/bin/jet docker/rutgers-nb/
+      - cp /go/bin/ein build/ein/
+      - cp /go/bin/spike build/spike/
+      - cp /go/bin/hermes build/hermes/
+      - cp /go/bin/julia build/julia/
 
-      - cp common/conf/config.toml docker/ein/
-      - cp common/conf/config.toml docker/spike/
-      - cp common/conf/config.toml docker/hermes/
-      - cp common/conf/config.toml docker/julia/
-      - cp common/conf/config.toml docker/rutgers-nk/
-      - cp common/conf/config.toml docker/rutgers-cm/
-      - cp common/conf/config.toml docker/rutgers-nb/
-      - cp common/conf/config.toml docker/njit/
+      - cp /go/bin/rutgers build/rutgers/
+      - cp /go/bin/njit build/njit/
+      - cp /go/bin/cuny build/cuny/
+
+      - cp /go/bin/jet build/rutgers/
+      - cp /go/bin/jet build/njit/
+      - cp /go/bin/jet build/cuny/
+
+      - cp common/conf/config.toml build/ein/
+      - cp common/conf/config.toml build/spike/
+      - cp common/conf/config.toml build/hermes/
+      - cp common/conf/config.toml build/julia/
+      - cp common/conf/config.toml build/rutgers/
+      - cp common/conf/config.toml build/njit/
+      - cp common/conf/config.toml build/cuny/
     when:
-      branch: [master, staging]
+      branch: [production, staging, develop]
       event: [push, tag, deployment]
 
   production:
@@ -63,39 +60,27 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/uct-core:ein -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:spike -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:hermes -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers-cm -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
-      - docker build -t tevjef/uct-core:njit -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/uct-core:fluentd -f support/fluentd/Dockerfile support/fluentd
-      - docker build -t tevjef/uct-core:fluentd-gen -f support/fluentd/gen/Dockerfile support/fluentd/gen
-      - docker build -t tevjef/uct-core:nginx -f support/nginx/Dockerfile support/nginx
-      - docker build -t tevjef/uct-core:nginx-gen -f support/nginx/gen/Dockerfile support/nginx/gen
-      - docker build -t tevjef/uct-core:postgresql -f support/postgresql/Dockerfile support/postgresql
-      - docker build -t tevjef/uct-core:telegraf -f support/telegraf/Dockerfile support/telegraf
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/uct-core:ein
-      - docker push tevjef/uct-core:spike
-      - docker push tevjef/uct-core:hermes
-      - docker push tevjef/uct-core:julia
-      - docker push tevjef/uct-core:rutgers-cm
-      - docker push tevjef/uct-core:rutgers-nb
-      - docker push tevjef/uct-core:rutgers-nk
-      - docker push tevjef/uct-core:njit
-      - docker push tevjef/uct-core:fluentd
-      - docker push tevjef/uct-core:fluentd-gen
-      - docker push tevjef/uct-core:nginx
-      - docker push tevjef/uct-core:nginx-gen
-      - docker push tevjef/uct-core:postgresql
-      - docker push tevjef/uct-core:telegraf
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      branch: master
+      branch: production
       event: [push, tag, deployment]
 
   staging:
@@ -103,37 +88,178 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/uct-core:ein-staging -f docker/ein/Dockerfile docker/ein
-      - docker build -t tevjef/uct-core:spike-staging -f docker/spike/Dockerfile docker/spike
-      - docker build -t tevjef/uct-core:hermes-staging -f docker/hermes/Dockerfile docker/hermes
-      - docker build -t tevjef/uct-core:julia-staging -f docker/julia/Dockerfile docker/julia
-      - docker build -t tevjef/uct-core:rutgers-cm-staging -f docker/rutgers-cm/Dockerfile docker/rutgers-cm
-      - docker build -t tevjef/uct-core:rutgers-nb-staging -f docker/rutgers-nb/Dockerfile docker/rutgers-nb
-      - docker build -t tevjef/uct-core:rutgers-nk-staging -f docker/rutgers-nk/Dockerfile docker/rutgers-nk
-      - docker build -t tevjef/uct-core:njit-staging -f docker/njit/Dockerfile docker/njit
-      - docker build -t tevjef/uct-core:fluentd-staging -f support/fluentd/Dockerfile support/fluentd
-      - docker build -t tevjef/uct-core:fluentd-gen-staging -f support/fluentd/gen/Dockerfile support/fluentd/gen
-      - docker build -t tevjef/uct-core:nginx-staging -f support/nginx/Dockerfile support/nginx
-      - docker build -t tevjef/uct-core:nginx-gen-staging -f support/nginx/gen/Dockerfile support/nginx/gen
-      - docker build -t tevjef/uct-core:postgresql-staging -f support/postgresql/Dockerfile support/postgresql
-      - docker build -t tevjef/uct-core:telegraf-staging -f support/telegraf/Dockerfile support/telegraf
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
 
-      - docker push tevjef/uct-core:ein-staging
-      - docker push tevjef/uct-core:spike-staging
-      - docker push tevjef/uct-core:hermes-staging
-      - docker push tevjef/uct-core:julia-staging
-      - docker push tevjef/uct-core:rutgers-cm-staging
-      - docker push tevjef/uct-core:rutgers-nb-staging
-      - docker push tevjef/uct-core:rutgers-nk-staging
-      - docker push tevjef/uct-core:njit-staging
-      - docker push tevjef/uct-core:fluentd-staging
-      - docker push tevjef/uct-core:fluentd-gen-staging
-      - docker push tevjef/uct-core:nginx-staging
-      - docker push tevjef/uct-core:nginx-gen-staging
-      - docker push tevjef/uct-core:postgresql-staging
-      - docker push tevjef/uct-core:telegraf-staging
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: staging
+      event: [push, tag, deployment]
+
+  develop:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
+      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
+      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
+      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
+      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
+      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
+      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+
+      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
+      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      branch: develop
+      event: [push]
+
+  kubernetes-deploy-staging:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      # Install Kubectl
+      - apk update
+      - apk add curl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
+
+      # Setup Kubectl
+      - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-context default --cluster=default --user=default
+      - kubectl config use-context default
+
+      - cd /go/src/github.com/tevjef/uct-core
+      # https://github.com/kubernetes/kubernetes/issues/53379 Uncomment in Kubernetes 1.8.4
+      # - kubectl apply -R -f kubernetes/staging
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nk rutgers-nk=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/njit:staging)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/njit njit=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/cuny:staging)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bar cuny-bar=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bcc cuny-bcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bkl cuny-bkl=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-bmc cuny-bmc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-csi cuny-csi=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-cty cuny-cty=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-hos cuny-hos=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-htr cuny-htr=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-jjc cuny-jjc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-kcc cuny-kcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-lag cuny-lag=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-leh cuny-leh=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-mec cuny-mec=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-nyt cuny-nyt=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-qcc cuny-qcc=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-qns cuny-qns=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/cuny-yrk cuny-yrk=$DIGEST
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      branch: staging
+      event: [push, tag, deployment]
+
+kubernetes-deploy-production:
+    image: library/docker:dind
+    commands:
+      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      # Install Kubectl
+      - apk update
+      - apk add curl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
+
+      # Setup Kubectl
+      - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-context default --cluster=default --user=default
+      - kubectl config use-context default
+
+      - cd /go/src/github.com/tevjef/uct-core
+      # https://github.com/kubernetes/kubernetes/issues/53379 Uncomment in Kubernetes 1.8.4
+      # kubectl apply -R -f kubernetes/production/ein
+      # kubectl apply -R -f kubernetes/production/hermes
+      # kubectl apply -R -f kubernetes/production/julia
+      # kubectl apply -R -f kubernetes/production/postgres
+      # kubectl apply -R -f kubernetes/production/redis
+
+      # kubectl apply -R -f kubernetes/production/njit-deployment.yml
+      # kubectl apply -R -f kubernetes/production/njit-metrics.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-cm-deployment.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-cm-metrics.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-nb-deployment.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
+      # kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
+  
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nk rutgers-nk=$DIGEST
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/njit:staging)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/njit njit=$DIGEST
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      branch: production
       event: [push, tag, deployment]

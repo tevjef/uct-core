@@ -1,0 +1,82 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  name: telegraf-exporter
+spec:
+  template:
+    metadata:
+      labels:
+        app: telegraf-exporter
+    spec:
+      containers:
+      - name: telegraf-exporter
+        image: telegraf:1.4-alpine
+        ports:
+        - containerPort: 13000
+          name: metrics-port
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: pg-cred
+                key: username
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-cred
+                key: password
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: pg-cred
+                key: database-name
+        volumeMounts:
+          - name: telegraf-conf-volume
+            mountPath: /etc/telegraf
+        resources:
+          requests:
+            cpu: "5m"
+            memory: 50Mi
+      volumes:
+        - name: telegraf-conf-volume
+          configMap:
+            name: telegraf-config
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: telegraf-exporter
+  labels:
+    metrics: telegraf-exporter
+spec:
+  jobLabel: telegraf-exporter
+  selector:
+    matchLabels:
+      app: telegraf-exporter
+  namespaceSelector:
+    matchNames:
+    - staging
+    - production
+  endpoints:
+  - port: telegraf-port
+    interval: 10s
+    honorLabels: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: telegraf-exporter
+  labels:
+    app: telegraf-exporter
+    metrics: "true"
+spec:
+  ports:
+  - port: 13000
+    protocol: TCP
+    targetPort: metrics-port
+    name: telegraf-port
+  selector:
+    app: telegraf-exporter

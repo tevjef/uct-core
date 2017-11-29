@@ -1,0 +1,962 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<PAGE id='SSR_CLSRCH_ENTRY'><GENSCRIPT id='script'><![CDATA[var oWin=window;
+    var oDoc = window.document;
+    oWin.strCurrUrl='https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL?&PAGE=SSR_CLSRCH_ENTRY';
+    ]]></GENSCRIPT><GENSCRIPT id='onloadScript'><![CDATA[g_bAccessibilityMode=false;
+    var actn='';
+    var oWin=window;
+    var oDoc=document;
+    actn=oDoc.win0.ICAction.value;
+    oDoc.win0.ICAction.value='None';
+    oDoc.win0.ICResubmit.value='0';
+    oWin.nResubmit='0';
+    oDoc.win0.ICStateNum.value=3;initVars_win0();
+    resetVars_win0();
+    oDoc.win0.ICFocus.value='';
+    setupTimeout2();
+    if (!isCrossDomainTop()) top.document.title=document.title;
+    ptEvent.add(window,'scroll',positionWAIT_win0);
+    ptCommonObj2.generateABNSearchResults(document.win0);
+    getGblSrchPageNum(actn);
+    if (gSrchRsltPageNum <= 5) getAllRelatedActions();
+
+    if (typeof(myAppsWindowOpenJS) != 'undefined' && myAppsWindowOpenJS != null && myAppsWindowOpenJS != '')
+    {
+    try {eval(myAppsWindowOpenJS);} catch(e) {}
+    myAppsWindowOpenJS=null;
+    }
+    if (typeof(ptLongEditCounter) != 'undefined' && ptLongEditCounter != null)
+    ptLongEditCounter.onLoadLongEditCounter();
+
+    doModalOnLoad_win0(false, false);
+    ResetGlyph_win0();
+    self.scroll(0,0);
+    objToBeFocus = null;
+    if (typeof oWin == 'undefined') setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+    else
+    oWin.setEventHandlers_win0('ICFirstAnchor_win0', 'ICLastAnchor_win0', false);
+    setFocus_win0('CLASS_SRCH_WRK2_INSTITUTION$31$',-1);
+    ptLoadingStatus_empty(0);
+    setupTimeout2();
+    processing_win0(0,3000);]]></GENSCRIPT>
+    <FIELD id='win0divPSPAGECONTAINER'><![CDATA[<table role='presentation'  border='0' id='ACE_width' cellpadding='0' cellspacing='0' class='PSPAGECONTAINER' cols='4' width='671'>
+        <tr>
+            <td width='4' height='0'></td>
+            <td width='544'></td>
+            <td width='16'></td>
+            <td width='107'></td>
+        </tr>
+        <tr>
+            <td height='52'></td>
+            <td  valign='top' align='left'>
+                <DIV  id='win0divDERIVED_CLSRCH_GROUPBOX2'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='543'>
+                    <tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Groupbox</td></tr>
+                    <tr><td width='541'>
+                        <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUPBOX2' cellpadding='0' cellspacing='0' cols='3' width='541' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                            <tr>
+                                <td width='7' height='0'></td>
+                                <td width='2'></td>
+                                <td width='532'></td>
+                            </tr>
+                            <tr>
+                                <td height='22' colspan='2'></td>
+                                <td  valign='top' align='left'>
+                                    <DIV  id='win0divDERIVED_CLSRCH_SS_TRANSACT_TITLE'><span role='heading' aria-level='1'  class='PATRANSACTIONTITLE' id='DERIVED_CLSRCH_SS_TRANSACT_TITLE'>Search for Classes</span>
+                                    </DIV></td>
+                            </tr>
+                            <tr>
+                                <td height='18'></td>
+                                <td colspan='2'  valign='top' align='left'>
+                                    <DIV  id='win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl'><span  class='PAPAGETITLE' >Enter Search Criteria</span> </DIV></td>
+                            </tr>
+                        </table>
+                    </td></tr>
+                </table>
+                </DIV></td>
+        </tr>
+        <tr>
+            <td height='4' colspan='4'></td>
+        </tr>
+        <tr>
+            <td height='684'></td>
+            <td colspan='2'  valign='top' align='left'>
+                <DIV  id='win0divDERIVED_CLSRCH_GROUP2'><table cellpadding='2' cellspacing='0' cols='1'  class='PSGROUPBOXWBO'  width='559'>
+                    <tr><td class='PSGROUPBOXLABEL'  align='left'>Search for Classes</td></tr>
+                    <tr><td width='557'>
+                        <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUP2' cellpadding='0' cellspacing='0' cols='4' width='557' class='PSGROUPBOX' style='border-style:none' >
+                            <tr>
+                                <td width='3' height='0'></td>
+                                <td width='520'></td>
+                                <td width='28'></td>
+                                <td width='6'></td>
+                            </tr>
+                            <tr>
+                                <td height='86'></td>
+                                <td  valign='top' align='left'>
+                                    <DIV  id='win0divDERIVED_CLSRCH_GROUP3'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='519'>
+                                        <tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Class Search Criteria</td></tr>
+                                        <tr><td width='517'>
+                                            <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUP3' cellpadding='0' cellspacing='0' cols='4' width='517' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                <tr>
+                                                    <td width='3' height='0'></td>
+                                                    <td width='428'></td>
+                                                    <td width='68'></td>
+                                                    <td width='18'></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='24'></td>
+                                                    <td colspan='2'  valign='top' align='left'>
+                                                        <DIV  id='win0div$ICField171'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='495'>
+                                                            <tr><td width='493'>
+                                                                <table role='presentation'  border='0' id='ACE_$ICField171' cellpadding='0' cellspacing='0' cols='3' width='493' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                    <tr>
+                                                                        <td width='3' height='4'></td>
+                                                                        <td width='144'></td>
+                                                                        <td width='346'></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='18'></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divCLASS_SRCH_WRK2_INSTITUTION$31$lbl'><label for='CLASS_SRCH_WRK2_INSTITUTION$31$' id='CLASS_SRCH_WRK2_INSTITUTION$31$_LBL' class='PSDROPDOWNLABEL' >Institution</label>
+                                                                            </DIV></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divCLASS_SRCH_WRK2_INSTITUTION$31$'><select name='CLASS_SRCH_WRK2_INSTITUTION$31$' id='CLASS_SRCH_WRK2_INSTITUTION$31$' tabindex='20' size='1'  class='PSDROPDOWNLIST' style='width:220px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                <option value="">&nbsp; </option>
+                                                                                <option value="BAR01">Baruch College</option>
+                                                                                <option value="BMC01">Borough of Manhattan CC</option>
+                                                                                <option value="BCC01">Bronx Community College</option>
+                                                                                <option value="BKL01" selected='selected'>Brooklyn College</option>
+                                                                                <option value="LAW01">CUNY School of Law</option>
+                                                                                <option value="MED01">CUNY School of Medicine</option>
+                                                                                <option value="SPH01">CUNY School of Public Health</option>
+                                                                                <option value="CTY01">City College</option>
+                                                                                <option value="CSI01">College of Staten Island</option>
+                                                                                <option value="NCC01">Guttman Community College</option>
+                                                                                <option value="HOS01">Hostos Community College</option>
+                                                                                <option value="HTR01">Hunter College</option>
+                                                                                <option value="JJC01">John Jay College</option>
+                                                                                <option value="KCC01">Kingsborough CC</option>
+                                                                                <option value="LAG01">LaGuardia Community College</option>
+                                                                                <option value="LEH01">Lehman College</option>
+                                                                                <option value="MEC01">Medgar Evers College</option>
+                                                                                <option value="NYT01">NYC College of Technology</option>
+                                                                                <option value="QNS01">Queens College</option>
+                                                                                <option value="QCC01">Queensborough CC</option>
+                                                                                <option value="SPS01">School of Professional Studies</option>
+                                                                                <option value="GRD01">The Graduate Center</option>
+                                                                                <option value="YRK01">York College</option>
+                                                                            </select>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td></tr>
+                                                        </table>
+                                                        </DIV></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='25'></td>
+                                                    <td  valign='top' align='left'>
+                                                        <DIV  id='win0divDERIVED_CLSRCH_SSR_GROUP1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='427'>
+                                                            <tr><td width='425'>
+                                                                <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_GROUP1' cellpadding='0' cellspacing='0' cols='3' width='425' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                    <tr>
+                                                                        <td width='3' height='0'></td>
+                                                                        <td width='144'></td>
+                                                                        <td width='278'></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='15'></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divCLASS_SRCH_WRK2_STRM$35$lbl'><label for='CLASS_SRCH_WRK2_STRM$35$' id='CLASS_SRCH_WRK2_STRM$35$_LBL' class='PSDROPDOWNLABEL' >Term</label>
+                                                                            </DIV></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divCLASS_SRCH_WRK2_STRM$35$'><select name='CLASS_SRCH_WRK2_STRM$35$' id='CLASS_SRCH_WRK2_STRM$35$' tabindex='21' size='1'  class='PSDROPDOWNLIST' style='width:220px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                <option value="">&nbsp; </option>
+                                                                                <option value="1169">2016 Fall Term</option>
+                                                                                <option value="1172" selected='selected'>2017 Spring Term</option>
+                                                                            </select>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td></tr>
+                                                        </table>
+                                                        </DIV></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='0' colspan='4'></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='29'></td>
+                                                    <td colspan='2'  valign='top' align='left'>
+                                                        <DIV  id='win0div$ICField252'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='495'>
+                                                            <tr><td width='493'>
+                                                                <table role='presentation'  border='0' id='ACE_$ICField252' cellpadding='0' cellspacing='0' cols='3' width='493' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                    <tr>
+                                                                        <td width='7' height='4'></td>
+                                                                        <td width='436'></td>
+                                                                        <td width='50'></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='23'></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0div$ICField143'><span  class='PAPAGEINSTRUCTIONS' >Select at least 2 search criteria.  Select Search to view your search results.</span>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td></tr>
+                                                        </table>
+                                                        </DIV></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='3' colspan='4'></td>
+                                                </tr>
+                                            </table>
+                                        </td></tr>
+                                    </table>
+                                    </DIV></td>
+                            </tr>
+                            <tr>
+                                <td height='557'></td>
+                                <td colspan='2'  valign='top' align='left'>
+                                    <DIV  id='win0divDERIVED_CLSRCH_GROUP4'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='547'>
+                                        <tr><td width='545'>
+                                            <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_GROUP4' cellpadding='0' cellspacing='0' cols='3' width='545' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                <tr>
+                                                    <td width='3' height='0'></td>
+                                                    <td width='536'></td>
+                                                    <td width='6'></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='543'></td>
+                                                    <td  valign='top' align='left'>
+                                                        <DIV  id='win0div$ICField193$0'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  id='$ICField193$scroll$0' onclick="getScrollTableId('$ICField193$scroll$0')" width='535'>
+                                                            <tr><td width='533'>
+                                                                <table role='presentation'  border='0' id='ACE_$ICField193$0' cellpadding='0' cellspacing='0' cols='4' width='533' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                    <tr>
+                                                                        <td width='0' height='0'></td>
+                                                                        <td width='504'></td>
+                                                                        <td width='24'></td>
+                                                                        <td width='6'></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='16'></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$0'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='503'>
+                                                                                <tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Class Search</td></tr>
+                                                                                <tr><td width='501'>
+                                                                                    <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$0' cellpadding='0' cellspacing='0' cols='3' width='501' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                        <tr>
+                                                                                            <td width='3' height='0'></td>
+                                                                                            <td width='20'></td>
+                                                                                            <td width='478'></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='1'></td>
+                                                                                            <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$0'><a name='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$0' id='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$0'  role='button'tabindex='38' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$0');"><img src='/cs/cnyhcprd/cache850/PS_COLLAPSE_ICN_1.gif' name='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$IMG$0'  alt='Class Search' title='Class Search' border='0' /></a>
+                                                                                                </DIV></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='10'></td>
+                                                                                            <td  valign='top' align='left'>
+                                                                                                <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$255$lbl$0'><span  class='PSEDITBOXLABEL' >Class Search</span> </DIV></td>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </td></tr>
+                                                                            </table>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='169'></td>
+                                                                        <td colspan='2'  valign='top' align='left'>
+                                                                            <DIV  id='win0divDERIVED_CLSRCH_SSR_GROUP_BOX_1$0'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='527'>
+                                                                                <tr><td width='525'>
+                                                                                    <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_GROUP_BOX_1$0' cellpadding='0' cellspacing='0' cols='3' width='525' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                        <tr>
+                                                                                            <td width='3' height='0'></td>
+                                                                                            <td width='520'></td>
+                                                                                            <td width='2'></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='161'></td>
+                                                                                            <td  valign='top' align='left'>
+                                                                                                <DIV  id='win0div$ICField232$0'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  id='$ICField232$scrolli$0' onclick="getScrollTableId('$ICField232$scrolli$0')" width='519'>
+                                                                                                    <tr><td width='517'>
+                                                                                                        <table role='presentation'  border='0' id='ACE_$ICField232$0' cellpadding='0' cellspacing='0' cols='5' width='517' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                                            <tr>
+                                                                                                                <td width='27' height='8'></td>
+                                                                                                                <td width='120'></td>
+                                                                                                                <td width='28'></td>
+                                                                                                                <td width='188'></td>
+                                                                                                                <td width='154'></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='19'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SUBJECT_SRCHlbl$0'><label for='SSR_CLSRCH_WRK_SUBJECT_SRCH$0' id='SSR_CLSRCH_WRK_SUBJECT_SRCH_LBL$0' class='PSDROPDOWNLABEL' >Subject</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SUBJECT_SRCH$0'><select name='SSR_CLSRCH_WRK_SUBJECT_SRCH$0' id='SSR_CLSRCH_WRK_SUBJECT_SRCH$0' tabindex='52' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="ACCT.">ACCT. - Accounting</option>
+                                                                                                                        <option value="AFST.">AFST. - Africana Studies</option>
+                                                                                                                        <option value="AMST.">AMST. - American Studies</option>
+                                                                                                                        <option value="ANTH.">ANTH - Anthropology &amp; Arch</option>
+                                                                                                                        <option value="ARAB.">ARAB. - Arabic</option>
+                                                                                                                        <option value="ARTD.">ARTD. - Art</option>
+                                                                                                                        <option value="BIOL.">BIOL. - Biology</option>n
+                                                                                                                        <option value="BUSN.">BUSN - Finance &amp; Business Mgmt</option>
+                                                                                                                        <option value="CAST.">CAST. - Caribbean Studies</option>
+                                                                                                                        <option value="CBSE.">CBSE - Child,  Biling, Spec Ed</option>
+                                                                                                                        <option value="CHEM.">CHEM. - Chemistry</option>
+                                                                                                                        <option value="CHIN.">CHIN. - Chinese</option>
+                                                                                                                        <option value="CHST.">CHST. - Children&#039;s Studies</option>
+                                                                                                                        <option value="CISC.">CISC - Comp &amp; Info Science</option>
+                                                                                                                        <option value="CLAS.">CLAS. - Classics</option>
+                                                                                                                        <option value="CMLT.">CMLT. - Comparative Literature</option>
+                                                                                                                        <option value="COMM.">COMM. - Communications</option>
+                                                                                                                        <option value="CORC.">CORC. - Core Curriculum</option>
+                                                                                                                        <option value="ECAE.">ECAE - Early Childhood/ Art Ed</option>
+                                                                                                                        <option value="ECON.">ECON. - Economics</option>
+                                                                                                                        <option value="EESC.">EESC - Earth &amp; Environ Sci</option>
+                                                                                                                        <option value="ENGL.">ENGL. - English</option>
+                                                                                                                        <option value="ESLR.">ESLR - Engl As A Second Lang</option>
+                                                                                                                        <option value="FILM.">FILM. - Film</option>
+                                                                                                                        <option value="FINC.">FINC - Finance</option>
+                                                                                                                        <option value="FREN.">FREN. - French</option>
+                                                                                                                        <option value="GERM.">GERM. - German</option>
+                                                                                                                        <option value="GRKC.">GRKC. - Greek (Ancient)</option>
+                                                                                                                        <option value="GSCI.">GSCI. - General Science</option>
+                                                                                                                        <option value="HARC.">HARC - Honors Acad Resch Collq</option>
+                                                                                                                        <option value="HEBR.">HEBR. - Hebrew</option>
+                                                                                                                        <option value="HIST.">HIST. - History</option>
+                                                                                                                        <option value="HNSC.">HNSC - Health &amp; Nutrition Sci</option>
+                                                                                                                        <option value="INDS.">INDS - Interdiscip Studies</option>
+                                                                                                                        <option value="ITAL.">ITAL. - Italian</option>
+                                                                                                                        <option value="JAPN.">JAPN. - Japanese</option>
+                                                                                                                        <option value="JUST.">JUST. - Judaic Studies</option>
+                                                                                                                        <option value="KINS.">KINS - Kinesiology</option>
+                                                                                                                        <option value="LATN.">LATN. - Latin</option>
+                                                                                                                        <option value="LING.">LING. - Lingusitics</option>
+                                                                                                                        <option value="MAM">MAM - Maintain Matriculation</option>
+                                                                                                                        <option value="MATH.">MATH. - Mathematics</option>
+                                                                                                                        <option value="MCHC.">MCHC. - Cuny Hon Col Seminar</option>
+                                                                                                                        <option value="MUSC.">MUSC. - Music</option>
+                                                                                                                        <option value="PERM">PERM - Permit Course</option>
+                                                                                                                        <option value="PHIL.">PHIL. - Philosophy</option>
+                                                                                                                        <option value="PHYS.">PHYS. - Physics</option>
+                                                                                                                        <option value="PIMA.">PIMA - Perf &amp; Inter Media Arts</option>
+                                                                                                                        <option value="POLS.">POLS. - Political Science</option>
+                                                                                                                        <option value="PRLS.">PRLS - Puerto Rican &amp; Lat Stud</option>
+                                                                                                                        <option value="PSYC.">PSYC. - Psychology</option>
+                                                                                                                        <option value="RELG.">RELG. - Religion</option>
+                                                                                                                        <option value="RUSS.">RUSS. - Russian</option>
+                                                                                                                        <option value="SEED.">SEED. - Secondary Education</option>
+                                                                                                                        <option value="SOCY.">SOCY. - Sociology</option>
+                                                                                                                        <option value="SPAN.">SPAN. - Spanish</option>
+                                                                                                                        <option value="SPCL.">SPCL - Schl Psy, Couns&amp; Ldrshp</option>
+                                                                                                                        <option value="SPCM.">SPCM. - Scholars&#039; Program</option>
+                                                                                                                        <option value="SPEC.">SPEC. - Speech</option>
+                                                                                                                        <option value="STABD">STABD - Study Abroad</option>
+                                                                                                                        <option value="SUST.">SUST. - Urban Sustainability</option>
+                                                                                                                        <option value="THEA.">THEA. - Theater</option>
+                                                                                                                        <option value="TVRA.">TVRA. - Television &amp; Radio</option>
+                                                                                                                        <option value="WGST.">WGST - Womens &amp; Gender Studies</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='21'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CATALOG_NBRlbl$1'><label for='SSR_CLSRCH_WRK_CATALOG_NBR$1' id='SSR_CLSRCH_WRK_CATALOG_NBR_LBL$1' class='PSEDITBOXLABEL' >Course Number</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_EXACT_MATCH1$1'><select name='SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$1' id='SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$1' tabindex='114' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="C">contains</option>
+                                                                                                                        <option value="G">greater than or equal to</option>
+                                                                                                                        <option value="E" selected='selected'>is exactly</option>
+                                                                                                                        <option value="T">less than or equal to</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CATALOG_NBR$1'><input type='text' name='SSR_CLSRCH_WRK_CATALOG_NBR$1' id='SSR_CLSRCH_WRK_CATALOG_NBR$1' tabindex='115' value=""  class='PSEDITBOX' style='width:56px; ' maxlength='10' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','N',0);"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_ACAD_CAREERlbl$2'><label for='SSR_CLSRCH_WRK_ACAD_CAREER$2' id='SSR_CLSRCH_WRK_ACAD_CAREER_LBL$2' class='PSDROPDOWNLABEL' >Course Career</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_ACAD_CAREER$2'><select name='SSR_CLSRCH_WRK_ACAD_CAREER$2' id='SSR_CLSRCH_WRK_ACAD_CAREER$2' tabindex='175' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="GRAD">Graduate</option>
+                                                                                                                        <option value="UGRD">Undergraduate</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20'></td>
+                                                                                                                <td rowspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CRSE_ATTRlbl$3'><label for='SSR_CLSRCH_WRK_CRSE_ATTR$3' id='SSR_CLSRCH_WRK_CRSE_ATTR_LBL$3' class='PSDROPDOWNLABEL' >Course Attribute</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CRSE_ATTR$3'><select name='SSR_CLSRCH_WRK_CRSE_ATTR$3' id='SSR_CLSRCH_WRK_CRSE_ATTR$3' tabindex='272' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="ASAP">ASAP Course</option>
+                                                                                                                        <option value="MEBI">Biology Gateway Course</option>
+                                                                                                                        <option value="MEBU">Business Gateway Course</option>
+                                                                                                                        <option value="HON">Campus Honors Course</option>
+                                                                                                                        <option value="COPT">College Option Course</option>
+                                                                                                                        <option value="MECJ">Crim Justice Gateway Course</option>
+                                                                                                                        <option value="DOC">Doctoral Course</option>
+                                                                                                                        <option value="ESL">ESL Course</option>
+                                                                                                                        <option value="MEEC">Economics Gateway Course</option>
+                                                                                                                        <option value="MEEN">English Gateway Course</option>
+                                                                                                                        <option value="EXCG">Exchange Program Course</option>
+                                                                                                                        <option value="ELO">Experiential Learning</option>
+                                                                                                                        <option value="MHC">Macaulay Honors College Course</option>
+                                                                                                                        <option value="MENR">Nursing Gateway Course</option>
+                                                                                                                        <option value="MEPS">Political Sci Gateway Course</option>
+                                                                                                                        <option value="PLTS">Prelude To Success Course</option>
+                                                                                                                        <option value="MEPY">Psychology Gateway Course</option>
+                                                                                                                        <option value="SEEK">Seek/CD Course</option>
+                                                                                                                        <option value="MESO">Sociology Gateway Course</option>
+                                                                                                                        <option value="STCH">Student Teaching Course</option>
+                                                                                                                        <option value="STBD">Study Abroad Course</option>
+                                                                                                                        <option value="METE">Teacher Educ Gateway Course</option>
+                                                                                                                        <option value="TOS">Teachers on Sabbatical Course</option>
+                                                                                                                        <option value="WRIC">Writing Intensive Course</option>
+                                                                                                                        <option value="OERS">ZERO Textbook Cost Course</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='4'></td>
+                                                                                                                <td></td>
+                                                                                                                <td colspan='2' rowspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CRSE_ATTR_VALUE$3'><select name='SSR_CLSRCH_WRK_CRSE_ATTR_VALUE$3' id='SSR_CLSRCH_WRK_CRSE_ATTR_VALUE$3' tabindex='273' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='16'></td>
+                                                                                                                <td colspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CRSE_ATTR_VALUElbl$3'><label for='SSR_CLSRCH_WRK_CRSE_ATTR_VALUE$3' id='SSR_CLSRCH_WRK_CRSE_ATTR_VALUE_LBL$3' class='PSDROPDOWNLABEL' >Course Attribute Value</label>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='32'></td>
+                                                                                                                <td rowspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CU_RQMNT_DESIGNTNlbl$4'><label for='SSR_CLSRCH_WRK_CU_RQMNT_DESIGNTN$4' id='SSR_CLSRCH_WRK_CU_RQMNT_DESIGNTN_LBL$4' class='PSDROPDOWNLABEL' >Requirement Designation</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CU_RQMNT_DESIGNTN$4'><select name='SSR_CLSRCH_WRK_CU_RQMNT_DESIGNTN$4' id='SSR_CLSRCH_WRK_CU_RQMNT_DESIGNTN$4' tabindex='341' size='1'  class='PSDROPDOWNLIST' style='width:260px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="FCE">Flexible Core - Creative Expression</option>
+                                                                                                                        <option value="FIS">Flexible Core - Individual and Society</option>
+                                                                                                                        <option value="FSW">Flexible Core - Scientific World</option>
+                                                                                                                        <option value="FUS">Flexible Core - US Experience in its Diversity</option>
+                                                                                                                        <option value="FWG">Flexible Core - World Cultures &amp; Global Issues</option>
+                                                                                                                        <option value="REC">Required Core - English Composition</option>
+                                                                                                                        <option value="RLP">Required Core - Life and Physical Sciences</option>
+                                                                                                                        <option value="RMQ">Required Core - Mathematical&amp;QuantitativeReasoning</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='19'></td>
+                                                                                                                <td colspan='3' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_OPEN_ONLY$5'><input type='hidden' name='SSR_CLSRCH_WRK_SSR_OPEN_ONLY$chk$5' id='SSR_CLSRCH_WRK_SSR_OPEN_ONLY$chk$5' value="Y" />
+                                                                                                                        <input type='checkbox' name='SSR_CLSRCH_WRK_SSR_OPEN_ONLY$5' id='SSR_CLSRCH_WRK_SSR_OPEN_ONLY$5' class='PSCHECKBOX' tabindex='353' value="Y" checked='checked' onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_SSR_OPEN_ONLY$chk$5.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" /><label for='SSR_CLSRCH_WRK_SSR_OPEN_ONLY$5' id='SSR_CLSRCH_WRK_SSR_OPEN_ONLY_LBL$5' class='PSCHECKBOX' >Show Open Classes Only</label>
+
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                        </table>
+                                                                                                    </td></tr>
+                                                                                                </table>
+                                                                                                </DIV></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='7' colspan='3'></td>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </td></tr>
+                                                                            </table>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='8' colspan='4'></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='16'></td>
+                                                                        <td  valign='top' align='left'>
+                                                                            <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='503'>
+                                                                                <tr><td class='PAGROUPBOXLABELINVISIBLE'  align='left'>Additional Search Criteria</td></tr>
+                                                                                <tr><td width='501'>
+                                                                                    <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$1' cellpadding='0' cellspacing='0' cols='3' width='501' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                        <tr>
+                                                                                            <td width='3' height='0'></td>
+                                                                                            <td width='20'></td>
+                                                                                            <td width='478'></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='1'></td>
+                                                                                            <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$1'><a name='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$1' id='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$1'  role='button'tabindex='479' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$1');"><img src='/cs/cnyhcprd/cache850/PS_COLLAPSE_ICN_1.gif' name='DERIVED_CLSRCH_SSR_EXPAND_COLLAPS$149$$IMG$1'  alt='Additional Search Criteria' title='Additional Search Criteria' border='0' /></a>
+                                                                                                </DIV></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='10'></td>
+                                                                                            <td  valign='top' align='left'>
+                                                                                                <DIV  id='win0divDERIVED_CLSRCH_SSR_EXPAND_COLLAPS$255$lbl$1'><span  class='PSEDITBOXLABEL' >Additional Search Criteria</span> </DIV></td>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </td></tr>
+                                                                            </table>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td height='333'></td>
+                                                                        <td colspan='2'  valign='top' align='left'>
+                                                                            <DIV  id='win0divDERIVED_CLSRCH_SSR_GROUP_BOX_1$1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='527'>
+                                                                                <tr><td width='525'>
+                                                                                    <table role='presentation'  border='0' id='ACE_DERIVED_CLSRCH_SSR_GROUP_BOX_1$1' cellpadding='0' cellspacing='0' cols='3' width='525' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                        <tr>
+                                                                                            <td width='3' height='0'></td>
+                                                                                            <td width='520'></td>
+                                                                                            <td width='2'></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='326'></td>
+                                                                                            <td  valign='top' align='left'>
+                                                                                                <DIV  id='win0div$ICField232$1'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  id='$ICField232$scrolli$1' onclick="getScrollTableId('$ICField232$scrolli$1')" width='519'>
+                                                                                                    <tr><td width='517'>
+                                                                                                        <table role='presentation'  border='0' id='ACE_$ICField232$1' cellpadding='0' cellspacing='0' cols='10' width='517' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                                            <tr>
+                                                                                                                <td width='19' height='8'></td>
+                                                                                                                <td width='8'></td>
+                                                                                                                <td width='120'></td>
+                                                                                                                <td width='44'></td>
+                                                                                                                <td width='76'></td>
+                                                                                                                <td width='72'></td>
+                                                                                                                <td width='24'></td>
+                                                                                                                <td width='56'></td>
+                                                                                                                <td width='52'></td>
+                                                                                                                <td width='46'></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='24' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SESSION_CODElbl$6'><label for='SSR_CLSRCH_WRK_SESSION_CODE$6' id='SSR_CLSRCH_WRK_SESSION_CODE_LBL$6' class='PSDROPDOWNLABEL' >Session</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SESSION_CODE$6'><select name='SSR_CLSRCH_WRK_SESSION_CODE$6' id='SSR_CLSRCH_WRK_SESSION_CODE$6' tabindex='508' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="8W1">Eight Week - First</option>
+                                                                                                                        <option value="8W2">Eight Week - Second</option>
+                                                                                                                        <option value="11W">Eleven Week</option>
+                                                                                                                        <option value="5W1">Five Week - First</option>
+                                                                                                                        <option value="5W2">Five Week - Second</option>
+                                                                                                                        <option value="5W3">Five Week - Third</option>
+                                                                                                                        <option value="4W1">Four Week - First</option>
+                                                                                                                        <option value="4W2">Four Week - Second</option>
+                                                                                                                        <option value="4W3">Four Week - Third</option>
+                                                                                                                        <option value="LT3">Less Than 3 Week</option>
+                                                                                                                        <option value="MBS">Medical, Basic Science</option>
+                                                                                                                        <option value="MCS">Medical, Clinical Science</option>
+                                                                                                                        <option value="9W1">Nine Week - First</option>
+                                                                                                                        <option value="9W2">Nine Week - Second</option>
+                                                                                                                        <option value="1">Regular Academic Session</option>
+                                                                                                                        <option value="2">Second Session</option>
+                                                                                                                        <option value="7W1">Seven Week - First</option>
+                                                                                                                        <option value="7W2">Seven Week - Second</option>
+                                                                                                                        <option value="6W1">Six Week - First</option>
+                                                                                                                        <option value="6W2">Six Week - Second</option>
+                                                                                                                        <option value="10W">Ten Week</option>
+                                                                                                                        <option value="3W1">Three Week - First</option>
+                                                                                                                        <option value="3W2">Three Week - Second</option>
+                                                                                                                        <option value="3W3">Three Week - Third</option>
+                                                                                                                        <option value="12W">Twelve Week</option>
+                                                                                                                        <option value="WIN">Winter</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_INSTRUCTION_MODElbl$7'><label for='SSR_CLSRCH_WRK_INSTRUCTION_MODE$7' id='SSR_CLSRCH_WRK_INSTRUCTION_MODE_LBL$7' class='PSDROPDOWNLABEL' >Mode of Instruction</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_INSTRUCTION_MODE$7'><select name='SSR_CLSRCH_WRK_INSTRUCTION_MODE$7' id='SSR_CLSRCH_WRK_INSTRUCTION_MODE$7' tabindex='587' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="FO">Fully Online</option>
+                                                                                                                        <option value="H">Hybrid</option>
+                                                                                                                        <option value="P">In Person</option>
+                                                                                                                        <option value="O">Online</option>
+                                                                                                                        <option value="PO">Partially Online</option>
+                                                                                                                        <option value="W">Web-Enhanced</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='24' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_MEETING_TIME_STARTlbl$8'><label for='SSR_CLSRCH_WRK_MEETING_TIME_START$8' id='SSR_CLSRCH_WRK_MEETING_TIME_START_LBL$8' class='PSEDITBOXLABEL' >Meeting Start Time</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='4'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_START_TIME_OPR$8'><select name='SSR_CLSRCH_WRK_SSR_START_TIME_OPR$8' id='SSR_CLSRCH_WRK_SSR_START_TIME_OPR$8' tabindex='619' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="BT">between</option>
+                                                                                                                        <option value="GT">greater than</option>
+                                                                                                                        <option value="GE" selected='selected'>greater than or equal to</option>
+                                                                                                                        <option value="E">is exactly</option>
+                                                                                                                        <option value="LT">less than</option>
+                                                                                                                        <option value="LE">less than or equal to</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_MEETING_TIME_START$8'><input type='text' name='SSR_CLSRCH_WRK_MEETING_TIME_START$8' id='SSR_CLSRCH_WRK_MEETING_TIME_START$8' tabindex='620' value=""  class='PSEDITBOX' style='width:56px; ' maxlength='6' onchange="addchg_win0(this);oChange_win0=this;"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='24' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_MEETING_TIME_ENDlbl$8'><label for='SSR_CLSRCH_WRK_MEETING_TIME_END$8' id='SSR_CLSRCH_WRK_MEETING_TIME_END_LBL$8' class='PSEDITBOXLABEL' >Meeting End Time</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='4'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_END_TIME_OPR$8'><select name='SSR_CLSRCH_WRK_SSR_END_TIME_OPR$8' id='SSR_CLSRCH_WRK_SSR_END_TIME_OPR$8' tabindex='623' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="BT">between</option>
+                                                                                                                        <option value="GT">greater than</option>
+                                                                                                                        <option value="GE">greater than or equal to</option>
+                                                                                                                        <option value="E">is exactly</option>
+                                                                                                                        <option value="LT">less than</option>
+                                                                                                                        <option value="LE" selected='selected'>less than or equal to</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_MEETING_TIME_END$8'><input type='text' name='SSR_CLSRCH_WRK_MEETING_TIME_END$8' id='SSR_CLSRCH_WRK_MEETING_TIME_END$8' tabindex='624' value=""  class='PSEDITBOX' style='width:56px; ' maxlength='6' onchange="addchg_win0(this);oChange_win0=this;"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='23' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_INCLUDE_CLASS_DAYSlbl$9'><label for='SSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS$9' id='SSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS_LBL$9' class='PSDROPDOWNLABEL' >Days of Week</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS$9'><select name='SSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS$9' id='SSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS$9' tabindex='686' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="F">exclude any of these days</option>
+                                                                                                                        <option value="E">exclude only these days</option>
+                                                                                                                        <option value="J">include any of these days</option>
+                                                                                                                        <option value="I" selected='selected'>include only these days</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='25'></td>
+                                                                                                                <td colspan='8'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0div$ICField258$9'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='451'>
+                                                                                                                        <tr><td width='449'>
+                                                                                                                            <table role='presentation'  border='0' id='ACE_$ICField258$9' cellpadding='0' cellspacing='0' cols='15' width='449' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                                                                                                <tr>
+                                                                                                                                    <td width='115' height='4'></td>
+                                                                                                                                    <td width='18'></td>
+                                                                                                                                    <td width='24'></td>
+                                                                                                                                    <td width='17'></td>
+                                                                                                                                    <td width='26'></td>
+                                                                                                                                    <td width='18'></td>
+                                                                                                                                    <td width='25'></td>
+                                                                                                                                    <td width='19'></td>
+                                                                                                                                    <td width='32'></td>
+                                                                                                                                    <td width='16'></td>
+                                                                                                                                    <td width='15'></td>
+                                                                                                                                    <td width='18'></td>
+                                                                                                                                    <td width='19'></td>
+                                                                                                                                    <td width='17'></td>
+                                                                                                                                    <td width='70'></td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td height='2'></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_MON$9'><input type='hidden' name='SSR_CLSRCH_WRK_MON$chk$9' id='SSR_CLSRCH_WRK_MON$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_MON$9' id='SSR_CLSRCH_WRK_MON$9' class='PSCHECKBOX' tabindex='687' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_MON$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_TUES$9'><input type='hidden' name='SSR_CLSRCH_WRK_TUES$chk$9' id='SSR_CLSRCH_WRK_TUES$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_TUES$9' id='SSR_CLSRCH_WRK_TUES$9' class='PSCHECKBOX' tabindex='688' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_TUES$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_WED$9'><input type='hidden' name='SSR_CLSRCH_WRK_WED$chk$9' id='SSR_CLSRCH_WRK_WED$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_WED$9' id='SSR_CLSRCH_WRK_WED$9' class='PSCHECKBOX' tabindex='689' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_WED$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_THURS$9'><input type='hidden' name='SSR_CLSRCH_WRK_THURS$chk$9' id='SSR_CLSRCH_WRK_THURS$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_THURS$9' id='SSR_CLSRCH_WRK_THURS$9' class='PSCHECKBOX' tabindex='690' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_THURS$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_FRI$9'><input type='hidden' name='SSR_CLSRCH_WRK_FRI$chk$9' id='SSR_CLSRCH_WRK_FRI$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_FRI$9' id='SSR_CLSRCH_WRK_FRI$9' class='PSCHECKBOX' tabindex='691' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_FRI$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_SAT$9'><input type='hidden' name='SSR_CLSRCH_WRK_SAT$chk$9' id='SSR_CLSRCH_WRK_SAT$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_SAT$9' id='SSR_CLSRCH_WRK_SAT$9' class='PSCHECKBOX' tabindex='692' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_SAT$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                    <td></td>
+                                                                                                                                    <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divSSR_CLSRCH_WRK_SUN$9'><input type='hidden' name='SSR_CLSRCH_WRK_SUN$chk$9' id='SSR_CLSRCH_WRK_SUN$chk$9' value="" />
+                                                                                                                                            <input type='checkbox' name='SSR_CLSRCH_WRK_SUN$9' id='SSR_CLSRCH_WRK_SUN$9' class='PSCHECKBOX' tabindex='693' value="Y" onclick="setupTimeout2();    this.form.SSR_CLSRCH_WRK_SUN$chk$9.value=(this.checked?'Y':'N');doFocus_win0(this,false,true);" />
+                                                                                                                                        </DIV></td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td height='17'></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_MONlbl$9'><span  class='PSEDITBOXLABEL' >Mon</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_TUESlbl$9'><span  class='PSEDITBOXLABEL' >Tues</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_WEDlbl$9'><span  class='PSEDITBOXLABEL' >Wed</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_THURSlbl$9'><span  class='PSEDITBOXLABEL' >Thurs</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_FRIlbl$9'><span  class='PSEDITBOXLABEL' >Fri</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_SATlbl$9'><span  class='PSEDITBOXLABEL' >Sat</span> </DIV></td>
+                                                                                                                                    <td  valign='top' align='left'>
+                                                                                                                                        <DIV  id='win0divDERIVED_CS_SUNlbl$9'><span  class='PSEDITBOXLABEL' >Sun</span> </DIV></td>
+                                                                                                                                </tr>
+                                                                                                                            </table>
+                                                                                                                        </td></tr>
+                                                                                                                    </table>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='5' colspan='10'></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='1' colspan='4'></td>
+                                                                                                                <td colspan='6' rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divDERIVED_AS_LBL_ES_EXAMPLE_LBL2$10'><a name='DERIVED_AS_LBL_ES_EXAMPLE_LBL2$10' id='DERIVED_AS_LBL_ES_EXAMPLE_LBL2$10'  role='button'tabindex='754' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'DERIVED_AS_LBL_ES_EXAMPLE_LBL2$10');"><img src='/cs/cnyhcprd/cache850/PT_HELP_SWAN_1.gif' name='DERIVED_AS_LBL_ES_EXAMPLE_LBL2$IMG$10'  alt='(example: 1136)' onMouseOver="MOpopupObj_win0.StartPopup('win0divDERIVED_AS_LBL_ES_EXAMPLE_LBL2$10', 'DERIVED_AS_LBL_ES_EXAMPLE_LBL2$10_14690_3144', 0, 0);" onMouseOut="MOpopupObj_win0.StopPopup(); " class='PSPUSHBUTTON_MO'  border='0' /></a>
+                                                                                                                    </DIV>
+                                                                                                                    <div id="DERIVED_AS_LBL_ES_EXAMPLE_LBL2$10_14690_3144" style="display:none; position:absolute; max-width:400px; top:0; left:0;">
+                                                                                                                        <span style="display:block;" class="PTPOPUP_MSGHDR">example: 1136</span><br /><span style="display:block;" class="PTPOPUP_MSGTXT"> </span></DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='23' colspan='2'></td>
+                                                                                                                <td rowspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CLASS_NBRlbl$10'><label for='SSR_CLSRCH_WRK_CLASS_NBR$10' id='SSR_CLSRCH_WRK_CLASS_NBR_LBL$10' class='PSEDITBOXLABEL' >Class Nbr</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CLASS_NBR$10'><input type='text' name='SSR_CLSRCH_WRK_CLASS_NBR$10' id='SSR_CLSRCH_WRK_CLASS_NBR$10' tabindex='753' value=""  class='PSEDITBOX' style='width:35px; text-align:right; ' maxlength='5' onchange="addchg_win0(this);return doEdits_win0(this,'S(5.0)','N','N','N','N','N','N',/^ *[0-9\,]*(\.[0-9\,]*)? *$/);"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='1' colspan='2'></td>
+                                                                                                                <td colspan='2'></td>
+                                                                                                                <td colspan='4' rowspan='2' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divDERIVED_AS_LBL_ES_EXAMPLE_LBL3$11'><a name='DERIVED_AS_LBL_ES_EXAMPLE_LBL3$11' id='DERIVED_AS_LBL_ES_EXAMPLE_LBL3$11'  role='button'tabindex='817' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'DERIVED_AS_LBL_ES_EXAMPLE_LBL3$11');"><img src='/cs/cnyhcprd/cache850/PT_HELP_SWAN_1.gif' name='DERIVED_AS_LBL_ES_EXAMPLE_LBL3$IMG$11'  alt='(example: statistics)' onMouseOver="MOpopupObj_win0.StartPopup('win0divDERIVED_AS_LBL_ES_EXAMPLE_LBL3$11', 'DERIVED_AS_LBL_ES_EXAMPLE_LBL3$11_14690_3145', 0, 0);" onMouseOut="MOpopupObj_win0.StopPopup(); " class='PSPUSHBUTTON_MO'  border='0' /></a>
+                                                                                                                    </DIV>
+                                                                                                                    <div id="DERIVED_AS_LBL_ES_EXAMPLE_LBL3$11_14690_3145" style="display:none; position:absolute; max-width:400px; top:0; left:0;">
+                                                                                                                        <span style="display:block;" class="PTPOPUP_MSGHDR">example: statistics</span><br /><span style="display:block;" class="PTPOPUP_MSGTXT"> </span></DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='21' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSR_LBL_WRK_COURSE_TITLElbl$11'><span  class='PSEDITBOXLABEL' >Course Keyword</span> </DIV></td>
+                                                                                                                <td colspan='3' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_DESCR$11'><input type='text' name='SSR_CLSRCH_WRK_DESCR$11' id='SSR_CLSRCH_WRK_DESCR$11' tabindex='816' value=""  class='PSEDITBOX' style='width:180px; ' maxlength='30'  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_UNITS_MINIMUMlbl$12'><label for='SSR_CLSRCH_WRK_UNITS_MINIMUM$12' id='SSR_CLSRCH_WRK_UNITS_MINIMUM_LBL$12' class='PSEDITBOXLABEL' >Minimum Units</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='4'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_UNITS_MIN_OPR$12'><select name='SSR_CLSRCH_WRK_SSR_UNITS_MIN_OPR$12' id='SSR_CLSRCH_WRK_SSR_UNITS_MIN_OPR$12' tabindex='877' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="GT">greater than</option>
+                                                                                                                        <option value="GE" selected='selected'>greater than or equal to</option>
+                                                                                                                        <option value="E">is exactly</option>
+                                                                                                                        <option value="LT">less than</option>
+                                                                                                                        <option value="LE">less than or equal to</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_UNITS_MINIMUM$12'><input type='text' name='SSR_CLSRCH_WRK_UNITS_MINIMUM$12' id='SSR_CLSRCH_WRK_UNITS_MINIMUM$12' tabindex='878' value=""  class='PSEDITBOX' style='width:56px; text-align:right; ' maxlength='6' onchange="addchg_win0(this);return doEdits_win0(this,'S(3.2)','N','N','N','N','N','N',/^ *[0-9\,]*(\.[0-9\,]*)? *$/);"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='21' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_UNITS_MAXIMUMlbl$12'><label for='SSR_CLSRCH_WRK_UNITS_MAXIMUM$12' id='SSR_CLSRCH_WRK_UNITS_MAXIMUM_LBL$12' class='PSEDITBOXLABEL' >Maximum Units</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='4'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_UNITS_MAX_OPR$12'><select name='SSR_CLSRCH_WRK_SSR_UNITS_MAX_OPR$12' id='SSR_CLSRCH_WRK_SSR_UNITS_MAX_OPR$12' tabindex='879' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="GT">greater than</option>
+                                                                                                                        <option value="GE">greater than or equal to</option>
+                                                                                                                        <option value="E">is exactly</option>
+                                                                                                                        <option value="LT">less than</option>
+                                                                                                                        <option value="LE" selected='selected'>less than or equal to</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='3' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_UNITS_MAXIMUM$12'><input type='text' name='SSR_CLSRCH_WRK_UNITS_MAXIMUM$12' id='SSR_CLSRCH_WRK_UNITS_MAXIMUM$12' tabindex='880' value=""  class='PSEDITBOX' style='width:56px; text-align:right; ' maxlength='6' onchange="addchg_win0(this);return doEdits_win0(this,'S(3.2)','N','N','N','N','N','N',/^ *[0-9\,]*(\.[0-9\,]*)? *$/);"  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_COMPONENTlbl$13'><label for='SSR_CLSRCH_WRK_SSR_COMPONENT$13' id='SSR_CLSRCH_WRK_SSR_COMPONENT_LBL$13' class='PSDROPDOWNLABEL' >Course Component</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_COMPONENT$13'><select name='SSR_CLSRCH_WRK_SSR_COMPONENT$13' id='SSR_CLSRCH_WRK_SSR_COMPONENT$13' tabindex='940' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="CLN">Clinical</option>
+                                                                                                                        <option value="CHR">Conference Hour</option>
+                                                                                                                        <option value="CON">Continuance</option>
+                                                                                                                        <option value="DIS">Discussion</option>
+                                                                                                                        <option value="DTN">Dissertation</option>
+                                                                                                                        <option value="FLD">Field Studies</option>
+                                                                                                                        <option value="IND">Independent Study</option>
+                                                                                                                        <option value="INT">Internship</option>
+                                                                                                                        <option value="LAB">Laboratory</option>
+                                                                                                                        <option value="LEC">Lecture</option>
+                                                                                                                        <option value="MSG">Message</option>
+                                                                                                                        <option value="PRA">Practicum</option>
+                                                                                                                        <option value="REC">Recitation</option>
+                                                                                                                        <option value="RSC">Research</option>
+                                                                                                                        <option value="SEM">Seminar</option>
+                                                                                                                        <option value="SUP">Supplemental Instruction</option>
+                                                                                                                        <option value="TST">Test Section</option>
+                                                                                                                        <option value="THE">Thesis Research</option>
+                                                                                                                        <option value="TUT">Tutorial</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='24' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CAMPUSlbl$14'><label for='SSR_CLSRCH_WRK_CAMPUS$14' id='SSR_CLSRCH_WRK_CAMPUS_LBL$14' class='PSDROPDOWNLABEL' >Campus</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_CAMPUS$14'><select name='SSR_CLSRCH_WRK_CAMPUS$14' id='SSR_CLSRCH_WRK_CAMPUS$14' tabindex='1002' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);submitAction_win0(this.form,this.id);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="MAIN">Brooklyn College</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_LOCATIONlbl$15'><label for='SSR_CLSRCH_WRK_LOCATION$15' id='SSR_CLSRCH_WRK_LOCATION_LBL$15' class='PSDROPDOWNLABEL' >Location</label>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='7'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_LOCATION$15'><select name='SSR_CLSRCH_WRK_LOCATION$15' id='SSR_CLSRCH_WRK_LOCATION$15' tabindex='1060' size='1'  class='PSDROPDOWNLIST' style='width:194px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="" selected='selected'>&nbsp; </option>
+                                                                                                                        <option value="MAIN">Main - Brooklyn College</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                            <tr>
+                                                                                                                <td height='20' colspan='2'></td>
+                                                                                                                <td  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSR_LBL_WRK_INSTRCTOR_LBLlbl$16'><span  class='PSEDITBOXLABEL' >Instructor Last Name</span> </DIV></td>
+                                                                                                                <td colspan='2'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_SSR_EXACT_MATCH2$16'><select name='SSR_CLSRCH_WRK_SSR_EXACT_MATCH2$16' id='SSR_CLSRCH_WRK_SSR_EXACT_MATCH2$16' tabindex='1109' size='1'  class='PSDROPDOWNLIST' style='width:96px; ' onchange="addchg_win0(this);return doEdits_win0(this,'','N','N','N','N','Y','Y',0);" onkeydown="if ((typeof isLoaderInProcess == 'function') && isLoaderInProcess() && ptCommonObj2!=null) { ptCommonObj2.terminateEvent(event); } " >
+                                                                                                                        <option value="">&nbsp; </option>
+                                                                                                                        <option value="B" selected='selected'>begins with</option>
+                                                                                                                        <option value="C">contains</option>
+                                                                                                                        <option value="E">is exactly</option>
+                                                                                                                    </select>
+                                                                                                                    </DIV></td>
+                                                                                                                <td colspan='5' nowrap='nowrap'  valign='top' align='left'>
+                                                                                                                    <DIV  id='win0divSSR_CLSRCH_WRK_LAST_NAME$16'><input type='text' name='SSR_CLSRCH_WRK_LAST_NAME$16' id='SSR_CLSRCH_WRK_LAST_NAME$16' tabindex='1110' value=""  class='PSEDITBOX' style='width:190px; ' maxlength='30'  />
+                                                                                                                    </DIV></td>
+                                                                                                            </tr>
+                                                                                                        </table>
+                                                                                                    </td></tr>
+                                                                                                </table>
+                                                                                                </DIV></td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <td height='7' colspan='3'></td>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </td></tr>
+                                                                            </table>
+                                                                            </DIV></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td></tr>
+                                                        </table>
+                                                        </DIV></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='9' colspan='3'></td>
+                                                </tr>
+                                            </table>
+                                        </td></tr>
+                                    </table>
+                                    </DIV></td>
+                            </tr>
+                            <tr>
+                                <td height='4' colspan='4'></td>
+                            </tr>
+                            <tr>
+                                <td height='19'></td>
+                                <td  valign='top' align='left'>
+                                    <DIV  id='win0div$ICField183'><table cellpadding='2' cellspacing='0' cols='1'  class='PABACKGROUNDINVISIBLEWBO'  width='519'>
+                                        <tr><td width='517'>
+                                            <table role='presentation'  border='0' id='ACE_$ICField183' cellpadding='0' cellspacing='0' cols='3' width='517' class='PABACKGROUNDINVISIBLE' style='border-style:none' >
+                                                <tr>
+                                                    <td width='323' height='9'></td>
+                                                    <td width='116'></td>
+                                                    <td width='78'></td>
+                                                </tr>
+                                                <tr>
+                                                    <td height='10'></td>
+                                                    <td  valign='top' align='left'>
+                                                        <DIV  id='win0divCLASS_SRCH_WRK2_SSR_PB_CLEAR'><span id='CLASS_SRCH_WRK2_SSR_PB_CLEAR$span'  class='SSSBUTTON_CANCELLINK'  title='Clear Criteria' ><a name='CLASS_SRCH_WRK2_SSR_PB_CLEAR' id='CLASS_SRCH_WRK2_SSR_PB_CLEAR'  ptlinktgt='pt_peoplecode' tabindex='1289' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'CLASS_SRCH_WRK2_SSR_PB_CLEAR');"  class='SSSBUTTON_CANCELLINK' >Clear</a></span>
+                                                        </DIV></td>
+                                                    <td  valign='top' align='left'>
+                                                        <DIV  id='win0divCLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH'><span id='CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH$span'  class='SSSBUTTON_CONFIRMLINK' ><a name='CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH' id='CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH'  ptlinktgt='pt_peoplecode' tabindex='1290' onclick='javascript:cancelBubble(event);' href="javascript:submitAction_win0(document.win0,'CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH');"  class='SSSBUTTON_CONFIRMLINK' >Search</a></span>
+                                                        </DIV></td>
+                                                </tr>
+                                            </table>
+                                        </td></tr>
+                                    </table>
+                                    </DIV></td>
+                            </tr>
+                        </table>
+                    </td></tr>
+                </table>
+                </DIV></td>
+        </tr>
+        <tr>
+            <td height='4' colspan='4'></td>
+        </tr>
+    </table>
+        ]]></FIELD>
+    <SYSVAR id='sysvar'><![CDATA[nMaxSavedStates=5;
+        sHistURL="https://hrsa.cunyfirst.cuny.edu/psc/cnyhcprd/GUEST/HRMS/client/COMMUNITY_ACCESS.CLASS_SEARCH.GBL?page=SSR_CLSRCH_ENTRY&";
+        bHtml5Doc = true;
+        bClearBackState=false;
+        bPageTransfered=false;
+        bTransferAnimate=false;
+        UpdateHistory('', '', '', 'SSR_CLSRCH_ENTRY', 1, '');
+        bCleanHtml = true;
+        bDefer = true;
+        bCDATA = false;
+        bAccessibleLayout = false;
+        bGenDomInfo = false;
+        ]]></SYSVAR></PAGE>

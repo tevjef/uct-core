@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: monitoring
+  name: cuny-bar
+  labels:
+    metrics: cuny-bar
+spec:
+  jobLabel: cuny-bar
+  selector:
+    matchLabels:
+      app: cuny-bar
+  namespaceSelector:
+    matchNames:
+    - staging
+    - production
+  endpoints:
+  - port: metrics-port
+    interval: 2m
+    honorLabels: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: cuny-bar
+  labels:
+    app: cuny-bar
+    metrics: "true"
+spec:
+  selector:
+    app: cuny-bar
+  ports:
+  - name: metrics-port
+    port: 13000
+    protocol: TCP
+    targetPort: metrics-port

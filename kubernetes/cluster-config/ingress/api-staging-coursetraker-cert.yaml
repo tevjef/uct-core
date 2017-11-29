@@ -1,0 +1,16 @@
+apiVersion: "stable.k8s.psg.io/v1"
+kind: "Certificate"
+metadata:
+  name: "api-coursetraker-cert"
+  namespace: "staging"
+  labels:
+    stable.k8s.psg.io/kcm.class: "default"
+spec:
+  domain: "api.staging.coursetrakr.io"
+  email: "tev.jeffrey@gmail.com"
+  provider: "namecheap"
+  secretName: api-staging-tls
+  # Troubleshooting
+  # 1. Uses a forked, but not modified version of the kube-cert-manager
+  # 2. Check certificate in Google Cloud console
+  # 3. Check Namecheap IP address whitelist as the nodes can change thier IP address. 

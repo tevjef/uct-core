@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+  namespace: production
+data:
+  telegraf.conf: |+
+    [agent]
+      interval = "10s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      precision = ""
+      debug = false
+      quiet = false
+      hostname = ""
+      omit_hostname = false
+
+    [[outputs.prometheus_client]]
+      listen = ":13000"
+      expiration_interval = "60s"
+
+    [[inputs.postgresql]]
+      address = "host=postgresql user=$POSTGRES_USER password=$POSTGRES_PASSWORD sslmode=disable application_name=telegraf"
+      databases = ["$POSTGRES_DB"]
+    [[inputs.redis]]
+      servers = ["tcp://redis:6379"]

@@ -3,9 +3,8 @@ package conf
 import (
 	"fmt"
 	"net"
-	"os"
-
 	_ "net/http/pprof"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
@@ -13,28 +12,22 @@ import (
 	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
 
-type pprof map[string]server
-
-type scrapers map[string]*scraper
+var WorkingDir = os.Getenv("GOPATH") + "/src/github.com/tevjef/uct-core/scrapers/cuny/"
 
 type Config struct {
 	AppName  string
 	Postgres Postgres `toml:"postgres"`
 	Redis    Redis    `toml:"redis"`
-	Pprof    pprof    `toml:"pprof"`
-	InfluxDb InfluxDb `toml:"influxdb"`
 	Spike    spike    `toml:"spike"`
 	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
-	Scrapers scrapers `toml:"scrapers"`
 }
 
 type spike struct {
 	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
 }
 
-type julia struct {
-}
+type julia struct{}
 
 type hermes struct {
 	ApiKey string `toml:"api_key" envconfig:"FCM_API_KEY"`
@@ -46,39 +39,20 @@ type server struct {
 	Enabled  bool
 }
 
-type scraper struct {
-	Interval string `toml:"interval"`
-}
-
 type Postgres struct {
 	User     string `toml:"user" envconfig:"POSTGRES_USER"`
-	Host     string `toml:"host"  envconfig:"POSTGRES_PORT_5432_TCP_ADDR"`
-	Port     string `toml:"port" envconfig:"POSTGRES_PORT_5432_TCP_PORT"`
+	Host     string `toml:"host"  envconfig:"POSTGRES_HOST"`
+	Port     string `toml:"port" envconfig:"POSTGRES_PORT"`
 	Password string `toml:"password" envconfig:"POSTGRES_PASSWORD"`
 	Name     string `toml:"name" envconfig:"POSTGRES_DB"`
 	ConnMax  int    `toml:"connection_max" envconfig:"POSTGRES_MAX_CONNECTIONS"`
 }
 
 type Redis struct {
-	Host     string `toml:"host" envconfig:"REDIS_PORT_6379_TCP_ADDR"`
-	Port     string `toml:"port" envconfig:"REDIS_PORT_6379_TCP_PORT"`
+	Host     string `toml:"host" envconfig:"REDIS_SERVICE_HOST"`
+	Port     string `toml:"port" envconfig:"REDIS_SERVICE_PORT"`
 	Password string `toml:"password" envconfig:"REDIS_PASSWORD"`
 	Db       int    `toml:"db" envconfig:"REDIS_DB"`
-}
-
-type InfluxDb struct {
-	User     string `toml:"user" envconfig:"INFLUXDB_ADMIN_USER"`
-	Port     string `toml:"port" envconfig:"INFLUXDB_PORT_8086_TCP_PORT"`
-	Host     string `toml:"host" envconfig:"INFLUXDB_PORT_8086_TCP_ADDR"`
-	Password string `toml:"password" envconfig:"INFLUXDB_ADMIN_PASSWORD"`
-}
-
-func (pprof pprof) Get(key string) server {
-	return pprof[key]
-}
-
-func (scrapers scrapers) Get(key string) *scraper {
-	return scrapers[key]
 }
 
 func init() {
@@ -93,24 +67,17 @@ func OpenConfig(file *os.File) Config {
 func OpenConfigWithName(file *os.File, name string) Config {
 	c := Config{}
 	if _, err := toml.DecodeReader(file, &c); err != nil {
-		log.Fatalln("Error while decoding config file checking environment:", err)
-		return c
+		log.Fatalln("error while decoding config file checking environment:", err)
 	}
 
 	c.fromEnvironment()
-
 	c.AppName = name
+
 	return c
 }
 
 func (c *Config) fromEnvironment() {
-
-	err := envconfig.Process("", &c.InfluxDb)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = envconfig.Process("", &c.Postgres)
+	err := envconfig.Process("", &c.Postgres)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -145,14 +112,14 @@ func bindEnv(defValue string, env string) string {
 	}
 }
 
-func (c Config) DebugSever(appName string) *net.TCPAddr {
-	value := c.Pprof[appName].Host
-	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
-		log.Panicf("'%s' is not a valid TCP address: %s", value, err)
-		return nil
-	} else {
-		return addr
+func (c Config) DebugSever(appName string) net.Listener {
+	listener, err := net.Listen("tcp", ":13100")
+	if err != nil {
+		listener, _ = net.Listen("tcp", ":0")
+		log.Println("pprof on port...", listener.Addr().(*net.TCPAddr).Port)
 	}
+
+	return listener
 }
 
 func (c Config) DatabaseConfig(appName string) string {

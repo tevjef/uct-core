@@ -7,11 +7,10 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/tevjef/uct-core/common/try"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
 )
 
@@ -104,7 +103,7 @@ func isRetriable(err error) (bool, error) {
 		return true, errors.New("connection error")
 	}
 
-	return false, nil
+	return false, err
 }
 
 func (db handlerImpl) Insert(query string, data interface{}) (id int64) {

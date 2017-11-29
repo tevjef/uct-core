@@ -160,7 +160,7 @@ func ValidateAllCourses(subject *Subject) error {
 		}
 
 		if err := ValidateAllSections(course); err != nil {
-			return nil
+			return err
 		}
 
 		// Course []Metadata
@@ -323,7 +323,7 @@ func (sub *Subject) Validate(uni *University) error {
 	sub.TopicId = ToTopicId(sub.TopicName)
 
 	if len(sub.Courses) == 0 {
-		log.WithField("subject", sub.TopicName).Errorln("No course in subject")
+		log.WithField("subject", sub.TopicName).Warningln("No course in subject")
 	} else {
 		sort.Sort(courseSorter{sub.Courses})
 	}
@@ -398,9 +398,11 @@ func (section *Section) Validate(course *Course) error {
 		}
 	}
 
-	// Credits
+	// Credits must be a numeric type
 	if section.Credits == "" {
 		return errors.New("Credits == is empty")
+	} else if _, err := strconv.ParseFloat(section.Credits, 64); err != nil {
+		return err
 	}
 
 	section.TopicName = strings.Join([]string{course.TopicName, section.Number, section.CallNumber}, ".")

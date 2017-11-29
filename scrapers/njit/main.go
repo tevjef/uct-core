@@ -14,17 +14,15 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/model"
 	"github.com/tevjef/uct-core/common/proxy"
 	"github.com/tevjef/uct-core/common/try"
 	"github.com/tevjef/uct-core/scrapers/njit/cookie"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type njit struct {
@@ -46,22 +44,33 @@ func init() {
 }
 
 func main() {
-	app := kingpin.New("njit", "A program for scraping information from NJIT serrvers.")
-	configFile := app.Flag("config", "configuration file for the application").Required().Short('c').File()
+	nconf := &njitConfig{}
+	app := kingpin.New("njit", "A program for scraping information from NJIT serrvers.").DefaultEnvars()
+
+	app.Flag("output-format", "choose output format").
+		Short('f').
+		HintOptions(model.Json, model.Protobuf).
+		PlaceHolder("[protobuf, json]").
+		Default("protobuf").
+		EnumVar(&nconf.outputFormat, "protobuf", "json")
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Required().
+		Short('c').
+		File()
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
-	config := conf.OpenConfigWithName(*configFile, app.Name)
+	nconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(nconf.service.DebugSever(app.Name))
 
 	(&njit{
-		app: app.Model(),
-		config: &njitConfig{
-			service: config,
-		},
-		ctx: context.TODO(),
+		app:    app.Model(),
+		config: nconf,
+		ctx:    context.TODO(),
 	}).init()
 }
 
@@ -71,7 +80,6 @@ func (njit *njit) init() {
 	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
 
 	semesters := []*model.Semester{
-		university.ResolvedSemesters.Last,
 		university.ResolvedSemesters.Current,
 		university.ResolvedSemesters.Next}
 
@@ -98,7 +106,7 @@ func (njit *njit) init() {
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}
 
-	if reader, err := model.MarshalMessage(model.Json, university); err != nil {
+	if reader, err := model.MarshalMessage(njit.config.outputFormat, university); err == nil {
 		io.Copy(os.Stdout, reader)
 	}
 }
@@ -195,7 +203,6 @@ func (cr *courseRequest) requestSearch() (courses []*NCourse) {
 	}
 
 	courses = cleanCourseList(courses)
-
 	return
 }
 

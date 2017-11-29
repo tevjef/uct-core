@@ -4,23 +4,44 @@ import (
 	"fmt"
 	_ "net/http/pprof"
 	"os"
-	"strconv"
 	"time"
-
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/database"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/notification"
-	"github.com/tevjef/uct-core/common/redis"
-	"github.com/tevjef/uct-core/common/try"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
+	"github.com/prometheus/client_golang/prometheus"
 	gcm "github.com/tevjef/go-gcm"
+	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-core/common/database"
+	_ "github.com/tevjef/uct-core/common/metrics"
+	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-core/common/notification"
+	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+)
+
+var (
+	notificationsIn = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "hermes_notifications_in_count",
+		Help: "Number notifications received by Hermes",
+	}, []string{"university_name", "status"})
+
+	notificationsOut = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "hermes_notifications_out_count",
+		Help: "Number notifications processed by Heremes",
+	}, []string{"university_name", "status"})
+	fcmElapsed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "hermes_fcm_elapsed_second",
+		Help: "Time taken to send notification",
+	}, []string{"university_name", "status"})
+
+	fcmElapsedHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "hermes_histogram_fcm_elapsed_second",
+		Help: "Time taken to send notification",
+	}, []string{"university_name", "status"})
 )
 
 type hermes struct {
@@ -37,43 +58,53 @@ type hermesConfig struct {
 }
 
 func init() {
+	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
+
+	prometheus.MustRegister(notificationsIn, notificationsOut, fcmElapsed, fcmElapsedHistogram)
 }
 
 func main() {
-	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Google Cloud Messaging")
-	dryRun := app.Flag("dry-run", "enable dry-run").Short('d').Default("true").Bool()
-	configFile := app.Flag("config", "configuration file for the application").Short('c').File()
-	config := conf.Config{}
+	hconf := &hermesConfig{}
+
+	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Firebase Cloud Messaging")
+
+	app.Flag("dry-run", "enable dry-run").
+		Short('d').
+		Default("true").
+		Envar("HERMES_DRY_RUN").
+		BoolVar(&hconf.dryRun)
+
+	configFile := app.Flag("config", "configuration file for the application").
+		Short('c').
+		Envar("HERMES_CONFIG").
+		File()
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// Parse configuration file
-	config = conf.OpenConfig(*configFile)
-	config.AppName = app.Name
+	hconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
-	if enableFcm, _ := strconv.ParseBool(os.Getenv("ENABLE_FCM")); enableFcm {
+	if hconf.dryRun {
+		log.Infoln("Enabling FCM in dry run mode")
+	} else {
 		log.Infoln("Enabling FCM in production mode")
-		*dryRun = false
 	}
 
 	// Open database connection
-	pgDatabase, err := model.OpenPostgres(config.DatabaseConfig(app.Name))
+	pgDatabase, err := model.OpenPostgres(hconf.service.DatabaseConfig(app.Name))
 	if err != nil {
 		log.WithError(err).Fatalln("failed to open database connection")
 	}
 
 	// Start profiling
-	go model.StartPprof(config.DebugSever(app.Name))
+	go model.StartPprof(hconf.service.DebugSever(app.Name))
 
 	(&hermes{
-		app: app.Model(),
-		config: &hermesConfig{
-			service: config,
-			dryRun:  *dryRun,
-		},
-		redis:    redis.NewHelper(config, app.Name),
+		app:      app.Model(),
+		config:   hconf,
+		redis:    redis.NewHelper(hconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()
 }
@@ -90,11 +121,19 @@ func (hermes *hermes) init() {
 }
 
 func (hermes *hermes) recvNotification(pair notificationPair) {
+	label := prometheus.Labels{
+		"university_name": pair.n.University.TopicName,
+		"status":          pair.n.Status,
+	}
+
+	notificationsIn.With(label).Inc()
 	log.WithFields(log.Fields{"university_name": pair.n.University.TopicName,
 		"notification_id": pair.n.NotificationId, "status": pair.n.Status,
 		"topic": pair.n.TopicName}).Info("postgres_notification")
 
 	defer func(start time.Time) {
+		fcmElapsed.With(label).Set(time.Since(start).Seconds())
+		fcmElapsedHistogram.With(label).Observe(time.Since(start).Seconds())
 		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3,
 			"university_name": pair.n.University.TopicName,
 			"name":            "send_notification"}).Infoln()
@@ -111,6 +150,8 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 	if err != nil {
 		log.WithError(err).Errorln()
 	}
+
+	notificationsOut.With(label).Inc()
 }
 
 func (hermes *hermes) waitForPop() chan notificationPair {

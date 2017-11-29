@@ -1,0 +1,850 @@
+version: '2'
+services:
+  blog:
+    image: tevjef/alpine-ghost
+    restart: on-failure:3
+    volumes:
+      - '/var/lib/ghost:/var/lib/ghost'
+    environment:
+      - NODE_ENV=production
+      - GHOST_DOMAIN=https://blog.${BASE_URL}/
+      - GHOST_PROD_FORCE_ADMIN_SSL=true
+      - VIRTUAL_HOST=blog.${BASE_URL}
+      - LETSENCRYPT_HOST=blog.${BASE_URL}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.blog"
+    labels:
+      fluentd.tag: "blog"
+  ein:
+    image: 'tevjef/uct-core:ein${ENV}'
+    links:
+      - postgresql
+      - redis
+    restart: on-failure:3
+    ports:
+      - '13100'
+    depends_on:
+      - fluentd
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.ein"
+    labels:
+      fluentd.tag: "core.ein"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\"]"
+
+  grafana:
+    image: grafana/grafana:4.0.1
+    restart: on-failure:3
+    links:
+      - influxdb
+    volumes:
+      - /var/lib/uct/grafana:/var/lib/grafana
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_SERVER_ROOT_URL=https://grafana.${BASE_URL}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_EXTERNAL_IMAGE_STORAGE_PROVIDER=s3
+      - GF_EXTERNAL_IMAGE_STORAGE_S3_BUCKET_URL=http://grafana.uct.s3.amazonaws.com/
+      - GF_EXTERNAL_IMAGE_STORAGE_S3_ACCESS_KEY=${AWS_KEY_ID}
+      - GF_EXTERNAL_IMAGE_STORAGE_S3_SECRET_KEY=${AWS_SECRET_KEY}
+      - VIRTUAL_HOST=grafana.${BASE_URL}
+      - LETSENCRYPT_HOST=grafana.${BASE_URL}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.grafana"
+    labels:
+      fluentd.tag: "grafana"
+
+  hermes:
+    image: tevjef/uct-core:hermes${ENV}
+    restart: always
+    ports:
+      - '13200'
+    depends_on:
+      - postgresql
+      - redis
+      - fluentd
+    links:
+      - postgresql
+    environment:
+      - ENABLE_FCM=${ENABLE_FCM}
+      - FCM_API_KEY=${FCM_API_KEY}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.hermes"
+    labels:
+      fluentd.tag: "core.hermes"
+      fluentd.influxdb.tags: "[\"level\", \"status\", \"university_name\"]"
+
+  influxdb:
+    image: tevjef/influxdb
+    restart: unless-stopped
+    volumes:
+      - /var/lib/uct/influxdb:/var/lib/influxdb
+    ports:
+      - "8086:8086"
+      - "8083"
+    environment:
+      - VIRTUAL_PORT=8083
+      - VIRTUAL_HOST=influxdb.${BASE_URL}
+      - INFLUXDB_CREATE_DB=system;universityct
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.influxdb"
+    labels:
+      fluentd.tag: "influxdb"
+
+  julia:
+    image: tevjef/uct-core:julia${ENV}
+    restart: always
+    ports:
+      - '13201'
+    depends_on:
+      - postgresql
+      - redis
+      - fluentd
+    links:
+      - postgresql
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.julia"
+    labels:
+      fluentd.tag: "core.julia"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\"]"
+
+  nginx:
+    container_name: nginx
+    restart: on-failure:3
+    image: tevjef/uct-core:nginx${ENV}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - /etc/nginx/conf.d
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.nginx"
+    labels:
+      fluentd.tag: "nginx"
+      fluentd.influxdb.tags: "[\"host\", \"status\"]"
+
+  nginx-gen:
+    image: tevjef/uct-core:nginx-gen${ENV}
+    restart: on-failure:3
+    command: -notify-sighup nginx -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    volumes_from:
+      - nginx
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.nginx-gen"
+    labels:
+      fluentd.tag: "nginx-gen"
+
+  nginx-letsencrypt:
+    restart: on-failure:3
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - /etc/nginx/certs:/etc/nginx/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.letsencrypt"
+    labels:
+      fluentd.tag: "letsencrypt"
+
+  njit:
+    image: tevjef/uct-core:njit${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - HTTP_PROXY_URL=${HTTP_PROXY_URL}
+      - HTTP_PROXY_USER=${HTTP_PROXY_USER}
+      - HTTP_PROXY_PASS=${HTTP_PROXY_PASS}
+      - JET_SCRAPER_NAME=njit
+      - JET_DAEMON=10m
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.njit"
+    labels:
+      fluentd.tag: "core.njit"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  postgresql:
+    image: tevjef/uct-core:postgresql${ENV}
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/uct/postgresql:/var/lib/postgresql
+    environment:
+     - POSTGRES_USER=${POSTGRES_USER}
+     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+     - POSTGRES_DB=${POSTGRES_DB}
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.postgresql"
+    labels:
+      fluentd.tag: "postgresql"
+
+  redis:
+    image: redis:3.2-alpine
+    restart: always
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.redis"
+    labels:
+      fluentd.tag: "redis"
+
+  rutgers-cm:
+    image: tevjef/uct-core:rutgers${ENV}
+    restart: on-failure:3
+    ports:
+      - '13302'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - RUTGERS_CAMPUS=CM
+      - JET_SCRAPER_NAME=rutgers-cm
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.rutgers-cm"
+    labels:
+      fluentd.tag: "core.rutgers-cm"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  rutgers-nb:
+    image: tevjef/uct-core:rutgers${ENV}
+    restart: on-failure:3
+    ports:
+      - '13303'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - RUTGERS_CAMPUS=NB
+      - JET_SCRAPER_NAME=rutgers-nb
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.rutgers-nb"
+    labels:
+      fluentd.tag: "core.rutgers-nb"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  rutgers-nk:
+    image: tevjef/uct-core:rutgers${ENV}
+    restart: on-failure:3
+    ports:
+      - '13301'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - RUTGERS_CAMPUS=NK
+      - JET_SCRAPER_NAME=rutgers-nk
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.rutgers-nk"
+    labels:
+      fluentd.tag: "core.rutgers-nk"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-htr:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=HTR
+      - JET_SCRAPER_NAME=cuny-htr
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-htr"
+    labels:
+      fluentd.tag: "core.scraper.cuny-htr"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-nyt:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=NYT
+      - JET_SCRAPER_NAME=cuny-nyt
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-nyt"
+    labels:
+      fluentd.tag: "core.scraper.cuny-nyt"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-lag:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=LAG
+      - JET_SCRAPER_NAME=cuny-lag
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-lag"
+    labels:
+      fluentd.tag: "core.scraper.cuny-lag"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-qns:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=QNS
+      - JET_SCRAPER_NAME=cuny-qns
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-qns"
+    labels:
+      fluentd.tag: "core.scraper.cuny-qns"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-cty:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=CTY
+      - JET_SCRAPER_NAME=cuny-cty
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-cty"
+    labels:
+      fluentd.tag: "core.scraper.cuny-cty"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-csi:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=CSI
+      - JET_SCRAPER_NAME=cuny-csi
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-csi"
+    labels:
+      fluentd.tag: "core.scraper.cuny-csi"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bmc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BMC
+      - JET_SCRAPER_NAME=cuny-bmc
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bmc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bmc"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-kcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=KCC
+      - JET_SCRAPER_NAME=cuny-kcc
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-kcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-kcc"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-qcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=QCC
+      - JET_SCRAPER_NAME=cuny-qcc
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-qcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-qcc"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bar:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BAR
+      - JET_SCRAPER_NAME=cuny-bar
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bar"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bcc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BCC
+      - JET_SCRAPER_NAME=cuny-bcc
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bcc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bcc"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-leh:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=LEH
+      - JET_SCRAPER_NAME=cuny-leh
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-leh"
+    labels:
+      fluentd.tag: "core.scraper.cuny-leh"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-jjc:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=JJC
+      - JET_SCRAPER_NAME=cuny-jjc
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-jjc"
+    labels:
+      fluentd.tag: "core.scraper.cuny-jjc"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bkl:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BKL
+      - JET_SCRAPER_NAME=cuny-bkl
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bkl"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bkl"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-bar:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=BAR
+      - JET_SCRAPER_NAME=cuny-bar
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-bar"
+    labels:
+      fluentd.tag: "core.scraper.cuny-bar"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-yrk:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=YRK
+      - JET_SCRAPER_NAME=cuny-yrk
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-yrk"
+    labels:
+      fluentd.tag: "core.scraper.cuny-yrk"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-mec:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=MEC
+      - JET_SCRAPER_NAME=cuny-mec
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-mec"
+    labels:
+      fluentd.tag: "core.scraper.cuny-mec"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  scraper-cuny-hos:
+    image: tevjef/uct-core:cuny${ENV}
+    restart: on-failure:3
+    ports:
+      - '13304'
+    depends_on:
+      - redis
+      - fluentd
+    links:
+      - redis
+    environment:
+      - CUNY_UNIVERSITY=HOS
+      - JET_SCRAPER_NAME=cuny-hos
+      - JET_DAEMON=10m
+      - JET_DAEMON_JITTER=50
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.scraper.cuny-hos"
+    labels:
+      fluentd.tag: "core.scraper.cuny-hos"
+      fluentd.influxdb.measurement: "docker.core.scraper"
+      fluentd.influxdb.tags: "[\"level\", \"scraper_name\"]"
+
+  spike:
+    restart: on-failure:3
+    depends_on:
+      - fluentd
+    image: tevjef/uct-core:spike${ENV}
+    links:
+      - postgresql
+      - redis
+    ports:
+      - '13400'
+    environment:
+      - GIN_MODE=release
+      - VIRTUAL_HOST=api.${BASE_URL}
+      - VIRTUAL_PORT=9876
+      - LETSENCRYPT_HOST=api.${BASE_URL}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.core.spike"
+    labels:
+      fluentd.tag: "core.spike"
+      fluentd.influxdb.tags: "[\"level\", \"university_name\", \"user-agent\", \"method\", \"status\", \"handler\"]"
+
+  telegraf:
+    image: tevjef/uct-core:telegraf${ENV}
+    restart: always
+    links:
+      - postgresql
+      - redis
+      - influxdb
+      - ein
+      - spike
+      - hermes
+      - julia
+    volumes:
+      - '/var/run/docker.sock:/tmp/docker.sock:ro'
+      - '/var/run/utmp:/var/run/utmp:ro'
+    logging:
+      driver: fluentd
+      options:
+        tag: "docker.telegraf"
+    labels:
+      fluentd.tag: "telegraf"
+    environment:
+      - AWS_KEY_ID=${AWS_KEY_ID}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - RESPONSE_ENDPOINT=https://api.${BASE_URL}/v2/universities
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER}
+      - INFLUXDB_DATABASE=system
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+  fluentd:
+    container_name: fluentd
+    restart: always
+    image: tevjef/uct-core:fluentd${ENV}
+    ports:
+      - '24224:24224'
+    volumes_from:
+      - fluentd-gen
+
+  fluentd-gen:
+    container_name: fluentd-gen
+    restart: always
+    image: tevjef/uct-core:fluentd-gen${ENV}
+    command: -notify-sighup fluentd -wait 2s -watch /etc/docker-gen/templates/fluent.conf.tmpl /fluentd/etc/fluent.conf
+    volumes:
+      - /fluentd/etc
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    environment:
+      - AWS_KEY_ID=${AWS_KEY_ID}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER}
+      - INFLUXDB_DATABASE=universityct
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+
+networks:
+  default:
+    external:
+      name: uct_default

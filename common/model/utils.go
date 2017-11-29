@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tevjef/uct-core/common/try"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"github.com/tevjef/uct-core/common/try"
 	"gopkg.in/redis.v5"
 )
 
@@ -17,9 +16,8 @@ func TimeTrack(start time.Time, name string) {
 	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debug("")
 }
 
-func StartPprof(host *net.TCPAddr) {
-	log.Info("starting debug server on...", (*host).String())
-	log.Info(http.ListenAndServe((*host).String(), nil))
+func StartPprof(listener net.Listener) {
+	log.Info(http.Serve(listener, nil))
 }
 
 func OpenPostgres(connection string) (database *sqlx.DB, err error) {
@@ -36,7 +34,7 @@ func OpenPostgres(connection string) (database *sqlx.DB, err error) {
 	return
 }
 
-func OpenRedis(addr, password string, database int) (client *redis.Client, err error) {
+func OpenRedis(addr, password string, database int, retry int) (client *redis.Client, err error) {
 	err = try.DoWithOptions(func(attempt int) (retry bool, err error) {
 		client = redis.NewClient(&redis.Options{
 			Addr:     addr,
@@ -49,7 +47,7 @@ func OpenRedis(addr, password string, database int) (client *redis.Client, err e
 		}
 
 		return false, err
-	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: 5})
+	}, &try.Options{BackoffStrategy: try.ExponentialJitterBackoff, MaxRetries: retry})
 
 	return
 }
