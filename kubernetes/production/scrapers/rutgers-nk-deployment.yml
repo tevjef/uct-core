@@ -29,5 +29,4 @@ spec:
             value: rutgers-nk
           resources:
             requests:
-              cpu: "5m"
               memory: 50Mi

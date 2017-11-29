@@ -33,5 +33,4 @@ spec:
             value: cuny-hos
           resources:
             requests:
-              cpu: "5m"
               memory: 50Mi
