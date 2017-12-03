@@ -26,8 +26,11 @@ spec:
             httpGet:
               path: /v2/universities
               port: 9876
+              httpHeaders:
+              - name: X-Health-Check
+                value: "true"
             initialDelaySeconds: 5
-            periodSeconds: 5
+            periodSeconds: 10
           env:
             - name: POSTGRES_HOST
               value: postgresql

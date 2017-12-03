@@ -6,6 +6,9 @@ steps:
     - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
     - '--file=build/$_UCT_SERVICE/Dockerfile.$_UCT_SERVICE'
     - '--tag=gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
+    - '--tag=gcr.io/$PROJECT_ID/$_UCT_SERVICE:$SHORT_SHA'
     - '.'
 
-images: ['gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME']
+images: 
+  - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
+  - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$SHORT_SHA'
