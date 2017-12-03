@@ -160,7 +160,6 @@ pipeline:
       - cd /go/src/github.com/tevjef/uct-core
       
       - kubectl apply -R -f kubernetes/staging
-      - kubectl apply -R -f kubernetes/cluster-config/staging
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
@@ -238,8 +237,6 @@ pipeline:
       - kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
       - kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
       - kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
-
-      - kubectl apply -R -f kubernetes/cluster-config/production
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
