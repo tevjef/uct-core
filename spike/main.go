@@ -18,6 +18,7 @@ import (
 	"github.com/tevjef/uct-core/spike/middleware"
 	"github.com/tevjef/uct-core/spike/middleware/cache"
 	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
+	"github.com/tevjef/uct-core/spike/store"
 	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -82,7 +83,7 @@ func main() {
 		app:      app.Model(),
 		config:   sconf,
 		redis:    redis.NewHelper(sconf.service, app.Name),
-		postgres: database.NewHandler(app.Name, pgdb, queries),
+		postgres: database.NewHandler(app.Name, pgdb, store.Queries),
 		ctx:      context.TODO(),
 	}).init()
 }
@@ -122,6 +123,8 @@ func (spike *spike) init() {
 		v1.GET("/courses/:topic", coursesHandler(0))
 		v1.GET("/course/:topic", courseHandler(0))
 		v1.GET("/section/:topic", sectionHandler(0))
+		v1.GET("/subscription", subscriptionHandler())
+		v1.GET("/notification", notificationHandler())
 	}
 
 	// v2 caches responses and defaults to protobuf
@@ -137,6 +140,8 @@ func (spike *spike) init() {
 		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
 		v2.GET("/course/:topic", courseHandler(10*time.Second))
 		v2.GET("/section/:topic", sectionHandler(10*time.Second))
+		v2.POST("/subscription", subscriptionHandler())
+		v2.POST("/notification", notificationHandler())
 	}
 
 	r.Run(":" + strconv.Itoa(int(spike.config.port)))

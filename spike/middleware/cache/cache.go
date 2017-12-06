@@ -87,7 +87,6 @@ func (w *cachedWriter) Written() bool {
 	return w.written
 }
 
-// Can write be called multiple times?
 func (w *cachedWriter) Write(data []byte) (int, error) {
 	ret, err := w.ResponseWriter.Write(data)
 
@@ -169,6 +168,7 @@ func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc
 				handle(c)
 			}
 
+			c.Set(middleware.MetaKey, *response.Meta)
 			c.Set(middleware.ResponseKey, response)
 		}
 	}

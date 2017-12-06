@@ -22,7 +22,11 @@ func Decorator(c *gin.Context) {
 	if value, responseExists = c.Get(ResponseKey); responseExists {
 		response, _ := value.(model.Response)
 		code := int32(200)
-		meta.Code = &code
+		if metaExists {
+			code = *meta.Code
+		} else {
+			meta.Code = &code
+		}
 		response.Meta = &meta
 		c.Set(ResponseKey, response)
 	} else {
