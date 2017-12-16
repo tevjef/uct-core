@@ -6,7 +6,7 @@ metadata:
   labels:
     stable.k8s.psg.io/kcm.class: "default"
   annotations:
-    stable.k8s.psg.io/kcm.provider: "namecheap"
+    stable.k8s.psg.io/kcm.provider: "googlecloud"
     stable.k8s.psg.io/kcm.email: "tev.jeffrey@gmail.com"
     kubernetes.io/ingress.allow-http: "false"
 spec:

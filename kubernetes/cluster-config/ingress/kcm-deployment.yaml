@@ -24,6 +24,13 @@ spec:
               secretKeyRef:
                 name: dns-providers
                 key: dnsimple-oauth-token
+          - name: GCE_PROJECT
+            valueFrom:
+              secretKeyRef:
+                name: dns-providers
+                key: googlecloud-project
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /etc/kcm/sa.json
           - name: NAMECHEAP_API_USER
             valueFrom:
               secretKeyRef:
@@ -41,7 +48,16 @@ spec:
             - name: kcm-data
               mountPath: /var/lib/cert-manager
               subPath: cert-manager
+            - name: service-account
+              mountPath: /etc/kcm
+              readOnly: true  
       volumes:
-        - name: "kcm-data"
+        - name: kcm-data
           persistentVolumeClaim:
             claimName: kcm-pvc
+        - name: service-account
+          secret:
+            secretName: dns-providers
+            items:
+            - key: googlecloud-credentials
+              path: sa.json
