@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 
@@ -17,7 +18,7 @@ func Test_waitForNotification(t *testing.T) {
 	mock := &notifier.FakeNotifier{Notifications: expected, Ch: ch}
 	mock.Send()
 
-	waitForNotification(mock, func(notification *model.UCTNotification) {
+	waitForNotification(context.Background(), mock, func(notification *model.UCTNotification) {
 		assert.Contains(t, expected, notification.TopicName)
 		log.Debugf("onNotify %s", notification.TopicName)
 		if i := atomic.AddInt32(&mock.Sent, 1); int32(len(expected)) == i {
