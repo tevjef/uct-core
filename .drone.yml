@@ -75,6 +75,8 @@ pipeline:
       - cp common/conf/config.toml build/rutgers/
       - cp common/conf/config.toml build/njit/
       - cp common/conf/config.toml build/cuny/
+
+      - cp -r postgresql/ build/postgresql/
     when:
       branch: [production, staging, develop]
       event: [push, tag, deployment]
@@ -91,7 +93,7 @@ pipeline:
       - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -119,7 +121,7 @@ pipeline:
       - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH

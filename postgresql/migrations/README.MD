@@ -1,0 +1,1 @@
+These files are used to manually perform a migration before new app deployments are rolled out.
