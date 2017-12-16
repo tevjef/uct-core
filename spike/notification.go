@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,10 +45,13 @@ func notificationHandler() gin.HandlerFunc {
 		if notificationId == "" {
 			httperror.BadRequest(c, errors.New("empty notificationId"))
 			return
+		} else if _, err := strconv.Atoi(notificationId); err != nil {
+			httperror.BadRequest(c, errors.New("invalid notificationId: "+notificationId))
+			return
 		}
 
-		os, osVersion, appVersion := deviceInfo(c)
-		if err := InsertNotification(c, topicName, fcmToken, receiveAt, os, osVersion, appVersion); err != nil {
+		os, osVersion, appVersion := deviceInfo(c.Request.Header)
+		if err := InsertNotification(c, topicName, fcmToken, receiveAt, notificationId, os, osVersion, appVersion); err != nil {
 			if err == sql.ErrNoRows {
 				httperror.NotFound(c, err)
 				return
@@ -67,6 +71,7 @@ func InsertNotification(
 	topicName,
 	fcmToken string,
 	receiveAt time.Time,
+	notificationId string,
 	os string,
 	osVersion string,
 	appVersion string) (err error) {
@@ -77,12 +82,13 @@ func InsertNotification(
 	defer span.Finish()
 
 	m := map[string]interface{}{
-		"topic_name":  topicName,
-		"receive_at":  receiveAt,
-		"fcm_token":   fcmToken,
-		"os":          os,
-		"os_version":  osVersion,
-		"app_version": appVersion,
+		"topic_name":      topicName,
+		"receive_at":      receiveAt,
+		"fcm_token":       fcmToken,
+		"notification_id": notificationId,
+		"os":              os,
+		"os_version":      osVersion,
+		"app_version":     appVersion,
 	}
 
 	if err = store.Insert(ctx, store.InsertNotificationQuery, m); err != nil {

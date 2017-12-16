@@ -35,7 +35,7 @@ func subscriptionHandler() gin.HandlerFunc {
 			return
 		}
 
-		os, osVersion, appVersion := deviceInfo(c)
+		os, osVersion, appVersion := deviceInfo(c.Request.Header)
 		if err := InsertSubscription(c, topicName, fcmToken, subscribed, os, osVersion, appVersion); err != nil {
 			if err == sql.ErrNoRows {
 				httperror.NotFound(c, err)

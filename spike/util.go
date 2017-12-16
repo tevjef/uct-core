@@ -1,9 +1,8 @@
 package main
 
 import (
+	"net/http"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 // Rutgers Course Tracker/com.tevinjeffrey.rutgersct (1.0.7.0R; Android 27)
@@ -42,36 +41,35 @@ func parseios(userAgent string) (string, string) {
 	return appVersion, osVersion
 }
 
-func deviceInfo(c *gin.Context) (string, string, string) {
+func deviceInfo(header http.Header) (string, string, string) {
 	var os string
 	var osVersion string
 	var appVersion string
 
-	m := map[string]string{}
-	userAgent := strings.ToLower(c.Request.Header.Get("User-Agent"))
-	if userAgent != "" {
+	userAgent := header.Get("User-Agent")
+	if userAgent == "" {
 		return os, osVersion, appVersion
 	}
 
-	if strings.Contains(userAgent, "android") {
+	if strings.Contains(strings.ToLower(userAgent), "android") {
 		os = "android"
 	}
 
-	if strings.Contains(userAgent, "ios") {
+	if strings.Contains(strings.ToLower(userAgent), "ios") {
 		os = "ios"
 	}
 
 	// Rutgers Course Tracker/com.tevinjeffrey.rutgersct (1.0.7.0R; Android 27)
-	if v, _ := m["os"]; v == "android" {
-		app, os := parseAndroid(userAgent)
-		appVersion = app
-		osVersion = os
+	if os == "android" {
+		appV, osV := parseAndroid(userAgent)
+		appVersion = appV
+		osVersion = osV
 	}
 
-	if v, _ := m["os"]; v == "ios" {
-		app, os := parseios(userAgent)
-		appVersion = app
-		osVersion = os
+	if os == "ios" {
+		appV, osV := parseios(userAgent)
+		appVersion = appV
+		osVersion = osV
 	}
 
 	return os, osVersion, appVersion

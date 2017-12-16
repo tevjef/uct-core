@@ -1,10 +1,11 @@
 package trace
 
 import (
-	"cloud.google.com/go/trace"
 	"context"
-	"github.com/gin-gonic/gin"
 	"strings"
+
+	"cloud.google.com/go/trace"
+	"github.com/gin-gonic/gin"
 )
 
 // Setter defines a context that enables setting values.
@@ -31,7 +32,6 @@ func NewSpan(ctx context.Context, spanName string) *trace.Span {
 	return span.NewChild(spanName)
 }
 
-// Each handler must either set a meta or response
 func Trace(traceClient *trace.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
