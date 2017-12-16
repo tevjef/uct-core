@@ -22,6 +22,12 @@ func notificationHandler() gin.HandlerFunc {
 			return
 		}
 
+		fcmToken := c.FormValue("fcmToken")
+		if fcmToken == "" {
+			httperror.BadRequest(c, errors.New("empty fcmToken"))
+			return
+		}
+
 		receiveAt, err := time.Parse(time.RFC3339, receiveAtStr)
 		if err != nil {
 			httperror.BadRequest(c, err)
@@ -40,7 +46,7 @@ func notificationHandler() gin.HandlerFunc {
 			return
 		}
 
-		if err := InsertNotification(c, topicName, receiveAt); err != nil {
+		if err := InsertNotification(c, topicName, fcmToken, receiveAt); err != nil {
 			if err == sql.ErrNoRows {
 				httperror.NotFound(c, err)
 				return
@@ -55,13 +61,18 @@ func notificationHandler() gin.HandlerFunc {
 	}
 }
 
-func InsertNotification(ctx context.Context, topicName string, receiveAt time.Time) (err error) {
+func InsertNotification(ctx context.Context, topicName, fcmToken string, receiveAt time.Time) (err error) {
 	defer model.TimeTrack(time.Now(), "SelectSection")
 	span := mtrace.NewSpan(ctx, "database.InsertNotification")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
-	m := map[string]interface{}{"topic_name": topicName, "receive_at": receiveAt}
+	m := map[string]interface{}{
+		"topic_name": topicName,
+		"receive_at": receiveAt,
+		"fcm_token":  fcmToken,
+	}
+
 	if err = store.Insert(ctx, store.InsertNotificationQuery, m); err != nil {
 		return
 	}

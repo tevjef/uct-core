@@ -106,7 +106,6 @@ func (w *cachedWriter) Write(data []byte) (int, error) {
 				err = w.store.Set(w.key, val, w.expire)
 				if err != nil {
 					log.WithError(err).Errorln("error while setting data in cache")
-
 				}
 			}
 

@@ -36,6 +36,7 @@ CREATE TABLE public.acknowledge
   os_version TEXT,
   app_version TEXT,
   topic_name TEXT NOT NULL,
+  fcm_token TEXT NOT NULL,
   receive_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,

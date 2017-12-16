@@ -104,8 +104,8 @@ const (
                     VALUES  (:topic_name, :fcm_token, :is_subscribed)
                     RETURNING subscription.id`
 
-	InsertNotificationQuery = `INSERT INTO acknowledge (topic_name, receive_at)
-                    VALUES  (:topic_name, :receive_at)
+	InsertNotificationQuery = `INSERT INTO acknowledge (topic_name, fcm_token, receive_at)
+                    VALUES  (:topic_name, :fcm_token, :receive_at)
                     RETURNING acknowledge.id`
 
 	SelectUniversityCTE = `WITH resolved_semesters AS (
