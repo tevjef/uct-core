@@ -58,7 +58,10 @@ func TestParseSubjects(t *testing.T) {
 			Season: model.Spring,
 		}}
 
-	doc := sr.scrapeSubjects()
+	doc, err := sr.scrapeSubjects()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 
 	subjects := sr.parseSubjects(doc)
 
@@ -83,8 +86,10 @@ func TestParseCourses(t *testing.T) {
 	defer ts.Close()
 
 	cr := courseScraper{url: ts.URL + "/search", scraper: defaultScraper}
-	doc := cr.scrapeCourses()
-
+	doc, err := cr.scrapeCourses()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	_ = cr.parseCourses(doc)
 }
 
@@ -95,7 +100,10 @@ func TestParseCourse(t *testing.T) {
 
 	cr := &courseScraper{url: ts.URL + "/search", scraper: defaultScraper}
 
-	doc := cr.scrapeCourses()
+	doc, err := cr.scrapeCourses()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 
 	findCourses(doc.Selection, func(index int, s *goquery.Selection) {
 		findSections(s, func(index int, s *goquery.Selection) {

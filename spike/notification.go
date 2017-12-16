@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"

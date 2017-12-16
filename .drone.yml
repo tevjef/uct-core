@@ -17,13 +17,37 @@ pipeline:
       - go get -u github.com/golang/dep/cmd/dep
       - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
+
+      - cd /go/src/github.com/tevjef/uct-core/ein
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
+
+      - cd /go/src/github.com/tevjef/uct-core/hermes
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
+
+      - cd /go/src/github.com/tevjef/uct-core/julia
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/rutgers
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/njit
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/cuny
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
+
+      - cd /go/src/github.com/tevjef/uct-core/jet
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
+
+      - cd /go/src/github.com/tevjef/uct-core/spike
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
@@ -262,3 +286,7 @@ pipeline:
     when:
       branch: production
       event: [push, tag, deployment]
+
+services:
+  redis:
+    image: redis:4-alpine
