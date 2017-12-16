@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +47,8 @@ func notificationHandler() gin.HandlerFunc {
 			return
 		}
 
-		if err := InsertNotification(c, topicName, fcmToken, receiveAt); err != nil {
+		os, osVersion, appVersion := deviceInfo(c)
+		if err := InsertNotification(c, topicName, fcmToken, receiveAt, os, osVersion, appVersion); err != nil {
 			if err == sql.ErrNoRows {
 				httperror.NotFound(c, err)
 				return
@@ -61,20 +63,32 @@ func notificationHandler() gin.HandlerFunc {
 	}
 }
 
-func InsertNotification(ctx context.Context, topicName, fcmToken string, receiveAt time.Time) (err error) {
+func InsertNotification(
+	ctx context.Context,
+	topicName,
+	fcmToken string,
+	receiveAt time.Time,
+	os string,
+	osVersion string,
+	appVersion string) (err error) {
+
 	defer model.TimeTrack(time.Now(), "SelectSection")
 	span := mtrace.NewSpan(ctx, "database.InsertNotification")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
 	m := map[string]interface{}{
-		"topic_name": topicName,
-		"receive_at": receiveAt,
-		"fcm_token":  fcmToken,
+		"topic_name":  topicName,
+		"receive_at":  receiveAt,
+		"fcm_token":   fcmToken,
+		"os":          os,
+		"os_version":  osVersion,
+		"app_version": appVersion,
 	}
 
 	if err = store.Insert(ctx, store.InsertNotificationQuery, m); err != nil {
 		return
 	}
+
 	return
 }

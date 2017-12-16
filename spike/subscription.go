@@ -35,7 +35,8 @@ func subscriptionHandler() gin.HandlerFunc {
 			return
 		}
 
-		if err := InsertSubscription(c, topicName, fcmToken, subscribed); err != nil {
+		os, osVersion, appVersion := deviceInfo(c)
+		if err := InsertSubscription(c, topicName, fcmToken, subscribed, os, osVersion, appVersion); err != nil {
 			if err == sql.ErrNoRows {
 				httperror.NotFound(c, err)
 				return
@@ -50,13 +51,29 @@ func subscriptionHandler() gin.HandlerFunc {
 	}
 }
 
-func InsertSubscription(ctx context.Context, topicName, fcmToken string, subscribed bool) (err error) {
+func InsertSubscription(
+	ctx context.Context,
+	topicName,
+	fcmToken string,
+	subscribed bool,
+	os string,
+	osVersion string,
+	appVersion string) (err error) {
+
 	defer model.TimeTrack(time.Now(), "SelectSection")
 	span := mtrace.NewSpan(ctx, "database.InsertSubscription")
 	span.SetLabel("topicName", topicName)
 	defer span.Finish()
 
-	m := map[string]interface{}{"topic_name": topicName, "fcm_token": fcmToken, "is_subscribed": subscribed}
+	m := map[string]interface{}{
+		"topic_name":    topicName,
+		"fcm_token":     fcmToken,
+		"is_subscribed": subscribed,
+		"os":            os,
+		"os_version":    osVersion,
+		"app_version":   appVersion,
+	}
+
 	if err = store.Insert(ctx, store.InsertSubscriptionQuery, m); err != nil {
 		return
 	}

@@ -100,12 +100,12 @@ const (
 	SectionMetadataQuery    = `SELECT title, content FROM metadata WHERE section_id = :section_id ORDER BY id`
 	MeetingMetadataQuery    = `SELECT title, content FROM metadata WHERE meeting_id = :meeting_id ORDER BY id`
 
-	InsertSubscriptionQuery = `INSERT INTO subscription (topic_name, fcm_token, is_subscribed)
-                    VALUES  (:topic_name, :fcm_token, :is_subscribed)
+	InsertSubscriptionQuery = `INSERT INTO subscription (topic_name, fcm_token, is_subscribed, os, os_version, app_version)
+                    VALUES  (:topic_name, :fcm_token, :is_subscribed, :os, :os_version, :app_version)
                     RETURNING subscription.id`
 
-	InsertNotificationQuery = `INSERT INTO acknowledge (topic_name, fcm_token, receive_at)
-                    VALUES  (:topic_name, :fcm_token, :receive_at)
+	InsertNotificationQuery = `INSERT INTO acknowledge (topic_name, fcm_token, receive_at, os, os_version, app_version)
+                    VALUES  (:topic_name, :fcm_token, :receive_at, :os, :os_version, :app_version)
                     RETURNING acknowledge.id`
 
 	SelectUniversityCTE = `WITH resolved_semesters AS (
