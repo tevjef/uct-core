@@ -56,16 +56,10 @@ func (p *Policy) CacheHeader() string {
 		p.ClientMaxAge = p.ServerMaxAge
 	}
 
-	if p.ClientMaxAge > 0 {
-		if p.Directive == Private {
-			buffer.WriteString(p.Directive.String())
-			buffer.WriteString(", ")
-			writeMaxAge()
-		} else {
-			buffer.WriteString(p.Directive.String())
-			buffer.WriteString(", ")
-			writeMaxAge()
-		}
+	if p.ClientMaxAge > 0 && p.Directive != NoStore && p.Directive != NoCache {
+		buffer.WriteString(p.Directive.String())
+		buffer.WriteString(", ")
+		writeMaxAge()
 	} else if p.Directive == NoStore || p.Directive == NoCache {
 		buffer.WriteString(p.Directive.String())
 	}

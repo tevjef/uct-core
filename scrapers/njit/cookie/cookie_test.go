@@ -2,7 +2,6 @@ package cookie
 
 import (
 	"crypto/tls"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -48,7 +47,7 @@ func TestBakedCookie_SetValue(t *testing.T) {
 	}
 }
 
-func TestNew(t *testing.T) {
+/*func TestNew(t *testing.T) {
 
 	var queueSize = 10
 	var cookies []*http.Cookie
@@ -61,19 +60,19 @@ func TestNew(t *testing.T) {
 	}
 
 	cc := New(cookies, func(bc *BakedCookie) error {
-		bc.SetValue(prepareCookie("201690"))
+		bc.SetValue(prepareCookie(t, "201690"))
 		log.Debugln("initializing cookie", bc.name)
 		return nil
 	})
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 2; i++ {
 		go func() {
 			bc := cc.Pop(nil)
 
 			time.Sleep(time.Second * time.Duration(rand.Intn(4)))
 
 			cc.Push(bc, func(baked *BakedCookie) error {
-				resetCookie(*baked.Get())
+				resetCookie(t, *baked.Get())
 				return nil
 			})
 		}()
@@ -81,9 +80,9 @@ func TestNew(t *testing.T) {
 	}
 
 	time.Sleep(time.Minute)
-}
+}*/
 
-func resetCookie(cookie http.Cookie) {
+func resetCookie(t *testing.T, cookie http.Cookie) {
 	req, _ := http.NewRequest(http.MethodPost, "https://myhub.njit.edu/StudentRegistrationSsb/ssb/classSearch/classSearch", strings.NewReader(url.Values{}.Encode()))
 	req.AddCookie(&cookie)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -91,17 +90,16 @@ func resetCookie(cookie http.Cookie) {
 	_, err := httpClient.Do(req)
 
 	if err != nil {
-		log.WithError(err).Errorln("Failed to validate cookie")
+		t.Fatalf("Failed to validate cookie err: %s", err.Error())
 	}
 
 	log.Debugln("Resetting cookie", cookie.Value, cookie.Domain)
 }
 
-func prepareCookie(term string) string {
+func prepareCookie(t *testing.T, term string) string {
 	resp, err := httpClient.PostForm("https://myhub.njit.edu/StudentRegistrationSsb/ssb/term/search?mode=search", url.Values{"term": []string{term}})
-
 	if err != nil {
-		log.WithError(err).Errorln("Failed get cookie")
+		t.Fatalf("Failed get cookie: err %s", err.Error())
 	}
 
 	if len(resp.Cookies()) > 0 {
@@ -111,9 +109,8 @@ func prepareCookie(term string) string {
 		_, err := httpClient.Do(req)
 
 		if err != nil {
-			log.WithError(err).Errorln("Failed to validate cookie")
+			t.Fatalf("Failed to validate: err %s", err.Error())
 		}
-
 		return cookie.Value
 	}
 
@@ -137,9 +134,7 @@ func TestCookieCutter_Push(t *testing.T) {
 	}
 }
 
-var proxyUrl, _ = url.Parse("http://localhost:8888")
-
 var httpClient = &http.Client{
 	Timeout:   15 * time.Second,
-	Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+	Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }

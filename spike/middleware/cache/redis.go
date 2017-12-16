@@ -42,7 +42,7 @@ func (c *RedisStore) Add(key string, value interface{}, expires time.Duration) e
 func (c *RedisStore) Get(key string, ptrValue interface{}) error {
 	item, err := c.client.Get(key).Bytes()
 
-	if item == nil {
+	if len(item) == 0 {
 		return ErrCacheMiss
 	}
 
@@ -116,6 +116,10 @@ func (c *RedisStore) Decrement(key string, delta uint64) (uint64, error) {
 
 func (c *RedisStore) Flush() error {
 	return c.client.FlushDb().Err()
+}
+
+func (c *RedisStore) Ping() error {
+	return c.client.Ping().Err()
 }
 
 func (c *RedisStore) expiration(expires time.Duration) time.Duration {

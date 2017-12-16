@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -15,13 +13,16 @@ import (
 	"github.com/tevjef/uct-core/common/model"
 )
 
+var (
+	subjectsHtml, _ = ioutil.ReadFile(conf.WorkingDir + "testdata/subjects.dat")
+	searchHtml, _   = ioutil.ReadFile(conf.WorkingDir + "testdata/courses.dat")
+	sectionHtml, _  = ioutil.ReadFile(conf.WorkingDir + "testdata/section.dat")
+	defaultSemester = model.Semester{Year: 2017, Season: "spring"}
+)
+
 func init() {
 	log.SetFormatter(&log.TextFormatter{})
 }
-
-var subjectsHtml, _ = ioutil.ReadFile(conf.WorkingDir + "testdata/subjects.dat")
-var searchHtml, _ = ioutil.ReadFile(conf.WorkingDir + "testdata/courses.dat")
-var sectionHtml, _ = ioutil.ReadFile(conf.WorkingDir + "testdata/section.dat")
 
 func TestParseSemester(t *testing.T) {
 	type args struct {
@@ -39,8 +40,8 @@ func TestParseSemester(t *testing.T) {
 		{args: args{model.Semester{Year: 2017, Season: model.Winter}}, want: "1170"},
 	}
 	for _, tt := range tests {
-		if got := parseSemester(tt.args.semester); got != tt.want {
-			t.Errorf("%q. parseSemester() = %v, want %v", tt.name, got, tt.want)
+		if got, err := parseSemester(tt.args.semester); got != tt.want && err != nil {
+			t.Errorf("%q. parseSemester() = %v, want %v err=%v", tt.name, got, tt.want, err)
 		}
 	}
 }
@@ -85,7 +86,7 @@ func TestParseCourses(t *testing.T) {
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
-	cr := courseScraper{url: ts.URL + "/search", scraper: defaultScraper}
+	cr := courseScraper{semester: defaultSemester, url: ts.URL + "/search", scraper: defaultScraper}
 	doc, err := cr.scrapeCourses()
 	if err != nil {
 		t.Fatal(err.Error())
@@ -98,7 +99,7 @@ func TestParseCourse(t *testing.T) {
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
-	cr := &courseScraper{url: ts.URL + "/search", scraper: defaultScraper}
+	cr := &courseScraper{semester: defaultSemester, url: ts.URL + "/search", scraper: defaultScraper}
 
 	doc, err := cr.scrapeCourses()
 	if err != nil {
@@ -107,8 +108,27 @@ func TestParseCourse(t *testing.T) {
 
 	findCourses(doc.Selection, func(index int, s *goquery.Selection) {
 		findSections(s, func(index int, s *goquery.Selection) {
-			a, _ := json.Marshal(cr.parseSection(s, &model.Course{}))
-			fmt.Println(string(a))
+			section := cr.parseSection(s, &model.Course{})
+
+			if section.CallNumber == "" {
+				t.Fatalf("section.CallNumber is empty: %#v", section)
+			}
+
+			if section.Status == "" {
+				t.Fatalf("section.Status is empty: %#v", section)
+			}
+
+			if section.Number == "" {
+				t.Fatalf("section.Number is empty: %#v", section)
+			}
+
+			if section.Credits == "" {
+				t.Fatalf("section section.Credits is empty: %#v", section)
+			}
+
+			if len(section.Metadata) < 1 && section.Metadata != nil {
+				t.Fatalf("invalid section.Metadata:%#v", section)
+			}
 		})
 	})
 }
@@ -122,7 +142,15 @@ func TestParseSection(t *testing.T) {
 
 	doc := sr.scrapeSection("")
 
-	fmt.Printf("%#v", sr.parseSection(doc, &model.Course{}))
+	section := sr.parseAdditionalSectionInfo(doc, &model.Course{})
+
+	if section.Credits == "" {
+		t.Fatalf("section.Credits is empty: %#v", section)
+	}
+
+	if len(section.Metadata) < 1 {
+		t.Fatalf("invalid section.Metadata: %#v", section)
+	}
 }
 
 func setUpTestMux() http.Handler {
