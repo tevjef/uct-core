@@ -255,14 +255,14 @@ pipeline:
       - kubectl apply -R -f kubernetes/production/postgres
       - kubectl apply -R -f kubernetes/production/redis
 
-      - kubectl apply -R -f kubernetes/production/njit-deployment.yml
-      - kubectl apply -R -f kubernetes/production/njit-metrics.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-cm-deployment.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-cm-metrics.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-nb-deployment.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
-      - kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/njit-deployment.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/njit-metrics.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-cm-deployment.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-cm-metrics.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nb-deployment.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nb-metrics.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-deployment.yml
+      - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-metrics.yml
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
