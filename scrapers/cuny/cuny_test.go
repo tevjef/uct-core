@@ -20,7 +20,7 @@ func TestSplitMeeting(t *testing.T) {
 		args args
 		want [3]string
 	}{
-		{args: args{"Saturday 12:30PM - 1:45PM"}, want: [3]string{"Saturday", "12:30PM", "1:45PM"}},
+		{args: args{"Saturday 12:30PM - 1:45PM"}, want: [3]string{"Saturday", "12:30 PM", "1:45 PM"}},
 	}
 	for _, tt := range tests {
 		if got := splitMeeting(tt.args.meeting); !reflect.DeepEqual(got, tt.want) {

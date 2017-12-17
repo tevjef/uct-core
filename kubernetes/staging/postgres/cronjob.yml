@@ -5,6 +5,7 @@ metadata:
   namespace: staging
 spec:
   schedule: "@daily"
+  successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:

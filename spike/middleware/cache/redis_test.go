@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"net"
 	"testing"
 	"time"
 )
@@ -10,17 +9,12 @@ import (
 const redisTestServer = "localhost:6379"
 
 var newRedisStore = func(t *testing.T, defaultExpiration time.Duration) CacheStore {
-	c, err := net.Dial("tcp", redisTestServer)
-	if err == nil {
-		c.Write([]byte("flush_db\r\n"))
-		c.Close()
-		redisCache := NewRedisCache(redisTestServer, "", 9, defaultExpiration)
-		redisCache.Flush()
-		return redisCache
+	redisCache := NewRedisCache(redisTestServer, "", 9, defaultExpiration)
+	err := redisCache.Flush()
+	if err != nil {
+		t.Fatal(err.Error())
 	}
-	t.Errorf("couldn't connect to redis on %s", redisTestServer)
-	t.FailNow()
-	panic("")
+	return redisCache
 }
 
 func TestRedisCache_TypicalGetSet(t *testing.T) {

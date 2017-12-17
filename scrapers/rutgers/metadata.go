@@ -11,7 +11,7 @@ func getRutgers(campus string) model.University {
 		Name:             "Rutgers University–New Brunswick",
 		Abbr:             "RU-NB",
 		HomePage:         "http://newbrunswick.edu/",
-		RegistrationPage: "https://sims.edu/webreg/",
+		RegistrationPage: "https://sims.rutgers.edu/webreg/",
 		Registrations: []*model.Registration{
 			{
 				Period:     model.InFall.String(),

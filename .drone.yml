@@ -17,13 +17,37 @@ pipeline:
       - go get -u github.com/golang/dep/cmd/dep
       - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
+
+      - cd /go/src/github.com/tevjef/uct-core/ein
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
+
+      - cd /go/src/github.com/tevjef/uct-core/hermes
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
+
+      - cd /go/src/github.com/tevjef/uct-core/julia
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/rutgers
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/njit
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
+
+      - cd /go/src/github.com/tevjef/uct-core/scrapers/cuny
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
+
+      - cd /go/src/github.com/tevjef/uct-core/jet
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
+
+      - cd /go/src/github.com/tevjef/uct-core/spike
+      - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
     when:
       event: [push, pull_request, tag, deployment]
@@ -51,6 +75,8 @@ pipeline:
       - cp common/conf/config.toml build/rutgers/
       - cp common/conf/config.toml build/njit/
       - cp common/conf/config.toml build/cuny/
+
+      - cp -r postgresql/ build/postgresql/
     when:
       branch: [production, staging, develop]
       event: [push, tag, deployment]
@@ -67,7 +93,7 @@ pipeline:
       - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -95,7 +121,7 @@ pipeline:
       - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -158,8 +184,8 @@ pipeline:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      # https://github.com/kubernetes/kubernetes/issues/53379 Uncomment in Kubernetes 1.8.4
-      # - kubectl apply -R -f kubernetes/staging
+      
+      - kubectl apply -R -f kubernetes/staging
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
@@ -223,21 +249,20 @@ pipeline:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      # https://github.com/kubernetes/kubernetes/issues/53379 Uncomment in Kubernetes 1.8.4
-      # kubectl apply -R -f kubernetes/production/ein
-      # kubectl apply -R -f kubernetes/production/hermes
-      # kubectl apply -R -f kubernetes/production/julia
-      # kubectl apply -R -f kubernetes/production/postgres
-      # kubectl apply -R -f kubernetes/production/redis
+      - kubectl apply -R -f kubernetes/production/ein
+      - kubectl apply -R -f kubernetes/production/hermes
+      - kubectl apply -R -f kubernetes/production/julia
+      - kubectl apply -R -f kubernetes/production/postgres
+      - kubectl apply -R -f kubernetes/production/redis
 
-      # kubectl apply -R -f kubernetes/production/njit-deployment.yml
-      # kubectl apply -R -f kubernetes/production/njit-metrics.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-cm-deployment.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-cm-metrics.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-nb-deployment.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
-      # kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
+      - kubectl apply -R -f kubernetes/production/njit-deployment.yml
+      - kubectl apply -R -f kubernetes/production/njit-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-cm-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-cm-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nb-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nb-metrics.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nk-deployment.yml
+      - kubectl apply -R -f kubernetes/production/rutgers-nk-metrics.yml
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
@@ -263,3 +288,7 @@ pipeline:
     when:
       branch: production
       event: [push, tag, deployment]
+
+services:
+  redis:
+    image: redis:4-alpine

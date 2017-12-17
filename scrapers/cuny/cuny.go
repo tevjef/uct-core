@@ -224,7 +224,7 @@ func expandMeeting(meeting string) []string {
 	day := meeting[:spaceIndex]
 	time := meeting[spaceIndex+1:]
 
-	meetings := []string{}
+	var meetings []string
 
 	for i := 0; i < len(day)/2; i++ {
 		d := parseDay(day[i*2 : i*2+2])

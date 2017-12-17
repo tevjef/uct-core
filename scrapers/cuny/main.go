@@ -239,7 +239,12 @@ func (sr *subjectScraper) scrapeSubjects() (*goquery.Document, error) {
 	form := cunyForm{}
 	form.setUniversity(sr.scraper.university)
 	form.setAction(universityKey)
-	form.setTerm(parseSemester(sr.semester))
+
+	term, err := parseSemester(sr.semester)
+	if err != nil {
+		return nil, err
+	}
+	form.setTerm(term)
 
 	return sr.scraper.client.Post(sr.url, url.Values(form))
 }
@@ -293,7 +298,12 @@ func (cr *courseScraper) scrapeCourses() (*goquery.Document, error) {
 	form.setAction(searchAction)
 	form.setSubject(cr.subjectId)
 	form.setUniversity(cr.scraper.university)
-	form.setTerm(parseSemester(cr.semester))
+
+	term, err := parseSemester(cr.semester)
+	if err != nil {
+		return nil, err
+	}
+	form.setTerm(term)
 
 	return cr.scraper.client.Post(cr.url, url.Values(form))
 }
@@ -449,7 +459,7 @@ func (cr *courseScraper) parseSection(doc *goquery.Selection, course *model.Cour
 		sectionDoc := sr.scrapeSection(sectionId)
 
 		// Parses section in the context of some course
-		extraSectionInfo := sr.parseSection(sectionDoc, course)
+		extraSectionInfo := sr.parseAdditionalSectionInfo(sectionDoc, course)
 
 		// Merge new section returned after parsing.
 		section.Now = extraSectionInfo.Now
@@ -529,7 +539,7 @@ func (sr *sectionScraper) scrapeSection(sectionId string) *goquery.Document {
 
 // Parses section in the context of some course, returns a section containing
 // information that could not be parse from the course page
-func (sr *sectionScraper) parseSection(doc *goquery.Document, course *model.Course) (section model.Section) {
+func (sr *sectionScraper) parseAdditionalSectionInfo(doc *goquery.Document, course *model.Course) (section model.Section) {
 	if course.Synopsis == nil {
 		s := sr.findDescription(doc.Selection)
 		course.Synopsis = &s
@@ -669,16 +679,24 @@ func (sr *sectionScraper) findAvailability(s *goquery.Selection, id string) int 
 	return 0
 }
 
-func parseSemester(semester model.Semester) string {
+func parseSemester(semester model.Semester) (string, error){
+	if semester.GetSeason() == "" {
+		return "", fmt.Errorf("season must not be empty")
+	}
+
+	if semester.GetYear() < 2000 {
+		return "", fmt.Errorf("season must not be empty")
+	}
+
 	year := strconv.Itoa(int(semester.Year))[2:]
 	if semester.Season == model.Fall {
-		return "1" + year + "9"
+		return "1" + year + "9", nil
 	} else if semester.Season == model.Summer {
-		return "1" + year + "7"
+		return "1" + year + "7", nil
 	} else if semester.Season == model.Spring {
-		return "1" + year + "2"
+		return "1" + year + "2", nil
 	} else {
-		return "1" + year + "0"
+		return "1" + year + "0", nil
 	}
 }
 

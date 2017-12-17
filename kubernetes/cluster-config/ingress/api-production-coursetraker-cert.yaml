@@ -6,5 +6,5 @@ metadata:
 spec:
   domain: "api.staging.coursetrakr.io"
   email: "tev.jeffrey@gmail.com"
-  provider: "namecheap"
+  provider: "googlecloud"
   secretName: api-production-tls

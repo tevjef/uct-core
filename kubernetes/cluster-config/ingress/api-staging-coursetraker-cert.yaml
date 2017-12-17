@@ -8,7 +8,7 @@ metadata:
 spec:
   domain: "api.staging.coursetrakr.io"
   email: "tev.jeffrey@gmail.com"
-  provider: "namecheap"
+  provider: "googlecloud"
   secretName: api-staging-tls
   # Troubleshooting
   # 1. Uses a forked, but not modified version of the kube-cert-manager
