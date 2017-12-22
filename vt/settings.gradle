@@ -1,0 +1,4 @@
+rootProject.name = 'vt'
+include 'server'
+include 'proto'
+

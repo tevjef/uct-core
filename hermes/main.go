@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/prometheus/client_golang/prometheus"
-	gcm "github.com/tevjef/go-gcm"
+	"github.com/tevjef/go-gcm"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	_ "github.com/tevjef/uct-core/common/metrics"
@@ -20,7 +20,7 @@ import (
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -192,6 +192,9 @@ func (hermes *hermes) popNotification() (*notificationPair, error) {
 }
 
 func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
+	//Sent to "/topics/android:" + pair.n.TopicName | with android payload
+	//Sent to "/topics/ios:" + pair.n.TopicName | with ios notification payload
+	//Sent to "/topics/" + pair.n.TopicName | for backwards compatibility
 	httpMessage := gcm.HttpMessage{
 		To:               "/topics/" + pair.n.TopicName,
 		Data:             map[string]interface{}{"message": pair.raw},
@@ -214,6 +217,53 @@ func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
 
 	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
 	return
+}
+
+func (hermes *hermes) sendAndroidNotification(pair notificationPair) (err error) {
+	//Sent to "/topics/android:" + pair.n.TopicName | with android payload
+	//Sent to "/topics/ios:" + pair.n.TopicName | with ios notification payload
+	//Sent to "/topics/" + pair.n.TopicName | for backwards compatibility
+	httpMessage := gcm.HttpMessage{
+		To:               "/topics/android:" + pair.n.TopicName,
+		Data:             map[string]interface{}{"message": pair.raw},
+		ContentAvailable: true,
+		Priority:         "high",
+		Notification: &gcm.Notification{
+
+		}
+		DryRun: hermes.config.dryRun,
+	}
+
+	var httpResponse *gcm.HttpResponse
+	if httpResponse, err = gcm.SendHttp(hermes.config.service.Hermes.ApiKey, httpMessage); err != nil {
+		return
+	}
+
+	log.WithFields(log.Fields{"topic": httpMessage.To, "university_name": pair.n.University.TopicName,
+		"message_id": httpResponse.MessageId, "error": httpResponse.Error}).Infoln("fcm_response")
+	// Print FCM errors, but don't panic
+	if httpResponse.Error != "" {
+		return fmt.Errorf(httpResponse.Error)
+	}
+
+	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
+	return
+}
+
+func notificationTitle(n *model.UCTNotification) string {
+	var title string
+	var body string
+
+	course := n.University.Subjects[0].Courses[0]
+	section := course.Sections[0]
+
+	if n.Status == "Open" {
+		title = "A section has opened!"
+		body = "Section " + section.Number + " of " + course.Name + " has opened!"
+	} else {
+		title = "A section has closed!"
+		body = "Section " + section.Number + " of " + course.Name + " has closed!"
+	}
 }
 
 type notificationPair struct {
