@@ -53,20 +53,13 @@ func deviceInfo(header http.Header) (string, string, string) {
 
 	if strings.Contains(strings.ToLower(userAgent), "android") {
 		os = "android"
-	}
-
-	if strings.Contains(strings.ToLower(userAgent), "ios") {
-		os = "ios"
-	}
-
-	// Rutgers Course Tracker/com.tevinjeffrey.rutgersct (1.0.7.0R; Android 27)
-	if os == "android" {
 		appV, osV := parseAndroid(userAgent)
 		appVersion = appV
 		osVersion = osV
 	}
 
-	if os == "ios" {
+	if strings.Contains(strings.ToLower(userAgent), "ios") {
+		os = "ios"
 		appV, osV := parseios(userAgent)
 		appVersion = appV
 		osVersion = osV

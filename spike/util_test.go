@@ -68,6 +68,14 @@ func Test_parseios(t *testing.T) {
 			want:  "1.0.7",
 			want1: "iOS 10.2.1",
 		},
+		{
+			name: "3",
+			args: args{
+				userAgent: "UniversityCourseTracker/1.0.8 (com.tevinjeffrey.uctios; build:100; iOS 10.3.1) Alamofire/4.5.1 Course Tracker/1.0.8",
+			},
+			want:  "1.0.8",
+			want1: "iOS 10.3.1",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
