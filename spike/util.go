@@ -21,20 +21,20 @@ func parseAndroid(userAgent string) (string, string) {
 	return appVersion, osVersion
 }
 
-// UniversityCourseTracker/com.tevinjeffrey.uctios (100; iOS 10.2.1) Course Tracker/1.0.7
+// UniversityCourseTracker/1.0.8 (com.tevinjeffrey.uctios; build:100; iOS 10.3.1) Alamofire/4.5.1
 func parseios(userAgent string) (string, string) {
 	appVersion := ""
 	osVersion := ""
-	part := strings.Split(userAgent, ";")
+	part := strings.Split(userAgent, "(")
 	if len(part) == 2 {
-		part = strings.Split(part[1], ")")
-		if len(part) == 2 {
-			osVersion = strings.Trim(part[0], " ")
-
-			part = strings.Split(part[1], "/")
-			if len(part) == 2 {
-				appVersion = strings.Trim(part[1], " ")
-			}
+		part1 := strings.Split(part[0], "/")
+		if len(part1) == 2 {
+			appVersion = strings.Trim(part1[1], " ")
+		}
+		part1 = strings.Split(part[1], ")")
+		if len(part1) == 2 {
+			part1 = strings.Split(part1[0], ";")
+			osVersion = strings.Trim(part1[2], " ")
 		}
 	}
 

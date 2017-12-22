@@ -49,6 +49,7 @@ pipeline:
       - cd /go/src/github.com/tevjef/uct-core/spike
       - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
+
     when:
       event: [push, pull_request, tag, deployment]
 
@@ -86,6 +87,8 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
+      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
+
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -114,6 +117,8 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
+      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
+
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -141,6 +146,8 @@ pipeline:
     image: library/docker:dind
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
 
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike

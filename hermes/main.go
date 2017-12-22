@@ -228,10 +228,8 @@ func (hermes *hermes) sendAndroidNotification(pair notificationPair) (err error)
 		Data:             map[string]interface{}{"message": pair.raw},
 		ContentAvailable: true,
 		Priority:         "high",
-		Notification: &gcm.Notification{
-
-		}
-		DryRun: hermes.config.dryRun,
+		Notification:     &gcm.Notification{},
+		DryRun:           hermes.config.dryRun,
 	}
 
 	var httpResponse *gcm.HttpResponse
@@ -250,6 +248,7 @@ func (hermes *hermes) sendAndroidNotification(pair notificationPair) (err error)
 	return
 }
 
+/*
 func notificationTitle(n *model.UCTNotification) string {
 	var title string
 	var body string
@@ -264,7 +263,7 @@ func notificationTitle(n *model.UCTNotification) string {
 		title = "A section has closed!"
 		body = "Section " + section.Number + " of " + course.Name + " has closed!"
 	}
-}
+}*/
 
 type notificationPair struct {
 	n   *model.UCTNotification
