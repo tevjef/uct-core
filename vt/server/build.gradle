@@ -8,7 +8,6 @@ dependencies {
     compile project(":proto")
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "com.google.api-client:google-api-client:1.23.0"
-    compile "com.google.guava:guava:23.6-jre"
 }
 
 clean {
