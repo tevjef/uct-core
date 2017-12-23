@@ -1,17 +1,18 @@
 package main
 
 import (
-	"fmt"
 	_ "net/http/pprof"
 	"os"
 	"time"
+
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tevjef/go-gcm"
+	"github.com/tevjef/go-fcm"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	_ "github.com/tevjef/uct-core/common/metrics"
@@ -45,16 +46,20 @@ var (
 )
 
 type hermes struct {
-	app      *kingpin.ApplicationModel
-	config   *hermesConfig
-	redis    *redis.Helper
-	postgres database.Handler
-	ctx      context.Context
+	app       *kingpin.ApplicationModel
+	config    *hermesConfig
+	fcmClient *fcm.Client
+	redis     *redis.Helper
+	postgres  database.Handler
+	ctx       context.Context
 }
 
 type hermesConfig struct {
-	service conf.Config
-	dryRun  bool
+	service           conf.Config
+	dryRun            bool
+	firebaseProjectID string
+	tokenServerAddr   string
+	tokenServerPort   int16
 }
 
 func init() {
@@ -75,6 +80,21 @@ func main() {
 		Default("true").
 		Envar("HERMES_DRY_RUN").
 		BoolVar(&hconf.dryRun)
+
+	app.Flag("firebase-project-id", "Firebase project Id").
+		Default("vt").
+		Envar("FIREBASE_PROJECT_ID").
+		StringVar(&hconf.firebaseProjectID)
+
+	app.Flag("token-server-addr", "Token server address").
+		Default("vt").
+		Envar("TOKEN_SERVER_ADDR").
+		StringVar(&hconf.tokenServerAddr)
+
+	app.Flag("token-server-port", "Token server port").
+		Default("9875").
+		Envar("TOKEN_SERVER_PORT").
+		Int16Var(&hconf.tokenServerPort)
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').
@@ -98,14 +118,18 @@ func main() {
 		log.WithError(err).Fatalln("failed to open database connection")
 	}
 
+	provider := &tokenProvider{hconf.tokenServerAddr, strconv.Itoa(int(hconf.tokenServerPort))}
+	fcmClient, err := fcm.NewClient(hconf.firebaseProjectID, provider)
+
 	// Start profiling
 	go model.StartPprof(hconf.service.DebugSever(app.Name))
 
 	(&hermes{
-		app:      app.Model(),
-		config:   hconf,
-		redis:    redis.NewHelper(hconf.service, app.Name),
-		postgres: database.NewHandler(app.Name, pgDatabase, queries),
+		app:       app.Model(),
+		config:    hconf,
+		fcmClient: fcmClient,
+		redis:     redis.NewHelper(hconf.service, app.Name),
+		postgres:  database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()
 }
 
@@ -141,7 +165,7 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
 	err := try.Do(func(attempt int) (retry bool, err error) {
-		if err = hermes.sendGcmNotification(pair); err != nil {
+		if err = hermes.sendFcmNotification(pair); err != nil {
 			return true, err
 		}
 		return false, nil
@@ -166,6 +190,33 @@ func (hermes *hermes) waitForPop() chan notificationPair {
 		}
 
 	}()
+
+	go func() {
+		time.Sleep(time.Second * 10)
+
+		var rawN = `
+{
+    "university": {"id": 3, "abbr": "RU-NB", "name": "Rutgers University–New Brunswick", "subjects": [{"id": 1048, "name": "Sociology", "year": "2016", "number": "920", "season": "fall", "courses": [{"id": 14785, "name": "Soc Mental Illness", "number": "307", "sections": [{"id": 33259, "max": 1, "now": 0, "number": "02", "status": "Closed", "credits": "3.0", "topic_id": "17834289047972563637", "course_id": 14785, "created_at": "2016-05-30T07:05:20.93539", "topic_name": "rutgers.universitynew.brunswick.920.sociology.fall.2016.307.soc.mental.illness.02.11593", "updated_at": "2016-08-25T05:01:52.299825", "call_number": "11593"}], "topic_id": "3437346514840870658", "subject_id": 1048, "topic_name": "rutgers.universitynew.brunswick.920.sociology.fall.2016.307.soc.mental.illness"}], "topic_id": "473453796608589362", "topic_name": "rutgers.universitynew.brunswick.920.sociology.fall.2016", "university_id": 3}], "topic_id": "13265320283999417559", "home_page": "http://newbrunswick.rutgers.edu/", "main_color": "F44336", "topic_name": "rutgers.universitynew.brunswick", "registration_page": "https://sims.rutgers.edu/webreg/"},
+    "topic_name": "rutgers.universitynewark.050.american.studies.summer.2017.200.intro.amer.studies.bq.04605",
+    "notification_id": 1234567,
+    "status": "Open"
+}
+`
+
+		var noti model.UCTNotification
+		err := noti.UnmarshalJSON([]byte(rawN))
+		if err != nil {
+			panic(err)
+		}
+
+		pair := notificationPair{
+			n:   &noti,
+			raw: rawN,
+		}
+
+		c <- pair
+	}()
+
 	return c
 }
 
@@ -175,7 +226,7 @@ func (hermes *hermes) popNotification() (*notificationPair, error) {
 			return nil, errors.Wrap(err, "error getting notification data")
 		} else {
 			uctNotification := &model.UCTNotification{}
-			if err := uctNotification.Unmarshal(b); err != nil {
+			if err := uctNotification.UnmarshalJSON(b); err != nil {
 				return nil, err
 			} else if jsonBytes, err := ffjson.Marshal(uctNotification); err != nil {
 				return nil, err
@@ -190,80 +241,6 @@ func (hermes *hermes) popNotification() (*notificationPair, error) {
 		return nil, err
 	}
 }
-
-func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
-	//Sent to "/topics/android:" + pair.n.TopicName | with android payload
-	//Sent to "/topics/ios:" + pair.n.TopicName | with ios notification payload
-	//Sent to "/topics/" + pair.n.TopicName | for backwards compatibility
-	httpMessage := gcm.HttpMessage{
-		To:               "/topics/" + pair.n.TopicName,
-		Data:             map[string]interface{}{"message": pair.raw},
-		ContentAvailable: true,
-		Priority:         "high",
-		DryRun:           hermes.config.dryRun,
-	}
-
-	var httpResponse *gcm.HttpResponse
-	if httpResponse, err = gcm.SendHttp(hermes.config.service.Hermes.ApiKey, httpMessage); err != nil {
-		return
-	}
-
-	log.WithFields(log.Fields{"topic": httpMessage.To, "university_name": pair.n.University.TopicName,
-		"message_id": httpResponse.MessageId, "error": httpResponse.Error}).Infoln("fcm_response")
-	// Print FCM errors, but don't panic
-	if httpResponse.Error != "" {
-		return fmt.Errorf(httpResponse.Error)
-	}
-
-	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
-	return
-}
-
-func (hermes *hermes) sendAndroidNotification(pair notificationPair) (err error) {
-	//Sent to "/topics/android:" + pair.n.TopicName | with android payload
-	//Sent to "/topics/ios:" + pair.n.TopicName | with ios notification payload
-	//Sent to "/topics/" + pair.n.TopicName | for backwards compatibility
-	httpMessage := gcm.HttpMessage{
-		To:               "/topics/android:" + pair.n.TopicName,
-		Data:             map[string]interface{}{"message": pair.raw},
-		ContentAvailable: true,
-		Priority:         "high",
-		Notification:     &gcm.Notification{},
-		DryRun:           hermes.config.dryRun,
-	}
-
-	var httpResponse *gcm.HttpResponse
-	if httpResponse, err = gcm.SendHttp(hermes.config.service.Hermes.ApiKey, httpMessage); err != nil {
-		return
-	}
-
-	log.WithFields(log.Fields{"topic": httpMessage.To, "university_name": pair.n.University.TopicName,
-		"message_id": httpResponse.MessageId, "error": httpResponse.Error}).Infoln("fcm_response")
-	// Print FCM errors, but don't panic
-	if httpResponse.Error != "" {
-		return fmt.Errorf(httpResponse.Error)
-	}
-
-	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
-	return
-}
-
-/*
-func notificationTitle(n *model.UCTNotification) string {
-	var title string
-	var body string
-
-	course := n.University.Subjects[0].Courses[0]
-	section := course.Sections[0]
-
-	if n.Status == "Open" {
-		title = "A section has opened!"
-		body = "Section " + section.Number + " of " + course.Name + " has opened!"
-	} else {
-		title = "A section has closed!"
-		body = "Section " + section.Number + " of " + course.Name + " has closed!"
-	}
-}*/
 
 type notificationPair struct {
 	n   *model.UCTNotification

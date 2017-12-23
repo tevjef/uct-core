@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package token;
+
+option java_multiple_files = true;
+
+message TokenRequest { }
+
+message TokenResponse {
+    string token = 1;
+}
+
+service TokenService {
+    rpc token(TokenRequest) returns (TokenResponse);
+}
