@@ -1,17 +1,17 @@
 package io.coursetrakr.server
 
-import io.coursetrackr.proto.TokenRequest
-import io.coursetrackr.proto.TokenResponse
-import io.coursetrackr.proto.TokenServiceGrpc
 import io.grpc.stub.StreamObserver
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.util.Clock
+import io.coursetrakr.proto.TokenRequest
+import io.coursetrakr.proto.TokenResponse
+import io.coursetrakr.proto.TokenServiceGrpc
 import java.io.IOException
 
 class TokenService(private val googleCredential: GoogleCredential) : TokenServiceGrpc.TokenServiceImplBase() {
-    var cachedToken = ""
+    private var cachedToken = ""
 
-    override fun token(request: TokenRequest, responseObserver: StreamObserver<TokenResponse>) {
+    override fun getToken(request: TokenRequest, responseObserver: StreamObserver<TokenResponse>) {
         try {
             println("Attempting to get token")
             val token = getAccessToken()
