@@ -191,18 +191,22 @@ pipeline:
       - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
       # Setup Kubectl
+      - echo -n $KUBERNETES_CERT | base64 -d > ca.crt
       - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
-      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --certificate-authority=ca.crt
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      
+
       - kubectl apply -R -f kubernetes/staging
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/vt:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/vt vt=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
   
