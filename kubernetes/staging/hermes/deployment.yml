@@ -23,6 +23,10 @@ spec:
           name: metrics-port
           protocol: TCP
         env:
+        - name: TOKEN_SERVER_ADDR
+          value: vt
+        - name: TOKEN_SERVER_PORT
+          value: 9875
         - name: POSTGRES_HOST
           value: postgresql
         - name: POSTGRES_USER
@@ -40,11 +44,6 @@ spec:
             secretKeyRef:
               name: pg-cred
               key: database-name
-        - name: FCM_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: hermes-cred
-              key: fcm-key
         - name: HERMES_DRY_RUN
           valueFrom:
             secretKeyRef:

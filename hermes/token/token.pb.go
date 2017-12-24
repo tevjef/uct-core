@@ -73,7 +73,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for TokenService service
 
 type TokenServiceClient interface {
-	Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	GetToken(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
 }
 
 type tokenServiceClient struct {
@@ -84,9 +84,9 @@ func NewTokenServiceClient(cc *grpc.ClientConn) TokenServiceClient {
 	return &tokenServiceClient{cc}
 }
 
-func (c *tokenServiceClient) Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+func (c *tokenServiceClient) GetToken(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
 	out := new(TokenResponse)
-	err := grpc.Invoke(ctx, "/token.TokenService/token", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/token.TokenService/GetToken", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,27 +96,27 @@ func (c *tokenServiceClient) Token(ctx context.Context, in *TokenRequest, opts .
 // Server API for TokenService service
 
 type TokenServiceServer interface {
-	Token(context.Context, *TokenRequest) (*TokenResponse, error)
+	GetToken(context.Context, *TokenRequest) (*TokenResponse, error)
 }
 
 func RegisterTokenServiceServer(s *grpc.Server, srv TokenServiceServer) {
 	s.RegisterService(&_TokenService_serviceDesc, srv)
 }
 
-func _TokenService_Token_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TokenService_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TokenServiceServer).Token(ctx, in)
+		return srv.(TokenServiceServer).GetToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/token.TokenService/Token",
+		FullMethod: "/token.TokenService/GetToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServiceServer).Token(ctx, req.(*TokenRequest))
+		return srv.(TokenServiceServer).GetToken(ctx, req.(*TokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -126,8 +126,8 @@ var _TokenService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*TokenServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "token",
-			Handler:    _TokenService_Token_Handler,
+			MethodName: "GetToken",
+			Handler:    _TokenService_GetToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -137,13 +137,14 @@ var _TokenService_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("token.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 118 bytes of a gzipped FileDescriptorProto
+	// 140 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2e, 0xc9, 0xcf, 0x4e,
 	0xcd, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0xf8, 0xb8, 0x78, 0x42,
 	0x40, 0x8c, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2, 0x12, 0x25, 0x55, 0x2e, 0x5e, 0x28, 0xbf, 0xb8,
 	0x20, 0x3f, 0xaf, 0x38, 0x55, 0x48, 0x84, 0x0b, 0xa2, 0x52, 0x82, 0x51, 0x81, 0x51, 0x83, 0x33,
-	0x08, 0xc2, 0x31, 0x72, 0x82, 0x6a, 0x0b, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0x15, 0x32, 0x82,
-	0xaa, 0x12, 0x12, 0xd6, 0x83, 0x58, 0x82, 0x6c, 0xa8, 0x94, 0x08, 0xaa, 0x20, 0xc4, 0x64, 0x27,
-	0xa6, 0x00, 0xc6, 0x24, 0x36, 0xb0, 0x63, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0xd4, 0x45,
-	0x47, 0xc9, 0x9b, 0x00, 0x00, 0x00,
+	0x08, 0xc2, 0x31, 0x72, 0x85, 0x6a, 0x0b, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0x15, 0x32, 0xe5,
+	0xe2, 0x70, 0x4f, 0x2d, 0x01, 0x0b, 0x09, 0x09, 0xeb, 0x41, 0xec, 0x41, 0x36, 0x57, 0x4a, 0x04,
+	0x55, 0x10, 0x62, 0xb8, 0x93, 0x04, 0x97, 0x48, 0x66, 0xbe, 0x5e, 0x72, 0x7e, 0x69, 0x51, 0x71,
+	0x6a, 0x49, 0x51, 0x62, 0x76, 0x11, 0xc4, 0x71, 0x01, 0x8c, 0x49, 0x6c, 0x60, 0x86, 0x31, 0x20,
+	0x00, 0x00, 0xff, 0xff, 0x9d, 0x42, 0x43, 0xec, 0xb4, 0x00, 0x00, 0x00,
 }

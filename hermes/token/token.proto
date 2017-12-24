@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package token;
 
+option java_package = "io.coursetrakr.proto";
 option java_multiple_files = true;
 
 message TokenRequest { }
@@ -11,5 +12,5 @@ message TokenResponse {
 }
 
 service TokenService {
-    rpc token(TokenRequest) returns (TokenResponse);
+    rpc GetToken(TokenRequest) returns (TokenResponse);
 }

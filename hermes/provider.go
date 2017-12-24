@@ -5,7 +5,6 @@ import (
 
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/hermes/token"
 	"google.golang.org/grpc"
@@ -26,8 +25,7 @@ func (provider *tokenProvider) Token() (string, error) {
 
 	client := token.NewTokenServiceClient(conn)
 
-	tokenResponse, err := client.Token(context.Background(), &token.TokenRequest{})
-	logrus.Printf("tokenResponse %#v err: %v", tokenResponse, err)
+	tokenResponse, err := client.GetToken(context.Background(), &token.TokenRequest{})
 	if err != nil {
 		return "", nil
 	}
