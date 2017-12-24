@@ -175,10 +175,10 @@
   version = "v1.1.4"
 
 [[projects]]
+  branch = "master"
   name = "github.com/tevjef/go-fcm"
   packages = ["."]
-  revision = "401a6e0aaa3e6c77be2e58f60b2fcf7e011cff83"
-  version = "0.2"
+  revision = "d1269f885bc6c37ee7e9bd57e6c41c9a38c7c2b5"
 
 [[projects]]
   branch = "master"
