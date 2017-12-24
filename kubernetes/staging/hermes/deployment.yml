@@ -23,10 +23,6 @@ spec:
           name: metrics-port
           protocol: TCP
         env:
-        - name: TOKEN_SERVER_ADDR
-          value: vt
-        - name: TOKEN_SERVER_PORT
-          value: "9875"
         - name: POSTGRES_HOST
           value: postgresql
         - name: POSTGRES_USER
@@ -49,6 +45,19 @@ spec:
             secretKeyRef:
               name: hermes-cred
               key: dry-run
+        - name: CREDENTIALS_LOCATION
+          value: /etc/hermes/sa.json
+        volumeMounts:
+        - name: google-sa
+          mountPath: /etc/hermes
+          readOnly: true
         resources:
           requests:
             memory: 50Mi
+      volumes:
+      - name: google-sa
+        secret:
+          secretName: hermes-cred
+          items:
+          - key: sa.json
+            path: sa.json

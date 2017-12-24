@@ -5,8 +5,6 @@ import (
 	"os"
 	"time"
 
-	"strconv"
-
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -42,10 +40,6 @@ var (
 		Name: "hermes_histogram_fcm_elapsed_second",
 		Help: "Time taken to send notification",
 	}, []string{"university_name", "status"})
-	tokenElapsedHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "hermes_token_elapsed_second",
-		Help: "Time taken to get a token",
-	})
 )
 
 type hermes struct {
@@ -58,11 +52,10 @@ type hermes struct {
 }
 
 type hermesConfig struct {
-	service           conf.Config
-	dryRun            bool
-	firebaseProjectID string
-	tokenServerAddr   string
-	tokenServerPort   int16
+	service             conf.Config
+	dryRun              bool
+	firebaseProjectID   string
+	credentialsLocation string
 }
 
 func init() {
@@ -75,7 +68,6 @@ func init() {
 		notificationsOut,
 		fcmElapsed,
 		fcmElapsedHistogram,
-		tokenElapsedHistogram,
 	)
 }
 
@@ -95,15 +87,10 @@ func main() {
 		Envar("FIREBASE_PROJECT_ID").
 		StringVar(&hconf.firebaseProjectID)
 
-	app.Flag("token-server-addr", "Token server address").
-		Default("vt").
-		Envar("TOKEN_SERVER_ADDR").
-		StringVar(&hconf.tokenServerAddr)
-
-	app.Flag("token-server-port", "Token server port").
-		Default("9875").
-		Envar("TOKEN_SERVER_PORT").
-		Int16Var(&hconf.tokenServerPort)
+	app.Flag("google-credentials", "Google credentials location").
+		Default("universitycoursetracker.json").
+		Envar("CREDENTIALS_LOCATION").
+		StringVar(&hconf.credentialsLocation)
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').
@@ -127,8 +114,10 @@ func main() {
 		log.WithError(err).Fatalln("failed to open database connection")
 	}
 
-	provider := &tokenProvider{hconf.tokenServerAddr, strconv.Itoa(int(hconf.tokenServerPort))}
-	fcmClient, err := fcm.NewClient(hconf.firebaseProjectID, provider)
+	fcmClient, err := fcm.NewClient(hconf.firebaseProjectID, hconf.credentialsLocation)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to create firebase client")
+	}
 
 	// Start profiling
 	go model.StartPprof(hconf.service.DebugSever(app.Name))

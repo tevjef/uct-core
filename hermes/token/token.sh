@@ -1,1 +1,0 @@
-protoc -I token/ token/token.proto --go_out=plugins=grpc:token
