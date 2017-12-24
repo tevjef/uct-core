@@ -172,7 +172,7 @@
   branch = "master"
   name = "github.com/tevjef/go-fcm"
   packages = ["."]
-  revision = "d1269f885bc6c37ee7e9bd57e6c41c9a38c7c2b5"
+  revision = "3f908c5c36e8bf3ad02d9434ef3762d6474c8631"
 
 [[projects]]
   branch = "master"
@@ -184,7 +184,7 @@
   branch = "master"
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "4ad9ed71b16134163c6502b2ba1ba93de1a0f171"
+  revision = "2d49ec7f886f93f2681924ba4ca71f8d5334ecf6"
 
 [[projects]]
   branch = "master"
@@ -273,6 +273,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "53e9844490a34b3d46a804def44edb649679044314769beaa7430d50e6c31491"
+  inputs-digest = "4ff417f8feab4931edc215f620039dcfb62cebb4ae1b0adebae3fca4abf39978"
   solver-name = "gps-cdcl"
   solver-version = 1
