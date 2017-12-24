@@ -56,10 +56,16 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/gin-contrib/sse"
+  packages = ["."]
+  revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
+
+[[projects]]
   name = "github.com/gin-gonic/gin"
   packages = [".","binding","render"]
-  revision = "9163ee543d3f1fab9b0ad8cdf6dc2a6ec2c07dbb"
-  version = "v1.0rc1"
+  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
+  version = "v1.2"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -89,18 +95,6 @@
   name = "github.com/lib/pq"
   packages = [".","oid"]
   revision = "83612a56d3dd153a94a629cd64925371c9adad78"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/manucorporat/sse"
-  packages = ["."]
-  revision = "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
-
-[[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -188,6 +182,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  revision = "4ad9ed71b16134163c6502b2ba1ba93de1a0f171"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["context","context/ctxhttp","html","html/atom","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
   revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
@@ -253,10 +253,10 @@
   version = "v2.2.6"
 
 [[projects]]
-  name = "gopkg.in/bluesuncorp/validator.v5"
+  name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
-  revision = "d5acf1dac43705f8bfbb71d878e290e2bed3950b"
-  version = "v5.12"
+  revision = "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
+  version = "v8.18.2"
 
 [[projects]]
   name = "gopkg.in/redis.v5"
@@ -264,9 +264,15 @@
   revision = "a16aeec10ff407b1e7be6dd35797ccf5426ef0f0"
   version = "v5.2.9"
 
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "287cf08546ab5e7e37d55a84f7ed3fd1db036de5"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "49c83aa9934ddf0cea9573e7fe84c2d85aa2f9717e02d908b6172a9b23ec3da0"
+  inputs-digest = "53e9844490a34b3d46a804def44edb649679044314769beaa7430d50e6c31491"
   solver-name = "gps-cdcl"
   solver-version = 1

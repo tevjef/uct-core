@@ -17,14 +17,14 @@ import (
 
 func notificationHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		receiveAtStr := c.FormValue("receiveAt")
-		if receiveAtStr == "" {
+		receiveAtStr, exists := c.GetPostForm("receiveAt")
+		if !exists {
 			httperror.BadRequest(c, errors.New("empty receiveAt"))
 			return
 		}
 
-		fcmToken := c.FormValue("fcmToken")
-		if fcmToken == "" {
+		fcmToken, exists := c.GetPostForm("fcmToken")
+		if !exists {
 			httperror.BadRequest(c, errors.New("empty fcmToken"))
 			return
 		}
@@ -35,13 +35,13 @@ func notificationHandler() gin.HandlerFunc {
 			return
 		}
 
-		topicName := c.FormValue("topicName")
-		if topicName == "" {
+		topicName, exists := c.GetPostForm("topicName")
+		if !exists {
 			httperror.BadRequest(c, errors.New("empty topicName"))
 			return
 		}
 
-		notificationId := c.FormValue("notificationId")
+		notificationId, exists := c.GetPostForm("notificationId")
 		if notificationId == "" {
 			httperror.BadRequest(c, errors.New("empty notificationId"))
 			return
