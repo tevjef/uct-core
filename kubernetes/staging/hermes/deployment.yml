@@ -26,7 +26,7 @@ spec:
         - name: TOKEN_SERVER_ADDR
           value: vt
         - name: TOKEN_SERVER_PORT
-          value: 9875
+          value: "9875"
         - name: POSTGRES_HOST
           value: postgresql
         - name: POSTGRES_USER
