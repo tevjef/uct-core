@@ -190,7 +190,6 @@ func (hermes *hermes) waitForPop() chan notificationPair {
 		}
 
 	}()
-
 	return c
 }
 
@@ -200,7 +199,7 @@ func (hermes *hermes) popNotification() (*notificationPair, error) {
 			return nil, errors.Wrap(err, "error getting notification data")
 		} else {
 			uctNotification := &model.UCTNotification{}
-			if err := uctNotification.UnmarshalJSON(b); err != nil {
+			if err := uctNotification.Unmarshal(b); err != nil {
 				return nil, err
 			} else if jsonBytes, err := ffjson.Marshal(uctNotification); err != nil {
 				return nil, err
