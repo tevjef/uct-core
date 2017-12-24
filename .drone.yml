@@ -87,8 +87,6 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
-
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -97,8 +95,6 @@ pipeline:
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
-
-      - docker push tevjef/vt:$DRONE_COMMIT_BRANCH
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -119,8 +115,6 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
-
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -129,8 +123,6 @@ pipeline:
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
-
-      - docker push tevjef/vt:$DRONE_COMMIT_BRANCH
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -151,8 +143,6 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/vt:$DRONE_COMMIT_BRANCH -f vt/Dockerfile vt
-
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -161,8 +151,6 @@ pipeline:
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
-
-      - docker push tevjef/vt:$DRONE_COMMIT_BRANCH
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -200,9 +188,6 @@ pipeline:
       - cd /go/src/github.com/tevjef/uct-core
 
       - kubectl apply -R -f kubernetes/staging
-
-      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/vt:$DRONE_COMMIT_BRANCH)
-      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/vt vt=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
