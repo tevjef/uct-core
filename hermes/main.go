@@ -38,11 +38,14 @@ var (
 		Name: "hermes_fcm_elapsed_second",
 		Help: "Time taken to send notification",
 	}, []string{"university_name", "status"})
-
 	fcmElapsedHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "hermes_histogram_fcm_elapsed_second",
 		Help: "Time taken to send notification",
 	}, []string{"university_name", "status"})
+	tokenElapsedHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name: "hermes_token_elapsed_second",
+		Help: "Time taken to get a token",
+	})
 )
 
 type hermes struct {
@@ -67,7 +70,13 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 
-	prometheus.MustRegister(notificationsIn, notificationsOut, fcmElapsed, fcmElapsedHistogram)
+	prometheus.MustRegister(
+		notificationsIn,
+		notificationsOut,
+		fcmElapsed,
+		fcmElapsedHistogram,
+		tokenElapsedHistogram,
+	)
 }
 
 func main() {
@@ -82,7 +91,7 @@ func main() {
 		BoolVar(&hconf.dryRun)
 
 	app.Flag("firebase-project-id", "Firebase project Id").
-		Default("universitycoursetraker").
+		Default("universitycoursetracker").
 		Envar("FIREBASE_PROJECT_ID").
 		StringVar(&hconf.firebaseProjectID)
 

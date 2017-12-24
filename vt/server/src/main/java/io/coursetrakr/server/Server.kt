@@ -7,9 +7,8 @@ import java.io.FileInputStream
 import java.util.*
 import kotlin.system.exitProcess
 
-fun main(args : Array<String>) {
+fun main(args: Array<String>) {
     val scope = "https://www.googleapis.com/auth/firebase.messaging"
-    println(System.getProperty("user.dir"))
     val credentialLocation = System.getenv("CREDENTIALS_LOCATION")
 
     if (credentialLocation.isNullOrBlank()) {

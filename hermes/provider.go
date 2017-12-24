@@ -5,6 +5,8 @@ import (
 
 	"fmt"
 
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-core/hermes/token"
 	"google.golang.org/grpc"
@@ -16,6 +18,11 @@ type tokenProvider struct {
 }
 
 func (provider *tokenProvider) Token() (string, error) {
+	defer func(start time.Time) {
+		tokenElapsedHistogram.Observe(time.Since(start).Seconds())
+		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3}).Infoln("getting token")
+	}(time.Now())
+
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", provider.addr, provider.port), grpc.WithInsecure())
 	if err != nil {
 		log.WithError(err).Fatal("error connecting to token service")

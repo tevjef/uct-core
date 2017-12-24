@@ -8,18 +8,19 @@ import io.coursetrakr.proto.TokenResponse
 import io.coursetrakr.proto.TokenServiceGrpc
 import java.io.IOException
 
-class TokenService(private val googleCredential: GoogleCredential) : TokenServiceGrpc.TokenServiceImplBase() {
+class TokenService(private val googleCredential: GoogleCredential)
+    : TokenServiceGrpc.TokenServiceImplBase() {
+
     private var cachedToken = ""
 
     override fun getToken(request: TokenRequest, responseObserver: StreamObserver<TokenResponse>) {
         try {
-            println("Attempting to get token")
             val token = getAccessToken()
             val tokenResponse = TokenResponse.newBuilder()
                     .apply { this.token = token }
                     .build()
 
-            println("Got token")
+            println("sending token...")
             responseObserver.onNext(tokenResponse)
             responseObserver.onCompleted()
         } catch (e: Exception) {
@@ -31,6 +32,7 @@ class TokenService(private val googleCredential: GoogleCredential) : TokenServic
     @Throws(IOException::class)
     private fun getAccessToken(): String {
         if (Clock.SYSTEM.currentTimeMillis() > googleCredential.expirationTimeMilliseconds ?: 0) {
+            println("refreshing token...")
             googleCredential.refreshToken()
         }
         cachedToken = googleCredential.accessToken
