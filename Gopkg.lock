@@ -79,7 +79,6 @@
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jmoiron/sqlx"
   packages = [".","reflectx"]
   revision = "de8647470aafe4854c976707c431dbe1eb2822c6"
@@ -91,7 +90,6 @@
   version = "v1.3.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/lib/pq"
   packages = [".","oid"]
   revision = "83612a56d3dd153a94a629cd64925371c9adad78"
@@ -121,7 +119,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/pquerna/ffjson"
   packages = ["ffjson","fflib/v1","fflib/v1/internal"]
   revision = "d49c2bc1aa135aad0c6f4fc2056623ec78f5d5ac"
@@ -273,6 +270,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4ff417f8feab4931edc215f620039dcfb62cebb4ae1b0adebae3fca4abf39978"
+  inputs-digest = "9011fe25314b9b2bb28d41327576760b843ea131a6e488817a8fcf12939e1ab8"
   solver-name = "gps-cdcl"
   solver-version = 1
