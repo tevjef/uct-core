@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	_ "net/http/pprof"
 	"os"
 	"time"
@@ -11,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/prometheus/client_golang/prometheus"
-	gcm "github.com/tevjef/go-gcm"
+	"github.com/tevjef/go-fcm"
 	"github.com/tevjef/uct-core/common/conf"
 	"github.com/tevjef/uct-core/common/database"
 	_ "github.com/tevjef/uct-core/common/metrics"
@@ -20,7 +19,7 @@ import (
 	"github.com/tevjef/uct-core/common/redis"
 	"github.com/tevjef/uct-core/common/try"
 	"golang.org/x/net/context"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -37,7 +36,6 @@ var (
 		Name: "hermes_fcm_elapsed_second",
 		Help: "Time taken to send notification",
 	}, []string{"university_name", "status"})
-
 	fcmElapsedHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "hermes_histogram_fcm_elapsed_second",
 		Help: "Time taken to send notification",
@@ -45,16 +43,19 @@ var (
 )
 
 type hermes struct {
-	app      *kingpin.ApplicationModel
-	config   *hermesConfig
-	redis    *redis.Helper
-	postgres database.Handler
-	ctx      context.Context
+	app       *kingpin.ApplicationModel
+	config    *hermesConfig
+	fcmClient *fcm.Client
+	redis     *redis.Helper
+	postgres  database.Handler
+	ctx       context.Context
 }
 
 type hermesConfig struct {
-	service conf.Config
-	dryRun  bool
+	service             conf.Config
+	dryRun              bool
+	firebaseProjectID   string
+	credentialsLocation string
 }
 
 func init() {
@@ -62,7 +63,12 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 
-	prometheus.MustRegister(notificationsIn, notificationsOut, fcmElapsed, fcmElapsedHistogram)
+	prometheus.MustRegister(
+		notificationsIn,
+		notificationsOut,
+		fcmElapsed,
+		fcmElapsedHistogram,
+	)
 }
 
 func main() {
@@ -75,6 +81,16 @@ func main() {
 		Default("true").
 		Envar("HERMES_DRY_RUN").
 		BoolVar(&hconf.dryRun)
+
+	app.Flag("firebase-project-id", "Firebase project Id").
+		Default("universitycoursetracker").
+		Envar("FIREBASE_PROJECT_ID").
+		StringVar(&hconf.firebaseProjectID)
+
+	app.Flag("google-credentials", "Google credentials location").
+		Default("universitycoursetracker.json").
+		Envar("CREDENTIALS_LOCATION").
+		StringVar(&hconf.credentialsLocation)
 
 	configFile := app.Flag("config", "configuration file for the application").
 		Short('c').
@@ -98,14 +114,20 @@ func main() {
 		log.WithError(err).Fatalln("failed to open database connection")
 	}
 
+	fcmClient, err := fcm.NewClient(hconf.firebaseProjectID, hconf.credentialsLocation)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to create firebase client")
+	}
+
 	// Start profiling
 	go model.StartPprof(hconf.service.DebugSever(app.Name))
 
 	(&hermes{
-		app:      app.Model(),
-		config:   hconf,
-		redis:    redis.NewHelper(hconf.service, app.Name),
-		postgres: database.NewHandler(app.Name, pgDatabase, queries),
+		app:       app.Model(),
+		config:    hconf,
+		fcmClient: fcmClient,
+		redis:     redis.NewHelper(hconf.service, app.Name),
+		postgres:  database.NewHandler(app.Name, pgDatabase, queries),
 	}).init()
 }
 
@@ -141,7 +163,7 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 
 	// Retry in case of SSL/TLS timeout errors. FCM itself should be rock solid
 	err := try.Do(func(attempt int) (retry bool, err error) {
-		if err = hermes.sendGcmNotification(pair); err != nil {
+		if err = hermes.sendFcmNotification(pair); err != nil {
 			return true, err
 		}
 		return false, nil
@@ -189,31 +211,6 @@ func (hermes *hermes) popNotification() (*notificationPair, error) {
 	} else {
 		return nil, err
 	}
-}
-
-func (hermes *hermes) sendGcmNotification(pair notificationPair) (err error) {
-	httpMessage := gcm.HttpMessage{
-		To:               "/topics/" + pair.n.TopicName,
-		Data:             map[string]interface{}{"message": pair.raw},
-		ContentAvailable: true,
-		Priority:         "high",
-		DryRun:           hermes.config.dryRun,
-	}
-
-	var httpResponse *gcm.HttpResponse
-	if httpResponse, err = gcm.SendHttp(hermes.config.service.Hermes.ApiKey, httpMessage); err != nil {
-		return
-	}
-
-	log.WithFields(log.Fields{"topic": httpMessage.To, "university_name": pair.n.University.TopicName,
-		"message_id": httpResponse.MessageId, "error": httpResponse.Error}).Infoln("fcm_response")
-	// Print FCM errors, but don't panic
-	if httpResponse.Error != "" {
-		return fmt.Errorf(httpResponse.Error)
-	}
-
-	hermes.acknowledgeNotification(pair.n.NotificationId, httpResponse.MessageId)
-	return
 }
 
 type notificationPair struct {

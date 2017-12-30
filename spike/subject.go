@@ -18,7 +18,7 @@ import (
 
 func subjectHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		subjectTopicName := strings.ToLower(c.ParamValue("topic"))
+		subjectTopicName := strings.ToLower(c.Param("topic"))
 
 		if sub, _, err := SelectSubject(c, subjectTopicName); err != nil {
 			if err == sql.ErrNoRows {
@@ -38,9 +38,9 @@ func subjectHandler(expire time.Duration) gin.HandlerFunc {
 
 func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		season := strings.ToLower(c.ParamValue("season"))
-		year := c.ParamValue("year")
-		uniTopicName := strings.ToLower(c.ParamValue("topic"))
+		season := strings.ToLower(c.Param("season"))
+		year := c.Param("year")
+		uniTopicName := strings.ToLower(c.Param("topic"))
 
 		if subjects, err := SelectSubjects(c, uniTopicName, season, year); err != nil {
 			if err == sql.ErrNoRows {

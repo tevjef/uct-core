@@ -55,18 +55,10 @@ func Test_parseios(t *testing.T) {
 		{
 			name: "1",
 			args: args{
-				userAgent: "UniversityCourseTracker/com.tevinjeffrey.uctios (100; iOS 10.2.1) Course Tracker/1.0.7",
+				userAgent: "UniversityCourseTracker/1.0.8 (com.tevinjeffrey.uctios; build:100; iOS 10.3.1) Alamofire/4.5.1",
 			},
-			want:  "1.0.7",
-			want1: "iOS 10.2.1",
-		},
-		{
-			name: "2",
-			args: args{
-				userAgent: "UniversityCourseTracker/com.tevinjeffrey.uctios (100; iOS 10.2.1) Course Tracker/1.0.7",
-			},
-			want:  "1.0.7",
-			want1: "iOS 10.2.1",
+			want:  "1.0.8",
+			want1: "iOS 10.3.1",
 		},
 	}
 	for _, tt := range tests {

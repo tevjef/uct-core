@@ -17,20 +17,20 @@ import (
 
 func subscriptionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		subscribed, err := strconv.ParseBool(c.FormValue("isSubscribed"))
+		subscribed, err := strconv.ParseBool(c.PostForm("isSubscribed"))
 		if err != nil {
 			httperror.BadRequest(c, errors.New("invalid isSubscribed"+err.Error()))
 			return
 		}
 
-		fcmToken := c.FormValue("fcmToken")
-		if fcmToken == "" {
+		fcmToken, exists := c.GetPostForm("fcmToken")
+		if !exists {
 			httperror.BadRequest(c, errors.New("empty fcmToken"))
 			return
 		}
 
-		topicName := c.FormValue("topicName")
-		if topicName == "" {
+		topicName, exists := c.GetPostForm("topicName")
+		if !exists {
 			httperror.BadRequest(c, errors.New("empty topicName"))
 			return
 		}

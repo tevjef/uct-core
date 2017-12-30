@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 )
@@ -44,4 +46,13 @@ func UnmarshalMessage(format string, r io.Reader, m *University) error {
 		return fmt.Errorf("%s Reason %s", "Failed to unmarshal message:", "empty data")
 	}
 	return nil
+}
+
+func PrintJson(m interface{}) {
+	b, err := json.MarshalIndent(m, " ", "  ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(os.Stdout, "%s", string(b))
 }

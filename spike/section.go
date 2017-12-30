@@ -17,7 +17,7 @@ import (
 
 func sectionHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		sectionTopicName := strings.ToLower(c.ParamValue("topic"))
+		sectionTopicName := strings.ToLower(c.Param("topic"))
 
 		if s, _, err := SelectSection(c, sectionTopicName); err != nil {
 			if err == sql.ErrNoRows {

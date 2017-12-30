@@ -18,7 +18,7 @@ import (
 
 func courseHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		courseTopicName := strings.ToLower(c.ParamValue("topic"))
+		courseTopicName := strings.ToLower(c.Param("topic"))
 
 		if course, _, err := SelectCourse(c, courseTopicName); err != nil {
 			if err == sql.ErrNoRows {
@@ -38,7 +38,7 @@ func courseHandler(expire time.Duration) gin.HandlerFunc {
 
 func coursesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		subjectTopicName := strings.ToLower(c.ParamValue("topic"))
+		subjectTopicName := strings.ToLower(c.Param("topic"))
 
 		if courses, err := SelectCourses(c, subjectTopicName); err != nil {
 			if err == sql.ErrNoRows {

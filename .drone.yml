@@ -49,6 +49,7 @@ pipeline:
       - cd /go/src/github.com/tevjef/uct-core/spike
       - go test ./...
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
+
     when:
       event: [push, pull_request, tag, deployment]
 
@@ -149,7 +150,7 @@ pipeline:
       - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
       - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f support/postgresql/Dockerfile support/postgresql
+      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
@@ -178,18 +179,19 @@ pipeline:
       - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
       # Setup Kubectl
+      - echo -n $KUBERNETES_CERT | base64 -d > ca.crt
       - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
-      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --certificate-authority=ca.crt
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-core
-      
+
       - kubectl apply -R -f kubernetes/staging
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
   

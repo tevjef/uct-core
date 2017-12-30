@@ -20,7 +20,7 @@ import (
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		topicName := strings.ToLower(c.ParamValue("topic"))
+		topicName := strings.ToLower(c.Param("topic"))
 
 		if u, err := SelectUniversity(c, topicName); err != nil {
 			if err == sql.ErrNoRows {

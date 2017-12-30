@@ -49,10 +49,16 @@ func main() {
 	}
 
 	if *out != "" {
-		output := model.MarshalMessage(*out, university)
+		output, err := model.MarshalMessage(*out, university)
+		if err != nil {
+			panic(err)
+		}
 		io.Copy(os.Stdout, output)
 	} else {
-		output := model.MarshalMessage(*format, university)
+		output, err := model.MarshalMessage(*format, university)
+		if err != nil {
+			panic(err)
+		}
 		io.Copy(os.Stdout, output)
 	}
 }
