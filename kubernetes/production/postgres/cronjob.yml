@@ -5,6 +5,7 @@ metadata:
   namespace: production
 spec:
   schedule: "@daily"
+  successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:

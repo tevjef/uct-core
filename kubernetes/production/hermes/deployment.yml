@@ -40,16 +40,24 @@ spec:
             secretKeyRef:
               name: pg-cred
               key: database-name
-        - name: FCM_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: hermes-cred
-              key: fcm-key
         - name: HERMES_DRY_RUN
           valueFrom:
             secretKeyRef:
               name: hermes-cred
               key: dry-run
+        - name: CREDENTIALS_LOCATION
+          value: /etc/hermes/sa.json
+        volumeMounts:
+        - name: google-sa
+          mountPath: /etc/hermes
+          readOnly: true
         resources:
           requests:
             memory: 50Mi
+      volumes:
+      - name: google-sa
+        secret:
+          secretName: hermes-cred
+          items:
+          - key: sa.json
+            path: sa.json
