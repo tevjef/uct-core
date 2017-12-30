@@ -1,0 +1,14 @@
+# gazelle:prefix github.com/tevjef/uct-core
+
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+gazelle(
+    name = "gazelle",
+    command = "fix",
+    external = "vendored",
+    prefix = "github.com/tevjef/uct-core",
+    extra_args = [
+            "-proto",
+            "disable",
+        ],
+)

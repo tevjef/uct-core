@@ -1,0 +1,51 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "course.go",
+        "main.go",
+        "notification.go",
+        "section.go",
+        "subject.go",
+        "subscription.go",
+        "university.go",
+        "util.go",
+    ],
+    importpath = "github.com/tevjef/uct-core/spike",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/conf:go_default_library",
+        "//common/database:go_default_library",
+        "//common/metrics:go_default_library",
+        "//common/model:go_default_library",
+        "//common/redis:go_default_library",
+        "//spike/middleware:go_default_library",
+        "//spike/middleware/cache:go_default_library",
+        "//spike/middleware/httperror:go_default_library",
+        "//spike/middleware/trace:go_default_library",
+        "//spike/store:go_default_library",
+        "//vendor/cloud.google.com/go/trace:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/gin-gonic/gin:go_default_library",
+        "//vendor/github.com/lib/pq:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+        "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
+        "//vendor/golang.org/x/net/context:go_default_library",
+        "//vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "spike",
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-core/spike",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["util_test.go"],
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-core/spike",
+)

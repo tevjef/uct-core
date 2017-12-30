@@ -67,3 +67,4 @@ scrapers/cuny/cunt
 !common/conf/config.toml
 config.toml
 universitycoursetracker.json
+/bazel-*

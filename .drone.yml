@@ -3,6 +3,16 @@ workspace:
   path: src/github.com/tevjef/uct-core
 
 pipeline:
+  restore-cache:
+    image: drillster/drone-volume-cache
+    restore: true
+    mount:
+      - ./vendor
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: [push, pull_request, tag, deployment]
+
   core:
     image: golang:1.9-alpine
     environment:
@@ -290,6 +300,16 @@ pipeline:
     when:
       branch: production
       event: [push, tag, deployment]
+
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - ./vendor
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: [push, pull_request, tag, deployment]
 
 services:
   redis:

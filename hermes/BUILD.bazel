@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "fcm.go",
+        "main.go",
+    ],
+    importpath = "github.com/tevjef/uct-core/hermes",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/conf:go_default_library",
+        "//common/database:go_default_library",
+        "//common/metrics:go_default_library",
+        "//common/model:go_default_library",
+        "//common/notification:go_default_library",
+        "//common/redis:go_default_library",
+        "//common/try:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/lib/pq:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+        "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
+        "//vendor/github.com/tevjef/go-fcm:go_default_library",
+        "//vendor/golang.org/x/net/context:go_default_library",
+        "//vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "hermes",
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-core/hermes",
+    visibility = ["//visibility:public"],
+)
