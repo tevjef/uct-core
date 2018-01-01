@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "database.go",
+        "decorator.go",
+        "logging.go",
+        "negotiaition.go",
+    ],
+    importpath = "github.com/tevjef/uct-core/spike/middleware",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/database:go_default_library",
+        "//common/model:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/gin-gonic/gin:go_default_library",
+        "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
+    ],
+)

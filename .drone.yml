@@ -3,6 +3,18 @@ workspace:
   path: src/github.com/tevjef/uct-core
 
 pipeline:
+  restore-cache:
+    image: drillster/drone-volume-cache
+    restore: true
+    mount:
+      - /go/bin
+      - /go/pkg
+      - ./vendor
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: [push, pull_request, tag, deployment]
+
   core:
     image: golang:1.9-alpine
     environment:
@@ -140,6 +152,7 @@ pipeline:
 
   develop:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -169,6 +182,7 @@ pipeline:
 
   kubernetes-deploy-staging:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password, kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -235,6 +249,7 @@ pipeline:
 
   kubernetes-deploy-production:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password, kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -290,6 +305,18 @@ pipeline:
     when:
       branch: production
       event: [push, tag, deployment]
+
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - /go/bin
+      - /go/pkg
+      - ./vendor
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: [push, pull_request, tag, deployment]
 
 services:
   redis:
