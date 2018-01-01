@@ -152,6 +152,7 @@ pipeline:
 
   develop:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -181,6 +182,7 @@ pipeline:
 
   kubernetes-deploy-staging:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password, kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -247,6 +249,7 @@ pipeline:
 
   kubernetes-deploy-production:
     image: library/docker:dind
+    secrets: [ docker_username, docker_password, kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
