@@ -16,7 +16,7 @@ pipeline:
       event: push
 
   compile:
-    image: golang:1.9-alpine
+    image: golang:rc-alpine
     environment:
       - GOPATH=/go
     commands:
@@ -26,7 +26,8 @@ pipeline:
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
-      - go get -u github.com/golang/dep/cmd/dep
+      - wget https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
+      - chmod +x ./dep-linux-amd64 && mv ./dep-linux-amd64 /usr/local/bin/dep
       - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
 

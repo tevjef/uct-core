@@ -58,17 +58,9 @@
   version = "1.1.4"
 
 [[constraint]]
-  name = "github.com/tevjef/go-gcm"
-  revision = "2f9e2682fa1359ee803b0d73065a6ffec6158b1c"
-
-[[constraint]]
   name = "gopkg.in/alecthomas/kingpin.v2"
   version = "2.2.2"
 
 [[constraint]]
   name = "gopkg.in/redis.v5"
   version = "5.1.6"
-
-[[constraint]]
-  name = "google.golang.org/grpc"
-  version = "1.8.x"
