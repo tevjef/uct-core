@@ -20,7 +20,7 @@ import (
 	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
 	"github.com/tevjef/uct-core/spike/store"
 	"golang.org/x/net/context"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type spike struct {
@@ -143,6 +143,9 @@ func (spike *spike) init() {
 		v2.POST("/subscription", subscriptionHandler())
 		v2.POST("/notification", notificationHandler())
 	}
+
+	static := r.Group("/static")
+	static.GET("/:file", serveStaticFromGithub)
 
 	r.Run(":" + strconv.Itoa(int(spike.config.port)))
 }
