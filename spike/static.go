@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-core/spike/middleware/httperror"
 )
 
 func serveStaticFromGithub(c *gin.Context) {
@@ -15,11 +16,13 @@ func serveStaticFromGithub(c *gin.Context) {
 
 	var file = c.Param("file")
 	resp, err := http.Get("https://raw.githubusercontent.com/tevjef/uct-backend/" + branch + "static/" + file)
-	if err != nil {
-		return
-	}
 
 	defer resp.Body.Close()
+
+	if err != nil {
+		httperror.BadRequest(c, err)
+		return
+	}
 
 	io.Copy(c.Writer, resp.Body)
 
