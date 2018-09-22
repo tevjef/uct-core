@@ -12,7 +12,7 @@ go_library(
         "university.go",
         "util.go",
     ],
-    importpath = "github.com/tevjef/uct-core/spike",
+    importpath = "github.com/tevjef/uct-backend/spike",
     visibility = ["//visibility:private"],
     deps = [
         "//common/conf:go_default_library",
@@ -39,7 +39,7 @@ go_library(
 go_binary(
     name = "spike",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/spike",
+    importpath = "github.com/tevjef/uct-backend/spike",
     visibility = ["//visibility:public"],
 )
 
@@ -47,5 +47,5 @@ go_test(
     name = "go_default_test",
     srcs = ["util_test.go"],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/spike",
+    importpath = "github.com/tevjef/uct-backend/spike",
 )

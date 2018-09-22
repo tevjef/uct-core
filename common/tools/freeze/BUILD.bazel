@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["freeze.go"],
-    importpath = "github.com/tevjef/uct-core/common/tools/freeze",
+    importpath = "github.com/tevjef/uct-backend/common/tools/freeze",
     visibility = ["//visibility:public"],
     deps = ["//vendor/golang.org/x/sys/unix:go_default_library"],
 )

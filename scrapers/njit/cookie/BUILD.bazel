@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["cookie.go"],
-    importpath = "github.com/tevjef/uct-core/scrapers/njit/cookie",
+    importpath = "github.com/tevjef/uct-backend/scrapers/njit/cookie",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/Sirupsen/logrus:go_default_library"],
 )
@@ -12,6 +12,6 @@ go_test(
     name = "go_default_test",
     srcs = ["cookie_test.go"],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/njit/cookie",
+    importpath = "github.com/tevjef/uct-backend/scrapers/njit/cookie",
     deps = ["//vendor/github.com/Sirupsen/logrus:go_default_library"],
 )

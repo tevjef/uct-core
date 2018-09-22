@@ -1,8 +1,8 @@
 package store
 
 import (
-	"github.com/tevjef/uct-core/common/database"
-	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
+	"github.com/tevjef/uct-backend/common/database"
+	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 
 	"golang.org/x/net/context"
 )

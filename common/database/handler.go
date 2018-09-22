@@ -10,7 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/try"
+	"github.com/tevjef/uct-backend/common/try"
 	"golang.org/x/net/context"
 )
 

@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/github.com/tevjef/uct-core
+  path: src/github.com/tevjef/uct-backend
 
 pipeline:
   restore-cache:
@@ -16,7 +16,7 @@ pipeline:
       event: push
 
   compile:
-    image: golang:rc-alpine
+    image: golang:1.11-alpine
     environment:
       - GOPATH=/go
     commands:
@@ -31,23 +31,23 @@ pipeline:
       - dep ensure -v
       - export PATH=$PATH:$GOPATH/bin
 
-      - go test github.com/tevjef/uct-core/ein/...
-      - go test github.com/tevjef/uct-core/julia/...
-      - go test github.com/tevjef/uct-core/hermes/...
-      - go test github.com/tevjef/uct-core/scrapers/rutgers/...
-      - go test github.com/tevjef/uct-core/scrapers/njit/...
-      - go test github.com/tevjef/uct-core/scrapers/cuny/...
-      - go test github.com/tevjef/uct-core/jet/...
-      - go test github.com/tevjef/uct-core/spike/...
+      - go test github.com/tevjef/uct-backend/ein/...
+      - go test github.com/tevjef/uct-backend/julia/...
+      - go test github.com/tevjef/uct-backend/hermes/...
+      - go test github.com/tevjef/uct-backend/scrapers/rutgers/...
+      - go test github.com/tevjef/uct-backend/scrapers/njit/...
+      - go test github.com/tevjef/uct-backend/scrapers/cuny/...
+      - go test github.com/tevjef/uct-backend/jet/...
+      - go test github.com/tevjef/uct-backend/spike/...
 
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/ein
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/julia
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/rutgers
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/njit
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/cuny
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/jet
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/spike
     when:
       event: [push, pull_request]
 
@@ -126,7 +126,7 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
 
       - kubectl apply -R -f kubernetes/staging
 
@@ -191,7 +191,7 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
       - kubectl apply -R -f kubernetes/production/ein
       - kubectl apply -R -f kubernetes/production/hermes
       - kubectl apply -R -f kubernetes/production/julia

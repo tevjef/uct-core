@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["trace.go"],
-    importpath = "github.com/tevjef/uct-core/spike/middleware/trace",
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/trace",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/cloud.google.com/go/trace:go_default_library",

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/redis"
+	"github.com/tevjef/uct-backend/common/redis"
 	"golang.org/x/net/context"
 )
 

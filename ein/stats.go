@@ -6,8 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/database"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/database"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 func statsCollector(ein *ein, university string) {

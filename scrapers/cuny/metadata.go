@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 var cunyMetadata = map[string]model.University{

@@ -6,7 +6,7 @@ go_library(
         "mock.go",
         "notifier.go",
     ],
-    importpath = "github.com/tevjef/uct-core/julia/notifier",
+    importpath = "github.com/tevjef/uct-backend/julia/notifier",
     visibility = ["//visibility:public"],
     deps = [
         "//common/model:go_default_library",

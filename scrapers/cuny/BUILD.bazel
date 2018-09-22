@@ -8,7 +8,7 @@ go_library(
         "main.go",
         "metadata.go",
     ],
-    importpath = "github.com/tevjef/uct-core/scrapers/cuny",
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
     visibility = ["//visibility:private"],
     deps = [
         "//common/conf:go_default_library",
@@ -26,7 +26,7 @@ go_library(
 go_binary(
     name = "cuny",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/cuny",
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
     visibility = ["//visibility:public"],
 )
 
@@ -38,7 +38,7 @@ go_test(
     ],
     data = glob(["testdata/**"]),
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/cuny",
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
     deps = [
         "//common/conf:go_default_library",
         "//common/model:go_default_library",

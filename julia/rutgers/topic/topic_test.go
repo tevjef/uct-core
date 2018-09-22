@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 	"golang.org/x/net/context"
 )
 

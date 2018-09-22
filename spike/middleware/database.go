@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/tevjef/uct-core/common/database"
+	"github.com/tevjef/uct-backend/common/database"
 )
 
 // Each handler must either set a meta or response

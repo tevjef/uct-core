@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 type NSemesters struct {

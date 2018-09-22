@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/try"
+	"github.com/tevjef/uct-backend/common/try"
 	"net"
 )
 

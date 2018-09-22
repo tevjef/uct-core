@@ -6,7 +6,7 @@ go_library(
         "fcm.go",
         "main.go",
     ],
-    importpath = "github.com/tevjef/uct-core/hermes",
+    importpath = "github.com/tevjef/uct-backend/hermes",
     visibility = ["//visibility:private"],
     deps = [
         "//common/conf:go_default_library",
@@ -30,6 +30,6 @@ go_library(
 go_binary(
     name = "hermes",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/hermes",
+    importpath = "github.com/tevjef/uct-backend/hermes",
     visibility = ["//visibility:public"],
 )

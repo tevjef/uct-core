@@ -7,8 +7,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/julia/notifier"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/julia/notifier"
 )
 
 func Test_waitForNotification(t *testing.T) {
