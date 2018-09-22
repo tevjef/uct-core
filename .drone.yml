@@ -52,34 +52,36 @@ pipeline:
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/cuny
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/jet
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/spike
+
+      - ls -lA /go/bin
     when:
       event: [push, pull_request]
 
   stage-binaries:
     image: library/docker:dind
     commands:
-      - cp /go/bin/ein build/ein/
-      - cp /go/bin/spike build/spike/
-      - cp /go/bin/hermes build/hermes/
-      - cp /go/bin/julia build/julia/
+      - cp -v /go/bin/ein build/ein/
+      - cp -v /go/bin/spike build/spike/
+      - cp -v /go/bin/hermes build/hermes/
+      - cp -v /go/bin/julia build/julia/
 
-      - cp /go/bin/rutgers build/rutgers/
-      - cp /go/bin/njit build/njit/
-      - cp /go/bin/cuny build/cuny/
+      - cp -v /go/bin/rutgers build/rutgers/
+      - cp -v /go/bin/njit build/njit/
+      - cp -v /go/bin/cuny build/cuny/
 
-      - cp /go/bin/jet build/rutgers/
-      - cp /go/bin/jet build/njit/
-      - cp /go/bin/jet build/cuny/
+      - cp -v /go/bin/jet build/rutgers/
+      - cp -v /go/bin/jet build/njit/
+      - cp -v /go/bin/jet build/cuny/
 
-      - cp common/conf/config.toml build/ein/
-      - cp common/conf/config.toml build/spike/
-      - cp common/conf/config.toml build/hermes/
-      - cp common/conf/config.toml build/julia/
-      - cp common/conf/config.toml build/rutgers/
-      - cp common/conf/config.toml build/njit/
-      - cp common/conf/config.toml build/cuny/
+      - cp -v common/conf/config.toml build/ein/
+      - cp -v common/conf/config.toml build/spike/
+      - cp -v common/conf/config.toml build/hermes/
+      - cp -v common/conf/config.toml build/julia/
+      - cp -v common/conf/config.toml build/rutgers/
+      - cp -v common/conf/config.toml build/njit/
+      - cp -v common/conf/config.toml build/cuny/
 
-      - cp -r postgresql/ build/postgresql/
+      - cp -v -r postgresql/ build/postgresql/
     when:
       branch: [production, staging, develop]
       event: push
