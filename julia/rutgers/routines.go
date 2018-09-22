@@ -3,7 +3,7 @@ package rutgers
 import (
 	"sync"
 
-	"github.com/tevjef/uct-core/julia/rutgers/topic"
+	"github.com/tevjef/uct-backend/julia/rutgers/topic"
 )
 
 type Routines struct {

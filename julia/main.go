@@ -5,17 +5,18 @@ import (
 	"os"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tevjef/uct-core/common/conf"
-	_ "github.com/tevjef/uct-core/common/metrics"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/notification"
-	"github.com/tevjef/uct-core/common/redis"
-	"github.com/tevjef/uct-core/julia/notifier"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	_ "github.com/tevjef/uct-backend/common/metrics"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/notification"
+	"github.com/tevjef/uct-backend/common/redis"
+	"github.com/tevjef/uct-backend/julia/notifier"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

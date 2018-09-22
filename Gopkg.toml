@@ -39,12 +39,15 @@
 
 [[constraint]]
   name = "github.com/jmoiron/sqlx"
+  revision = "de8647470aafe4854c976707c431dbe1eb2822c6"
 
 [[constraint]]
   name = "github.com/lib/pq"
+  revision = "83612a56d3dd153a94a629cd64925371c9adad78"
 
 [[constraint]]
   name = "github.com/pquerna/ffjson"
+  revision = "d49c2bc1aa135aad0c6f4fc2056623ec78f5d5ac"
 
 [[constraint]]
   branch = "master"
@@ -55,17 +58,9 @@
   version = "1.1.4"
 
 [[constraint]]
-  name = "github.com/tevjef/go-gcm"
-  revision = "2f9e2682fa1359ee803b0d73065a6ffec6158b1c"
-
-[[constraint]]
   name = "gopkg.in/alecthomas/kingpin.v2"
   version = "2.2.2"
 
 [[constraint]]
   name = "gopkg.in/redis.v5"
   version = "5.1.6"
-
-[[constraint]]
-  name = "google.golang.org/grpc"
-  version = "1.8.x"

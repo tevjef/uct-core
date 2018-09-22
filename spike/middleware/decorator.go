@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/tevjef/uct-core/common/model"
 	"fmt"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 // Each handler must either set a meta or response

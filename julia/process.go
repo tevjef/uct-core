@@ -4,8 +4,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/julia/rutgers"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/julia/rutgers"
 )
 
 type Processor interface {

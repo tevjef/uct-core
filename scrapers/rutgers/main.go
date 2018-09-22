@@ -13,11 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/try"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/try"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

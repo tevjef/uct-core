@@ -5,14 +5,15 @@ import (
 	"strconv"
 	"time"
 
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/spike/middleware"
-	"github.com/tevjef/uct-core/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-core/spike/middleware/trace"
-	"github.com/tevjef/uct-core/spike/store"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/spike/middleware"
+	"github.com/tevjef/uct-backend/spike/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
+	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func notificationHandler() gin.HandlerFunc {

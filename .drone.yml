@@ -1,89 +1,94 @@
 workspace:
   base: /go
-  path: src/github.com/tevjef/uct-core
+  path: src/github.com/tevjef/uct-backend
 
 pipeline:
-  core:
-    image: golang:1.9-alpine
+  restore-cache:
+    image: drillster/drone-volume-cache
+    restore: true
+    mount:
+      - /go/bin
+      - /go/pkg
+      - ./vendor
+      - /root/.cache/go-build
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: push
+
+  compile:
+    image: golang:1.11-alpine
     environment:
       - GOPATH=/go
     commands:
-      - go version
-      - export GOOS=linux
-      - export GOARCH=amd64
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
-      - go get -u github.com/golang/dep/cmd/dep
-      - dep ensure -v
+
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - export GO111MODULE=on
+      - export CGO_ENABLED=0
+      - go version
+      - go env
+      - go list ./...
+
       - export PATH=$PATH:$GOPATH/bin
 
-      - cd /go/src/github.com/tevjef/uct-core/ein
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
+      - go test github.com/tevjef/uct-backend/ein/...
+      - go test github.com/tevjef/uct-backend/julia/...
+      - go test github.com/tevjef/uct-backend/hermes/...
+      - go test github.com/tevjef/uct-backend/scrapers/rutgers/...
+      - go test github.com/tevjef/uct-backend/scrapers/njit/...
+      - go test github.com/tevjef/uct-backend/scrapers/cuny/...
+      - go test github.com/tevjef/uct-backend/jet/...
+      - go test github.com/tevjef/uct-backend/spike/...
 
-      - cd /go/src/github.com/tevjef/uct-core/hermes
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/ein
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/julia
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/rutgers
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/njit
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/cuny
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/jet
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/spike
 
-      - cd /go/src/github.com/tevjef/uct-core/julia
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
-
-      - cd /go/src/github.com/tevjef/uct-core/scrapers/rutgers
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
-
-      - cd /go/src/github.com/tevjef/uct-core/scrapers/njit
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
-
-      - cd /go/src/github.com/tevjef/uct-core/scrapers/cuny
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
-
-      - cd /go/src/github.com/tevjef/uct-core/jet
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
-
-      - cd /go/src/github.com/tevjef/uct-core/spike
-      - go test ./...
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
-
+      - ls -lA /go/bin
     when:
-      event: [push, pull_request, tag, deployment]
+      event: [push, pull_request]
 
-  common:
+  stage-binaries:
     image: library/docker:dind
     commands:
-      - cp /go/bin/ein build/ein/
-      - cp /go/bin/spike build/spike/
-      - cp /go/bin/hermes build/hermes/
-      - cp /go/bin/julia build/julia/
+      - cp -v /go/bin/ein build/ein/
+      - cp -v /go/bin/spike build/spike/
+      - cp -v /go/bin/hermes build/hermes/
+      - cp -v /go/bin/julia build/julia/
 
-      - cp /go/bin/rutgers build/rutgers/
-      - cp /go/bin/njit build/njit/
-      - cp /go/bin/cuny build/cuny/
+      - cp -v /go/bin/rutgers build/rutgers/
+      - cp -v /go/bin/njit build/njit/
+      - cp -v /go/bin/cuny build/cuny/
 
-      - cp /go/bin/jet build/rutgers/
-      - cp /go/bin/jet build/njit/
-      - cp /go/bin/jet build/cuny/
+      - cp -v /go/bin/jet build/rutgers/
+      - cp -v /go/bin/jet build/njit/
+      - cp -v /go/bin/jet build/cuny/
 
-      - cp common/conf/config.toml build/ein/
-      - cp common/conf/config.toml build/spike/
-      - cp common/conf/config.toml build/hermes/
-      - cp common/conf/config.toml build/julia/
-      - cp common/conf/config.toml build/rutgers/
-      - cp common/conf/config.toml build/njit/
-      - cp common/conf/config.toml build/cuny/
+      - cp -v common/conf/config.toml build/ein/
+      - cp -v common/conf/config.toml build/spike/
+      - cp -v common/conf/config.toml build/hermes/
+      - cp -v common/conf/config.toml build/julia/
+      - cp -v common/conf/config.toml build/rutgers/
+      - cp -v common/conf/config.toml build/njit/
+      - cp -v common/conf/config.toml build/cuny/
 
-      - cp -r postgresql/ build/postgresql/
+      - cp -v -r postgresql/ build/postgresql/
     when:
       branch: [production, staging, develop]
-      event: [push, tag, deployment]
+      event: push
 
-  production:
+  build-images:
     image: library/docker:dind
+    secrets: [docker_username, docker_password]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -107,71 +112,13 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      branch: production
-      event: [push, tag, deployment]
-
-  staging:
-    image: library/docker:dind
-    commands:
-      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-
-      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
-      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
-      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
-      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
-      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
-      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
-      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
-
-      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      branch: staging
-      event: [push, tag, deployment]
-
-  develop:
-    image: library/docker:dind
-    commands:
-      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-
-      - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
-      - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
-      - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
-      - docker build -t tevjef/julia:$DRONE_COMMIT_BRANCH -f build/julia/Dockerfile build/julia
-      - docker build -t tevjef/rutgers:$DRONE_COMMIT_BRANCH -f build/rutgers/Dockerfile build/rutgers
-      - docker build -t tevjef/njit:$DRONE_COMMIT_BRANCH -f build/njit/Dockerfile build/njit
-      - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
-      - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
-
-      - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/julia:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/rutgers:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/njit:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/cuny:$DRONE_COMMIT_BRANCH
-      - docker push tevjef/postgresql:$DRONE_COMMIT_BRANCH
-
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      branch: develop
-      event: [push]
+      branch: [production, staging, develop]
+      event: push
 
   kubernetes-deploy-staging:
     image: library/docker:dind
+    secrets: [kubernetes_cert, kubernetes_master, kubernetes_token]
     commands:
-      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-
       # Install Kubectl
       - apk update
       - apk add curl
@@ -185,7 +132,7 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
 
       - kubectl apply -R -f kubernetes/staging
 
@@ -235,9 +182,8 @@ pipeline:
 
   kubernetes-deploy-production:
     image: library/docker:dind
+    secrets: [kubernetes_cert, kubernetes_master, kubernetes_token]
     commands:
-      - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-
       # Install Kubectl
       - apk update
       - apk add curl
@@ -245,12 +191,13 @@ pipeline:
       - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
       # Setup Kubectl
+      - echo -n $KUBERNETES_CERT | base64 -d > ca.crt
       - kubectl config set-credentials default --token=$(echo -n $KUBERNETES_TOKEN | base64 -d)
-      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --insecure-skip-tls-verify=true
+      - kubectl config set-cluster default --server=$KUBERNETES_MASTER --certificate-authority=ca.crt
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
       - kubectl apply -R -f kubernetes/production/ein
       - kubectl apply -R -f kubernetes/production/hermes
       - kubectl apply -R -f kubernetes/production/julia
@@ -289,7 +236,20 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: production
-      event: [push, tag, deployment]
+      event: push
+
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - /go/bin
+      - /go/pkg
+      - ./vendor
+      - /root/.cache/go-build
+    volumes:
+      - /tmp/cache:/cache
+    when:
+      event: push
 
 services:
   redis:

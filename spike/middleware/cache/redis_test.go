@@ -6,7 +6,7 @@ import (
 )
 
 // These tests require redis server running on localhost:6379 (the default)
-const redisTestServer = "localhost:6379"
+const redisTestServer = "redis:6379"
 
 var newRedisStore = func(t *testing.T, defaultExpiration time.Duration) CacheStore {
 	redisCache := NewRedisCache(redisTestServer, "", 9, defaultExpiration)

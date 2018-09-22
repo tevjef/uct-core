@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "coding.go",
+        "diff.go",
+        "model.go",
+        "model.pb.go",
+        "model.pb_ffjson.go",
+        "sort.go",
+        "utils.go",
+        "validate.go",
+    ],
+    importpath = "github.com/tevjef/uct-backend/common/model",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/try:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
+        "//vendor/github.com/jmoiron/sqlx:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+        "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
+        "//vendor/github.com/pquerna/ffjson/fflib/v1:go_default_library",
+        "//vendor/gopkg.in/redis.v5:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "model_test.go",
+        "modelpb_test.go",
+        "validate_test.go",
+    ],
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-backend/common/model",
+    deps = [
+        "//vendor/github.com/gogo/protobuf/jsonpb:go_default_library",
+        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+    ],
+)

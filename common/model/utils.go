@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
-	"github.com/tevjef/uct-core/common/try"
+	"github.com/tevjef/uct-backend/common/try"
 	"gopkg.in/redis.v5"
 )
 

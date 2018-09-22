@@ -11,15 +11,16 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/database"
-	_ "github.com/tevjef/uct-core/common/metrics"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/redis"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/database"
+	_ "github.com/tevjef/uct-backend/common/metrics"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/redis"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

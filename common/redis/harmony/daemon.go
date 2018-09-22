@@ -4,9 +4,10 @@ import (
 	"math/rand"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/redis"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/redis"
 )
 
 var fields = log.Fields{}

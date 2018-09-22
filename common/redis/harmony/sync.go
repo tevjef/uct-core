@@ -6,13 +6,14 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"github.com/tevjef/uct-core/common/redis"
-	"github.com/tevjef/uct-core/common/redis/lock"
-	"github.com/tevjef/uct-core/common/try"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/redis"
+	"github.com/tevjef/uct-backend/common/redis/lock"
+	"github.com/tevjef/uct-backend/common/try"
 )
 
 type redisSync struct {

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["helper.go"],
+    importpath = "github.com/tevjef/uct-backend/common/redis",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/conf:go_default_library",
+        "//common/model:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/gopkg.in/redis.v5:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["helper_test.go"],
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-backend/common/redis",
+    deps = ["//common/conf:go_default_library"],
+)

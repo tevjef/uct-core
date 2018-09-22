@@ -3,9 +3,9 @@ package topic
 import (
 	"time"
 
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 type Routine struct {

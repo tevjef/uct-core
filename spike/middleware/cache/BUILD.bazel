@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cache.go",
+        "inmemory.go",
+        "policy.go",
+        "redis.go",
+        "serializer.go",
+    ],
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/cache",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/model:go_default_library",
+        "//spike/middleware:go_default_library",
+        "//spike/middleware/trace:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/gin-gonic/gin:go_default_library",
+        "//vendor/github.com/robfig/go-cache:go_default_library",
+        "//vendor/gopkg.in/redis.v5:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "cache_test.go",
+        "inmemory_test.go",
+        "policy_test.go",
+        "redis_test.go",
+    ],
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/cache",
+)

@@ -6,11 +6,12 @@ import (
 	"net/url"
 	"strings"
 
+	"net"
+
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/try"
-	"net"
+	"github.com/tevjef/uct-backend/common/try"
 )
 
 type cunyForm url.Values

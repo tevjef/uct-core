@@ -14,14 +14,15 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/proxy"
-	"github.com/tevjef/uct-core/common/try"
-	"github.com/tevjef/uct-core/scrapers/njit/cookie"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/proxy"
+	"github.com/tevjef/uct-backend/common/try"
+	"github.com/tevjef/uct-backend/scrapers/njit/cookie"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

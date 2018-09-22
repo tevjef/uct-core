@@ -1,0 +1,48 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cookie.go",
+        "cuny.go",
+        "main.go",
+        "metadata.go",
+    ],
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/conf:go_default_library",
+        "//common/model:go_default_library",
+        "//common/proxy:go_default_library",
+        "//common/try:go_default_library",
+        "//vendor/github.com/PuerkitoBio/goquery:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+        "//vendor/golang.org/x/net/context:go_default_library",
+        "//vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "cuny",
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "cuny_test.go",
+        "main_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":go_default_library"],
+    importpath = "github.com/tevjef/uct-backend/scrapers/cuny",
+    deps = [
+        "//common/conf:go_default_library",
+        "//common/model:go_default_library",
+        "//vendor/github.com/PuerkitoBio/goquery:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+    ],
+)
