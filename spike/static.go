@@ -11,7 +11,7 @@ import (
 func serveStaticFromGithub(c *gin.Context) {
 	var branch = c.Query("branch")
 	if branch != "" {
-		branch = branch + "/"
+		branch = branch + "production/"
 	}
 
 	var file = c.Param("file")
