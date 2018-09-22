@@ -6,7 +6,7 @@ go_library(
         "processor.go",
         "routines.go",
     ],
-    importpath = "github.com/tevjef/uct-core/julia/rutgers",
+    importpath = "github.com/tevjef/uct-backend/julia/rutgers",
     visibility = ["//visibility:public"],
     deps = [
         "//common/model:go_default_library",

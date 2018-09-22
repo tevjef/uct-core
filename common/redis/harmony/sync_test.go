@@ -6,14 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"context"
+
 	_ "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/redis"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/redis"
 )
 
 func getClient(t *testing.T) *redis.Helper {

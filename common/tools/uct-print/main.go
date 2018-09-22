@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

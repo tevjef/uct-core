@@ -8,7 +8,7 @@ go_library(
         "logging.go",
         "negotiaition.go",
     ],
-    importpath = "github.com/tevjef/uct-core/spike/middleware",
+    importpath = "github.com/tevjef/uct-backend/spike/middleware",
     visibility = ["//visibility:public"],
     deps = [
         "//common/database:go_default_library",

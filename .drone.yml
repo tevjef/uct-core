@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/github.com/tevjef/uct-core
+  path: src/github.com/tevjef/uct-backend
 
 pipeline:
   restore-cache:
@@ -10,44 +10,48 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
+      - /root/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
       event: push
 
   compile:
-    image: golang:rc-alpine
+    image: golang:1.11-alpine
     environment:
       - GOPATH=/go
     commands:
-      - export GOOS=linux
-      - export GOARCH=amd64
-      - go version
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
-      - wget https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
-      - chmod +x ./dep-linux-amd64 && mv ./dep-linux-amd64 /usr/local/bin/dep
-      - dep ensure -v
+
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - export GO111MODULE=on
+      - export CGO_ENABLED=0
+      - go version
+      - go env
+      - go list ./...
+
       - export PATH=$PATH:$GOPATH/bin
 
-      - go test github.com/tevjef/uct-core/ein/...
-      - go test github.com/tevjef/uct-core/julia/...
-      - go test github.com/tevjef/uct-core/hermes/...
-      - go test github.com/tevjef/uct-core/scrapers/rutgers/...
-      - go test github.com/tevjef/uct-core/scrapers/njit/...
-      - go test github.com/tevjef/uct-core/scrapers/cuny/...
-      - go test github.com/tevjef/uct-core/jet/...
-      - go test github.com/tevjef/uct-core/spike/...
+      - go test github.com/tevjef/uct-backend/ein/...
+      - go test github.com/tevjef/uct-backend/julia/...
+      - go test github.com/tevjef/uct-backend/hermes/...
+      - go test github.com/tevjef/uct-backend/scrapers/rutgers/...
+      - go test github.com/tevjef/uct-backend/scrapers/njit/...
+      - go test github.com/tevjef/uct-backend/scrapers/cuny/...
+      - go test github.com/tevjef/uct-backend/jet/...
+      - go test github.com/tevjef/uct-backend/spike/...
 
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/ein
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/hermes
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/julia
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/rutgers
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/njit
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/scrapers/cuny
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/jet
-      - go install -v -ldflags "-s -w" github.com/tevjef/uct-core/spike
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/ein
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/hermes
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/julia
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/rutgers
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/njit
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/scrapers/cuny
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/jet
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/spike
     when:
       event: [push, pull_request]
 
@@ -126,7 +130,7 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
 
       - kubectl apply -R -f kubernetes/staging
 
@@ -191,7 +195,7 @@ pipeline:
       - kubectl config set-context default --cluster=default --user=default
       - kubectl config use-context default
 
-      - cd /go/src/github.com/tevjef/uct-core
+      - cd /go/src/github.com/tevjef/uct-backend
       - kubectl apply -R -f kubernetes/production/ein
       - kubectl apply -R -f kubernetes/production/hermes
       - kubectl apply -R -f kubernetes/production/julia
@@ -239,6 +243,7 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
+      - /root/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:

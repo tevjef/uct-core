@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/tevjef/uct-core/common/tools/uct-clean",
+    importpath = "github.com/tevjef/uct-backend/common/tools/uct-clean",
     visibility = ["//visibility:private"],
     deps = [
         "//common/model:go_default_library",
@@ -15,6 +15,6 @@ go_library(
 go_binary(
     name = "uct-clean",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/common/tools/uct-clean",
+    importpath = "github.com/tevjef/uct-backend/common/tools/uct-clean",
     visibility = ["//visibility:public"],
 )

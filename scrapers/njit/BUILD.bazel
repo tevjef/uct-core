@@ -7,7 +7,7 @@ go_library(
         "metadata.go",
         "njit.go",
     ],
-    importpath = "github.com/tevjef/uct-core/scrapers/njit",
+    importpath = "github.com/tevjef/uct-backend/scrapers/njit",
     visibility = ["//visibility:private"],
     deps = [
         "//common/conf:go_default_library",
@@ -25,7 +25,7 @@ go_library(
 go_binary(
     name = "njit",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/njit",
+    importpath = "github.com/tevjef/uct-backend/scrapers/njit",
     visibility = ["//visibility:public"],
 )
 
@@ -36,6 +36,6 @@ go_test(
         "njit_test.go",
     ],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/njit",
+    importpath = "github.com/tevjef/uct-backend/scrapers/njit",
     deps = ["//vendor/github.com/stretchr/testify/assert:go_default_library"],
 )

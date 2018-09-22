@@ -14,14 +14,15 @@ import (
 	"time"
 	"unicode"
 
+	"context"
+
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
-	"github.com/tevjef/uct-core/common/conf"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/common/proxy"
-	"github.com/tevjef/uct-core/common/try"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/proxy"
+	"github.com/tevjef/uct-backend/common/try"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -679,7 +680,7 @@ func (sr *sectionScraper) findAvailability(s *goquery.Selection, id string) int 
 	return 0
 }
 
-func parseSemester(semester model.Semester) (string, error){
+func parseSemester(semester model.Semester) (string, error) {
 	if semester.GetSeason() == "" {
 		return "", fmt.Errorf("season must not be empty")
 	}

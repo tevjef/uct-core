@@ -6,7 +6,7 @@ go_library(
         "daemon.go",
         "sync.go",
     ],
-    importpath = "github.com/tevjef/uct-core/common/redis/harmony",
+    importpath = "github.com/tevjef/uct-backend/common/redis/harmony",
     visibility = ["//visibility:public"],
     deps = [
         "//common/redis:go_default_library",
@@ -26,7 +26,7 @@ go_test(
         "sync_test.go",
     ],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/common/redis/harmony",
+    importpath = "github.com/tevjef/uct-backend/common/redis/harmony",
     deps = [
         "//common/conf:go_default_library",
         "//common/model:go_default_library",

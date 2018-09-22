@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["database.go"],
-    importpath = "github.com/tevjef/uct-core/spike/store",
+    importpath = "github.com/tevjef/uct-backend/spike/store",
     visibility = ["//visibility:public"],
     deps = [
         "//common/database:go_default_library",

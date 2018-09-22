@@ -9,7 +9,7 @@ go_library(
         "redis.go",
         "serializer.go",
     ],
-    importpath = "github.com/tevjef/uct-core/spike/middleware/cache",
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/cache",
     visibility = ["//visibility:public"],
     deps = [
         "//common/model:go_default_library",
@@ -31,5 +31,5 @@ go_test(
         "redis_test.go",
     ],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/spike/middleware/cache",
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/cache",
 )

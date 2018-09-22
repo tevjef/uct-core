@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["handler.go"],
-    importpath = "github.com/tevjef/uct-core/common/database",
+    importpath = "github.com/tevjef/uct-backend/common/database",
     visibility = ["//visibility:public"],
     deps = [
         "//common/try:go_default_library",

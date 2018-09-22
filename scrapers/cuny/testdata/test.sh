@@ -1,7 +1,7 @@
 #! /bin/bash
 
-go build github.com/tevjef/uct-core/scrapers/cuny
-go build github.com/tevjef/uct-core/common/tools/uct-clean
+go build github.com/tevjef/uct-backend/scrapers/cuny
+go build github.com/tevjef/uct-backend/common/tools/uct-clean
 
 declare -a arr=("BAR"
                 "BMC"

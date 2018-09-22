@@ -4,11 +4,12 @@ import (
 	"strings"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tevjef/uct-core/common/model"
-	"github.com/tevjef/uct-core/julia/rutgers/topic"
-	"golang.org/x/net/context"
+	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/julia/rutgers/topic"
 )
 
 type RutgersProcessor struct {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 var toTitle = model.ToTitle

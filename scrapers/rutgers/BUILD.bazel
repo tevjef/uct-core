@@ -7,7 +7,7 @@ go_library(
         "metadata.go",
         "rutgers.go",
     ],
-    importpath = "github.com/tevjef/uct-core/scrapers/rutgers",
+    importpath = "github.com/tevjef/uct-backend/scrapers/rutgers",
     visibility = ["//visibility:private"],
     deps = [
         "//common/conf:go_default_library",
@@ -22,7 +22,7 @@ go_library(
 go_binary(
     name = "rutgers",
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/rutgers",
+    importpath = "github.com/tevjef/uct-backend/scrapers/rutgers",
     visibility = ["//visibility:public"],
 )
 
@@ -33,6 +33,6 @@ go_test(
         "rutgers_test.go",
     ],
     embed = [":go_default_library"],
-    importpath = "github.com/tevjef/uct-core/scrapers/rutgers",
+    importpath = "github.com/tevjef/uct-backend/scrapers/rutgers",
     deps = ["//vendor/github.com/stretchr/testify/assert:go_default_library"],
 )

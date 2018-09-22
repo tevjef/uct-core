@@ -3,7 +3,7 @@ package redis
 import (
 	"testing"
 
-	"github.com/tevjef/uct-core/common/conf"
+	"github.com/tevjef/uct-backend/common/conf"
 )
 
 func TestClientConnection(t *testing.T) {

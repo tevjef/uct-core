@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["error.go"],
-    importpath = "github.com/tevjef/uct-core/spike/middleware/httperror",
+    importpath = "github.com/tevjef/uct-backend/spike/middleware/httperror",
     visibility = ["//visibility:public"],
     deps = [
         "//common/model:go_default_library",

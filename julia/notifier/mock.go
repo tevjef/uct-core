@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-core/common/model"
+	"github.com/tevjef/uct-backend/common/model"
 )
 
 type FakeNotifier struct {
