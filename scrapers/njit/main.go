@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"github.com/tevjef/uct-backend/common/conf"
@@ -21,7 +23,6 @@ import (
 	"github.com/tevjef/uct-backend/common/proxy"
 	"github.com/tevjef/uct-backend/common/try"
 	"github.com/tevjef/uct-backend/scrapers/njit/cookie"
-	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -18,7 +20,6 @@ import (
 	"github.com/tevjef/uct-backend/common/notification"
 	"github.com/tevjef/uct-backend/common/redis"
 	"github.com/tevjef/uct-backend/common/try"
-	"golang.org/x/net/context"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

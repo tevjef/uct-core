@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"context"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/tevjef/uct-backend/common/model"
-	"golang.org/x/net/context"
 )
 
 func Test_collapse(t *testing.T) {

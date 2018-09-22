@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/spike/middleware"
@@ -12,7 +14,6 @@ import (
 	"github.com/tevjef/uct-backend/spike/middleware/httperror"
 	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
-	"golang.org/x/net/context"
 )
 
 func sectionHandler(expire time.Duration) gin.HandlerFunc {

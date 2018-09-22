@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"context"
+
 	"cloud.google.com/go/trace"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -19,7 +21,6 @@ import (
 	"github.com/tevjef/uct-backend/spike/middleware/cache"
 	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
-	"golang.org/x/net/context"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

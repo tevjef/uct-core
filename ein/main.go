@@ -11,6 +11,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -19,7 +21,6 @@ import (
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/redis"
-	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

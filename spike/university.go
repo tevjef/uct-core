@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/uct-backend/common/model"
@@ -15,7 +17,6 @@ import (
 	"github.com/tevjef/uct-backend/spike/middleware/httperror"
 	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
-	"golang.org/x/net/context"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {

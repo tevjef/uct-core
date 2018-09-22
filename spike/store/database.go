@@ -4,7 +4,7 @@ import (
 	"github.com/tevjef/uct-backend/common/database"
 	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 type Data struct {

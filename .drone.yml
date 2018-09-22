@@ -10,6 +10,7 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
+      - /root/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
@@ -20,15 +21,18 @@ pipeline:
     environment:
       - GOPATH=/go
     commands:
-      - export GOOS=linux
-      - export GOARCH=amd64
-      - go version
       - apk update
       - apk --no-cache add ca-certificates openssl git
       - update-ca-certificates
-      - wget https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
-      - chmod +x ./dep-linux-amd64 && mv ./dep-linux-amd64 /usr/local/bin/dep
-      - dep ensure -v
+
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - export GO111MODULE=on
+      - export CGO_ENABLED=0
+      - go version
+      - go env
+      - go list ./...
+
       - export PATH=$PATH:$GOPATH/bin
 
       - go test github.com/tevjef/uct-backend/ein/...
@@ -239,6 +243,7 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
+      - /root/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:

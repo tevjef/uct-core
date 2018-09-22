@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
@@ -15,7 +17,6 @@ import (
 	"github.com/tevjef/uct-backend/common/notification"
 	"github.com/tevjef/uct-backend/common/redis"
 	"github.com/tevjef/uct-backend/julia/notifier"
-	"golang.org/x/net/context"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 

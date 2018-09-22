@@ -7,11 +7,12 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tevjef/uct-backend/common/try"
-	"golang.org/x/net/context"
 )
 
 type Handler interface {
