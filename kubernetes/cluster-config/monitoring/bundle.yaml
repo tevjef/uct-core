@@ -9,7 +9,7 @@ roleRef:
   name: prometheus-operator
 subjects:
 - kind: ServiceAccount
-  name: prometheus-operator
+  name: prometheus-k8s
   namespace: monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -19,60 +19,68 @@ metadata:
   namespace: monitoring
 rules:
 - apiGroups:
-  - extensions
-  resources:
-  - thirdpartyresources
-  verbs:
-  - "*"
-- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - monitoring.coreos.com
   resources:
   - alertmanagers
   - prometheuses
+  - prometheuses/finalizers
+  - alertmanagers/finalizers
   - servicemonitors
+  - prometheusrules
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - apps
   resources:
   - statefulsets
-  verbs: ["*"]
-- apiGroups: [""]
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
   resources:
   - configmaps
   - secrets
-  verbs: ["*"]
-- apiGroups: [""]
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
   resources:
   - pods
-  verbs: ["list", "delete"]
-- apiGroups: [""]
+  verbs:
+  - list
+  - delete
+- apiGroups:
+  - ""
   resources:
   - services
   - endpoints
-  verbs: ["get", "create", "update"]
-- apiGroups: [""]
+  verbs:
+  - get
+  - create
+  - update
+- apiGroups:
+  - ""
   resources:
   - nodes
-  verbs: ["list", "watch"]
-- apiGroups: [""]
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
   resources:
   - namespaces
-  verbs: ["list"]
+  verbs:
+  - get
+  - list
+  - watch
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-operator
-  namespace: monitoring
----
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   labels:
@@ -81,6 +89,9 @@ metadata:
   namespace: monitoring
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: prometheus-operator
   template:
     metadata:
       labels:
@@ -89,8 +100,10 @@ spec:
       containers:
       - args:
         - --kubelet-service=kube-system/kubelet
+        - --logtostderr=true
         - --config-reloader-image=quay.io/coreos/configmap-reload:v0.0.1
-        image: quay.io/coreos/prometheus-operator:v0.15.0
+        - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:v0.23.2
+        image: quay.io/coreos/prometheus-operator:v0.23.2
         name: prometheus-operator
         ports:
         - containerPort: 8080
@@ -102,4 +115,12 @@ spec:
           requests:
             cpu: 50m
             memory: 50Mi
-      serviceAccountName: prometheus-operator
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: prometheus-k8s
