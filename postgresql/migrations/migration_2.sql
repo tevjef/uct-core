@@ -1,0 +1,1 @@
+ALTER TYPE os ADD VALUE 'unknown' AFTER 'ios';

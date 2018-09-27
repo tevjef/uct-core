@@ -42,7 +42,7 @@ func parseios(userAgent string) (string, string) {
 }
 
 func deviceInfo(header http.Header) (string, string, string) {
-	var os string
+	var os = "unknown"
 	var osVersion string
 	var appVersion string
 
