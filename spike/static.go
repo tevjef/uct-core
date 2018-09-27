@@ -15,12 +15,8 @@ func serveStaticFromGithub(c *gin.Context) {
 		branch = "production"
 	}
 
-	if branch != "" {
-		branch = branch + "/"
-	}
-
 	var file = c.Param("file")
-	resp, err := http.Get("https://raw.githubusercontent.com/tevjef/uct-backend/" + branch + "static/" + file)
+	resp, err := http.Get("https://raw.githubusercontent.com/tevjef/uct-backend/" + branch + "/static/" + file)
 
 	defer resp.Body.Close()
 
