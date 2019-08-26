@@ -20,7 +20,7 @@ type Process struct {
 }
 
 func (p *Process) Run(fn DispatchFunc) {
-	var rutgersProcessor = rutgers.New(4 * time.Minute)
+	var rutgersProcessor = rutgers.New(10 * time.Minute)
 
 	for {
 		select {
