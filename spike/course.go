@@ -35,7 +35,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 			httperror.ServerError(c, err)
 			return
 		} else {
-			c.Set(middleware.ResponseKey, response)
+			c.Set(middleware.ResponseKey, *response)
 		}
 	}, expire)
 }
