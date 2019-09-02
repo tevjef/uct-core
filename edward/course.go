@@ -93,7 +93,7 @@ func courseHandler(c *gin.Context) {
 			for key := range subs {
 				value := subs[key]
 				deviation := (float64(value.Subscribers) - mean) / std
-				value.IsHot = deviation > float64(1)
+				value.IsHot = deviation > float64(1) && value.Subscribers > 10
 
 				x = append(x, float64(value.Subscribers))
 				weights = append(weights, 1)
