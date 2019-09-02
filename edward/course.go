@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +50,7 @@ func courseHandler(c *gin.Context) {
 		var lastUpdate time.Time
 
 		// Check if exists
-		if documentSnapshot, _ := courseRef.Get(c); documentSnapshot.Exists() && false {
+		if documentSnapshot, _ := courseRef.Get(c); documentSnapshot.Exists() {
 			if documentSnapshot.Exists() {
 				lastUpdate = documentSnapshot.UpdateTime
 				data := documentSnapshot.Data()["view"]
@@ -66,25 +65,16 @@ func courseHandler(c *gin.Context) {
 		}
 
 		if lastUpdate.Add(time.Hour * 6).Before(time.Now()) {
-			sem := make(chan bool, 10)
-			cwg := sync.WaitGroup{}
 			for i := range course.Sections {
-				cwg.Add(1)
-				sem <- true
-				go func(index int) {
-					count, _ := GetSubscriberCount(ctx, course.Sections[index].TopicName)
+				count, _ := GetSubscriberCount(ctx, course.Sections[i].TopicName)
 
-					view := &model.SubscriptionView{
-						TopicName:   course.Sections[index].TopicName,
-						Subscribers: int64(count),
-					}
+				view := &model.SubscriptionView{
+					TopicName:   course.Sections[i].TopicName,
+					Subscribers: int64(count),
+				}
 
-					subs = append(subs, view)
-					<-sem
-					cwg.Done()
-				}(i)
+				subs = append(subs, view)
 			}
-			cwg.Wait()
 
 			var x []float64
 			var weights []float64

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -13,8 +15,28 @@ import (
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
 	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/edward/client"
 	"github.com/tevjef/uct-backend/spike/store"
 )
+
+func hotnessHandler(c *gin.Context) {
+	courseTopicName := strings.ToLower(c.Param("topic"))
+
+	url, _ := url.Parse("http://localhost:2058")
+
+	client := client.Client{
+		BaseURL:    url,
+		UserAgent:  "localhost",
+		HttpClient: http.DefaultClient,
+	}
+
+	if response, err := client.ListSubscriptionView(courseTopicName); err != nil {
+		httperror.ServerError(c, err)
+		return
+	} else {
+		c.Set(middleware.ResponseKey, response)
+	}
+}
 
 func courseHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {

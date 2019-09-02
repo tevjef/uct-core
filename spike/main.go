@@ -120,7 +120,6 @@ func (spike *spike) init() {
 		v1.GET("/subject/:topic", subjectHandler(0))
 		v1.GET("/courses/:topic", coursesHandler(0))
 		v1.GET("/course/:topic", courseHandler(0))
-
 		v1.GET("/section/:topic", sectionHandler(0))
 		v1.GET("/subscription", subscriptionHandler())
 		v1.GET("/notification", notificationHandler())
@@ -138,6 +137,7 @@ func (spike *spike) init() {
 		v2.GET("/subject/:topic", subjectHandler(10*time.Second))
 		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
 		v2.GET("/course/:topic", courseHandler(10*time.Second))
+		v2.GET("/course/:topic/hotness/view", hotnessHandler)
 		v2.GET("/section/:topic", sectionHandler(10*time.Second))
 		v2.POST("/subscription", subscriptionHandler())
 		v2.POST("/notification", notificationHandler())
