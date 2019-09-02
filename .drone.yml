@@ -210,7 +210,7 @@ pipeline:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-backend
-#      - kubectl apply -R -f kubernetes/production/edward
+      - kubectl apply -R -f kubernetes/production/edward
       - kubectl apply -R -f kubernetes/production/ein
       - kubectl apply -R -f kubernetes/production/hermes
       - kubectl apply -R -f kubernetes/production/julia
@@ -226,8 +226,8 @@ pipeline:
       - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-deployment.yml
       - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-metrics.yml
 
-#      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/edward:$DRONE_COMMIT_BRANCH)
-#      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/edward edward=$DIGEST
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/edward:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/edward edward=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
