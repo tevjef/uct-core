@@ -5,7 +5,6 @@ metadata:
   name: edward-http
   labels:
     app: edward
-    host: api.staging.coursetrakr.io
 spec:
   ports:
   - port: 2058
