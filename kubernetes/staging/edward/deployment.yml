@@ -42,6 +42,19 @@ spec:
                   key: database-name
             - name: EDWARD_GCP_PROJECT
               value: universitycoursetracker
+            - name: CREDENTIALS_LOCATION
+              value: /etc/edward/sa.json
           resources:
             requests:
               memory: 50Mi
+          volumeMounts:
+            - name: google-sa
+              mountPath: /etc/edward
+              readOnly: true
+        volumes:
+          - name: google-sa
+            secret:
+              secretName: edward-cred
+              items:
+                - key: sa.json
+                  path: sa.json
