@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  namespace: staging
+  namespace: production
   name: edward
 spec:
   replicas: 1
