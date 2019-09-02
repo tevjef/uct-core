@@ -14,7 +14,7 @@ pipeline:
     volumes:
       - /tmp/cache:/cache
     when:
-      event: push
+      event: [push, pull_request]
 
   compile:
     image: golang:1.12-alpine
@@ -264,7 +264,7 @@ pipeline:
     volumes:
       - /tmp/cache:/cache
     when:
-      event: push
+      event: [push, pull_request]
 
 services:
   redis:
