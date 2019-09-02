@@ -48,9 +48,9 @@ spec:
             requests:
               memory: 50Mi
           volumeMounts:
-            - name: google-sa
-              mountPath: /etc/edward
-              readOnly: true
+          - name: google-sa
+            mountPath: /etc/edward
+            readOnly: true
         volumes:
           - name: google-sa
             secret:
