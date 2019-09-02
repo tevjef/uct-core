@@ -56,7 +56,7 @@ func courseHandler(c *gin.Context) {
 		// Check if exists
 		log.Debugln("checking snapshot")
 		if documentSnapshot, err := courseRef.Get(ctx); err != nil {
-			log.WithError(err).Debugln("error getting course ref")
+			log.WithError(err).Debugln("error getting course ref", documentSnapshot)
 			lastUpdate = time.Now().Truncate(time.Hour * 9999)
 		} else if documentSnapshot.Exists() {
 			log.Debugln("exists")
@@ -78,7 +78,7 @@ func courseHandler(c *gin.Context) {
 		log.Debugln("last update", lastUpdate)
 		log.Debugln("last bool", lastUpdate.Add(time.Hour*6).Before(time.Now()))
 
-		if len(subs) != 0 && lastUpdate.Add(time.Hour*6).Before(time.Now()) {
+		if len(subs) == 0 && lastUpdate.Add(time.Hour*6).Before(time.Now()) {
 			for i := range course.Sections {
 				count, _ := GetSubscriberCount(ctx, course.Sections[i].TopicName)
 
