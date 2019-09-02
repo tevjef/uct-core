@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/prometheus/common/log"
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/tevjef/uct-backend/common/middleware"
 	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
