@@ -19,23 +19,25 @@ import (
 	"github.com/tevjef/uct-backend/spike/store"
 )
 
-func hotnessHandler(c *gin.Context) {
-	courseTopicName := strings.ToLower(c.Param("topic"))
+func hotnessHandler(expire time.Duration) gin.HandlerFunc {
+	return cache.CachePage(func(c *gin.Context) {
+		courseTopicName := strings.ToLower(c.Param("topic"))
 
-	url, _ := url.Parse("http://edward:2058")
+		url, _ := url.Parse("http://edward-http:2058")
 
-	client := client.Client{
-		BaseURL:    url,
-		UserAgent:  "localhost",
-		HttpClient: http.DefaultClient,
-	}
+		client := client.Client{
+			BaseURL:    url,
+			UserAgent:  "",
+			HttpClient: http.DefaultClient,
+		}
 
-	if response, err := client.ListSubscriptionView(courseTopicName); err != nil {
-		httperror.ServerError(c, err)
-		return
-	} else {
-		c.Set(middleware.ResponseKey, response)
-	}
+		if response, err := client.ListSubscriptionView(courseTopicName); err != nil {
+			httperror.ServerError(c, err)
+			return
+		} else {
+			c.Set(middleware.ResponseKey, response)
+		}
+	}, expire)
 }
 
 func courseHandler(expire time.Duration) gin.HandlerFunc {
