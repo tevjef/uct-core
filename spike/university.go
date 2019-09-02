@@ -1,21 +1,20 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"context"
-
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/ffjson/ffjson"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/cache"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/cache"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
 )
 
@@ -65,7 +64,7 @@ func SelectUniversity(ctx context.Context, topicName string) (university model.U
 
 	m := map[string]interface{}{"topic_name": topicName}
 	d := store.Data{}
-	if err = store.Get(ctx, store.SelectUniversityCTE, &d, m); err != nil {
+	if err = middleware.Get(ctx, store.SelectUniversityCTE, &d, m); err != nil {
 		return
 	}
 
@@ -81,7 +80,7 @@ func SelectUniversities(ctx context.Context) (universities []*model.University, 
 
 	var topics []string
 	m := map[string]interface{}{}
-	if err = store.Select(ctx, store.ListUniversitiesQuery, &topics, m); err != nil {
+	if err = middleware.Select(ctx, store.ListUniversitiesQuery, &topics, m); err != nil {
 		return
 	}
 

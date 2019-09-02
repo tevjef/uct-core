@@ -11,9 +11,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 )
 
 const (
@@ -135,7 +135,7 @@ func CachePageWithPolicy(handle gin.HandlerFunc, policy *Policy) gin.HandlerFunc
 	}
 
 	return func(c *gin.Context) {
-		span := mtrace.NewSpan(c, "cache.CachePageWithPolicy")
+		span := trace.NewSpan(c, "cache.CachePageWithPolicy")
 		defer span.Finish()
 
 		var cache responseCache

@@ -2,8 +2,8 @@ package httperror
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
 )
 
 type notFound struct {

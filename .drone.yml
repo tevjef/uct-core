@@ -10,16 +10,17 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
-      - /root/.cache/go-build
+      - /go/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
-      event: push
+      event: [push, pull_request]
 
   compile:
-    image: golang:1.11-alpine
+    image: golang:1.12-alpine
     environment:
       - GOPATH=/go
+      - GOCACHE=/go/.cache/go-build
     commands:
       - apk update
       - apk --no-cache add ca-certificates openssl git
@@ -29,12 +30,15 @@ pipeline:
       - export GOARCH=amd64
       - export GO111MODULE=on
       - export CGO_ENABLED=0
+
       - go version
       - go env
-      - go list ./...
+      - go mod tidy
+      - go mod verify
 
       - export PATH=$PATH:$GOPATH/bin
 
+      - go test github.com/tevjef/uct-backend/edward/...
       - go test github.com/tevjef/uct-backend/ein/...
       - go test github.com/tevjef/uct-backend/julia/...
       - go test github.com/tevjef/uct-backend/hermes/...
@@ -44,6 +48,7 @@ pipeline:
       - go test github.com/tevjef/uct-backend/jet/...
       - go test github.com/tevjef/uct-backend/spike/...
 
+      - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/edward
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/ein
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/hermes
       - go install -v -ldflags "-s -w" github.com/tevjef/uct-backend/julia
@@ -60,6 +65,7 @@ pipeline:
   stage-binaries:
     image: library/docker:dind
     commands:
+      - cp -v /go/bin/edward build/edward/
       - cp -v /go/bin/ein build/ein/
       - cp -v /go/bin/spike build/spike/
       - cp -v /go/bin/hermes build/hermes/
@@ -73,6 +79,7 @@ pipeline:
       - cp -v /go/bin/jet build/njit/
       - cp -v /go/bin/jet build/cuny/
 
+      - cp -v common/conf/config.toml build/edward/
       - cp -v common/conf/config.toml build/ein/
       - cp -v common/conf/config.toml build/spike/
       - cp -v common/conf/config.toml build/hermes/
@@ -92,6 +99,7 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
+      - docker build -t tevjef/edward:$DRONE_COMMIT_BRANCH -f build/edward/Dockerfile build/edward
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
@@ -101,6 +109,7 @@ pipeline:
       - docker build -t tevjef/cuny:$DRONE_COMMIT_BRANCH -f build/cuny/Dockerfile build/cuny
       - docker build -t tevjef/postgresql:$DRONE_COMMIT_BRANCH -f build/postgresql/Dockerfile build/postgresql
 
+      - docker push tevjef/edward:$DRONE_COMMIT_BRANCH
       - docker push tevjef/ein:$DRONE_COMMIT_BRANCH
       - docker push tevjef/spike:$DRONE_COMMIT_BRANCH
       - docker push tevjef/hermes:$DRONE_COMMIT_BRANCH
@@ -135,6 +144,9 @@ pipeline:
       - cd /go/src/github.com/tevjef/uct-backend
 
       - kubectl apply -R -f kubernetes/staging
+
+      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/edward:$DRONE_COMMIT_BRANCH)
+      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/edward edward=$DIGEST
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
@@ -198,6 +210,7 @@ pipeline:
       - kubectl config use-context default
 
       - cd /go/src/github.com/tevjef/uct-backend
+#      - kubectl apply -R -f kubernetes/production/edward
       - kubectl apply -R -f kubernetes/production/ein
       - kubectl apply -R -f kubernetes/production/hermes
       - kubectl apply -R -f kubernetes/production/julia
@@ -213,9 +226,12 @@ pipeline:
       - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-deployment.yml
       - kubectl apply -R -f kubernetes/production/scrapers/rutgers-nk-metrics.yml
 
+#      - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/edward:$DRONE_COMMIT_BRANCH)
+#      - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/edward edward=$DIGEST
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/ein:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/ein ein=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
   
@@ -245,11 +261,11 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
-      - /root/.cache/go-build
+      - /go/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
-      event: push
+      event: [push, pull_request]
 
 services:
   redis:
