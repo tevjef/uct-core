@@ -55,10 +55,12 @@ func courseHandler(c *gin.Context) {
 
 		// Check if exists
 		log.Debugln("checking snapshot")
-		if documentSnapshot, err := courseRef.Get(c); err != nil {
+		if documentSnapshot, err := courseRef.Get(ctx); err != nil {
 			log.WithError(err).Debugln("error getting course ref")
 			lastUpdate = time.Now().Truncate(time.Hour * 9999)
 		} else if documentSnapshot.Exists() {
+			log.Debugln("exists")
+
 			lastUpdate = documentSnapshot.UpdateTime
 
 			data := documentSnapshot.Data()["view"]
