@@ -30,7 +30,7 @@ type FireStoreSubscriptionView struct {
 
 func courseHandler(c *gin.Context) {
 	defer model.TimeTrack(time.Now(), "courseHandler")
-	ctx, cancel := context.WithCancel(c)
+	ctx, cancel := context.WithDeadline(c, time.Now().Add(time.Second*5))
 	defer cancel()
 
 	courseTopicName := strings.ToLower(c.Param("topic"))
@@ -47,7 +47,7 @@ func courseHandler(c *gin.Context) {
 
 		log.Debugln("starting firestoreClient")
 
-		firestoreClient := firestore.FromContext(c)
+		firestoreClient := firestore.FromContext(ctx)
 		hotnessRef := firestoreClient.Collection("course.hotness")
 		courseRef := hotnessRef.Doc(courseTopicName)
 
@@ -55,7 +55,7 @@ func courseHandler(c *gin.Context) {
 
 		// Check if exists
 		log.Debugln("checking snapshot")
-		if documentSnapshot, err := courseRef.Get(context.Background()); err != nil {
+		if documentSnapshot, err := courseRef.Get(ctx); err != nil {
 			log.WithError(err).Debugln("error getting course ref", documentSnapshot)
 			lastUpdate = time.Now().Truncate(time.Hour * 9999)
 		} else if documentSnapshot.Exists() {
