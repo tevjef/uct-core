@@ -49,7 +49,7 @@ type edwardConfig struct {
 func init() {
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 
 	prometheus.MustRegister(
 	// prometheus
@@ -57,7 +57,6 @@ func init() {
 }
 
 func main() {
-	log.Println("start")
 	hconf := &edwardConfig{}
 
 	app := kingpin.New("edward", "A server that listens to a database for events and publishes notifications to Firebase Cloud Messaging")
