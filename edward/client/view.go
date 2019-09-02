@@ -2,14 +2,13 @@ package client
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/tevjef/uct-backend/common/model"
 )
 
-func (c *Client) ListSubscriptionView(topicName string) ([]*model.SubscriptionView, error) {
+func (c *Client) ListSubscriptionView(topicName string) (*model.Response, error) {
 	rel := &url.URL{Path: "/v1/hotness/" + topicName}
 	u := c.BaseURL.ResolveReference(rel)
 	req, err := http.NewRequest("GET", u.String(), nil)
@@ -32,11 +31,10 @@ func (c *Client) ListSubscriptionView(topicName string) ([]*model.SubscriptionVi
 		return nil, err
 	}
 
-	log.Println(string(b))
 	err = response.Unmarshal(b)
 	if err != nil {
 		return nil, err
 	}
 
-	return response.Data.SubscriptionView, err
+	return &response, err
 }
