@@ -65,7 +65,7 @@ pipeline:
   stage-binaries:
     image: library/docker:dind
     commands:
-      - cp -v /go/bin/ein build/edward/
+      - cp -v /go/bin/edward build/edward/
       - cp -v /go/bin/ein build/ein/
       - cp -v /go/bin/spike build/spike/
       - cp -v /go/bin/hermes build/hermes/
