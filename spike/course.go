@@ -22,7 +22,7 @@ import (
 func hotnessHandler(c *gin.Context) {
 	courseTopicName := strings.ToLower(c.Param("topic"))
 
-	url, _ := url.Parse("http://localhost:2058")
+	url, _ := url.Parse("http://edward:2058")
 
 	client := client.Client{
 		BaseURL:    url,
