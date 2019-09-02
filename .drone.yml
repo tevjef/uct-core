@@ -17,7 +17,7 @@ pipeline:
       event: push
 
   compile:
-    image: golang:1.11-alpine
+    image: golang:1.12-alpine
     environment:
       - GOPATH=/go
     commands:
@@ -31,7 +31,7 @@ pipeline:
       - export CGO_ENABLED=0
       - go version
       - go env
-      - go list ./...
+      - go mod verify
 
       - export PATH=$PATH:$GOPATH/bin
 

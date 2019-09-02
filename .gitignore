@@ -69,3 +69,5 @@ scrapers/cuny/cunt
 config.toml
 universitycoursetracker.json
 /bazel-*
+
+go.sum
