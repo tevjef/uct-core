@@ -57,6 +57,7 @@ func courseHandler(c *gin.Context) {
 		log.Debugln("checking snapshot")
 		if documentSnapshot, _ := courseRef.Get(c); documentSnapshot.Exists() {
 			lastUpdate = documentSnapshot.UpdateTime
+
 			data := documentSnapshot.Data()["view"]
 			if bytes, err := ffjson.Marshal(data); err != nil {
 				httperror.ServerError(c, err)
@@ -65,7 +66,12 @@ func courseHandler(c *gin.Context) {
 				httperror.ServerError(c, err)
 				return
 			}
+			log.Debugln("got data", data)
+			log.Debugln("got sub", subs)
 		}
+
+		log.Debugln("last update", lastUpdate)
+		log.Debugln("last bool", lastUpdate.Add(time.Hour*6).Before(time.Now()))
 
 		if lastUpdate.Add(time.Hour * 6).Before(time.Now()) {
 			for i := range course.Sections {
@@ -125,6 +131,7 @@ func courseHandler(c *gin.Context) {
 		response := model.Response{
 			Data: &model.Data{SubscriptionView: subs},
 		}
+		log.Debugln("setting response", subs)
 
 		c.Set(middleware.ResponseKey, response)
 	}
