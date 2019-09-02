@@ -31,7 +31,9 @@ func Decorator(c *gin.Context) {
 		response.Meta = &meta
 		c.Set(ResponseKey, response)
 	} else {
-		log.WithError(fmt.Errorf("%s", *meta.Message)).Error("response does not exist")
+		if meta.Message != nil {
+			log.WithError(fmt.Errorf("%s", *meta.Message)).Error("response does not exist")
+		}
 		c.Set(ResponseKey, model.Response{Meta: &meta})
 	}
 }

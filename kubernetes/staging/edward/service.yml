@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: staging
+  name: edward-http
+  labels:
+    app: edward
+    host: api.staging.coursetrakr.io
+spec:
+  ports:
+  - port: 2058
+    protocol: "TCP"
+    targetPort: 2058
+    name: edward-port
+  selector:
+    app: edward

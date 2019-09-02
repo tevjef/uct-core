@@ -1,18 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"strconv"
 	"time"
 
-	"context"
-
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
 )
 
@@ -75,7 +74,7 @@ func InsertSubscription(
 		"app_version":   appVersion,
 	}
 
-	if err = store.Insert(ctx, store.InsertSubscriptionQuery, m); err != nil {
+	if err = middleware.Insert(ctx, store.InsertSubscriptionQuery, m); err != nil {
 		return
 	}
 	return

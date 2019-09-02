@@ -1,18 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 	"time"
 
-	"context"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/cache"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/cache"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
 )
 
@@ -44,7 +43,7 @@ func SelectSection(ctx context.Context, sectionTopicName string) (section model.
 
 	d := store.Data{}
 	m := map[string]interface{}{"topic_name": sectionTopicName}
-	if err = store.Get(ctx, store.SelectProtoSectionQuery, &d, m); err != nil {
+	if err = middleware.Get(ctx, store.SelectProtoSectionQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
