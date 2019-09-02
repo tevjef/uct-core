@@ -9,6 +9,8 @@ connection_max = 10
 [hermes]
 api_key = ""
 
+[edward]
+
 [spike]
 redis_db = 1
 

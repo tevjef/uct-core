@@ -21,11 +21,14 @@ type Config struct {
 	Spike    spike    `toml:"spike"`
 	Julia    julia    `toml:"julia"`
 	Hermes   hermes   `toml:"hermes"`
+	Ed       ed       `toml:"edward"`
 }
 
 type spike struct {
 	RedisDb int `toml:"redis_db" envconfig:"REDIS_DB"`
 }
+
+type ed struct{}
 
 type julia struct{}
 
