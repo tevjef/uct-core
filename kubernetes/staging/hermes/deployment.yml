@@ -54,10 +54,10 @@ spec:
           resources:
             requests:
               memory: 50Mi
-        volumes:
-          - name: google-sa
-            secret:
-              secretName: hermes-cred
-              items:
-                - key: sa.json
-                  path: sa.json
+      volumes:
+        - name: google-sa
+          secret:
+            secretName: hermes-cred
+            items:
+              - key: sa.json
+                path: sa.json
