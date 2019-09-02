@@ -49,7 +49,7 @@ type edwardConfig struct {
 func init() {
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 
 	prometheus.MustRegister(
 	// prometheus

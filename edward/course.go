@@ -28,6 +28,7 @@ type FireStoreSubscriptionView struct {
 }
 
 func courseHandler(c *gin.Context) {
+	defer model.TimeTrack(time.Now(), "courseHandler")
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
@@ -51,16 +52,14 @@ func courseHandler(c *gin.Context) {
 
 		// Check if exists
 		if documentSnapshot, _ := courseRef.Get(c); documentSnapshot.Exists() {
-			if documentSnapshot.Exists() {
-				lastUpdate = documentSnapshot.UpdateTime
-				data := documentSnapshot.Data()["view"]
-				if bytes, err := ffjson.Marshal(data); err != nil {
-					httperror.ServerError(c, err)
-					return
-				} else if err := ffjson.Unmarshal(bytes, &subs); err != nil {
-					httperror.ServerError(c, err)
-					return
-				}
+			lastUpdate = documentSnapshot.UpdateTime
+			data := documentSnapshot.Data()["view"]
+			if bytes, err := ffjson.Marshal(data); err != nil {
+				httperror.ServerError(c, err)
+				return
+			} else if err := ffjson.Unmarshal(bytes, &subs); err != nil {
+				httperror.ServerError(c, err)
+				return
 			}
 		}
 
