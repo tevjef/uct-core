@@ -59,6 +59,7 @@ secrets
 spike/spike
 hermes/hermes
 ein/ein
+edward/edward
 julia/julia
 scrapers/rutgers/rutgers
 scrapers/njit/njit
@@ -68,3 +69,5 @@ scrapers/cuny/cunt
 config.toml
 universitycoursetracker.json
 /bazel-*
+
+go.sum

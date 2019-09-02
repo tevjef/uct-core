@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
 )
 
 func serveStaticFromGithub(c *gin.Context) {

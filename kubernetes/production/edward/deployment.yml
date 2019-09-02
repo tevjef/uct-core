@@ -1,26 +1,26 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  labels:
-    app: hermes
-  name: hermes
   namespace: staging
+  name: edward
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: hermes
+        app: edward
     spec:
       containers:
-        - image: docker.io/tevjef/hermes:staging
-          name: hermes
-          imagePullPolicy: Always
+        - name: edward
+          image: docker.io/tevjef/edward:staging
+          imagePullPolicy: "Always"
           ports:
             - containerPort: 13100
               name: pprof
             - containerPort: 13000
               name: metrics-port
+              protocol: TCP
+            - containerPort: 2058
               protocol: TCP
           env:
             - name: POSTGRES_HOST
@@ -40,16 +40,13 @@ spec:
                 secretKeyRef:
                   name: pg-cred
                   key: database-name
-            - name: HERMES_DRY_RUN
-              valueFrom:
-                secretKeyRef:
-                  name: hermes-cred
-                  key: dry-run
+            - name: EDWARD_GCP_PROJECT
+              value: universitycoursetracker
             - name: CREDENTIALS_LOCATION
-              value: /etc/hermes/sa.json
+              value: /etc/edward/sa.json
           volumeMounts:
             - name: google-sa
-              mountPath: /etc/hermes
+              mountPath: /etc/edward
               readOnly: true
           resources:
             requests:
@@ -57,7 +54,7 @@ spec:
       volumes:
         - name: google-sa
           secret:
-            secretName: hermes-cred
+            secretName: edward-cred
             items:
               - key: sa.json
                 path: sa.json

@@ -1,19 +1,18 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
-	"context"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/cache"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/cache"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
 )
 
@@ -67,7 +66,7 @@ func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.
 
 	m := map[string]interface{}{"topic_name": subjectTopicName}
 	d := store.Data{}
-	if err = store.Get(ctx, store.SelectProtoSubjectQuery, &d, m); err != nil {
+	if err = middleware.Get(ctx, store.SelectProtoSubjectQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
@@ -84,7 +83,7 @@ func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (sub
 	defer span.Finish()
 
 	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
-	err = store.Select(ctx, store.ListSubjectQuery, &subjects, m)
+	err = middleware.Select(ctx, store.ListSubjectQuery, &subjects, m)
 	if err == nil && len(subjects) == 0 {
 		err = httperror.NoDataFound(fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year))
 	}

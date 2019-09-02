@@ -1,12 +1,11 @@
 package main
 
 import (
+	"context"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
-
-	"context"
 
 	"cloud.google.com/go/trace"
 	log "github.com/Sirupsen/logrus"
@@ -15,11 +14,11 @@ import (
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/database"
 	_ "github.com/tevjef/uct-backend/common/metrics"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/cache"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/redis"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/cache"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
 	"github.com/tevjef/uct-backend/spike/store"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -85,13 +84,11 @@ func main() {
 		config:   sconf,
 		redis:    redis.NewHelper(sconf.service, app.Name),
 		postgres: database.NewHandler(app.Name, pgdb, store.Queries),
-		ctx:      context.TODO(),
+		ctx:      context.Background(),
 	}).init()
 }
 
 func (spike *spike) init() {
-	ctx := context.Background()
-
 	// recovery and logging
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -104,7 +101,7 @@ func (spike *spike) init() {
 		10*time.Second)))
 
 	if spike.config.gcpProject != "" {
-		traceClient, err := trace.NewClient(ctx, spike.config.gcpProject)
+		traceClient, err := trace.NewClient(spike.ctx, spike.config.gcpProject)
 		if err != nil {
 			log.Fatalf("failed to create client: %v", err)
 		}
@@ -140,6 +137,7 @@ func (spike *spike) init() {
 		v2.GET("/subject/:topic", subjectHandler(10*time.Second))
 		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
 		v2.GET("/course/:topic", courseHandler(10*time.Second))
+		v2.GET("/course/:topic/hotness/view", hotnessHandler(10*time.Second))
 		v2.GET("/section/:topic", sectionHandler(10*time.Second))
 		v2.POST("/subscription", subscriptionHandler())
 		v2.POST("/notification", notificationHandler())

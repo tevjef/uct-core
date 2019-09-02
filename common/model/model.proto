@@ -1,7 +1,7 @@
 syntax = "proto2";
 
 package model;
-import "gogo.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 option go_package = "model";
 option (gogoproto.gostring_all) = true;
@@ -157,4 +157,20 @@ message Data {
     optional Subject subject = 6;
     optional Course course = 7;
     optional Section section = 8;
+    repeated SubscriptionView subscription_view = 9;
+}
+
+message Subscription {
+    optional string id = 1 [(gogoproto.moretags) = "db:\"id\" firestore:\"id\"", (gogoproto.nullable) = false];
+    optional string os = 2 [(gogoproto.moretags) = "db:\"os\" firestore:\"os\"", (gogoproto.nullable) = false];
+    optional string is_subscribed = 3 [(gogoproto.moretags) = "db:\"is_subscribed\" firestore:\"is_subscribed\"", (gogoproto.nullable) = false];
+    optional string topic_name = 4 [(gogoproto.moretags) = "db:\"topic_name\" firestore:\"topic_name\"", (gogoproto.nullable) = false];
+    optional string fcm_token = 5 [(gogoproto.moretags) = "db:\"fcm_token\" firestore:\"fcm_token\"", (gogoproto.nullable) = false];
+    optional string created_at = 6 [(gogoproto.moretags) = "db:\"created_at\" firestore:\"created_at\"", (gogoproto.nullable) = false];
+}
+
+message SubscriptionView {
+    optional string topic_name = 1 [(gogoproto.moretags) = "db:\"topic_name\" firestore:\"topic_name\"", (gogoproto.nullable) = false];
+    optional int64 subscribers = 2 [(gogoproto.moretags) = "db:\"subscribers\" firestore:\"subscribers\"", (gogoproto.nullable) = false];
+    optional bool is_hot = 3 [(gogoproto.moretags) = "db:\"is_hot\" firestore:\"is_hot\"", (gogoproto.nullable) = false];
 }

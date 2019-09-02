@@ -1,21 +1,44 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
-	"context"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tevjef/uct-backend/common/middleware"
+	"github.com/tevjef/uct-backend/common/middleware/cache"
+	"github.com/tevjef/uct-backend/common/middleware/httperror"
+	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/middleware"
-	"github.com/tevjef/uct-backend/spike/middleware/cache"
-	"github.com/tevjef/uct-backend/spike/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/spike/middleware/trace"
+	"github.com/tevjef/uct-backend/edward/client"
 	"github.com/tevjef/uct-backend/spike/store"
 )
+
+func hotnessHandler(expire time.Duration) gin.HandlerFunc {
+	return cache.CachePage(func(c *gin.Context) {
+		courseTopicName := strings.ToLower(c.Param("topic"))
+
+		url, _ := url.Parse("http://edward-http:2058")
+
+		client := client.Client{
+			BaseURL:    url,
+			UserAgent:  "",
+			HttpClient: http.DefaultClient,
+		}
+
+		if response, err := client.ListSubscriptionView(courseTopicName); err != nil {
+			httperror.ServerError(c, err)
+			return
+		} else {
+			c.Set(middleware.ResponseKey, *response)
+		}
+	}, expire)
+}
 
 func courseHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
@@ -65,7 +88,7 @@ func SelectCourse(ctx context.Context, courseTopicName string) (course model.Cou
 
 	d := store.Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
-	if err = store.Get(ctx, store.SelectCourseQuery, &d, m); err != nil {
+	if err = middleware.Get(ctx, store.SelectCourseQuery, &d, m); err != nil {
 		return
 	}
 	b = d.Data
@@ -81,7 +104,7 @@ func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*mod
 
 	var d []store.Data
 	m := map[string]interface{}{"topic_name": subjectTopicName}
-	if err = store.Select(ctx, store.ListCoursesQuery, &d, m); err != nil {
+	if err = middleware.Select(ctx, store.ListCoursesQuery, &d, m); err != nil {
 		return
 	}
 	if err == nil && len(courses) == 0 {
