@@ -10,7 +10,7 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
-      - /root/.cache/go-build
+      - /go/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
@@ -20,6 +20,7 @@ pipeline:
     image: golang:1.12-alpine
     environment:
       - GOPATH=/go
+      - GOCACHE=/go/.cache/go-build
     commands:
       - apk update
       - apk --no-cache add ca-certificates openssl git
@@ -29,6 +30,7 @@ pipeline:
       - export GOARCH=amd64
       - export GO111MODULE=on
       - export CGO_ENABLED=0
+
       - go version
       - go env
       - go mod verify
@@ -258,7 +260,7 @@ pipeline:
       - /go/bin
       - /go/pkg
       - ./vendor
-      - /root/.cache/go-build
+      - /go/.cache/go-build
     volumes:
       - /tmp/cache:/cache
     when:
