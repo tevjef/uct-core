@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/gonum/stat"
 	"github.com/pquerna/ffjson/ffjson"
@@ -44,6 +45,8 @@ func courseHandler(c *gin.Context) {
 	} else {
 		var subs []*model.SubscriptionView
 
+		log.Debugln("starting firestoreClient")
+
 		firestoreClient := firestore.FromContext(c)
 		hotnessRef := firestoreClient.Collection("course.hotness")
 		courseRef := hotnessRef.Doc(courseTopicName)
@@ -51,6 +54,7 @@ func courseHandler(c *gin.Context) {
 		var lastUpdate time.Time
 
 		// Check if exists
+		log.Debugln("checking snapshot")
 		if documentSnapshot, _ := courseRef.Get(c); documentSnapshot.Exists() {
 			lastUpdate = documentSnapshot.UpdateTime
 			data := documentSnapshot.Data()["view"]
@@ -127,6 +131,8 @@ func courseHandler(c *gin.Context) {
 }
 
 func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
+	log.Debugln("starting SelectCourse")
+
 	defer model.TimeTrack(time.Now(), "SelectCourse")
 	span := mtrace.NewSpan(ctx, "database.SelectCourse")
 	span.SetLabel("topicName", courseTopicName)
