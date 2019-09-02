@@ -1,0 +1,60 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: staging
+  name: edward
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: edward
+    spec:
+      containers:
+        - name: edward
+          image: docker.io/tevjef/edward:staging
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 13100
+              name: pprof
+            - containerPort: 13000
+              name: metrics-port
+              protocol: TCP
+            - containerPort: 2058
+              protocol: TCP
+          env:
+            - name: POSTGRES_HOST
+              value: postgresql
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: database-name
+            - name: EDWARD_GCP_PROJECT
+              value: universitycoursetracker
+            - name: CREDENTIALS_LOCATION
+              value: /etc/edward/sa.json
+          volumeMounts:
+            - name: google-sa
+              mountPath: /etc/edward
+              readOnly: true
+          resources:
+            requests:
+              memory: 50Mi
+      volumes:
+        - name: google-sa
+          secret:
+            secretName: edward-cred
+            items:
+              - key: sa.json
+                path: sa.json
