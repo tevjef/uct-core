@@ -33,7 +33,6 @@ pipeline:
 
       - go version
       - go env
-      - go clean -modcache
       - go mod tidy
       - go mod verify
 
