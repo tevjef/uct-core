@@ -99,7 +99,7 @@ pipeline:
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
-      - docker build -t tevjef/edward:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/edward
+      - docker build -t tevjef/edward:$DRONE_COMMIT_BRANCH -f build/edward/Dockerfile build/edward
       - docker build -t tevjef/ein:$DRONE_COMMIT_BRANCH -f build/ein/Dockerfile build/ein
       - docker build -t tevjef/spike:$DRONE_COMMIT_BRANCH -f build/spike/Dockerfile build/spike
       - docker build -t tevjef/hermes:$DRONE_COMMIT_BRANCH -f build/hermes/Dockerfile build/hermes
