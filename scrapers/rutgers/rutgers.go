@@ -23,6 +23,38 @@ type (
 		Year    int
 	}
 
+	RCourseNew struct {
+		Subject            string        `json:"subject"`
+		OpenSections       int           `json:"openSections"`
+		SynopsisURL        string        `json:"synopsisUrl"`
+		Title              string        `json:"title"`
+		PreReqNotes        string        `json:"preReqNotes"`
+		CourseString       string        `json:"courseString"`
+		School             School        `json:"school"`
+		Credits            float64       `json:"credits"`
+		SubjectDescription string        `json:"subjectDescription"`
+		ExpandedTitle      string        `json:"expandedTitle"`
+		MainCampus         string        `json:"mainCampus"`
+		SubjectNotes       string        `json:"subjectNotes"`
+		CourseNumber       string        `json:"courseNumber"`
+		Level              string        `json:"level"`
+		CampusCode         string        `json:"campusCode"`
+		SubjectGroupNotes  string        `json:"subjectGroupNotes"`
+		OfferingUnitCode   string        `json:"offeringUnitCode"`
+		OfferingUnitTitle  string        `json:"offeringUnitTitle"`
+		CourseDescription  string        `json:"courseDescription"`
+		SupplementCode     string        `json:"supplementCode"`
+		UnitNotes          string        `json:"unitNotes"`
+		Sections           []*RSection   `json:"sections"`
+		CoreCodes          []interface{} `json:"coreCodes"`
+		CourseNotes        string        `json:"courseNotes"`
+	}
+
+	School struct {
+		Code        string `json:"code"`
+		Description string `json:"description"`
+	}
+
 	RCourse struct {
 		SubjectNotes      string        `json:"subjectNotes"`
 		CourseNumber      string        `json:"courseNumber"`
@@ -119,6 +151,32 @@ type (
 		ClassType       string
 	}
 )
+
+func (c RCourseNew) buildCourse() *RCourse {
+	course := &RCourse{
+		SubjectNotes:      c.SubjectNotes,
+		CourseNumber:      c.CourseNumber,
+		Subject:           c.Subject,
+		CampusCode:        c.CampusCode,
+		OpenSections:      c.OpenSections,
+		SynopsisURL:       c.SynopsisURL,
+		SubjectGroupNotes: c.SubjectGroupNotes,
+		OfferingUnitCode:  c.OfferingUnitCode,
+		OfferingUnitTitle: c.OfferingUnitTitle,
+		Title:             c.Title,
+		CourseDescription: c.CourseDescription,
+		PreReqNotes:       c.PreReqNotes,
+		Sections:          c.Sections,
+		SupplementCode:    c.SupplementCode,
+		Credits:           c.Credits,
+		UnitNotes:         c.UnitNotes,
+		CoreCodes:         c.CoreCodes,
+		CourseNotes:       c.CourseNotes,
+		ExpandedTitle:     c.ExpandedTitle,
+	}
+	course.clean()
+	return course
+}
 
 func (subject *RSubject) clean() {
 	subject.Name = toTitle(subject.Name)

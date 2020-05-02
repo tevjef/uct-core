@@ -1,5 +1,7 @@
 module github.com/tevjef/uct-backend
 
+go 1.14
+
 require (
 	cloud.google.com/go v0.26.0
 	firebase.google.com/go v3.9.0+incompatible
@@ -14,7 +16,7 @@ require (
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v0.0.0-20170702092826-d459835d2b07
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.0
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.1
 	github.com/gonum/blas v0.0.0-20181208220705-f22b278b28ac // indirect
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
@@ -40,7 +42,7 @@ require (
 	github.com/pquerna/ffjson v0.0.0-20190813045741-dac163c6c0a9
 	github.com/prometheus/client_golang v0.8.0
 	github.com/prometheus/client_model v0.0.0-20171117100541-99fa1f4be8e5 // indirect
-	github.com/prometheus/common v0.0.0-20180110214958-89604d197083 // indirect
+	github.com/prometheus/common v0.2.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20180125133057-cb4147076ac7 // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
 	github.com/satori/go.uuid v1.2.0
