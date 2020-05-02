@@ -17,7 +17,7 @@ pipeline:
       event: [push, pull_request]
 
   compile:
-    image: golang:1.12-alpine
+    image: golang:1.14-alpine
     environment:
       - GOPATH=/go
       - GOCACHE=/go/.cache/go-build
