@@ -1,5 +1,7 @@
 module github.com/tevjef/uct-backend
 
+go 1.14
+
 require (
 	cloud.google.com/go v0.26.0
 	firebase.google.com/go v3.9.0+incompatible
