@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/gonum/stat"
+	"github.com/pquerna/ffjson/ffjson"
 	"github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
@@ -43,32 +45,26 @@ func courseHandler(c *gin.Context) {
 		hotnessRef := firestoreClient.Collection("course.hotness")
 		courseRef := hotnessRef.Doc(courseTopicName)
 
-		//var lastUpdate time.Time
-
+		var lastUpdate time.Time
+		//
 		//Check if exists
-		//log.Debugln("checking snapshot")
-		//if documentSnapshot, err := courseRef.Get(c); err != nil {
-		//	log.WithError(err).Debugln("error getting course ref", documentSnapshot)
-		//	lastUpdate = time.Now().Truncate(time.Hour * 9999)
-		//} else if documentSnapshot.Exists() {
-		//	lastUpdate = documentSnapshot.UpdateTime
-		//
-		//	data := documentSnapshot.Data()["view"]
-		//	if bytes, err := ffjson.Marshal(data); err != nil {
-		//		httperror.ServerError(c, err)
-		//		return
-		//	} else if err := ffjson.Unmarshal(bytes, &subs); err != nil {
-		//		httperror.ServerError(c, err)
-		//		return
-		//	}
-		//	log.Debugln("got data", data)
-		//	log.Debugln("got sub", subs)
-		//}
-		//
-		//log.Debugln("last update", lastUpdate)
-		//log.Debugln("last bool", lastUpdate.Add(time.Hour*6).Before(time.Now()))
+		if documentSnapshot, err := courseRef.Get(c); err != nil {
+			log.WithError(err).Debugln("error getting course ref", documentSnapshot)
+			lastUpdate = time.Now().Truncate(time.Hour * 9999)
+		} else if documentSnapshot.Exists() {
+			lastUpdate = documentSnapshot.UpdateTime
 
-		if len(subs) == 0 /*&& lastUpdate.Add(time.Hour*6).Before(time.Now())*/ {
+			data := documentSnapshot.Data()["view"]
+			if bytes, err := ffjson.Marshal(data); err != nil {
+				httperror.ServerError(c, err)
+				return
+			} else if err := ffjson.Unmarshal(bytes, &subs); err != nil {
+				httperror.ServerError(c, err)
+				return
+			}
+		}
+
+		if lastUpdate.Add(time.Hour * 6).Before(time.Now()) {
 			for i := range course.Sections {
 				count, _ := GetSubscriberCount(c, course.Sections[i].TopicName)
 

@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: edward
-          image: docker.io/tevjef/edward:staging
+          image: docker.io/tevjef/edward:production
           imagePullPolicy: "Always"
           ports:
             - containerPort: 13100
