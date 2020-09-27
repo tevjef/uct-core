@@ -32,10 +32,11 @@ type rutgers struct {
 }
 
 type rutgersConfig struct {
-	service      conf.Config
-	campus       string
-	outputFormat string
-	latest       bool
+	service       conf.Config
+	campus        string
+	outputHttpUrl string
+	outputFormat  string
+	latest        bool
 }
 
 func (rutgers *rutgers) getCampus(campus string) model.University {

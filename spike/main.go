@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"cloud.google.com/go/trace"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -16,7 +15,6 @@ import (
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/redis"
 	"github.com/tevjef/uct-backend/spike/store"
@@ -101,11 +99,11 @@ func (spike *spike) init() {
 		10*time.Second)))
 
 	if spike.config.gcpProject != "" {
-		traceClient, err := trace.NewClient(spike.ctx, spike.config.gcpProject)
-		if err != nil {
-			log.Fatalf("failed to create client: %v", err)
-		}
-		r.Use(mtrace.Trace(traceClient))
+		//traceClient, err := trace.NewClient(spike.ctx, spike.config.gcpProject)
+		//if err != nil {
+		//	log.Fatalf("failed to create client: %v", err)
+		//}
+		//r.Use(mtrace.Trace(traceClient))
 	}
 
 	// does not cache and defaults to json

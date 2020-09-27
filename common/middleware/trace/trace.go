@@ -2,10 +2,13 @@ package trace
 
 import (
 	"context"
+	"log"
+	"os"
 	"strings"
 
-	"cloud.google.com/go/trace"
+	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/gin-gonic/gin"
+	"go.opencensus.io/trace"
 )
 
 // Setter defines a context that enables setting values.
@@ -29,10 +32,19 @@ func ToContext(s Setter, span *trace.Span) {
 
 func NewSpan(ctx context.Context, spanName string) *trace.Span {
 	span := FromContext(ctx)
-	return span.NewChild(spanName)
+	span.SetName(spanName)
+	return span
 }
 
-func Trace(traceClient *trace.Client) gin.HandlerFunc {
+func Trace(traceClient trace.Exporter) gin.HandlerFunc {
+	exporter, err := stackdriver.NewExporter(stackdriver.Options{
+		ProjectID: os.Getenv("GOOGLE_CLOUD_PROJECT"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	trace.RegisterExporter(exporter)
+
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
@@ -46,9 +58,9 @@ func Trace(traceClient *trace.Client) gin.HandlerFunc {
 			handler = "/"
 		}
 
-		span := traceClient.NewSpan(handler)
-		ToContext(c, span)
-		c.Next()
-		span.Finish()
+		//span := traceClient.NewSpan(handler)
+		//ToContext(c, span)
+		//c.Next()
+		//span.Finish()
 	}
 }

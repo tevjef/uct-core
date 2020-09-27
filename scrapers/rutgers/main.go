@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/model"
+	"github.com/tevjef/uct-backend/common/publishing"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -17,10 +19,25 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
+func RutgersScraper(w http.ResponseWriter, r *http.Request) {
+	mainFunc()
+
+	fmt.Fprint(w, "Complete")
+}
+
 func main() {
+	mainFunc()
+}
+
+func mainFunc() {
 	rconf := &rutgersConfig{}
 
 	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
+
+	app.Flag("output-http-url", "Choose endpoint to send results to.").
+		Default("").
+		Envar("OUTPUT_HTTP_URL").
+		StringVar(&rconf.outputHttpUrl)
 
 	app.Flag("campus", "Choose campus code. NB=New Brunswick, CM=Camden, NK=Newark").
 		Short('u').
@@ -42,20 +59,8 @@ func main() {
 		Envar("RUTGERS_LATEST").
 		BoolVar(&rconf.latest)
 
-	configFile := app.Flag("config", "configuration file for the application").
-		Required().
-		Short('c').
-		Envar("RUTGERS_CONFIG").
-		File()
-
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	kingpin.MustParse(app.Parse([]string{}))
 	app.Name = app.Name + "-" + rconf.campus
-
-	// Parse configuration file
-	rconf.service = conf.OpenConfigWithName(*configFile, app.Name)
-
-	// Start profiling
-	go model.StartPprof(rconf.service.DebugSever(app.Name))
 
 	(&rutgers{
 		app:    app.Model(),
@@ -68,6 +73,13 @@ func (rutgers *rutgers) init() {
 	if reader, err := model.MarshalMessage(rutgers.config.outputFormat, rutgers.getCampus(rutgers.config.campus)); err != nil {
 		log.WithError(err).Fatal()
 	} else {
-		io.Copy(os.Stdout, reader)
+		if rutgers.config.outputHttpUrl != "" {
+			err := publishing.PublishToHttp(rutgers.config.outputHttpUrl, reader)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			io.Copy(os.Stdout, reader)
+		}
 	}
 }

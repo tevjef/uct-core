@@ -1,4 +1,4 @@
-package main
+package jet
 
 import (
 	_ "net/http/pprof"

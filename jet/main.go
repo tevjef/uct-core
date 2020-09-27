@@ -1,20 +1,23 @@
-package main
+package jet
 
 import (
 	"bytes"
+	"context"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"io"
 	"io/ioutil"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-
-	"context"
+	"github.com/tevjef/uct-backend/common/publishing"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
@@ -43,6 +46,7 @@ type jetConfig struct {
 	service        conf.Config
 	inputFormat    string
 	outputFormat   string
+	outputHttpUrl  string
 	daemonInterval time.Duration
 	daemonJitter   int
 	daemonFile     string
@@ -52,19 +56,35 @@ type jetConfig struct {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.DebugLevel)
+}
+
+// HelloContentType is an HTTP Cloud function.
+// It uses the Content-Type header to identify the request payload format.
+func JetScraper(w http.ResponseWriter, r *http.Request) {
+	mainFunc()
+
+	fmt.Fprint(w, "Complete")
 }
 
 func main() {
+	mainFunc()
+}
+
+func mainFunc() {
 	jconf := jetConfig{}
 	app := kingpin.New("jet", "A program the wraps a uct scraper and collect it's output").DefaultEnvars()
 
 	app.Flag("output-format", "Choose output format").Short('f').
 		HintOptions(model.Protobuf, model.Json).
 		PlaceHolder("[protobuf, json]").
-		Default("protobuf").
+		Default("json").
 		EnumVar(&jconf.outputFormat, "protobuf", "json")
+
+	app.Flag("output-http-url", "Choose endpoint to send results to.").
+		Default("").
+		StringVar(&jconf.outputHttpUrl)
 
 	app.Flag("input-format", "Choose input format").
 		HintOptions(model.Protobuf, model.Json).
@@ -73,6 +93,7 @@ func main() {
 		EnumVar(&jconf.inputFormat, "protobuf", "json")
 
 	app.Flag("daemon", "Run as a daemon with a refesh interval. -1 to disable").
+		Default("0").
 		DurationVar(&jconf.daemonInterval)
 
 	app.Flag("daemon-jitter", "Jitter to add to the daemon interval").
@@ -83,24 +104,16 @@ func main() {
 
 	app.Flag("scraper-name", "The scraper name, used in logging").
 		Required().
+		Envar("SCRAPER_NAME").
 		StringVar(&jconf.scraperName)
 
 	app.Flag("scraper", "The scraper this program wraps, the name of the executable").
 		Required().
+		Envar("SCRAPER").
 		StringVar(&jconf.scraperCommand)
 
-	configFile := app.Flag("config", "configuration file for the application").
-		Short('c').
-		File()
-
-	kingpin.MustParse(app.Parse(deleteArgs(os.Args[1:])))
+	kingpin.MustParse(app.Parse([]string{}))
 	app.Name = jconf.scraperName
-
-	// Parse configuration file
-	jconf.service = conf.OpenConfigWithName(*configFile, app.Name)
-
-	// Start profiling
-	go model.StartPprof(jconf.service.DebugSever(app.Name))
 
 	appMetrics := metrics{
 		scraperBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -126,9 +139,9 @@ func main() {
 	)
 
 	(&jet{
-		app:     app.Model(),
-		config:  &jconf,
-		redis:   redis.NewHelper(jconf.service, app.Name),
+		app:    app.Model(),
+		config: &jconf,
+		//redis:   redis.NewHelper(jconf.service, app.Name),
 		metrics: appMetrics,
 	}).init()
 }
@@ -186,8 +199,15 @@ func (jet *jet) init() {
 			continue
 		}
 
-		// Write to stdout
-		io.Copy(os.Stdout, reader)
+		if jet.config.outputHttpUrl != "" {
+			err := publishing.PublishToHttp(jet.config.outputHttpUrl, reader)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			b, _ := ioutil.ReadAll(reader)
+			io.Copy(os.Stdout, strings.NewReader(string(b)))
+		}
 	}
 }
 

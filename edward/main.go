@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/firestore"
-	"cloud.google.com/go/trace"
 	firebase "firebase.google.com/go"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -18,7 +17,6 @@ import (
 	firestore2 "github.com/tevjef/uct-backend/common/firestore"
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/middleware"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/edward/store"
 	"google.golang.org/api/option"
@@ -144,11 +142,11 @@ func (edward *edward) init() {
 	r.Use(firestore2.Firestore(edward.firestore))
 
 	if edward.config.gcpProject != "" {
-		traceClient, err := trace.NewClient(edward.ctx, edward.config.gcpProject)
-		if err != nil {
-			log.Fatalf("failed to create client: %v", err)
-		}
-		r.Use(mtrace.Trace(traceClient))
+		//traceClient, err := trace.NewClient(edward.ctx, edward.config.gcpProject)
+		//if err != nil {
+		//	log.Fatalf("failed to create client: %v", err)
+		//}
+		//r.Use(mtrace.Trace(traceClient))
 	}
 
 	v1 := r.Group("/v1")
