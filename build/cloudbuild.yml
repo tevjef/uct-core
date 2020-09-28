@@ -2,12 +2,23 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'rutgers-nb', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
     dir: '/'
+    env:
+      - 'RUTGERS_CAMPUS=NB'
+      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'rutgers-nk', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
     dir: '/'
+    env:
+      - 'RUTGERS_CAMPUS=NK'
+      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'rutgers-cm', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
     dir: '/'
+    env:
+      - 'RUTGERS_CAMPUS=CM'
+      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'ein', '--trigger-http', '--runtime', 'go113', '--entry-point', 'Ein']
     dir: '/'
+    env:
+      - 'EIN_INPUT_FORMAT=protobuf'
