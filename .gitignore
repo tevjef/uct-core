@@ -71,3 +71,5 @@ universitycoursetracker.json
 /bazel-*
 
 go.sum
+
+*.zip

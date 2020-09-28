@@ -1,4 +1,4 @@
-package main
+package ein
 
 var queries = []string{UniversityInsertQuery,
 	UniversityUpdateQuery,

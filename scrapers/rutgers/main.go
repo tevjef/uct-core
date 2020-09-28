@@ -1,4 +1,4 @@
-package main
+package rutgers
 
 import (
 	"context"
@@ -20,16 +20,12 @@ func init() {
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	mainFunc()
+	MainFunc()
 
 	fmt.Fprint(w, "Complete")
 }
 
-func main() {
-	mainFunc()
-}
-
-func mainFunc() {
+func MainFunc() {
 	rconf := &rutgersConfig{}
 
 	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")

@@ -1,36 +1,40 @@
-package main
+package ein
 
 import (
 	"bytes"
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-
 	"context"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+
+	"cloud.google.com/go/firestore"
+	cloudStorage "cloud.google.com/go/storage"
+	firebase "firebase.google.com/go"
+	"firebase.google.com/go/storage"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/tevjef/uct-backend/common/conf"
-	"github.com/tevjef/uct-backend/common/database"
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/common/redis"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 type ein struct {
-	app      *kingpin.ApplicationModel
-	config   *einConfig
-	redis    *redis.Helper
-	postgres database.Handler
-	metrics  metrics
-	ctx      context.Context
+	app               *kingpin.ApplicationModel
+	config            *einConfig
+	firebaseApp       *firebase.App
+	storageClient     *storage.Client
+	firestoreClient   *firestore.Client
+	metrics           metrics
+	newUniversityData []byte
+	ctx               context.Context
 }
 
 type metrics struct {
@@ -62,10 +66,22 @@ type metrics struct {
 }
 
 type einConfig struct {
-	service     conf.Config
-	noDiff      bool
-	fullUpsert  bool
-	inputFormat string
+	service           conf.Config
+	noDiff            bool
+	fullUpsert        bool
+	inputFormat       string
+	firebaseProjectID string
+}
+
+func Ein(w http.ResponseWriter, r *http.Request) {
+	newUniversityData, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to read request body")
+	}
+
+	MainFunc(newUniversityData)
+
+	fmt.Fprint(w, "Complete")
 }
 
 func init() {
@@ -74,7 +90,7 @@ func init() {
 	log.SetLevel(log.InfoLevel)
 }
 
-func main() {
+func MainFunc(newUniversityData []byte) {
 	econf := &einConfig{}
 
 	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
@@ -98,25 +114,35 @@ func main() {
 		Envar("EIN_INPUT_FORMAT").
 		EnumVar(&econf.inputFormat, "protobuf", "json")
 
-	configFile := app.Flag("config", "configuration file for the application").
-		Short('c').
-		Envar("EIN_CONFIG").
-		File()
+	app.Flag("firebase-project-id", "Firebase project Id").
+		Default("universitycoursetracker").
+		Envar("FIREBASE_PROJECT_ID").
+		StringVar(&econf.firebaseProjectID)
 
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	kingpin.MustParse(app.Parse([]string{}))
 
-	// Parse configuration file
-	econf.service = conf.OpenConfigWithName(*configFile, app.Name)
+	ctx := context.Background()
 
-	// Start profiling
-	go model.StartPprof(econf.service.DebugSever(app.Name))
-
-	pgDatabase, err := model.OpenPostgres(econf.service.DatabaseConfig(app.Name))
+	credentials, err := google.FindDefaultCredentials(ctx)
+	credOption := option.WithCredentials(credentials)
+	firebaseConf := &firebase.Config{
+		ProjectID:     econf.firebaseProjectID,
+		StorageBucket: "universitycoursetracker.appspot.com",
+	}
+	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, credOption)
 	if err != nil {
-		log.WithError(err).Fatalln()
+		log.WithError(err).Fatalln("failed to crate firebase app")
 	}
 
-	pgDatabase.SetMaxOpenConns(econf.service.Postgres.ConnMax)
+	storageClient, err := firebaseApp.Storage(ctx)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to crate firebase storage client")
+	}
+
+	firestoreClient, err := firebaseApp.Firestore(ctx)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to create firestore client")
+	}
 
 	appMetrics := metrics{
 		insertions: prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -250,57 +276,32 @@ func main() {
 	)
 
 	(&ein{
-		app:      app.Model(),
-		config:   econf,
-		redis:    redis.NewHelper(econf.service, app.Name),
-		postgres: database.NewHandler(app.Name, pgDatabase, queries),
-		metrics:  appMetrics,
+		app:               app.Model(),
+		config:            econf,
+		firebaseApp:       firebaseApp,
+		storageClient:     storageClient,
+		firestoreClient:   firestoreClient,
+		metrics:           appMetrics,
+		newUniversityData: newUniversityData,
 	}).init()
 }
 
 func (ein *ein) init() {
-	for {
-		log.Infoln("waiting on queue:", redis.ScraperQueue)
-		if data, err := ein.redis.Client.BRPop(0, redis.ScraperQueue).Result(); err != nil {
-			log.WithError(err).Fatalln()
-		} else {
-			if err := ein.process(data); err != nil {
-				log.WithError(err).Errorln("failure while processing data")
-				continue
-			}
-		}
+	if err := ein.process(); err != nil {
+		log.WithError(err).Errorln("failure while processing data")
+		return
 	}
 }
 
-func (ein *ein) process(data []string) error {
-	defer func() {
-		if r := recover(); r != nil {
-			log.WithError(fmt.Errorf("recovered from error in queue loop: %v", r)).Errorln()
-		}
-	}()
-
-	val := data[1]
-	latestData := val + ":data:latest"
-	oldData := val + ":data:old"
-
-	log.WithFields(log.Fields{"key": val}).Debugln("RPOP")
-
-	raw, err := ein.redis.Client.Get(latestData).Bytes()
+func (ein *ein) process() error {
+	bucket, err := ein.storageClient.DefaultBucket()
 	if err != nil {
-		return errors.New("error while getting latest data")
-	}
-
-	var university model.University
-
-	// Try getting older data from redis
-	var oldRaw string
-	if oldRaw, err = ein.redis.Client.Get(oldData).Result(); err != nil {
-		log.Warningln("there was no older data, did it expire or is this first run?")
+		log.WithError(err).Fatalln("failed to get default bucket")
 	}
 
 	// Decode new data
 	var newUniversity model.University
-	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
+	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(ein.newUniversityData), &newUniversity); err != nil {
 		return errors.Wrap(err, "error while unmarshalling new data")
 	}
 
@@ -309,10 +310,23 @@ func (ein *ein) process(data []string) error {
 		return errors.Wrap(err, "error while validating newUniversity")
 	}
 
+	objHandle := bucket.Object(newUniversity.TopicName)
+
+	var oldRaw []byte
+	if oldUniversityReader, err := objHandle.NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
+		log.Warningln("there was no older data, did it expire or is this first run?")
+	} else {
+		if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
+			log.Fatalln("failed to read university data")
+		}
+	}
+
+	var university model.University
+
 	// Decode old data if have some
-	if oldRaw != "" && !ein.config.noDiff {
+	if oldRaw != nil && !ein.config.noDiff {
 		var oldUniversity model.University
-		if err := model.UnmarshalMessage(ein.config.inputFormat, strings.NewReader(oldRaw), &oldUniversity); err != nil {
+		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(oldRaw), &oldUniversity); err != nil {
 			return errors.Wrap(err, "error while unmarshalling old data")
 		}
 
@@ -326,28 +340,24 @@ func (ein *ein) process(data []string) error {
 		university = newUniversity
 	}
 
-	// Replace old data with new data we just received.
-	if _, err := ein.redis.Client.Set(oldData, raw, 0).Result(); err != nil {
-		return errors.Wrap(err, "error updating old data")
-	}
+	//go statsCollector(ein, university.TopicName)
 
-	ein.metrics.payloadBytes.With(prometheus.Labels{"university_name": university.TopicName}).Set(float64(len([]byte(raw))))
-	// Log bytes received
-	log.WithFields(log.Fields{"bytes": len([]byte(raw)), "university_name": university.TopicName}).Infoln(latestData)
+	ein.slimInsertUniversity(university)
+	//ein.updateSerial(ein.newUniversityData, university)
 
-	go statsCollector(ein, university.TopicName)
-
-	ein.insertUniversity(university)
-	ein.updateSerial(raw, university)
-
-	collectDatabaseStats(ein.postgres)
+	//collectDatabaseStats(ein.postgres)
 	doneAudit <- true
 	<-doneAudit
 	//break
 
-	return nil
+	w := objHandle.NewWriter(ein.ctx)
+
+	_, err = io.Copy(w, bytes.NewReader(ein.newUniversityData))
+
+	return err
 }
 
+/*
 // uses raw because the previously validated university was mutated some where and I couldn't find where
 func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
@@ -464,32 +474,6 @@ func (ein *ein) updateSerialSection(section *model.Section) {
 
 	// Sanity Check
 	log.WithFields(log.Fields{"section": section.TopicId, "bytes": len(data)}).Debugln("sanity")
-}
-
-func (ein *ein) insertUniversity(university model.University) {
-	defer model.TimeTrack(time.Now(), "insertUniversity")
-
-	university.Id = ein.postgres.Upsert(UniversityInsertQuery, UniversityUpdateQuery, university)
-
-	ein.insertSubjects(&university)
-
-	// ResolvedSemesters
-	ein.insertSemester(&university)
-
-	// Registrations
-	for _, registrations := range university.Registrations {
-		registrations.UniversityId = university.Id
-		ein.insertRegistration(registrations)
-	}
-
-	// university []Metadata
-	metadata := university.Metadata
-	for metadataIndex := range metadata {
-		metadata := metadata[metadataIndex]
-
-		metadata.UniversityId = &university.Id
-		ein.insertMetadata(metadata)
-	}
 }
 
 func (ein *ein) insertSubjects(university *model.University) {
@@ -707,3 +691,4 @@ func (ein *ein) insertMetadata(metadata *model.Metadata) (metadataId int64) {
 	}
 	return ein.postgres.Upsert(insertQuery, updateQuery, metadata)
 }
+*/

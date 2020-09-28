@@ -16,6 +16,7 @@ import (
 	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/spike/store"
+	"go.opencensus.io/trace"
 )
 
 type FireStoreSubscriptionDocument struct {
@@ -130,8 +131,8 @@ func courseHandler(c *gin.Context) {
 func SelectCourse(c context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
 	defer model.TimeTrack(time.Now(), "SelectCourse")
 	span := mtrace.NewSpan(c, "database.SelectCourse")
-	span.SetLabel("topicName", courseTopicName)
-	defer span.Finish()
+	span.AddAttributes(trace.StringAttribute("topicName", courseTopicName))
+	defer span.End()
 
 	d := store.Data{}
 	m := map[string]interface{}{"topic_name": courseTopicName}
