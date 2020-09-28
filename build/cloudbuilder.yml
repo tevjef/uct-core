@@ -1,20 +1,57 @@
 steps:
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'rutgers-nb', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
-    env:
-      - 'RUTGERS_CAMPUS=NB'
-      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    args: [ 'functions',
+            'deploy',
+            'rutgers-nb',
+            '--trigger-http',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'RutgersScraper',
+            '--set-env-vars',
+            'RUTGERS_CAMPUS=NB,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    ]
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'rutgers-nk', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
-    env:
-      - 'RUTGERS_CAMPUS=NK'
-      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    args: [ 'functions',
+            'deploy',
+            'rutgers-nk',
+            '--trigger-http',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'RutgersScraper',
+            '--set-env-vars',
+            'RUTGERS_CAMPUS=NK,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    ]
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'rutgers-cm', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
-    env:
-      - 'RUTGERS_CAMPUS=CM'
-      - 'OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    args: [ 'functions',
+            'deploy',
+            'rutgers-cm',
+            '--trigger-http',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'RutgersScraper',
+            '--set-env-vars',
+            'RUTGERS_CAMPUS=CM,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
+    ]
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'ein', '--trigger-http', '--runtime', 'go113', '--entry-point', 'Ein']
-    env:
-      - 'EIN_INPUT_FORMAT=protobuf'
+    args: [ 'functions',
+            'deploy',
+            'ein',
+            '--trigger-http',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'Ein',
+            '--set-env-vars',
+            'EIN_INPUT_FORMAT=protobuf'
+    ]
