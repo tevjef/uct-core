@@ -1,14 +1,13 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-    - 'build'
-    - '--cache-from'
-    - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
-    - '--file=build/$_UCT_SERVICE/Dockerfile.$_UCT_SERVICE'
-    - '--tag=gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
-    - '--tag=gcr.io/$PROJECT_ID/$_UCT_SERVICE:$SHORT_SHA'
-    - '.'
-
-images: 
-  - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$BRANCH_NAME'
-  - 'gcr.io/$PROJECT_ID/$_UCT_SERVICE:$SHORT_SHA'
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'rutgers-nb', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
+    dir: '/'
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'rutgers-nk', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
+    dir: '/'
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'rutgers-cm', '--trigger-http', '--runtime', 'go113', '--entry-point', 'RutgersScraper']
+    dir: '/'
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'ein', '--trigger-http', '--runtime', 'go113', '--entry-point', 'Ein']
+    dir: '/'

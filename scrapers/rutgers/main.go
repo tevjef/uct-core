@@ -16,7 +16,7 @@ import (
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,8 @@ func MainFunc() {
 }
 
 func (rutgers *rutgers) init() {
-	if reader, err := model.MarshalMessage(rutgers.config.outputFormat, rutgers.getCampus(rutgers.config.campus)); err != nil {
+	uni := rutgers.getCampus(rutgers.config.campus)
+	if reader, err := model.MarshalMessage(rutgers.config.outputFormat, uni); err != nil {
 		log.WithError(err).Fatal()
 	} else {
 		if rutgers.config.outputHttpUrl != "" {
@@ -74,6 +75,7 @@ func (rutgers *rutgers) init() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.WithField("topic_name", uni.TopicName).Infof("scraping complete")
 		} else {
 			io.Copy(os.Stdout, reader)
 		}
