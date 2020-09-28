@@ -324,7 +324,7 @@ func (ein *ein) process() error {
 	var university model.University
 
 	// Decode old data if have some
-	if oldRaw != nil && !ein.config.noDiff {
+	if len(oldRaw) != 0 && !ein.config.noDiff {
 		var oldUniversity model.University
 		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(oldRaw), &oldUniversity); err != nil {
 			return errors.Wrap(err, "error while unmarshalling old data")
@@ -346,8 +346,8 @@ func (ein *ein) process() error {
 	//ein.updateSerial(ein.newUniversityData, university)
 
 	//collectDatabaseStats(ein.postgres)
-	doneAudit <- true
-	<-doneAudit
+	//doneAudit <- true
+	//<-doneAudit
 	//break
 
 	w := objHandle.NewWriter(ein.ctx)
