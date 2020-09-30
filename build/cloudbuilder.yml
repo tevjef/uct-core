@@ -2,6 +2,20 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
+            'ein',
+            '--trigger-http',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'Ein',
+            '--set-env-vars',
+            'EIN_INPUT_FORMAT=protobuf,USE_WORKER_V2=true'
+    ]
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [ 'functions',
+            'deploy',
             'rutgers-nb',
             '--trigger-http',
             '--memory',
@@ -40,18 +54,4 @@ steps:
             'RutgersScraper',
             '--set-env-vars',
             'RUTGERS_CAMPUS=CM,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
-    ]
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: [ 'functions',
-            'deploy',
-            'ein',
-            '--trigger-http',
-            '--memory',
-            '128',
-            '--runtime',
-            'go113',
-            '--entry-point',
-            'Ein',
-            '--set-env-vars',
-            'EIN_INPUT_FORMAT=protobuf'
     ]

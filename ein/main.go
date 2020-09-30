@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"cloud.google.com/go/firestore"
-	cloudStorage "cloud.google.com/go/storage"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
 	"github.com/prometheus/client_golang/prometheus"
@@ -76,7 +75,7 @@ type einConfig struct {
 func Ein(w http.ResponseWriter, r *http.Request) {
 	newUniversityData, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.WithError(err).Fatalln("failed to read request body")
+		log.WithError(err).Errorln("failed to read request body")
 	}
 
 	MainFunc(newUniversityData)
@@ -131,17 +130,17 @@ func MainFunc(newUniversityData []byte) {
 	}
 	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, credOption)
 	if err != nil {
-		log.WithError(err).Fatalln("failed to crate firebase app")
+		log.WithError(err).Errorln("failed to crate firebase app")
 	}
 
 	storageClient, err := firebaseApp.Storage(ctx)
 	if err != nil {
-		log.WithError(err).Fatalln("failed to crate firebase storage client")
+		log.WithError(err).Errorln("failed to crate firebase storage client")
 	}
 
 	firestoreClient, err := firebaseApp.Firestore(ctx)
 	if err != nil {
-		log.WithError(err).Fatalln("failed to create firestore client")
+		log.WithError(err).Errorln("failed to create firestore client")
 	}
 
 	appMetrics := metrics{
@@ -296,7 +295,7 @@ func (ein *ein) init() {
 func (ein *ein) process() error {
 	bucket, err := ein.storageClient.DefaultBucket()
 	if err != nil {
-		log.WithError(err).Fatalln("failed to get default bucket")
+		log.WithError(err).Errorln("failed to get default bucket")
 	}
 
 	// Decode new data
@@ -312,14 +311,15 @@ func (ein *ein) process() error {
 
 	objHandle := bucket.Object(newUniversity.TopicName)
 
+	panic("my panic")
 	var oldRaw []byte
-	if oldUniversityReader, err := objHandle.NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
-		log.Warningln("there was no older data, did it expire or is this first run?")
-	} else {
-		if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
-			log.Fatalln("failed to read university data")
-		}
-	}
+	//if oldUniversityReader, err := objHandle.NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
+	//	log.Warningln("there was no older data, did it expire or is this first run?")
+	//} else {
+	//	if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
+	//		log.Errorln("failed to read university data")
+	//	}
+	//}
 
 	var university model.University
 
@@ -365,12 +365,12 @@ func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	// Decode new data
 	var newUniversity model.University
 	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
-		log.WithError(err).Fatalln("error while unmarshalling new data")
+		log.WithError(err).Errorln("error while unmarshalling new data")
 	}
 
 	// Make sure the data received is primed for the database
 	if err := model.ValidateAll(&newUniversity); err != nil {
-		log.WithError(err).Fatalln("error while validating newUniversity")
+		log.WithError(err).Errorln("error while validating newUniversity")
 	}
 
 	diffCourses := diffAndMergeCourses(newUniversity, diff)
@@ -443,7 +443,7 @@ type serial struct {
 func (ein *ein) updateSerialSubject(subject *model.Subject) {
 	data, err := subject.Marshal()
 	if err != nil {
-		log.WithError(err).Fatalln("failed to marshal subject")
+		log.WithError(err).Errorln("failed to marshal subject")
 	}
 	arg := serial{TopicName: subject.TopicName, Data: data}
 	ein.postgres.Update(SerialSubjectUpdateQuery, arg)
@@ -455,7 +455,7 @@ func (ein *ein) updateSerialSubject(subject *model.Subject) {
 func (ein *ein) updateSerialCourse(course *model.Course) {
 	data, err := course.Marshal()
 	if err != nil {
-		log.WithError(err).Fatalln("failed to marshal course")
+		log.WithError(err).Errorln("failed to marshal course")
 	}
 	arg := serial{TopicName: course.TopicName, Data: data}
 	ein.postgres.Update(SerialCourseUpdateQuery, arg)
@@ -467,7 +467,7 @@ func (ein *ein) updateSerialCourse(course *model.Course) {
 func (ein *ein) updateSerialSection(section *model.Section) {
 	data, err := section.Marshal()
 	if err != nil {
-		log.WithError(err).Fatalln("failed to marshal section")
+		log.WithError(err).Errorln("failed to marshal section")
 	}
 	arg := serial{TopicName: section.TopicName, Data: data}
 	ein.postgres.Update(SerialSectionUpdateQuery, arg)
