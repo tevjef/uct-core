@@ -79,7 +79,11 @@ func Ein(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Errorln("failed to read request body")
 	}
 
-	MainFunc(newUniversityData)
+	//MainFunc(newUniversityData)
+
+	log.Errorln("before crash")
+	panic("early crash")
+	log.Errorln("after crash")
 
 	fmt.Fprint(w, "Complete")
 }
@@ -92,8 +96,6 @@ func init() {
 
 func MainFunc(newUniversityData []byte) {
 	econf := &einConfig{}
-
-	panic("early crash")
 
 	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
 
