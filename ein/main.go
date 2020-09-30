@@ -313,7 +313,8 @@ func (ein *ein) process() error {
 
 	objHandle := bucket.Object(newUniversity.TopicName)
 
-	panic("my panic")
+	return errors.Wrap(err, "end of program")
+
 	var oldRaw []byte
 	//if oldUniversityReader, err := objHandle.NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
 	//	log.Warningln("there was no older data, did it expire or is this first run?")
