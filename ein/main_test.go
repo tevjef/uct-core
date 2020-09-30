@@ -2,12 +2,13 @@ package ein
 
 import (
 	"net/http/httptest"
-	"strings"
+	"os"
 	"testing"
 )
 
 func TestEin(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", strings.NewReader("{}"))
+	f, _ := os.Open("/Users/tevjef/Desktop/out.json")
+	req := httptest.NewRequest("POST", "/", f)
 	req.Header.Add("Content-Type", "application/json")
 
 	rr := httptest.NewRecorder()

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
@@ -288,6 +289,7 @@ func MainFunc(newUniversityData []byte) {
 func (ein *ein) init() {
 	if err := ein.process(); err != nil {
 		log.WithError(err).Errorln("failure while processing data")
+		time.Sleep(5 * time.Second)
 		return
 	}
 }

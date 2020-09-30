@@ -19,14 +19,15 @@ func (ein *ein) slimInsertUniversity(university model.University) {
 
 	university.Subjects = nil
 	universityView := UniversityView{data}
-	collections := ein.firestoreClient.Collection("universities")
-	docRef := collections.Doc(university.TopicName)
-	result, err := docRef.Set(ein.ctx, universityView)
+	//collections := ein.firestoreClient.Collection("universities")
+	//docRef := collections.Doc(university.TopicName)
+	//result, err := docRef.Set(ein.ctx, universityView)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Infoln(result.UpdateTime)
+	log.Infoln(universityView)
+
 }
 
 func (ein *ein) insertUniversity(university model.University) {
