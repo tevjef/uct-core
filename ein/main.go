@@ -93,6 +93,8 @@ func init() {
 func MainFunc(newUniversityData []byte) {
 	econf := &einConfig{}
 
+	panic("early crash")
+
 	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
 
 	app.Flag("no-diff", "do not diff against last data").
