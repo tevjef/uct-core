@@ -79,11 +79,7 @@ func Ein(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Errorln("failed to read request body")
 	}
 
-	//MainFunc(newUniversityData)
-
-	log.Errorln("before crash")
-	panic("early crash")
-	log.Errorln("after crash")
+	MainFunc(newUniversityData)
 
 	fmt.Fprint(w, "Complete")
 }
