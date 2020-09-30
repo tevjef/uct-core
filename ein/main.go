@@ -87,7 +87,7 @@ func Ein(w http.ResponseWriter, r *http.Request) {
 func init() {
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func MainFunc(newUniversityData []byte) {
