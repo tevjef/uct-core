@@ -1,6 +1,7 @@
 package uct_backend
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/tevjef/uct-backend/ein"
@@ -12,5 +13,11 @@ func RutgersScraper(w http.ResponseWriter, r *http.Request) {
 }
 
 func Ein(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+
 	ein.Ein(w, r)
 }
