@@ -8,13 +8,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	cloudStorage "cloud.google.com/go/storage"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
 	log "github.com/Sirupsen/logrus"
@@ -123,8 +124,8 @@ func MainFunc(newUniversityData []byte) {
 
 	ctx := context.Background()
 
-	credentials, err := google.FindDefaultCredentials(ctx)
-	credOption := option.WithCredentials(credentials)
+	//credentials, err := google.FindDefaultCredentials(ctx)
+	credOption := option.WithCredentialsFile("/Users/tevjef/Desktop/universitycoursetracker-1a1af4ac7a86.json")
 	firebaseConf := &firebase.Config{
 		ProjectID:     econf.firebaseProjectID,
 		StorageBucket: "universitycoursetracker.appspot.com",
@@ -283,13 +284,13 @@ func MainFunc(newUniversityData []byte) {
 		firestoreClient:   firestoreClient,
 		metrics:           appMetrics,
 		newUniversityData: newUniversityData,
+		ctx:               context.Background(),
 	}).init()
 }
 
 func (ein *ein) init() {
 	if err := ein.process(); err != nil {
 		log.WithError(err).Errorln("failure while processing data")
-		time.Sleep(5 * time.Second)
 		return
 	}
 }
@@ -311,18 +312,16 @@ func (ein *ein) process() error {
 		return errors.Wrap(err, "error while validating newUniversity")
 	}
 
-	objHandle := bucket.Object(newUniversity.TopicName)
-
-	return errors.Wrap(err, "end of program")
-
 	var oldRaw []byte
-	//if oldUniversityReader, err := objHandle.NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
-	//	log.Warningln("there was no older data, did it expire or is this first run?")
-	//} else {
-	//	if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
-	//		log.Errorln("failed to read university data")
-	//	}
-	//}
+	if oldUniversityReader, err := bucket.Object(newUniversity.TopicName).NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
+		log.Warningln("there was no older data, did it expire or is this first run?")
+	} else if err != nil {
+		log.WithError(err).Warningln("failed to get data from storage bucket")
+	} else if oldUniversityReader != nil {
+		if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
+			log.Errorln("failed to read university data")
+		}
+	}
 
 	var university model.University
 
@@ -345,7 +344,7 @@ func (ein *ein) process() error {
 
 	//go statsCollector(ein, university.TopicName)
 
-	ein.slimInsertUniversity(university)
+	ein.insertUniversity(newUniversity, university)
 	//ein.updateSerial(ein.newUniversityData, university)
 
 	//collectDatabaseStats(ein.postgres)
@@ -353,14 +352,13 @@ func (ein *ein) process() error {
 	//<-doneAudit
 	//break
 
-	w := objHandle.NewWriter(ein.ctx)
+	w := bucket.Object(newUniversity.TopicName).NewWriter(ein.ctx)
 
 	_, err = io.Copy(w, bytes.NewReader(ein.newUniversityData))
 
 	return err
 }
 
-/*
 // uses raw because the previously validated university was mutated some where and I couldn't find where
 func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
@@ -438,260 +436,14 @@ func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.
 	return coursesToUpdate
 }
 
-type serial struct {
-	TopicName string `db:"topic_name"`
-	Data      []byte `db:"data"`
-}
-
 func (ein *ein) updateSerialSubject(subject *model.Subject) {
-	data, err := subject.Marshal()
-	if err != nil {
-		log.WithError(err).Errorln("failed to marshal subject")
-	}
-	arg := serial{TopicName: subject.TopicName, Data: data}
-	ein.postgres.Update(SerialSubjectUpdateQuery, arg)
 
-	// Sanity Check
-	log.WithFields(log.Fields{"subject": subject.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
 func (ein *ein) updateSerialCourse(course *model.Course) {
-	data, err := course.Marshal()
-	if err != nil {
-		log.WithError(err).Errorln("failed to marshal course")
-	}
-	arg := serial{TopicName: course.TopicName, Data: data}
-	ein.postgres.Update(SerialCourseUpdateQuery, arg)
 
-	// Sanity Check
-	log.WithFields(log.Fields{"course": course.TopicId, "bytes": len(data)}).Debugln("sanity")
 }
 
 func (ein *ein) updateSerialSection(section *model.Section) {
-	data, err := section.Marshal()
-	if err != nil {
-		log.WithError(err).Errorln("failed to marshal section")
-	}
-	arg := serial{TopicName: section.TopicName, Data: data}
-	ein.postgres.Update(SerialSectionUpdateQuery, arg)
-
-	// Sanity Check
-	log.WithFields(log.Fields{"section": section.TopicId, "bytes": len(data)}).Debugln("sanity")
+	// TODO
 }
-
-func (ein *ein) insertSubjects(university *model.University) {
-
-	for subjectIndex := range university.Subjects {
-		subject := university.Subjects[subjectIndex]
-		subject.UniversityId = university.Id
-
-		subject.Id = ein.insertSubject(subject)
-
-		ein.insertCourses(subject)
-
-	}
-}
-
-func (ein *ein) insertCourses(subject *model.Subject) {
-	courses := subject.Courses
-	for courseIndex := range courses {
-		course := courses[courseIndex]
-
-		course.SubjectId = subject.Id
-		course.Id = ein.insertCourse(course)
-
-		ein.insertSections(course)
-
-		// Course []Metadata
-		metadatas := course.Metadata
-		for metadataIndex := range metadatas {
-			metadata := metadatas[metadataIndex]
-
-			metadata.CourseId = &course.Id
-			ein.insertMetadata(metadata)
-		}
-	}
-}
-
-func (ein *ein) insertSections(course *model.Course) {
-	sections := course.Sections
-
-	for sectionIndex := range sections {
-		section := sections[sectionIndex]
-
-		section.CourseId = course.Id
-		sectionId := ein.insertSection(section)
-		// Make section data available as soon as possible
-		ein.updateSerialSection(section)
-
-		//[]Instructors
-		instructors := section.Instructors
-		for instructorIndex := range instructors {
-			instructor := instructors[instructorIndex]
-			instructor.SectionId = sectionId
-			ein.insertInstructor(instructor)
-		}
-
-		//[]Meeting
-		meetings := section.Meetings
-		for meetingIndex := range meetings {
-			meeting := meetings[meetingIndex]
-
-			meeting.SectionId = sectionId
-			meetingId := ein.insertMeeting(meeting)
-
-			// Meeting []Metadata
-			metadata := meeting.Metadata
-			for metadataIndex := range metadata {
-				metadata := metadata[metadataIndex]
-
-				metadata.MeetingId = &meetingId
-				ein.insertMetadata(metadata)
-			}
-		}
-
-		//[]Books
-		books := section.Books
-		for bookIndex := range books {
-			book := books[bookIndex]
-
-			book.SectionId = sectionId
-			ein.insertBook(book)
-		}
-
-		// Section []Metadata
-		metadata := section.Metadata
-		for metadataIndex := range metadata {
-			metadata := metadata[metadataIndex]
-
-			metadata.SectionId = &sectionId
-			ein.insertMetadata(metadata)
-		}
-	}
-
-}
-
-func (ein *ein) insertSubject(sub *model.Subject) (subjectId int64) {
-	if !ein.config.fullUpsert {
-		if subjectId = ein.postgres.Exists(SubjectExistQuery, sub); subjectId != 0 {
-			return
-		}
-	}
-	subjectId = ein.postgres.Upsert(SubjectInsertQuery, SubjectUpdateQuery, sub)
-
-	// Subject []Metadata
-	metadatas := sub.Metadata
-	for metadataIndex := range metadatas {
-		metadata := metadatas[metadataIndex]
-
-		metadata.SubjectId = &subjectId
-		ein.insertMetadata(metadata)
-	}
-	return subjectId
-}
-
-func (ein *ein) insertCourse(course *model.Course) (courseId int64) {
-	if !ein.config.fullUpsert {
-		if courseId = ein.postgres.Exists(CourseExistQuery, course); courseId != 0 {
-			return
-		}
-	}
-	courseId = ein.postgres.Upsert(CourseInsertQuery, CourseUpdateQuery, course)
-
-	return courseId
-}
-
-func (ein *ein) insertSemester(university *model.University) int64 {
-	return ein.postgres.Upsert(SemesterInsertQuery, SemesterUpdateQuery, &model.DBResolvedSemester{
-		UniversityId:  university.Id,
-		CurrentSeason: university.ResolvedSemesters.Current.Season,
-		CurrentYear:   strconv.Itoa(int(university.ResolvedSemesters.Current.Year)),
-		LastSeason:    university.ResolvedSemesters.Last.Season,
-		LastYear:      strconv.Itoa(int(university.ResolvedSemesters.Last.Year)),
-		NextSeason:    university.ResolvedSemesters.Next.Season,
-		NextYear:      strconv.Itoa(int(university.ResolvedSemesters.Next.Year)),
-	})
-}
-
-func (ein *ein) insertSection(section *model.Section) int64 {
-	return ein.postgres.Upsert(SectionInsertQuery, SectionUpdateQuery, section)
-}
-
-func (ein *ein) insertMeeting(meeting *model.Meeting) (meetingId int64) {
-	if !!ein.config.fullUpsert {
-		if meetingId = ein.postgres.Exists(MeetingExistQuery, meeting); meetingId != 0 {
-			return
-		}
-	}
-	return ein.postgres.Upsert(MeetingInsertQuery, MeetingUpdateQuery, meeting)
-}
-
-func (ein *ein) insertInstructor(instructor *model.Instructor) (instructorId int64) {
-	if instructorId = ein.postgres.Exists(InstructorExistQuery, instructor); instructorId != 0 {
-		return
-	}
-	return ein.postgres.Upsert(InstructorInsertQuery, InstructorUpdateQuery, instructor)
-}
-
-func (ein *ein) insertBook(book *model.Book) (bookId int64) {
-	bookId = ein.postgres.Upsert(BookInsertQuery, BookUpdateQuery, book)
-
-	return bookId
-}
-
-func (ein *ein) insertRegistration(registration *model.Registration) int64 {
-	return ein.postgres.Upsert(RegistrationInsertQuery, RegistrationUpdateQuery, registration)
-}
-
-func (ein *ein) insertMetadata(metadata *model.Metadata) (metadataId int64) {
-	var insertQuery string
-	var updateQuery string
-
-	if metadata.UniversityId != nil {
-		if !ein.config.fullUpsert {
-			if metadataId = ein.postgres.Exists(MetaUniExistQuery, metadata); metadataId != 0 {
-				return
-			}
-		}
-		updateQuery = MetaUniUpdateQuery
-		insertQuery = MetaUniInsertQuery
-
-	} else if metadata.SubjectId != nil {
-		if !ein.config.fullUpsert {
-			if metadataId = ein.postgres.Exists(MetaSubjectExistQuery, metadata); metadataId != 0 {
-				return
-			}
-		}
-		updateQuery = MetaSubjectUpdateQuery
-		insertQuery = MetaSubjectInsertQuery
-
-	} else if metadata.CourseId != nil {
-		if !ein.config.fullUpsert {
-			if metadataId = ein.postgres.Exists(MetaCourseExistQuery, metadata); metadataId != 0 {
-				return
-			}
-		}
-		updateQuery = MetaCourseUpdateQuery
-		insertQuery = MetaCourseInsertQuery
-
-	} else if metadata.SectionId != nil {
-		if !ein.config.fullUpsert {
-			if metadataId = ein.postgres.Exists(MetaSectionExistQuery, metadata); metadataId != 0 {
-				return
-			}
-		}
-		updateQuery = MetaSectionUpdateQuery
-		insertQuery = MetaSectionInsertQuery
-
-	} else if metadata.MeetingId != nil {
-		if !ein.config.fullUpsert {
-			if metadataId = ein.postgres.Exists(MetaMeetingExistQuery, metadata); metadataId != 0 {
-				return
-			}
-		}
-		updateQuery = MetaMeetingUpdateQuery
-		insertQuery = MetaMeetingInsertQuery
-	}
-	return ein.postgres.Upsert(insertQuery, updateQuery, metadata)
-}
-*/
