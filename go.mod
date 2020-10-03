@@ -3,6 +3,7 @@ module github.com/tevjef/uct-backend
 go 1.14
 
 require (
+	cloud.google.com/go v0.67.0 // indirect
 	cloud.google.com/go/firestore v1.3.0
 	cloud.google.com/go/pubsub v1.7.0
 	cloud.google.com/go/storage v1.10.0

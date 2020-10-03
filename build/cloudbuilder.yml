@@ -1,5 +1,20 @@
 steps:
   - name: 'gcr.io/cloud-builders/gcloud'
+      args: [ 'functions',
+              'deploy',
+              'hermes',
+              '--trigger-event',
+              'providers/cloud.firestore/eventTypes/document.update',
+              '--trigger-resource',
+              'projects/universitycoursetracker/databases/(default)/documents/section.topicName/{topicName}',
+              '--memory',
+              '128',
+              '--runtime',
+              'go113',
+              '--entry-point',
+              'HelloFirestore'
+      ]
+  - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
             'ein',

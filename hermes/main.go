@@ -1,17 +1,15 @@
-package main
+package hermes
 
 import (
+	"context"
 	_ "net/http/pprof"
 	"os"
 	"time"
-
-	"context"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tevjef/go-fcm"
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/database"
@@ -21,26 +19,6 @@ import (
 	"github.com/tevjef/uct-backend/common/redis"
 	"github.com/tevjef/uct-backend/common/try"
 	"gopkg.in/alecthomas/kingpin.v2"
-)
-
-var (
-	notificationsIn = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "hermes_notifications_in_count",
-		Help: "Number notifications received by Hermes",
-	}, []string{"university_name", "status"})
-
-	notificationsOut = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "hermes_notifications_out_count",
-		Help: "Number notifications processed by Heremes",
-	}, []string{"university_name", "status"})
-	fcmElapsed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "hermes_fcm_elapsed_second",
-		Help: "Time taken to send notification",
-	}, []string{"university_name", "status"})
-	fcmElapsedHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "hermes_histogram_fcm_elapsed_second",
-		Help: "Time taken to send notification",
-	}, []string{"university_name", "status"})
 )
 
 type hermes struct {
@@ -61,18 +39,11 @@ type hermesConfig struct {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{})
 	log.SetLevel(log.InfoLevel)
-
-	prometheus.MustRegister(
-		notificationsIn,
-		notificationsOut,
-		fcmElapsed,
-		fcmElapsedHistogram,
-	)
 }
 
-func main() {
+func MainFunc() {
 	hconf := &hermesConfig{}
 
 	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Firebase Cloud Messaging")
@@ -92,16 +63,6 @@ func main() {
 		Default("universitycoursetracker.json").
 		Envar("CREDENTIALS_LOCATION").
 		StringVar(&hconf.credentialsLocation)
-
-	configFile := app.Flag("config", "configuration file for the application").
-		Short('c').
-		Envar("HERMES_CONFIG").
-		File()
-
-	kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	// Parse configuration file
-	hconf.service = conf.OpenConfigWithName(*configFile, app.Name)
 
 	if hconf.dryRun {
 		log.Infoln("Enabling FCM in dry run mode")
@@ -144,19 +105,11 @@ func (hermes *hermes) init() {
 }
 
 func (hermes *hermes) recvNotification(pair notificationPair) {
-	label := prometheus.Labels{
-		"university_name": pair.n.University.TopicName,
-		"status":          pair.n.Status,
-	}
-
-	notificationsIn.With(label).Inc()
 	log.WithFields(log.Fields{"university_name": pair.n.University.TopicName,
 		"notification_id": pair.n.NotificationId, "status": pair.n.Status,
 		"topic": pair.n.TopicName}).Info("postgres_notification")
 
 	defer func(start time.Time) {
-		fcmElapsed.With(label).Set(time.Since(start).Seconds())
-		fcmElapsedHistogram.With(label).Observe(time.Since(start).Seconds())
 		log.WithFields(log.Fields{"elapsed": time.Since(start).Seconds() * 1e3,
 			"university_name": pair.n.University.TopicName,
 			"name":            "send_notification"}).Infoln()
@@ -173,8 +126,6 @@ func (hermes *hermes) recvNotification(pair notificationPair) {
 	if err != nil {
 		log.WithError(err).Errorln()
 	}
-
-	notificationsOut.With(label).Inc()
 }
 
 func (hermes *hermes) waitForPop() chan notificationPair {
