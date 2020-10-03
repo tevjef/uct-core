@@ -212,11 +212,6 @@ func (ein *ein) updateSerial(raw []byte, diff model.University) {
 
 	diffCourses := diffAndMergeCourses(newUniversity, diff)
 
-	// log number of subjects, courses, and sections found
-	countUniversity(newUniversity, subjectCh, courseCh, sectionCh, meetingCh, metadataCh)
-	countUniversity(diff, diffSubjectCh, diffCourseCh, diffSectionCh, diffMeetingCh, diffMetadataCh)
-	countSubjects(newUniversity.Subjects, diffCourses, diffSerialSubjectCh, diffSerialCourseCh, diffSerialSectionCh, diffSerialMeetingCountCh, diffSerialMetadataCountCh)
-
 	var allSections []*model.Section
 	for courseIndex := range diffCourses {
 		course := diffCourses[courseIndex]
