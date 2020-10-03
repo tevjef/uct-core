@@ -148,11 +148,12 @@ func (ein *ein) process() error {
 
 	var oldRaw []byte
 
+	objName := "scraper-cache/" + newUniversity.TopicName
 	bucket, err := ein.storageClient.DefaultBucket()
 	if err != nil {
 		log.WithError(err).Errorln("failed to get default bucket")
 	}
-	if oldUniversityReader, err := bucket.Object(newUniversity.TopicName).NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
+	if oldUniversityReader, err := bucket.Object(objName).NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
 		log.Warningln("there was no older data, did it expire or is this first run?")
 	} else if err != nil {
 		log.WithError(err).Warningln("failed to get data from storage bucket")
@@ -184,7 +185,7 @@ func (ein *ein) process() error {
 	ein.insertUniversity(newUniversity, university)
 	ein.updateSerial(ein.newUniversityData, university)
 
-	w := bucket.Object(newUniversity.TopicName + ".old").NewWriter(ein.ctx)
+	w := bucket.Object(objName).NewWriter(ein.ctx)
 
 	_, err = io.Copy(w, bytes.NewReader(ein.newUniversityData))
 	err = w.Close()
