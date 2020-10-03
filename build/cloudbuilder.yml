@@ -5,13 +5,15 @@ steps:
             'ein',
             '--trigger-http',
             '--memory',
-            '128',
+            '256',
+            '--timeout',
+            '120'
             '--runtime',
             'go113',
             '--entry-point',
             'Ein',
             '--set-env-vars',
-            'EIN_INPUT_FORMAT=protobuf,USE_WORKER_V2=true'
+            'EIN_INPUT_FORMAT=protobuf'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
