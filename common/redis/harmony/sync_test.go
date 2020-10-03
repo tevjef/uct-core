@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/model"

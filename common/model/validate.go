@@ -135,6 +135,13 @@ func ValidateAll(university *University) (err error) {
 
 func ValidateAllSubjects(university *University) error {
 	makeUniqueSubjects(university.Subjects)
+
+	if len(university.Subjects) == 0 {
+		log.WithField("university", university.TopicName).Warningln("No subjects in university")
+	} else {
+		sort.Sort(subjectSorter{university.Subjects})
+	}
+
 	for subjectIndex := range university.Subjects {
 		subject := university.Subjects[subjectIndex]
 		if err := subject.Validate(university); err != nil {
@@ -300,12 +307,6 @@ func (u *University) Validate() error {
 
 	if u.ResolvedSemesters.Current == nil {
 		return errors.New("ResolvedSemesters.Current is nil")
-	}
-
-	if len(u.Subjects) == 0 {
-		log.WithField("university", u.TopicName).Warningln("No subjects in university")
-	} else {
-		sort.Sort(subjectSorter{u.Subjects})
 	}
 
 	u.TopicName = ToTopicName(u.Name)

@@ -32,6 +32,7 @@ type ein struct {
 	storageClient     *storage.Client
 	firestoreClient   *firestore.Client
 	newUniversityData []byte
+	logger            *log.Entry
 	ctx               context.Context
 }
 
@@ -121,6 +122,7 @@ func MainFunc(newUniversityData []byte) {
 		storageClient:     storageClient,
 		firestoreClient:   firestoreClient,
 		newUniversityData: newUniversityData,
+		logger:            log.WithFields(log.Fields{}),
 		ctx:               context.Background(),
 	}).init()
 }
@@ -145,20 +147,22 @@ func (ein *ein) process() error {
 		return errors.Wrap(err, "error while validating newUniversity")
 	}
 
+	ein.logger = log.WithField("university", newUniversity.TopicName)
+
 	var oldRaw []byte
 
 	objName := "scraper-cache/" + newUniversity.TopicName
 	bucket, err := ein.storageClient.DefaultBucket()
 	if err != nil {
-		log.WithError(err).Errorln("failed to get default bucket")
+		ein.logger.WithError(err).Errorln("failed to get default bucket")
 	}
 	if oldUniversityReader, err := bucket.Object(objName).NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
-		log.Warningln("there was no older data, did it expire or is this first run?")
+		ein.logger.Warningln("there was no older data, did it expire or is this first run?")
 	} else if err != nil {
-		log.WithError(err).Warningln("failed to get data from storage bucket")
+		ein.logger.WithError(err).Warningln("failed to get data from storage bucket")
 	} else if oldUniversityReader != nil {
 		if oldRaw, err = ioutil.ReadAll(oldUniversityReader); err != nil {
-			log.Errorln("failed to read university data")
+			ein.logger.Errorln("failed to read university data")
 		}
 	}
 
@@ -183,43 +187,23 @@ func (ein *ein) process() error {
 		university = newUniversity
 	}
 
-	debugWrite(bucket, oldUniversity, newUniversity, university)
 	w := bucket.Object(objName).NewWriter(ein.ctx)
 
 	_, err = w.Write(ein.newUniversityData)
 	err = w.Close()
 	if err != nil {
-		log.WithError(err).Errorln("failed to result to cloud storage")
+		ein.logger.WithError(err).Fatalln("failed to result to cloud storage")
 	}
 
 	ein.insertUniversity(newUniversity, university)
-	ein.updateSerial(university)
+	ein.insertSections(university)
 
 	return nil
 }
 
-func debugWrite(bucket *cloudStorage.BucketHandle, oldUniversity model.University, newUniversity model.University, diffUniversity model.University) {
-	oldUniversityBytes, _ := oldUniversity.MarshalJSON()
-	newUniversityBytes, _ := newUniversity.MarshalJSON()
-	diffUniversityBytes, _ := diffUniversity.MarshalJSON()
-
-	timestamp := fmt.Sprint(time.Now().Unix())
-	oldUniversityWriter := bucket.Object("debug/" + timestamp + "/oldUniversity.json").NewWriter(context.Background())
-	newUniversityWriter := bucket.Object("debug/" + timestamp + "/newUniversity.json").NewWriter(context.Background())
-	diffUniversityWriter := bucket.Object("debug/" + timestamp + "/diffUniversity.json").NewWriter(context.Background())
-
-	oldUniversityWriter.Write(oldUniversityBytes)
-	newUniversityWriter.Write(newUniversityBytes)
-	diffUniversityWriter.Write(diffUniversityBytes)
-
-	oldUniversityWriter.Close()
-	newUniversityWriter.Close()
-	diffUniversityWriter.Close()
-}
-
 // uses raw because the previously validated university was mutated some where and I couldn't find where
-func (ein *ein) updateSerial(diff model.University) {
-	defer model.TimeTrack(time.Now(), "updateSerial")
+func (ein *ein) insertSections(diff model.University) {
+	defer model.TimeTrack(time.Now(), "insertSections")
 
 	var allSections []*model.Section
 
@@ -235,7 +219,7 @@ func (ein *ein) updateSerial(diff model.University) {
 	}
 
 	if len(allSections) == 0 {
-		log.Infoln("updateSerial: no new sections")
+		ein.logger.Infoln("insertSections: no new sections")
 		return
 	}
 

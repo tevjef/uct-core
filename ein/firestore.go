@@ -11,22 +11,25 @@ import (
 )
 
 func (ein *ein) insertUniversity(newUniversity model.University, university model.University) {
-
 	defer model.TimeTrack(time.Now(), "insertUniversity")
 
 	universityCopy := university
 	universityCopy.Subjects = nil
 
 	data, err := universityCopy.Marshal()
+	if err != nil {
+		ein.logger.WithError(err).Fatalln("failed to marshal University")
+	}
 
 	universityView := NewFirestoreData(data)
 	collections := ein.firestoreClient.Collection("university.topicName")
 	docRef := collections.Doc(universityCopy.TopicName)
 	_, err = docRef.Set(ein.ctx, universityView)
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.WithError(err).Fatalln("firestore: failed to write university.topicName")
 	}
-	log.Debugln("set university.topicName")
+
+	ein.logger.Infoln("set university.topicName")
 
 	ein.insertSubjects(&newUniversity)
 
@@ -50,7 +53,7 @@ func (ein *ein) insertSemester(university *model.University) {
 	docRef := collections.Doc(university.TopicName)
 	_, err := docRef.Set(ein.ctx, firestoreSeason)
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.Fatalln(err)
 	}
 }
 
@@ -87,25 +90,30 @@ func (ein *ein) insertSubjects(university *model.University) {
 	}
 	results, err := batch.Commit(ein.ctx)
 	if err != nil {
-		log.WithError(err).Fatalln("failed to commit subject transaction")
+		ein.logger.WithError(err).Fatalln("firestore: failed to commit subject transaction")
 	}
 
-	log.WithField("results", len(results)).Infoln("firestore: set subject.topicName")
+	ein.logger.WithField("results", len(results)).Infoln("firestore: set subject.topicName")
 }
 
 func (ein *ein) injectSubjectBySemester(university *model.University, semester *model.Semester) {
+	field := log.Fields{"semester": makeSemesterKey(semester)}
 	filteredSubjects := getSubjectsForSemester(university.Subjects, semester)
 
 	data, err := (&model.Data{Subjects: filteredSubjects}).Marshal()
+	if err != nil {
+		ein.logger.WithError(err).WithFields(field).Fatalln("failed to marshal Data{[]Subject}")
+	}
+
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
 	_, err = zw.Write(data)
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.WithError(err).WithFields(field).Fatalln("failed to gzip subjects")
 	}
 	err = zw.Close()
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.WithError(err).WithFields(field).Fatalln(err)
 	}
 
 	NewFirestoreData(data)
@@ -115,10 +123,10 @@ func (ein *ein) injectSubjectBySemester(university *model.University, semester *
 	docRef := collections.Doc(university.TopicName + "." + makeSemesterKey(semester))
 	_, err = docRef.Set(ein.ctx, firestoreData)
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to set university.semester")
 	}
 
-	log.Infoln("firestore: set university.semester")
+	ein.logger.WithFields(field).Infoln("firestore: set university.semester")
 }
 
 func makeSemesterKey(semester *model.Semester) string {
@@ -140,6 +148,8 @@ func getSubjectsForSemester(subjects []*model.Subject, semester *model.Semester)
 }
 
 func (ein *ein) insertSubject(sub *model.Subject) {
+	field := log.Fields{"subject": sub.TopicName}
+
 	if !ein.config.fullUpsert {
 		// Update all
 		return
@@ -147,17 +157,21 @@ func (ein *ein) insertSubject(sub *model.Subject) {
 
 	subCopy := *sub
 
-	data, _ := subCopy.Marshal()
+	data, err := subCopy.Marshal()
+	if err != nil {
+		ein.logger.WithError(err).WithFields(field).Fatalln("failed to marshal Subject")
+	}
+
 	subView := NewFirestoreData(data)
 
 	collections := ein.firestoreClient.Collection("subject.topicName")
 	docRef := collections.Doc(subCopy.TopicName)
 	results, err := docRef.Set(ein.ctx, subView)
 	if err != nil {
-		log.Fatalln(err)
+		ein.logger.WithFields(field).Fatalln(err)
 	}
 
-	log.WithField("result", fmt.Sprintf("%+v", results)).WithField("topicName", sub.TopicName).Debugln("firestore: set subject.topicName")
+	ein.logger.WithFields(field).WithField("result", fmt.Sprintf("%+v", results)).WithField("topicName", sub.TopicName).Debugln("firestore: set subject.topicName")
 }
 
 func (ein *ein) updateSerialSection(sections []*model.Section) {
@@ -170,7 +184,7 @@ func (ein *ein) updateSerialSection(sections []*model.Section) {
 			section := s[sectionIndex]
 			secData, err := section.Marshal()
 			if err != nil {
-				log.Fatalln(err)
+				ein.logger.WithError(err).Fatalln("failed to marshal Section")
 			}
 			docRef := collection.Doc(section.TopicName)
 			batch.Set(docRef, FirestoreData{secData})
@@ -178,9 +192,9 @@ func (ein *ein) updateSerialSection(sections []*model.Section) {
 
 		results, err := batch.Commit(ein.ctx)
 		if err != nil {
-			log.Fatalln(err)
+			ein.logger.Fatalln(err)
 		}
-		log.WithField("results", len(results)).Infoln("firestore: set sections")
+		ein.logger.WithField("results", len(results)).Infoln("firestore: set sections")
 	})
 }
 

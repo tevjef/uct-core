@@ -200,7 +200,9 @@ func (a subjectSorter) Swap(i, j int) {
 }
 
 func (a subjectSorter) Less(i, j int) bool {
-	return strings.Compare(a.subjects[i].Name, a.subjects[j].Name) < 0
+	is := a.subjects[i]
+	js := a.subjects[j]
+	return is.Number+is.Name+is.Season < js.Number+js.Name+js.Season
 }
 
 func (meeting Meeting) dayRank() int {
