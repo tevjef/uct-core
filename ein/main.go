@@ -15,6 +15,7 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
 	log "github.com/Sirupsen/logrus"
@@ -123,14 +124,13 @@ func MainFunc(newUniversityData []byte) {
 
 	ctx := context.Background()
 
-	//credentials, err := google.FindDefaultCredentials(ctx)
-	credOption := option.WithCredentialsFile("/Users/tevjef/Desktop/universitycoursetracker-1a1af4ac7a86.json")
 	firebaseConf := &firebase.Config{
 		ProjectID:     econf.firebaseProjectID,
 		StorageBucket: "universitycoursetracker.appspot.com",
 	}
 
-	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, credOption)
+	credentials, err := google.FindDefaultCredentials(ctx)
+	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, option.WithCredentials(credentials))
 	if err != nil {
 		log.WithError(err).Errorln("failed to crate firebase app")
 	}
