@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -182,44 +181,40 @@ func (ein *ein) process() error {
 		university = newUniversity
 	}
 
-	ein.insertUniversity(newUniversity, university)
-	ein.updateSerial(ein.newUniversityData, university)
-
 	w := bucket.Object(objName).NewWriter(ein.ctx)
 
-	_, err = io.Copy(w, bytes.NewReader(ein.newUniversityData))
+	_, err = w.Write(ein.newUniversityData)
 	err = w.Close()
 	if err != nil {
 		log.WithError(err).Errorln("failed to result to cloud storage")
 	}
 
+	ein.insertUniversity(newUniversity, university)
+	ein.updateSerial(newUniversity, university)
+
 	return nil
 }
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
-func (ein *ein) updateSerial(raw []byte, diff model.University) {
+func (ein *ein) updateSerial(newUniversity model.University, diff model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
-	// Decode new data
-	var newUniversity model.University
-	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(raw), &newUniversity); err != nil {
-		log.WithError(err).Errorln("error while unmarshalling new data")
-	}
-
-	// Make sure the data received is primed for the database
-	if err := model.ValidateAll(&newUniversity); err != nil {
-		log.WithError(err).Errorln("error while validating newUniversity")
-	}
-
-	diffCourses := diffAndMergeCourses(newUniversity, diff)
-
 	var allSections []*model.Section
-	for courseIndex := range diffCourses {
-		course := diffCourses[courseIndex]
-		for sectionIndex := range course.Sections {
-			section := course.Sections[sectionIndex]
-			allSections = append(allSections, section)
+
+	for subjectIndex := range diff.Subjects {
+		subject := diff.Subjects[subjectIndex]
+		for courseIndex := range subject.Courses {
+			course := subject.Courses[courseIndex]
+			for sectionIndex := range course.Sections {
+				section := course.Sections[sectionIndex]
+				allSections = append(allSections, section)
+			}
 		}
+	}
+
+	if len(allSections) == 0 {
+		log.Infoln("updateSerial: no new sections")
+		return
 	}
 
 	ein.updateSerialSection(allSections)

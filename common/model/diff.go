@@ -54,16 +54,12 @@ func diffAndFilterSections(oldSections, newSections []*Section) []*Section {
 			break
 		}
 		if !newSections[e].Equal(oldSections[e]) {
-			fullSection := log.Fields{
-				"old_full_section": oldSections[e].String(),
-				"new_full_section": newSections[e].String(),
-			}
 			log.WithFields(log.Fields{
 				"old_call_number": oldSections[e].CallNumber,
 				"old_status":      oldSections[e].Status,
 				"new_call_number": newSections[e].CallNumber,
 				"new_status":      newSections[e].Status,
-			}).WithFields(oldSectionFields).WithFields(newSectionFields).WithFields(fullSection).WithFields(
+			}).WithFields(oldSectionFields).WithFields(newSectionFields).WithFields(
 				log.Fields{
 					"old_section": oldSections[e].TopicName,
 					"new_section": newSections[e].TopicName,
