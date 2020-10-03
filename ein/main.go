@@ -14,7 +14,6 @@ import (
 	cloudStorage "cloud.google.com/go/storage"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
-	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -33,37 +32,8 @@ type ein struct {
 	firebaseApp       *firebase.App
 	storageClient     *storage.Client
 	firestoreClient   *firestore.Client
-	metrics           metrics
 	newUniversityData []byte
 	ctx               context.Context
-}
-
-type metrics struct {
-	insertions  *prometheus.GaugeVec
-	updates     *prometheus.GaugeVec
-	upserts     *prometheus.GaugeVec
-	existential *prometheus.GaugeVec
-
-	subject  *prometheus.GaugeVec
-	course   *prometheus.GaugeVec
-	section  *prometheus.GaugeVec
-	meeting  *prometheus.GaugeVec
-	metadata *prometheus.GaugeVec
-
-	diffSubject  *prometheus.GaugeVec
-	diffCourse   *prometheus.GaugeVec
-	diffSection  *prometheus.GaugeVec
-	diffMeeting  *prometheus.GaugeVec
-	diffMetadata *prometheus.GaugeVec
-
-	diffSerialCourse   *prometheus.GaugeVec
-	diffSerialSection  *prometheus.GaugeVec
-	diffSerialSubject  *prometheus.GaugeVec
-	diffSerialMeeting  *prometheus.GaugeVec
-	diffSerialMetadata *prometheus.GaugeVec
-
-	elapsed      *prometheus.GaugeVec
-	payloadBytes *prometheus.GaugeVec
 }
 
 type einConfig struct {
@@ -145,144 +115,12 @@ func MainFunc(newUniversityData []byte) {
 		log.WithError(err).Errorln("failed to create firestore client")
 	}
 
-	appMetrics := metrics{
-		insertions: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_database_insertions",
-			Help: "Number of records inserted into the database",
-		}, []string{"university_name"}),
-
-		updates: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_database_updates",
-			Help: "Number of records updated in the database",
-		}, []string{"university_name"}),
-
-		upserts: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_database_upserts",
-			Help: "Number of records upserted in the database",
-		}, []string{"university_name"}),
-
-		existential: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_database_existential",
-			Help: "Number of existential queries performed on the database",
-		}, []string{"university_name"}),
-
-		subject: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_subject",
-			Help: "Number of subject objects",
-		}, []string{"university_name"}),
-
-		course: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_course",
-			Help: "Number of course objects",
-		}, []string{"university_name"}),
-
-		section: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_section",
-			Help: "Number of section objects",
-		}, []string{"university_name"}),
-
-		meeting: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_meeting",
-			Help: "Number of meeting objects",
-		}, []string{"university_name"}),
-
-		metadata: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_metadata",
-			Help: "Number of metadata objects",
-		}, []string{"university_name"}),
-
-		diffSubject: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_subject_diff",
-			Help: "Number of diff subject objects",
-		}, []string{"university_name"}),
-
-		diffCourse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_course_diff",
-			Help: "Number of diff course objects",
-		}, []string{"university_name"}),
-
-		diffSection: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_section_diff",
-			Help: "Number of diff section objects",
-		}, []string{"university_name"}),
-
-		diffMeeting: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_meeting_diff",
-			Help: "Number of diff meeting objects",
-		}, []string{"university_name"}),
-
-		diffMetadata: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_metadata_diff",
-			Help: "Number of diff metadata objects",
-		}, []string{"university_name"}),
-
-		diffSerialSubject: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_subject_serial_diff",
-			Help: "Diff of serialized subject objects",
-		}, []string{"university_name"}),
-
-		diffSerialCourse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_course_serial_diff",
-			Help: "Diff of serialized course objects",
-		}, []string{"university_name"}),
-
-		diffSerialSection: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_section_serial_diff",
-			Help: "Diff of serialized section objects",
-		}, []string{"university_name"}),
-
-		diffSerialMeeting: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_meeting_serial_diff",
-			Help: "Diff of serialized meeting objects",
-		}, []string{"university_name"}),
-
-		diffSerialMetadata: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_uct_metadata_serial_diff",
-			Help: "Diff of serialized metadata objects",
-		}, []string{"university_name"}),
-
-		elapsed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_process_elapsed_seconds",
-			Help: "Time taken to process all objects",
-		}, []string{"university_name"}),
-
-		payloadBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ein_payload_bytes",
-			Help: "Size of the the data to process",
-		}, []string{"university_name"}),
-	}
-
-	prometheus.MustRegister(
-		appMetrics.insertions,
-		appMetrics.updates,
-		appMetrics.upserts,
-		appMetrics.existential,
-		appMetrics.subject,
-		appMetrics.course,
-		appMetrics.section,
-		appMetrics.meeting,
-		appMetrics.metadata,
-		appMetrics.diffSubject,
-		appMetrics.diffCourse,
-		appMetrics.diffSection,
-		appMetrics.diffMeeting,
-		appMetrics.diffMetadata,
-		appMetrics.diffSerialSubject,
-		appMetrics.diffSerialCourse,
-		appMetrics.diffSerialSection,
-		appMetrics.diffSerialMeeting,
-		appMetrics.diffSerialMetadata,
-		appMetrics.elapsed,
-		appMetrics.payloadBytes,
-	)
-
 	(&ein{
 		app:               app.Model(),
 		config:            econf,
 		firebaseApp:       firebaseApp,
 		storageClient:     storageClient,
 		firestoreClient:   firestoreClient,
-		metrics:           appMetrics,
 		newUniversityData: newUniversityData,
 		ctx:               context.Background(),
 	}).init()
@@ -343,14 +181,8 @@ func (ein *ein) process() error {
 		university = newUniversity
 	}
 
-	go statsCollector(ein, university.TopicName)
-
 	ein.insertUniversity(newUniversity, university)
 	ein.updateSerial(ein.newUniversityData, university)
-
-	//doneAudit <- true
-	//<-doneAudit
-	//break
 
 	w := bucket.Object(newUniversity.TopicName + ".old").NewWriter(ein.ctx)
 
