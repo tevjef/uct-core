@@ -72,6 +72,8 @@ type FirestoreData struct {
 type SectionFirestoreData struct {
 	Data       []byte                 `firestore:"data"`
 	University *firestore.DocumentRef `firestore:"universityRef"`
+	Year       string                 `firestore:"year"`
+	Season     string                 `firestore:"season"`
 }
 
 func NewFirestoreData(data []byte) FirestoreData {
@@ -180,21 +182,26 @@ func (ein *ein) insertSubject(sub *model.Subject) {
 	ein.logger.WithFields(field).WithField("result", fmt.Sprintf("%+v", results)).WithField("topicName", sub.TopicName).Debugln("firestore: set subject.topicName")
 }
 
-func (ein *ein) updateSerialSection(university model.University, sections []*model.Section) {
+func (ein *ein) updateSerialSection(sectionMeta []SectionMeta) {
 	collection := ein.firestoreClient.Collection("section.topicName")
 	universityCollection := ein.firestoreClient.Collection("university.topicName")
 
-	Batch(500, sections, func(s []*model.Section) {
+	Batch(500, sectionMeta, func(s []SectionMeta) {
 		batch := ein.firestoreClient.Batch()
 
 		for sectionIndex := range s {
-			section := s[sectionIndex]
-			secData, err := section.Marshal()
+			sectionMeta := s[sectionIndex]
+			secData, err := sectionMeta.section.Marshal()
 			if err != nil {
 				ein.logger.WithError(err).Fatalln("failed to marshal Section")
 			}
-			docRef := collection.Doc(section.TopicName)
-			batch.Set(docRef, SectionFirestoreData{secData, universityCollection.Doc(university.TopicName)})
+			docRef := collection.Doc(sectionMeta.section.TopicName)
+			batch.Set(docRef, SectionFirestoreData{
+				secData,
+				universityCollection.Doc(sectionMeta.university.TopicName),
+				sectionMeta.subject.Year,
+				sectionMeta.subject.Season,
+			})
 		}
 
 		results, err := batch.Commit(ein.ctx)
@@ -205,13 +212,13 @@ func (ein *ein) updateSerialSection(university model.University, sections []*mod
 	})
 }
 
-func Batch(count int, items []*model.Section, callback func([]*model.Section)) {
-	var result []*model.Section
+func Batch(count int, items []SectionMeta, callback func([]SectionMeta)) {
+	var result []SectionMeta
 
 	for i := 0; i < len(items); i++ {
 		if len(result) == count {
 			callback(result)
-			result = []*model.Section{}
+			result = []SectionMeta{}
 		}
 
 		result = append(result, items[i])

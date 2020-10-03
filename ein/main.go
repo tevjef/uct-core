@@ -205,7 +205,7 @@ func (ein *ein) process() error {
 func (ein *ein) insertSections(diff model.University) {
 	defer model.TimeTrack(time.Now(), "insertSections")
 
-	var allSections []*model.Section
+	var allSectionMeta []SectionMeta
 
 	for subjectIndex := range diff.Subjects {
 		subject := diff.Subjects[subjectIndex]
@@ -213,15 +213,21 @@ func (ein *ein) insertSections(diff model.University) {
 			course := subject.Courses[courseIndex]
 			for sectionIndex := range course.Sections {
 				section := course.Sections[sectionIndex]
-				allSections = append(allSections, section)
+				allSectionMeta = append(allSectionMeta, SectionMeta{section, subject, diff})
 			}
 		}
 	}
 
-	if len(allSections) == 0 {
+	if len(allSectionMeta) == 0 {
 		ein.logger.Infoln("insertSections: no new sections")
 		return
 	}
 
-	ein.updateSerialSection(diff, allSections)
+	ein.updateSerialSection(allSectionMeta)
+}
+
+type SectionMeta struct {
+	section    *model.Section
+	subject    *model.Subject
+	university model.University
 }
