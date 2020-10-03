@@ -7,7 +7,7 @@ steps:
             '--memory',
             '256',
             '--timeout',
-            '120'
+            '120',
             '--runtime',
             'go113',
             '--entry-point',
