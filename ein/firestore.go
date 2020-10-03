@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	log "github.com/Sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
@@ -26,7 +27,7 @@ func (ein *ein) insertUniversity(newUniversity model.University, university mode
 	docRef := collections.Doc(universityCopy.TopicName)
 	_, err = docRef.Set(ein.ctx, universityView)
 	if err != nil {
-		ein.logger.WithError(err).Fatalln("firestore: failed to write university.topicName")
+		ein.logger.WithError(err).Fatalln("firestore: failed to set university.topicName")
 	}
 
 	ein.logger.Infoln("set university.topicName")
@@ -36,24 +37,24 @@ func (ein *ein) insertUniversity(newUniversity model.University, university mode
 	ein.insertSemester(&newUniversity)
 }
 
-type FirestoreSeason struct {
+type FirestoreSemesters struct {
 	CurrentSeason string `firestore:"currentSeason"`
 	NextSeason    string `firestore:"nextSeason"`
 	LastSeason    string `firestore:"lastSeason"`
 }
 
 func (ein *ein) insertSemester(university *model.University) {
-	firestoreSeason := FirestoreSeason{
+	firestoreSeason := FirestoreSemesters{
 		makeSemesterKey(university.ResolvedSemesters.Current),
 		makeSemesterKey(university.ResolvedSemesters.Next),
 		makeSemesterKey(university.ResolvedSemesters.Last),
 	}
 
-	collections := ein.firestoreClient.Collection("university.topicName")
+	collections := ein.firestoreClient.Collection("university.semesters")
 	docRef := collections.Doc(university.TopicName)
 	_, err := docRef.Set(ein.ctx, firestoreSeason)
 	if err != nil {
-		ein.logger.Fatalln(err)
+		ein.logger.WithError(err).Fatalln("firestore: failed to set university.semesters")
 	}
 }
 
@@ -66,6 +67,11 @@ type SubjectView struct {
 
 type FirestoreData struct {
 	Data []byte `firestore:"data"`
+}
+
+type SectionFirestoreData struct {
+	Data       []byte                 `firestore:"data"`
+	University *firestore.DocumentRef `firestore:"universityRef"`
 }
 
 func NewFirestoreData(data []byte) FirestoreData {
@@ -119,7 +125,7 @@ func (ein *ein) injectSubjectBySemester(university *model.University, semester *
 	NewFirestoreData(data)
 
 	firestoreData := FirestoreData{Data: buf.Bytes()}
-	collections := ein.firestoreClient.Collection("university.semester")
+	collections := ein.firestoreClient.Collection("university.subjects")
 	docRef := collections.Doc(university.TopicName + "." + makeSemesterKey(semester))
 	_, err = docRef.Set(ein.ctx, firestoreData)
 	if err != nil {
@@ -174,8 +180,9 @@ func (ein *ein) insertSubject(sub *model.Subject) {
 	ein.logger.WithFields(field).WithField("result", fmt.Sprintf("%+v", results)).WithField("topicName", sub.TopicName).Debugln("firestore: set subject.topicName")
 }
 
-func (ein *ein) updateSerialSection(sections []*model.Section) {
+func (ein *ein) updateSerialSection(university model.University, sections []*model.Section) {
 	collection := ein.firestoreClient.Collection("section.topicName")
+	universityCollection := ein.firestoreClient.Collection("university.topicName")
 
 	Batch(500, sections, func(s []*model.Section) {
 		batch := ein.firestoreClient.Batch()
@@ -187,7 +194,7 @@ func (ein *ein) updateSerialSection(sections []*model.Section) {
 				ein.logger.WithError(err).Fatalln("failed to marshal Section")
 			}
 			docRef := collection.Doc(section.TopicName)
-			batch.Set(docRef, FirestoreData{secData})
+			batch.Set(docRef, SectionFirestoreData{secData, universityCollection.Doc(university.TopicName)})
 		}
 
 		results, err := batch.Commit(ein.ctx)

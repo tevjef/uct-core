@@ -223,5 +223,5 @@ func (ein *ein) insertSections(diff model.University) {
 		return
 	}
 
-	ein.updateSerialSection(allSections)
+	ein.updateSerialSection(diff, allSections)
 }
