@@ -1,6 +1,9 @@
 package ein
 
 import (
+	"bytes"
+	"compress/gzip"
+	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,20 +14,23 @@ func (ein *ein) insertUniversity(newUniversity model.University, university mode
 
 	defer model.TimeTrack(time.Now(), "insertUniversity")
 
-	data, err := university.Marshal()
+	universityCopy := university
+	universityCopy.Subjects = nil
 
-	university.Subjects = nil
-	universityView := FirestoreData{data}
+	data, err := universityCopy.Marshal()
+
+	universityView := NewFirestoreData(data)
 	collections := ein.firestoreClient.Collection("university.topicName")
-	docRef := collections.Doc(university.TopicName)
+	docRef := collections.Doc(universityCopy.TopicName)
 	_, err = docRef.Set(ein.ctx, universityView)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Debugln("set university.topicName")
 
-	ein.insertSubjects(&university)
+	ein.insertSubjects(&newUniversity)
 
-	ein.insertSemester(&university)
+	ein.insertSemester(&newUniversity)
 }
 
 type FirestoreSeason struct {
@@ -59,37 +65,64 @@ type FirestoreData struct {
 	Data []byte `firestore:"data"`
 }
 
+func NewFirestoreData(data []byte) FirestoreData {
+	return FirestoreData{data}
+}
+
 func (ein *ein) insertSubjects(university *model.University) {
 	ein.injectSubjectBySemester(university, university.ResolvedSemesters.Current)
 	ein.injectSubjectBySemester(university, university.ResolvedSemesters.Next)
 	ein.injectSubjectBySemester(university, university.ResolvedSemesters.Last)
 
+	collection := ein.firestoreClient.Collection("subject.topicName")
+	batch := ein.firestoreClient.Batch()
 	for subjectIndex := range university.Subjects {
 		subject := university.Subjects[subjectIndex]
+		docRef := collection.Doc(subject.TopicName)
 
-		ein.insertSubject(subject)
+		data, _ := subject.Marshal()
+		subView := NewFirestoreData(data)
+
+		batch.Set(docRef, subView)
 	}
+	results, err := batch.Commit(ein.ctx)
+	if err != nil {
+		log.WithError(err).Fatalln("failed to commit subject transaction")
+	}
+
+	log.WithField("results", len(results)).Infoln("firestore: set subject.topicName")
 }
 
 func (ein *ein) injectSubjectBySemester(university *model.University, semester *model.Semester) {
 	filteredSubjects := getSubjectsForSemester(university.Subjects, semester)
 
 	data, err := (&model.Data{Subjects: filteredSubjects}).Marshal()
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err = zw.Write(data)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = zw.Close()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	firestoreData := FirestoreData{Data: data}
-	collections := ein.firestoreClient.Collection("university.topicName")
-	docRef := collections.Doc(university.TopicName + "." + makeSemesterKey(university.ResolvedSemesters.Current))
+	NewFirestoreData(data)
+
+	firestoreData := FirestoreData{Data: buf.Bytes()}
+	collections := ein.firestoreClient.Collection("university.semester")
+	docRef := collections.Doc(university.TopicName + "." + makeSemesterKey(semester))
 	_, err = docRef.Set(ein.ctx, firestoreData)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	log.Infoln("firestore: set university.semester")
 }
 
 func makeSemesterKey(semester *model.Semester) string {
-	return semester.Season + string(semester.Year)
+	return semester.Season + fmt.Sprint(semester.Year)
 }
 
 func getSubjectsForSemester(subjects []*model.Subject, semester *model.Semester) []*model.Subject {
@@ -98,7 +131,7 @@ func getSubjectsForSemester(subjects []*model.Subject, semester *model.Semester)
 	for subjectIndex := range subjects {
 		subject := subjects[subjectIndex]
 
-		if subject.Year == string(semester.Year) && subject.Season == semester.Season {
+		if subject.Year == fmt.Sprint(semester.Year) && subject.Season == semester.Season {
 			current = append(current, subject)
 		}
 	}
@@ -115,15 +148,53 @@ func (ein *ein) insertSubject(sub *model.Subject) {
 	subCopy := *sub
 
 	data, _ := subCopy.Marshal()
-
-	subView := FirestoreData{
-		Data: data,
-	}
+	subView := NewFirestoreData(data)
 
 	collections := ein.firestoreClient.Collection("subject.topicName")
 	docRef := collections.Doc(subCopy.TopicName)
-	_, err := docRef.Set(ein.ctx, subView)
+	results, err := docRef.Set(ein.ctx, subView)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	log.WithField("result", fmt.Sprintf("%+v", results)).WithField("topicName", sub.TopicName).Debugln("firestore: set subject.topicName")
+}
+
+func (ein *ein) updateSerialSection(sections []*model.Section) {
+	collection := ein.firestoreClient.Collection("section.topicName")
+
+	Batch(500, sections, func(s []*model.Section) {
+		batch := ein.firestoreClient.Batch()
+
+		for sectionIndex := range s {
+			section := s[sectionIndex]
+			secData, err := section.Marshal()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			docRef := collection.Doc(section.TopicName)
+			batch.Set(docRef, FirestoreData{secData})
+		}
+
+		results, err := batch.Commit(ein.ctx)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		log.WithField("results", len(results)).Infoln("firestore: set sections")
+	})
+}
+
+func Batch(count int, items []*model.Section, callback func([]*model.Section)) {
+	var result []*model.Section
+
+	for i := 0; i < len(items); i++ {
+		if len(result) == count {
+			callback(result)
+			result = []*model.Section{}
+		}
+
+		result = append(result, items[i])
+	}
+
+	callback(items[len(items)-len(items)%count:])
 }

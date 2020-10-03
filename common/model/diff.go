@@ -67,7 +67,7 @@ func diffAndFilterSections(oldSections, newSections []*Section) []*Section {
 				log.Fields{
 					"old_section": oldSections[e].TopicName,
 					"new_section": newSections[e].TopicName,
-				}).Infoln("diff")
+				}).Debugln("diff")
 			filteredSections = append(filteredSections, newSections[e])
 		}
 	}

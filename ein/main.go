@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -87,8 +86,8 @@ func Ein(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.InfoLevel)
 }
 
 func MainFunc(newUniversityData []byte) {
@@ -130,6 +129,7 @@ func MainFunc(newUniversityData []byte) {
 		ProjectID:     econf.firebaseProjectID,
 		StorageBucket: "universitycoursetracker.appspot.com",
 	}
+
 	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, credOption)
 	if err != nil {
 		log.WithError(err).Errorln("failed to crate firebase app")
@@ -296,10 +296,6 @@ func (ein *ein) init() {
 }
 
 func (ein *ein) process() error {
-	bucket, err := ein.storageClient.DefaultBucket()
-	if err != nil {
-		log.WithError(err).Errorln("failed to get default bucket")
-	}
 
 	// Decode new data
 	var newUniversity model.University
@@ -313,6 +309,11 @@ func (ein *ein) process() error {
 	}
 
 	var oldRaw []byte
+
+	bucket, err := ein.storageClient.DefaultBucket()
+	if err != nil {
+		log.WithError(err).Errorln("failed to get default bucket")
+	}
 	if oldUniversityReader, err := bucket.Object(newUniversity.TopicName).NewReader(ein.ctx); err == cloudStorage.ErrObjectNotExist {
 		log.Warningln("there was no older data, did it expire or is this first run?")
 	} else if err != nil {
@@ -342,21 +343,24 @@ func (ein *ein) process() error {
 		university = newUniversity
 	}
 
-	//go statsCollector(ein, university.TopicName)
+	go statsCollector(ein, university.TopicName)
 
 	ein.insertUniversity(newUniversity, university)
-	//ein.updateSerial(ein.newUniversityData, university)
+	ein.updateSerial(ein.newUniversityData, university)
 
-	//collectDatabaseStats(ein.postgres)
 	//doneAudit <- true
 	//<-doneAudit
 	//break
 
-	w := bucket.Object(newUniversity.TopicName).NewWriter(ein.ctx)
+	w := bucket.Object(newUniversity.TopicName + ".old").NewWriter(ein.ctx)
 
 	_, err = io.Copy(w, bytes.NewReader(ein.newUniversityData))
+	err = w.Close()
+	if err != nil {
+		log.WithError(err).Errorln("failed to result to cloud storage")
+	}
 
-	return err
+	return nil
 }
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
@@ -381,39 +385,22 @@ func (ein *ein) updateSerial(raw []byte, diff model.University) {
 	countUniversity(diff, diffSubjectCh, diffCourseCh, diffSectionCh, diffMeetingCh, diffMetadataCh)
 	countSubjects(newUniversity.Subjects, diffCourses, diffSerialSubjectCh, diffSerialCourseCh, diffSerialSectionCh, diffSerialMeetingCountCh, diffSerialMetadataCountCh)
 
-	sem := make(chan bool, ein.config.service.Postgres.ConnMax)
-
-	for subjectIndex := range newUniversity.Subjects {
-		subject := newUniversity.Subjects[subjectIndex]
-		ein.updateSerialSubject(subject)
-	}
-
-	cwg := sync.WaitGroup{}
+	var allSections []*model.Section
 	for courseIndex := range diffCourses {
 		course := diffCourses[courseIndex]
-
-		cwg.Add(1)
-
-		sem <- true
-		go func() {
-			ein.updateSerialCourse(course)
-
-			for sectionIndex := range course.Sections {
-				section := course.Sections[sectionIndex]
-				ein.updateSerialSection(section)
-			}
-
-			<-sem
-			cwg.Done()
-		}()
+		for sectionIndex := range course.Sections {
+			section := course.Sections[sectionIndex]
+			allSections = append(allSections, section)
+		}
 	}
-	cwg.Wait()
+
+	ein.updateSerialSection(allSections)
 }
 
 // For ever course that's in the diff return the course that has full data.
 func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.Course) {
-	allCourses := []*model.Course{}
-	diffCourses := []*model.Course{}
+	var allCourses []*model.Course
+	var diffCourses []*model.Course
 
 	for i := range full.Subjects {
 		allCourses = append(allCourses, full.Subjects[i].Courses...)
@@ -434,16 +421,4 @@ func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.
 	}
 
 	return coursesToUpdate
-}
-
-func (ein *ein) updateSerialSubject(subject *model.Subject) {
-
-}
-
-func (ein *ein) updateSerialCourse(course *model.Course) {
-
-}
-
-func (ein *ein) updateSerialSection(section *model.Section) {
-	// TODO
 }
