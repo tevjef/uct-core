@@ -302,6 +302,12 @@ func (u *University) Validate() error {
 		return errors.New("ResolvedSemesters.Current is nil")
 	}
 
+	if len(u.Subjects) == 0 {
+		log.WithField("university", u.TopicName).Warningln("No subjects in university")
+	} else {
+		sort.Sort(subjectSorter{u.Subjects})
+	}
+
 	u.TopicName = ToTopicName(u.Name)
 	u.TopicId = ToTopicId(u.TopicName)
 

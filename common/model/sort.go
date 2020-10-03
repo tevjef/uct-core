@@ -173,7 +173,7 @@ func (a CourseByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
 }
 
-type SubjectByName []Subject
+type SubjectByName []*Subject
 
 func (a SubjectByName) Len() int {
 	return len(a)
@@ -185,6 +185,22 @@ func (a SubjectByName) Swap(i, j int) {
 
 func (a SubjectByName) Less(i, j int) bool {
 	return strings.Compare(a[i].Name, a[j].Name) < 0
+}
+
+type subjectSorter struct {
+	subjects []*Subject
+}
+
+func (a subjectSorter) Len() int {
+	return len(a.subjects)
+}
+
+func (a subjectSorter) Swap(i, j int) {
+	a.subjects[i], a.subjects[j] = a.subjects[j], a.subjects[i]
+}
+
+func (a subjectSorter) Less(i, j int) bool {
+	return strings.Compare(a.subjects[i].Name, a.subjects[j].Name) < 0
 }
 
 func (meeting Meeting) dayRank() int {

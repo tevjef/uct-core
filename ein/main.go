@@ -164,9 +164,11 @@ func (ein *ein) process() error {
 
 	var university model.University
 
+	log.WithField("oldRaw", len(oldRaw)).Infoln("old university")
 	// Decode old data if have some
+	var oldUniversity model.University
+
 	if len(oldRaw) != 0 && !ein.config.noDiff {
-		var oldUniversity model.University
 		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(oldRaw), &oldUniversity); err != nil {
 			return errors.Wrap(err, "error while unmarshalling old data")
 		}
@@ -181,6 +183,7 @@ func (ein *ein) process() error {
 		university = newUniversity
 	}
 
+	debugWrite(bucket, oldUniversity, newUniversity, university)
 	w := bucket.Object(objName).NewWriter(ein.ctx)
 
 	_, err = w.Write(ein.newUniversityData)
@@ -190,13 +193,32 @@ func (ein *ein) process() error {
 	}
 
 	ein.insertUniversity(newUniversity, university)
-	ein.updateSerial(newUniversity, university)
+	ein.updateSerial(university)
 
 	return nil
 }
 
+func debugWrite(bucket *cloudStorage.BucketHandle, oldUniversity model.University, newUniversity model.University, diffUniversity model.University) {
+	oldUniversityBytes, _ := oldUniversity.MarshalJSON()
+	newUniversityBytes, _ := newUniversity.MarshalJSON()
+	diffUniversityBytes, _ := diffUniversity.MarshalJSON()
+
+	timestamp := fmt.Sprint(time.Now().Unix())
+	oldUniversityWriter := bucket.Object("debug/" + timestamp + "/oldUniversity.json").NewWriter(context.Background())
+	newUniversityWriter := bucket.Object("debug/" + timestamp + "/newUniversity.json").NewWriter(context.Background())
+	diffUniversityWriter := bucket.Object("debug/" + timestamp + "/diffUniversity.json").NewWriter(context.Background())
+
+	oldUniversityWriter.Write(oldUniversityBytes)
+	newUniversityWriter.Write(newUniversityBytes)
+	diffUniversityWriter.Write(diffUniversityBytes)
+
+	oldUniversityWriter.Close()
+	newUniversityWriter.Close()
+	diffUniversityWriter.Close()
+}
+
 // uses raw because the previously validated university was mutated some where and I couldn't find where
-func (ein *ein) updateSerial(newUniversity model.University, diff model.University) {
+func (ein *ein) updateSerial(diff model.University) {
 	defer model.TimeTrack(time.Now(), "updateSerial")
 
 	var allSections []*model.Section
@@ -218,30 +240,4 @@ func (ein *ein) updateSerial(newUniversity model.University, diff model.Universi
 	}
 
 	ein.updateSerialSection(allSections)
-}
-
-// For ever course that's in the diff return the course that has full data.
-func diffAndMergeCourses(full, diff model.University) (coursesToUpdate []*model.Course) {
-	var allCourses []*model.Course
-	var diffCourses []*model.Course
-
-	for i := range full.Subjects {
-		allCourses = append(allCourses, full.Subjects[i].Courses...)
-	}
-
-	for i := range diff.Subjects {
-		diffCourses = append(diffCourses, diff.Subjects[i].Courses...)
-	}
-
-	for i := range diffCourses {
-		course := diffCourses[i]
-		for j := range allCourses {
-			fullCourse := allCourses[j]
-			if course.TopicName == fullCourse.TopicName {
-				coursesToUpdate = append(coursesToUpdate, fullCourse)
-			}
-		}
-	}
-
-	return coursesToUpdate
 }

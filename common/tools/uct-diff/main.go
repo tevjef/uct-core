@@ -46,10 +46,18 @@ func main() {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
 	}
 
+	if err := model.ValidateAll(&oldUniversity); err != nil {
+		log.WithError(err).Fatalf("error while validating oldUniversity")
+	}
+
 	var newUniversity model.University
 
 	if err := model.UnmarshalMessage(*format, secondFile, &newUniversity); err != nil {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
+	}
+
+	if err := model.ValidateAll(&newUniversity); err != nil {
+		log.WithError(err).Fatalf("error while validating newUniversity")
 	}
 
 	filteredUniversity := model.DiffAndFilter(oldUniversity, newUniversity)
