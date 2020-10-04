@@ -15,20 +15,20 @@ spec:
           image: docker.io/tevjef/spike:staging
           imagePullPolicy: "Always"
           ports:
-          - containerPort: 13100
-            name: pprof
-          - containerPort: 13000
-            name: metrics-port       
-            protocol: TCP
-          - containerPort: 9876
-            protocol: TCP
+            - containerPort: 13100
+              name: pprof
+            - containerPort: 13000
+              name: metrics-port
+              protocol: TCP
+            - containerPort: 9876
+              protocol: TCP
           readinessProbe:
             httpGet:
               path: /v2/universities
               port: 9876
               httpHeaders:
-              - name: X-Health-Check
-                value: "true"
+                - name: X-Health-Check
+                  value: "true"
             initialDelaySeconds: 5
             periodSeconds: 10
           env:

@@ -16,7 +16,7 @@ go_library(
         "//common/redis:go_default_library",
         "//julia/notifier:go_default_library",
         "//julia/rutgers:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/lib/pq:go_default_library",
         "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
         "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
@@ -40,7 +40,7 @@ go_test(
     deps = [
         "//common/model:go_default_library",
         "//julia/notifier:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

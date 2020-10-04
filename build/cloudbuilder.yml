@@ -15,7 +15,7 @@ steps:
             'go113',
             '--entry-point',
             'Hermes'
-      ]
+    ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',

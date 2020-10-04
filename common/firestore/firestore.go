@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
 

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"unicode"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var trim = strings.TrimSpace
@@ -137,7 +137,7 @@ func ValidateAllSubjects(university *University) error {
 	makeUniqueSubjects(university.Subjects)
 
 	if len(university.Subjects) == 0 {
-		log.WithField("university", university.TopicName).Warningln("No subjects in university")
+		log.Warningln("no subjects in university: %v", university.TopicName)
 	} else {
 		sort.Sort(subjectSorter{university.Subjects})
 	}
@@ -330,7 +330,7 @@ func (sub *Subject) Validate(uni *University) error {
 	sub.TopicId = ToTopicId(sub.TopicName)
 
 	if len(sub.Courses) == 0 {
-		log.WithField("subject", sub.TopicName).Warningln("No course in subject")
+		log.Warningf("no course in subject: %v", sub.TopicName)
 	} else {
 		sort.Sort(courseSorter{sub.Courses})
 	}
@@ -364,7 +364,7 @@ func (course *Course) Validate(subject *Subject) error {
 	course.TopicName = ToTopicName(course.TopicName)
 	course.TopicId = ToTopicId(course.TopicName)
 	if len(course.Sections) == 0 {
-		log.WithField("course", course.TopicName).Errorln("No section in course")
+		log.Errorln("no section in course: %v", course.TopicName)
 	} else {
 		sort.Stable(sectionSorter{course.Sections})
 	}
@@ -504,7 +504,7 @@ func makeUniqueSubjects(subjects []*Subject) {
 		key := strings.Join([]string{subject.Season, subject.Year, subject.Name, subject.Number}, "")
 		m[key]++
 		if m[key] > 1 {
-			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugln("Duplicate subject")
+			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugf("duplicate subject: %v", subject.TopicName)
 			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
 		}
 	}
@@ -521,7 +521,7 @@ func makeUniqueCourses(subject *Subject, courses []*Course) {
 				"season": subject.Season,
 				"year":   subject.Year,
 				"key":    key,
-				"count":  m[key]}).Debugln("Duplicate course")
+				"count":  m[key]}).Debugf("duplicate course: %v", course.TopicName)
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
 		}
 	}

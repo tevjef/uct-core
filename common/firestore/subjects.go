@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"io/ioutil"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
 
@@ -28,7 +28,9 @@ func (client Client) InsertSubjects(subjects []*model.Subject) error {
 		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to commit subject transaction")
 	}
 
-	client.logger.WithField("results", len(results)).WithFields(field).Infoln("firestore: batch set complete")
+	client.logger.WithField("results", len(results)).
+		WithFields(field).
+		Debugln("firestore: batch set complete")
 
 	return nil
 }
@@ -94,7 +96,7 @@ func (client Client) InsertSubjectsBySemester(university model.University, semes
 		client.logger.WithError(err).WithFields(field).Fatalf("firestore: failed to set %s", CollectionUniversitySubjects)
 	}
 
-	client.logger.WithFields(field).Infof("firestore: set %s", CollectionUniversitySubjects)
+	client.logger.WithFields(field).Debugln("firestore: set %s", CollectionUniversitySubjects)
 
 	return nil
 }

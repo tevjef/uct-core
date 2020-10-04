@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//common/try:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/jmoiron/sqlx:go_default_library",
         "//vendor/github.com/pkg/errors:go_default_library",
         "//vendor/golang.org/x/net/context:go_default_library",

@@ -2,7 +2,7 @@ package hermes
 
 import (
 	"firebase.google.com/go/messaging"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 )
 
@@ -64,17 +64,20 @@ func (hermes *hermes) sendNotification(sectionNotification *uctfirestore.Section
 		Android: androidConfig,
 	}
 
-	field := map[string]interface{}{"section": sectionNotification.Section.TopicName}
+	field := map[string]interface{}{
+		"is_dry_run": hermes.config.dryRun,
+		"section":    sectionNotification.Section.TopicName,
+	}
 
 	if hermes.config.dryRun {
 		result, err := hermes.fcmClient.SendDryRun(hermes.ctx, message)
-		log.WithError(err).WithFields(field).Infoln(result)
+		log.WithError(err).WithFields(field).Infoln("notification sent: " + result)
 		if err != nil {
 			return err
 		}
 	} else {
 		result, err := hermes.fcmClient.Send(hermes.ctx, message)
-		log.WithError(err).WithFields(field).Infoln(result)
+		log.WithError(err).WithFields(field).Infoln("notification sent: " + result)
 		if err != nil {
 			return err
 		}

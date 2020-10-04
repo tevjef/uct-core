@@ -17,9 +17,9 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
-	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/model"
@@ -65,7 +65,7 @@ func init() {
 			log.FieldKeyMsg:   "message",
 		},
 	})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func MainFunc(newUniversityData []byte) {
@@ -181,7 +181,6 @@ func (ein *ein) process() error {
 
 	var university model.University
 
-	log.WithField("oldRaw", len(oldRaw)).Infoln("old university")
 	// Decode old data if have some
 	var oldUniversity model.University
 
@@ -206,6 +205,11 @@ func (ein *ein) process() error {
 	err = w.Close()
 	if err != nil {
 		ein.logger.WithError(err).Fatalln("failed to result to cloud storage")
+	}
+
+	if oldUniversity.Equal(newUniversity) {
+		ein.logger.WithError(err).Infof("%v: no changes found", newUniversity.TopicName)
+		return nil
 	}
 
 	ein.insertUniversity(newUniversity, university)
@@ -237,7 +241,7 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	if len(allSectionMeta) == 0 {
-		ein.logger.Infoln("insertSections: no new sections")
+		ein.logger.Infoln("%v: no new sections", diff.TopicName)
 		return
 	}
 

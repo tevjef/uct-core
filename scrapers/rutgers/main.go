@@ -8,9 +8,10 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/publishing"
+	_ "github.com/tevjef/uct-backend/common/trace"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -21,16 +22,16 @@ func init() {
 			log.FieldKeyMsg:   "message",
 		},
 	})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	MainFunc()
+	MainFunc(r.Context())
 
 	fmt.Fprint(w, "Complete")
 }
 
-func MainFunc() {
+func MainFunc(context context.Context) {
 	rconf := &rutgersConfig{}
 
 	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
@@ -66,7 +67,7 @@ func MainFunc() {
 	(&rutgers{
 		app:    app.Model(),
 		config: rconf,
-		ctx:    context.TODO(),
+		ctx:    context,
 	}).init()
 }
 
@@ -76,7 +77,7 @@ func (rutgers *rutgers) init() {
 		log.WithError(err).Fatal()
 	} else {
 		if rutgers.config.outputHttpUrl != "" {
-			err := publishing.PublishToHttp(rutgers.config.outputHttpUrl, reader)
+			err := publishing.PublishToHttp(rutgers.ctx, rutgers.config.outputHttpUrl, reader)
 			if err != nil {
 				log.Fatal(err)
 			}

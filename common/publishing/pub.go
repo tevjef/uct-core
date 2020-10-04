@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 
 	"cloud.google.com/go/pubsub"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"go.opencensus.io/exporter/stackdriver/propagation"
+	"go.opencensus.io/plugin/ochttp"
 	"google.golang.org/api/idtoken"
 )
 
@@ -38,14 +41,19 @@ func PublishMessage(token string, projectId string, topicId string, data string)
 	log.Debugln("Published message %d; msg ID: %v\n", id)
 }
 
-func PublishToHttp(url string, body io.Reader) error {
-	ctx := context.Background()
-	client, err := idtoken.NewClient(ctx, url)
+func PublishToHttp(context context.Context, url string, body io.Reader) error {
+	http.DefaultTransport = &ochttp.Transport{
+		// Use Google Cloud propagation format.
+		Propagation: &propagation.HTTPFormat{},
+	}
+
+	client, err := idtoken.NewClient(context, url)
 	if err != nil {
 		return fmt.Errorf("idtoken.NewClient: %v", err)
 	}
 
-	resp, err := client.Post(url, "", body)
+	req, err := http.NewRequestWithContext(context, http.MethodPost, url, body)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

@@ -10,9 +10,9 @@ spec:
   type: ClusterIP
   clusterIP: None
   ports:
-  - name: http-metrics
-    port: 9100
-    protocol: TCP
+    - name: http-metrics
+      port: 9100
+      protocol: TCP
   selector:
     app: node-exporter
 

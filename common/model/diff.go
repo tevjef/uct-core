@@ -1,7 +1,7 @@
 package model
 
 import (
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {

@@ -16,7 +16,7 @@ go_library(
         "//common/proxy:go_default_library",
         "//common/try:go_default_library",
         "//vendor/github.com/PuerkitoBio/goquery:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/pkg/errors:go_default_library",
         "//vendor/golang.org/x/net/context:go_default_library",
         "//vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
@@ -43,6 +43,6 @@ go_test(
         "//common/conf:go_default_library",
         "//common/model:go_default_library",
         "//vendor/github.com/PuerkitoBio/goquery:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

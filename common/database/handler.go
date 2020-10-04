@@ -1,17 +1,16 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"sync/atomic"
 	"syscall"
 
-	"context"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/try"
 )
 

@@ -1,16 +1,15 @@
 package main
 
 import (
+	"context"
 	_ "net/http/pprof"
 	"os"
 	"time"
 
-	"context"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/model"

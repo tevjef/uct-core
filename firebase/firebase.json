@@ -17,10 +17,10 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-        {
-          "source": "**",
-          "function": "helloWorld"
-        }
+      {
+        "source": "**",
+        "function": "helloWorld"
+      }
     ]
   },
   "storage": {

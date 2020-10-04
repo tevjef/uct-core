@@ -16,7 +16,7 @@ go_library(
         "//common/notification:go_default_library",
         "//common/redis:go_default_library",
         "//common/try:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/lib/pq:go_default_library",
         "//vendor/github.com/pkg/errors:go_default_library",
         "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",

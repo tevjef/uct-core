@@ -1,7 +1,7 @@
 package uctfirestore
 
 import (
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
 
@@ -34,7 +34,7 @@ func (client Client) InsertSection(sectionMetas []SectionMeta) error {
 		if err != nil {
 			client.logger.Fatalln(err)
 		}
-		client.logger.WithField("results", len(results)).WithFields(field).Infoln("firestore: batch set complete")
+		client.logger.WithField("results", len(results)).WithFields(field).Debugln("firestore: batch set complete")
 	})
 
 	return nil

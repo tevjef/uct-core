@@ -4,17 +4,17 @@ metadata:
   name: prometheus-k8s
   namespace: monitoring
 rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources:
-  - configmaps
-  verbs: ["get"]
+  - apiGroups: [ "" ]
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "" ]
+    resources:
+      - configmaps
+    verbs: [ "get" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -22,12 +22,12 @@ metadata:
   name: prometheus-k8s
   namespace: kube-system
 rules:
-- apiGroups: [""]
-  resources:
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [ "" ]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -35,12 +35,12 @@ metadata:
   name: prometheus-k8s
   namespace: default
 rules:
-- apiGroups: [""]
-  resources:
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [ "" ]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -48,12 +48,12 @@ metadata:
   name: prometheus-k8s
   namespace: staging
 rules:
-- apiGroups: [""]
-  resources:
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [ "" ]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -61,17 +61,17 @@ metadata:
   name: prometheus-k8s
   namespace: production
 rules:
-- apiGroups: [""]
-  resources:
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [ "" ]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: prometheus-k8s
 rules:
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
+  - nonResourceURLs: [ "/metrics" ]
+    verbs: [ "get" ]

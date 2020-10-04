@@ -11,8 +11,8 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"firebase.google.com/go/storage"
-	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	_ "github.com/tevjef/uct-backend/common/metrics"
@@ -161,7 +161,7 @@ func (hermes *hermes) init() error {
 			WithField("new_section", newSection.String()).
 			WithField("section", newSection.TopicName).
 			WithField("event", fmt.Sprintf("%+v", hermes.event)).
-			Warningln("section status did not updated.")
+			Warningln("section status did not update")
 		return nil
 	} else {
 		log.WithField("old_status", oldSection.Status).

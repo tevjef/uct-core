@@ -4,13 +4,13 @@ metadata:
   name: kube-state-metrics-resizer
   namespace: monitoring
 rules:
-- apiGroups: [""]
-  resources:
-  - pods
-  verbs: ["get"]
-- apiGroups: ["extensions"]
-  resources:
-  - deployments
-  resourceNames: ["kube-state-metrics"]
-  verbs: ["get", "update"]
+  - apiGroups: [ "" ]
+    resources:
+      - pods
+    verbs: [ "get" ]
+  - apiGroups: [ "extensions" ]
+    resources:
+      - deployments
+    resourceNames: [ "kube-state-metrics" ]
+    verbs: [ "get", "update" ]
 

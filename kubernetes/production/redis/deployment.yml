@@ -5,7 +5,7 @@ metadata:
   name: redis
 spec:
   ports:
-  - port: 6379
+    - port: 6379
   selector:
     app: redis
 ---
@@ -22,10 +22,10 @@ spec:
         app: redis
     spec:
       containers:
-      - image: redis:3
-        name: redis
-        ports: 
-        - containerPort: 6379
-        resources:
-          requests:
-            memory: 50Mi
+        - image: redis:3
+          name: redis
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: 50Mi

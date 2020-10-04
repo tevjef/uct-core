@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/julia/rutgers"
 )

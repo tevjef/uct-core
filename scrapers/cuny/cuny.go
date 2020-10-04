@@ -2,15 +2,14 @@ package main
 
 import (
 	"bytes"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"net"
-
 	"github.com/PuerkitoBio/goquery"
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/try"
 )
 

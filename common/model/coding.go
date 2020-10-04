@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-
 	"os"
 
 	"github.com/pkg/errors"

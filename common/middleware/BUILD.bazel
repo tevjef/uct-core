@@ -13,7 +13,7 @@ go_library(
     deps = [
         "//common/database:go_default_library",
         "//common/model:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/gin-gonic/gin:go_default_library",
         "//vendor/github.com/pquerna/ffjson/ffjson:go_default_library",
         "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",

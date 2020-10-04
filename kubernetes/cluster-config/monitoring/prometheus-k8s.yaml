@@ -11,7 +11,7 @@ spec:
   serviceAccountName: prometheus-k8s
   serviceMonitorSelector:
     matchExpressions:
-    - {key: metrics, operator: Exists}
+      - { key: metrics, operator: Exists }
   ruleSelector:
     matchLabels:
       role: prometheus-rulefiles
@@ -23,6 +23,6 @@ spec:
       memory: 600Mi
   alerting:
     alertmanagers:
-    - namespace: monitoring
-      name: alertmanager-main
-      port: web
+      - namespace: monitoring
+        name: alertmanager-main
+        port: web

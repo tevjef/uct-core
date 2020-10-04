@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/try"
 	"gopkg.in/redis.v5"
 )
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.WithFields(log.Fields{"elapsed": elapsed, "name": name}).Debug("")
+	log.WithFields(log.Fields{"elapsed": elapsed}).Tracef("time track: %v", name)
 }
 
 func StartPprof(listener net.Listener) {

@@ -12,12 +12,12 @@ spec:
       app: cuny-yrk
   namespaceSelector:
     matchNames:
-    - staging
-    - production
+      - staging
+      - production
   endpoints:
-  - port: metrics-port
-    interval: 2m
-    honorLabels: true
+    - port: metrics-port
+      interval: 2m
+      honorLabels: true
 ---
 apiVersion: v1
 kind: Service
@@ -31,7 +31,7 @@ spec:
   selector:
     app: cuny-yrk
   ports:
-  - name: metrics-port
-    port: 13000
-    protocol: TCP
-    targetPort: metrics-port
+    - name: metrics-port
+      port: 13000
+      protocol: TCP
+      targetPort: metrics-port

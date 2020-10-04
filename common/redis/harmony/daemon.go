@@ -1,12 +1,11 @@
 package harmony
 
 import (
+	"context"
 	"math/rand"
 	"time"
 
-	"context"
-
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/redis"
 )
 

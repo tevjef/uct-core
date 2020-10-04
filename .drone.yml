@@ -14,7 +14,7 @@ pipeline:
     volumes:
       - /tmp/cache:/cache
     when:
-      event: [push, pull_request]
+      event: [ push, pull_request ]
 
   compile:
     image: golang:1.14-alpine
@@ -60,7 +60,7 @@ pipeline:
 
       - ls -lA /go/bin
     when:
-      event: [push, pull_request]
+      event: [ push, pull_request ]
 
   stage-binaries:
     image: library/docker:dind
@@ -90,12 +90,12 @@ pipeline:
 
       - cp -v -r postgresql/ build/postgresql/
     when:
-      branch: [production, staging, develop]
+      branch: [ production, staging, develop ]
       event: push
 
   build-images:
     image: library/docker:dind
-    secrets: [docker_username, docker_password]
+    secrets: [ docker_username, docker_password ]
     commands:
       - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -121,12 +121,12 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      branch: [production, staging, develop]
+      branch: [ production, staging, develop ]
       event: push
 
   kubernetes-deploy-staging:
     image: library/docker:dind
-    secrets: [kubernetes_cert, kubernetes_master, kubernetes_token]
+    secrets: [ kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       # Install Kubectl
       - apk update
@@ -153,13 +153,13 @@ pipeline:
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
@@ -190,11 +190,11 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       branch: staging
-      event: [push, tag, deployment]
+      event: [ push, tag, deployment ]
 
   kubernetes-deploy-production:
     image: library/docker:dind
-    secrets: [kubernetes_cert, kubernetes_master, kubernetes_token]
+    secrets: [ kubernetes_cert, kubernetes_master, kubernetes_token ]
     commands:
       # Install Kubectl
       - apk update
@@ -234,13 +234,13 @@ pipeline:
 
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/spike:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/spike spike=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/hermes:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/hermes hermes=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/julia:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/julia julia=$DIGEST
-  
+
       - DIGEST=$(docker inspect --format='{{ index .RepoDigests 0 }}' tevjef/rutgers:$DRONE_COMMIT_BRANCH)
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-cm rutgers-cm=$DIGEST
       - kubectl -n $DRONE_COMMIT_BRANCH set image deployment/rutgers-nb rutgers-nb=$DIGEST
@@ -265,7 +265,7 @@ pipeline:
     volumes:
       - /tmp/cache:/cache
     when:
-      event: [push, pull_request]
+      event: [ push, pull_request ]
 
 services:
   redis:

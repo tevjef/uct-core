@@ -12,13 +12,13 @@ metadata:
 spec:
   tls:
     - hosts:
-      - api.staging.coursetrakr.io
+        - api.staging.coursetrakr.io
       secretName: api-staging-tls
   rules:
-  - host: api.staging.coursetrakr.io
-    http:
-      paths:
-      - path: /*
-        backend:
-          serviceName: spike-http
-          servicePort: spike-port
+    - host: api.staging.coursetrakr.io
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: spike-http
+              servicePort: spike-port

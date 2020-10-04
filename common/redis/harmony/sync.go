@@ -1,16 +1,15 @@
 package harmony
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
 	"time"
 
-	"context"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/redis"
 	"github.com/tevjef/uct-backend/common/redis/lock"
 	"github.com/tevjef/uct-backend/common/try"

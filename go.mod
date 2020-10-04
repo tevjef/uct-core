@@ -11,7 +11,7 @@ require (
 	firebase.google.com/go v3.9.0+incompatible
 	github.com/BurntSushi/toml v0.3.1
 	github.com/PuerkitoBio/goquery v1.2.0
-	github.com/Sirupsen/logrus v0.11.5
+	github.com/sirupsen/logrus v1.6.0
 	github.com/andybalholm/cascadia v0.0.0-20161224141413-349dd0209470 // indirect
 	github.com/aws/aws-sdk-go v1.34.32 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect

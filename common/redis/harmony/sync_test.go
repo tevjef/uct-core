@@ -1,16 +1,15 @@
 package harmony
 
 import (
+	"context"
 	"sort"
 	"strconv"
 	"testing"
 	"time"
 
-	"context"
-
-	_ "github.com/Sirupsen/logrus"
-	log "github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	_ "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/model"

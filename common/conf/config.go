@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	_ "github.com/tevjef/go-runtime-metrics/expvar"
 )
 

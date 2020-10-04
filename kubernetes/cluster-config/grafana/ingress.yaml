@@ -12,13 +12,13 @@ metadata:
 spec:
   tls:
     - hosts:
-      - grafana.staging.coursetrakr.io
+        - grafana.staging.coursetrakr.io
       secretName: grafana-tls
   rules:
-  - host: grafana.staging.coursetrakr.io
-    http:
-      paths:
-      - path: /*
-        backend:
-          serviceName: grafana
-          servicePort: grafana-port
+    - host: grafana.staging.coursetrakr.io
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: grafana
+              servicePort: grafana-port

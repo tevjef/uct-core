@@ -9,22 +9,31 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/try"
+	"go.opencensus.io/exporter/stackdriver/propagation"
+	"go.opencensus.io/plugin/ochttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
+	Transport: &ochttp.Transport{
+		// Use Google Cloud propagation format.
+		Propagation: &propagation.HTTPFormat{},
+	},
 }
 
 type rutgersRequest struct {
 	semester model.Semester
 	host     string
 	campus   string
+
+	context context.Context
 }
+
 type rutgers struct {
 	app    *kingpin.ApplicationModel
 	config *rutgersConfig
@@ -74,11 +83,12 @@ func (rutgers *rutgers) getCampus(campus string) model.University {
 	return university
 }
 
-func getSubjects(campus string, semester *model.Semester) []*RSubject {
+func getSubjects(context context.Context, campus string, semester *model.Semester) []*RSubject {
 	rr := rutgersRequest{
 		host:     "http://sis.rutgers.edu/soc/api",
 		semester: *semester,
 		campus:   campus,
+		context:  context,
 	}
 
 	subjects := rr.requestCourses()
@@ -97,7 +107,7 @@ func (sr rutgersRequest) requestCourses() (subjects []*RSubject) {
 
 	var courses []*RCourseNew
 
-	if err := getData(url, &courses); err == nil {
+	if err := getData(sr.context, url, &courses); err == nil {
 		subjectsMap := map[string]*RSubject{}
 		for i := range courses {
 			course := courses[i]
@@ -204,8 +214,8 @@ func buildSections(rutgerSections []*RSection) (s []*model.Section) {
 	return
 }
 
-func getData(url string, model interface{}) error {
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
+func getData(context context.Context, url string, model interface{}) error {
+	req, _ := http.NewRequestWithContext(context, http.MethodGet, url, nil)
 	//req.Header.Add("User-Agent", "Go/rutgers-scrape")
 
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})

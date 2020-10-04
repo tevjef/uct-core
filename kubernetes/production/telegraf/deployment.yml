@@ -10,33 +10,33 @@ spec:
         app: telegraf-exporter
     spec:
       containers:
-      - name: telegraf-exporter
-        image: telegraf:1.4-alpine
-        ports:
-        - containerPort: 13000
-          name: metrics-port
-        env:
-          - name: POSTGRES_USER
-            valueFrom:
-              secretKeyRef:
-                name: pg-cred
-                key: username
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: pg-cred
-                key: password
-          - name: POSTGRES_DB
-            valueFrom:
-              secretKeyRef:
-                name: pg-cred
-                key: database-name
-        volumeMounts:
-          - name: telegraf-conf-volume
-            mountPath: /etc/telegraf
-        resources:
-          requests:
-            memory: 50Mi
+        - name: telegraf-exporter
+          image: telegraf:1.4-alpine
+          ports:
+            - containerPort: 13000
+              name: metrics-port
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: pg-cred
+                  key: database-name
+          volumeMounts:
+            - name: telegraf-conf-volume
+              mountPath: /etc/telegraf
+          resources:
+            requests:
+              memory: 50Mi
       volumes:
         - name: telegraf-conf-volume
           configMap:
@@ -56,12 +56,12 @@ spec:
       app: telegraf-exporter
   namespaceSelector:
     matchNames:
-    - staging
-    - production
+      - staging
+      - production
   endpoints:
-  - port: telegraf-port
-    interval: 10s
-    honorLabels: true
+    - port: telegraf-port
+      interval: 10s
+      honorLabels: true
 ---
 apiVersion: v1
 kind: Service
@@ -73,9 +73,9 @@ metadata:
     metrics: "true"
 spec:
   ports:
-  - port: 13000
-    protocol: TCP
-    targetPort: metrics-port
-    name: telegraf-port
+    - port: 13000
+      protocol: TCP
+      targetPort: metrics-port
+      name: telegraf-port
   selector:
     app: telegraf-exporter

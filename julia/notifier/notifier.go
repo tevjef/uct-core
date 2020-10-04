@@ -1,8 +1,8 @@
 package notifier
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 type pgNotifier struct {

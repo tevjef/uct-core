@@ -12,13 +12,13 @@ metadata:
 spec:
   tls:
     - hosts:
-      - api.coursetrakr.io
+        - api.coursetrakr.io
       secretName: api-production-tls
   rules:
-  - host: api.coursetrakr.io
-    http:
-      paths:
-      - path: /*
-        backend:
-          serviceName: spike-http
-          servicePort: spike-port
+    - host: api.coursetrakr.io
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: spike-http
+              servicePort: spike-port

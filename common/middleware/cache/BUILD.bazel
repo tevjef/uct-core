@@ -15,7 +15,7 @@ go_library(
         "//common/model:go_default_library",
         "//spike/middleware:go_default_library",
         "//spike/middleware/trace:go_default_library",
-        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/gin-gonic/gin:go_default_library",
         "//vendor/github.com/robfig/go-cache:go_default_library",
         "//vendor/gopkg.in/redis.v5:go_default_library",

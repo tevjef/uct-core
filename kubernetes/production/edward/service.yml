@@ -7,9 +7,9 @@ metadata:
     app: edward
 spec:
   ports:
-  - port: 2058
-    protocol: "TCP"
-    targetPort: 2058
-    name: edward-port
+    - port: 2058
+      protocol: "TCP"
+      targetPort: 2058
+      name: edward-port
   selector:
     app: edward

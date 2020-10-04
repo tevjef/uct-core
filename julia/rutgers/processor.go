@@ -1,13 +1,12 @@
 package rutgers
 
 import (
+	"context"
 	"strings"
 	"time"
 
-	"context"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/julia/rutgers/topic"
 )

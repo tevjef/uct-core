@@ -1,11 +1,10 @@
 package topic
 
 import (
+	"context"
 	"time"
 
 	"github.com/tevjef/uct-backend/common/model"
-
-	"context"
 )
 
 type Routine struct {

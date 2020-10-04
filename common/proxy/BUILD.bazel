@@ -5,5 +5,5 @@ go_library(
     srcs = ["proxy.go"],
     importpath = "github.com/tevjef/uct-backend/common/proxy",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/Sirupsen/logrus:go_default_library"],
+    deps = ["//vendor/github.com/sirupsen/logrus:go_default_library"],
 )

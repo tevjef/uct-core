@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/julia/notifier"

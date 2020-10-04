@@ -6,11 +6,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/gonum/stat"
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/tevjef/uct-backend/common/firestore"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
 	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"

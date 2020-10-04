@@ -1,15 +1,11 @@
 package uctfirestore
 
 import (
-	"time"
-
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
 
 func (client Client) InsertUniversity(university model.University) error {
-	defer model.TimeTrack(time.Now(), "InsertUniversity")
-
 	universityCopy := university
 	universityCopy.Subjects = nil
 
@@ -27,13 +23,12 @@ func (client Client) InsertUniversity(university model.University) error {
 		return err
 	}
 
-	client.logger.Infoln("set university.topicName")
+	client.logger.Debugf("%v set university.topicName", university.TopicName)
 
 	return nil
 }
 
 func (client Client) GetUniversity(topicName string) (university *model.University, err error) {
-	defer model.TimeTrack(time.Now(), "GetUniversities")
 	field := log.Fields{"collection": CollectionUniversityTopicName}
 
 	collections := client.fsClient.Collection(CollectionUniversityTopicName)
@@ -71,7 +66,6 @@ func (client Client) GetUniversity(topicName string) (university *model.Universi
 }
 
 func (client Client) GetUniversities() (universities []*model.University, err error) {
-	defer model.TimeTrack(time.Now(), "GetUniversities")
 	field := log.Fields{"collection": CollectionUniversityTopicName}
 
 	collections := client.fsClient.Collection(CollectionUniversityTopicName)
