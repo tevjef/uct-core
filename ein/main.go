@@ -3,7 +3,6 @@ package ein
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -54,7 +53,7 @@ func Ein(w http.ResponseWriter, r *http.Request) {
 
 	MainFunc(newUniversityData)
 
-	fmt.Fprint(w, "Complete")
+	w.WriteHeader(http.StatusOK)
 }
 
 func init() {

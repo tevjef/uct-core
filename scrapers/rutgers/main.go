@@ -2,7 +2,6 @@ package rutgers
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	_ "net/http/pprof"
@@ -28,7 +27,7 @@ func init() {
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
 	MainFunc(r.Context())
 
-	fmt.Fprint(w, "Complete")
+	w.WriteHeader(http.StatusOK)
 }
 
 func MainFunc(context context.Context) {

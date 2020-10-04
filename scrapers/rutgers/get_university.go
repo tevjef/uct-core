@@ -216,8 +216,6 @@ func buildSections(rutgerSections []*RSection) (s []*model.Section) {
 
 func (sr rutgersRequest) getData(context context.Context, url string, model interface{}) error {
 	req, _ := http.NewRequestWithContext(context, http.MethodGet, url, nil)
-	//req.Header.Add("User-Agent", "Go/rutgers-scrape")
-
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})
 	fields.Debugf("%s: getData: %s", sr.campus, url)
 
@@ -238,7 +236,7 @@ func (sr rutgersRequest) getData(context context.Context, url string, model inte
 		fields.WithFields(log.Fields{
 			"content-length":  len(data),
 			"response_status": resp.StatusCode,
-			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %d response_time %d", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
+			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %v response_time %v", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
 
 		return false, nil
 	})
