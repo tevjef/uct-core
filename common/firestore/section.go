@@ -23,6 +23,7 @@ func (client Client) InsertSection(sectionMetas []SectionMeta) error {
 			docRef := collection.Doc(sectionMeta.Section.TopicName)
 			batch.Set(docRef, SectionFirestoreData{
 				Data:                secData,
+				CourseName:          sectionMeta.Course.Name,
 				UniversityTopicName: sectionMeta.University.TopicName,
 				Year:                sectionMeta.Subject.Year,
 				Season:              sectionMeta.Subject.Season,

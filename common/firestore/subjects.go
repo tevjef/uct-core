@@ -106,7 +106,7 @@ func (client Client) GetSubjectsBySemester(universityTopicName string, semester 
 	docRef := collections.Doc(universityTopicName + "." + MakeSemesterKey(semester))
 	docSnap, err := docRef.Get(client.context)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get university.semester")
+		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get docRef")
 	}
 
 	data := FirestoreData{}

@@ -155,6 +155,7 @@ func (ein *ein) process() error {
 	}
 
 	ein.logger = ein.logger.WithField("university", newUniversity.TopicName)
+	ein.uctFSClient = uctfirestore.NewClient(ein.ctx, ein.firestoreClient, ein.logger)
 
 	var oldRaw []byte
 
