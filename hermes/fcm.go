@@ -64,15 +64,17 @@ func (hermes *hermes) sendNotification(sectionNotification *uctfirestore.Section
 		Android: androidConfig,
 	}
 
+	field := map[string]interface{}{"section": sectionNotification.Section.TopicName}
+
 	if hermes.config.dryRun {
 		result, err := hermes.fcmClient.SendDryRun(hermes.ctx, message)
-		log.WithError(err).Infoln(result)
+		log.WithError(err).WithFields(field).Infoln(result)
 		if err != nil {
 			return err
 		}
 	} else {
 		result, err := hermes.fcmClient.Send(hermes.ctx, message)
-		log.WithError(err).Infoln(result)
+		log.WithError(err).WithFields(field).Infoln(result)
 		if err != nil {
 			return err
 		}

@@ -91,7 +91,7 @@ func (client Client) InsertSubjectsBySemester(university model.University, semes
 	docRef := collections.Doc(university.TopicName + "." + MakeSemesterKey(semester))
 	_, err = docRef.Set(client.context, firestoreData)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to set university.semester")
+		client.logger.WithError(err).WithFields(field).Fatalf("firestore: failed to set %s", CollectionUniversitySubjects)
 	}
 
 	client.logger.WithFields(field).Infof("firestore: set %s", CollectionUniversitySubjects)

@@ -40,7 +40,7 @@ func (client Client) GetUniversity(topicName string) (university *model.Universi
 	docRef := collections.Doc(topicName)
 	docSnap, err := docRef.Get(client.context)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to get docRef")
+		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get docRef")
 		return nil, err
 	}
 

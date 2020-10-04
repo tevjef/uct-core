@@ -52,8 +52,6 @@ func Hermes(context context.Context, event uctfirestore.FirestoreEvent) error {
 		return fmt.Errorf("metadata.FromContext: %v", err)
 	}
 	log.Printf("Function triggered by change to: %v", meta.Resource)
-	log.Printf("Beginning processing...")
-
 	return MainFunc(event)
 }
 
@@ -78,9 +76,9 @@ func MainFunc(firebaseEvent uctfirestore.FirestoreEvent) error {
 	ctx := context.Background()
 
 	if hconf.dryRun {
-		log.Infoln("Enabling FCM in dry run mode")
+		log.Infoln("enabling hermes in dry run mode")
 	} else {
-		log.Infoln("Enabling FCM in production mode")
+		log.Infoln("enabling hermes in production mode")
 	}
 
 	logger := log.WithFields(log.Fields{})

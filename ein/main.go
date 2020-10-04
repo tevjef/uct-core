@@ -154,7 +154,7 @@ func (ein *ein) process() error {
 		return errors.Wrap(err, "error while validating newUniversity")
 	}
 
-	ein.logger = log.WithField("university", newUniversity.TopicName)
+	ein.logger = ein.logger.WithField("university", newUniversity.TopicName)
 
 	var oldRaw []byte
 

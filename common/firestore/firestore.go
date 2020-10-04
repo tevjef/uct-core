@@ -119,8 +119,8 @@ func FromFirestoreValue(value FirestoreValue) (*SectionFirestoreData, error) {
 func (v SectionFirestoreValue) ToSectionFirestoreData() *SectionFirestoreData {
 	return &SectionFirestoreData{
 		Data:                v.Data.BytesValue,
-		UniversityTopicName: v.Data.StringValue,
-		CourseName:          v.Data.StringValue,
+		UniversityTopicName: v.UniversityTopicName.StringValue,
+		CourseName:          v.CourseName.StringValue,
 		Year:                v.Year.StringValue,
 		Season:              v.Season.StringValue,
 	}
