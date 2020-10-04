@@ -145,8 +145,6 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 		Year:   int32(year),
 		Season: Summer}
 
-	// Spring: Winter - StartFall
-	log.Println(winterReg.month(), winterReg.day(), startFallReg.month(), startFallReg.day(), month, day)
 	if yearDay >= winterReg.dayOfYear() || yearDay < startFallReg.dayOfYear() {
 		if winterReg.month()-month <= 0 {
 			spring.Year = spring.Year + 1
@@ -169,7 +167,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
-		log.Debugf("season range: %s (%s[%s] - %s[%s]) today: %s", "Fall", "EndSummer", endSummerReg.time(), "StartSpring", startSpringReg.time(), t)
+		log.Debugf("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "fall", "endSummer", endSummerReg.time(), "startSpring", startSpringReg.time(), t)
 		return &ResolvedSemester{
 			Last:    summer,
 			Current: fall,
@@ -177,7 +175,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 		}
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
-		log.Debugln("StartSpring: StartSpring -- Winter ", startSpringReg.dayOfYear(), "--", winterReg.dayOfYear(), "--", yearDay)
+		log.Debugln("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "winter", "startSpring", startSpringReg.time(), "winter", winterReg.time(), t)
 		return &ResolvedSemester{
 			Last:    fall,
 			Current: winter,
