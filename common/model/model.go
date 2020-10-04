@@ -115,19 +115,14 @@ func (r Registration) season() string {
 
 func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemester {
 	month := t.Month()
-	day := t.Day()
 	year := t.Year()
 
 	yearDay := t.YearDay()
 
-	//var springReg = registration[SEM_SPRING];
 	var winterReg = registration[InWinter]
-	//var summerReg = registration[SEM_SUMMER];
-	//var fallReg  = registration[SEM_FALL];
 	var startFallReg = registration[StartFall]
 	var startSpringReg = registration[StartSpring]
 	var endSummerReg = registration[EndSummer]
-	//var startSummerReg  = registration[START_SUMMER];
 
 	fall := &Semester{
 		Year:   int32(year),
@@ -153,14 +148,14 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 			winter.Year = winter.Year - 1
 			fall.Year = fall.Year - 1
 		}
-		log.Debugln("Spring: Winter - StartFall ", winterReg.month(), winterReg.day(), "--", startFallReg.month(), startFallReg.day(), "--", month, day)
+		log.Debugf("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "spring", "winter", winterReg.time(), "startFall", startFallReg.time(), t)
 		return &ResolvedSemester{
 			Last:    winter,
 			Current: spring,
 			Next:    summer}
 
 	} else if yearDay >= startFallReg.dayOfYear() && yearDay < endSummerReg.dayOfYear() {
-		log.Debugln("StartFall: StartFall -- EndSummer ", startFallReg.dayOfYear(), "--", endSummerReg.dayOfYear(), "--", yearDay)
+		log.Debugf("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "summer", "startFall", startFallReg.time(), "endSummer", endSummerReg.time(), t)
 		return &ResolvedSemester{
 			Last:    spring,
 			Current: summer,
@@ -175,7 +170,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 		}
 	} else if yearDay >= startSpringReg.dayOfYear() && yearDay < winterReg.dayOfYear() {
 		spring.Year = spring.Year + 1
-		log.Debugln("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "winter", "startSpring", startSpringReg.time(), "winter", winterReg.time(), t)
+		log.Debugf("resolved semester: %s (%s[%s] - %s[%s]) today: %s", "winter", "startSpring", startSpringReg.time(), "winter", winterReg.time(), t)
 		return &ResolvedSemester{
 			Last:    fall,
 			Current: winter,
