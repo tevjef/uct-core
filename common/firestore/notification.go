@@ -50,7 +50,7 @@ func (client Client) InsertNotification(sectionNotification *SectionNotification
 		fns.LastStatus = sectionNotification.Section.Status
 		fns.LastStatusUpdatedAt = time.Now()
 
-		err = tx.Set(docRef, fns, firestore.MergeAll)
+		err = tx.Set(docRef, fns)
 		if err != nil {
 			client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to set notification")
 			return err
