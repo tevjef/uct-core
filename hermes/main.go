@@ -42,7 +42,12 @@ type hermesConfig struct {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.TextFormatter{})
+	log.SetFormatter(&log.JSONFormatter{
+		FieldMap: log.FieldMap{
+			log.FieldKeyLevel: "severity",
+			log.FieldKeyMsg:   "message",
+		},
+	})
 	log.SetLevel(log.InfoLevel)
 }
 

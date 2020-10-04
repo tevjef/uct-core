@@ -24,18 +24,21 @@ func (client Client) InsertNotification(sectionNotification *SectionNotification
 	docRef := collection.Doc(sectionNotification.Section.TopicName)
 	return client.fsClient.RunTransaction(client.context, func(context context.Context, tx *firestore.Transaction) error {
 		docSnap, err := tx.Get(docRef)
+		docNotFound := status.Code(err) == codes.NotFound
 		if err != nil && status.Code(err) != codes.NotFound {
 			client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to get docRef")
 			return err
-		} else {
-			client.logger.Infoln("firestore: existing notification found!")
 		}
 
 		fns := FirestoreNotificationSent{}
-		err = docSnap.DataTo(&fns)
-		if err != nil {
-			client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to map FirestoreNotificationSent")
-			return err
+		if !docNotFound {
+			err = docSnap.DataTo(&fns)
+			if err != nil {
+				client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to map FirestoreNotificationSent")
+				return err
+			}
+		} else {
+			client.logger.Infoln("firestore: existing notification found!")
 		}
 
 		if sectionNotification.Section.Status == "Open" {
