@@ -13,17 +13,15 @@ import (
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/try"
-	"go.opencensus.io/exporter/stackdriver/propagation"
-	"go.opencensus.io/plugin/ochttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var httpClient = &http.Client{
 	Timeout: 15 * time.Second,
-	Transport: &ochttp.Transport{
-		// Use Google Cloud propagation format.
-		Propagation: &propagation.HTTPFormat{},
-	},
+	//Transport: &ochttp.Transport{
+	//	Use Google Cloud propagation format.
+	//Propagation: &propagation.HTTPFormat{},
+	//},
 }
 
 type rutgersRequest struct {
