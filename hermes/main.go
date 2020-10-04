@@ -48,7 +48,7 @@ func init() {
 			log.FieldKeyMsg:   "message",
 		},
 	})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func Hermes(context context.Context, event uctfirestore.FirestoreEvent) error {
@@ -56,7 +56,7 @@ func Hermes(context context.Context, event uctfirestore.FirestoreEvent) error {
 	if err != nil {
 		return fmt.Errorf("metadata.FromContext: %v", err)
 	}
-	log.Printf("Function triggered by change to: %v", meta.Resource)
+	log.Debugf("function triggered by change to: %v on event %v", meta, event)
 	return MainFunc(event)
 }
 
@@ -158,6 +158,11 @@ func (hermes *hermes) init() error {
 	if oldSection.Status != newSection.Status {
 		log.WithError(err).WithField("section", newSection.TopicName).Warningln("section status did not updated.")
 		return nil
+	} else {
+		log.WithField("old_status", oldSection.Status).
+			WithField("new_status", newSection.Status).
+			WithField("event", fmt.Sprintf("%+v", hermes.event)).
+			Debugf("firestore: document updated: %v", hermes.event.UpdateMask.FieldPaths)
 	}
 
 	sectionNotification, err := hermes.uctFSClient.GetSectionNotification(newSection.TopicName)
