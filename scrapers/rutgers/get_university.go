@@ -107,7 +107,7 @@ func (sr rutgersRequest) requestCourses() (subjects []*RSubject) {
 
 	var courses []*RCourseNew
 
-	if err := getData(sr.context, url, &courses); err == nil {
+	if err := sr.getData(sr.context, url, &courses); err == nil {
 		subjectsMap := map[string]*RSubject{}
 		for i := range courses {
 			course := courses[i]
@@ -214,12 +214,12 @@ func buildSections(rutgerSections []*RSection) (s []*model.Section) {
 	return
 }
 
-func getData(context context.Context, url string, model interface{}) error {
+func (sr rutgersRequest) getData(context context.Context, url string, model interface{}) error {
 	req, _ := http.NewRequestWithContext(context, http.MethodGet, url, nil)
 	//req.Header.Add("User-Agent", "Go/rutgers-scrape")
 
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})
-	fields.Debugln()
+	fields.Debugf("%s: getData: ", sr.campus, url)
 
 	err := try.Do(func(attempt int) (bool, error) {
 		startTime := time.Now()
@@ -238,7 +238,7 @@ func getData(context context.Context, url string, model interface{}) error {
 		fields.WithFields(log.Fields{
 			"content-length":  len(data),
 			"response_status": resp.StatusCode,
-			"response_time":   time.Since(startTime).Seconds()}).Debugln("getData: " + url)
+			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %s response_time", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
 
 		return false, nil
 	})

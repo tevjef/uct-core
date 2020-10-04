@@ -74,14 +74,16 @@ func MainFunc(context context.Context) {
 func (rutgers *rutgers) init() {
 	uni := rutgers.getCampus(rutgers.config.campus)
 	if reader, err := model.MarshalMessage(rutgers.config.outputFormat, uni); err != nil {
-		log.WithError(err).Fatal()
+		log.WithError(err).Warningf("%s: failed to parse university", rutgers.config.campus)
+	} else if len(uni.Subjects) == 0 {
+		log.WithError(err).Warningf("%s: incomplete university, exiting...", rutgers.config.campus)
 	} else {
 		if rutgers.config.outputHttpUrl != "" {
 			err := publishing.PublishToHttp(rutgers.ctx, rutgers.config.outputHttpUrl, reader)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.WithField("topic_name", uni.TopicName).Infof("scraping complete")
+			log.WithField("topic_name", uni.TopicName).Infof("%s: scraping complete", rutgers.config.campus)
 		} else {
 			io.Copy(os.Stdout, reader)
 		}
