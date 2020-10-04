@@ -504,7 +504,7 @@ func makeUniqueSubjects(subjects []*Subject) {
 		key := strings.Join([]string{subject.Season, subject.Year, subject.Name, subject.Number}, "")
 		m[key]++
 		if m[key] > 1 {
-			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugf("duplicate subject: %v", subject.TopicName)
+			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugf("duplicate subject: %v", key)
 			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
 		}
 	}
@@ -517,12 +517,12 @@ func makeUniqueCourses(subject *Subject, courses []*Course) {
 		key := strings.Join([]string{course.Name, course.Number}, "")
 		m[key]++
 		if m[key] > 1 {
+			course.Name = course.Name + "_" + strconv.Itoa(m[key])
 			log.WithFields(log.Fields{"subject": subject.Name,
 				"season": subject.Season,
 				"year":   subject.Year,
 				"key":    key,
-				"count":  m[key]}).Debugf("duplicate course: %v", course.TopicName)
-			course.Name = course.Name + "_" + strconv.Itoa(m[key])
+				"count":  m[key]}).Debugf("duplicate course: %v", key)
 		}
 	}
 }

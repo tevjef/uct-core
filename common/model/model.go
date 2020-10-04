@@ -94,6 +94,10 @@ func (r Registration) dayOfYear() int {
 	return time.Unix(r.PeriodDate, 0).UTC().YearDay()
 }
 
+func (r Registration) time() time.Time {
+	return time.Unix(r.PeriodDate, 0).UTC()
+}
+
 func (r Registration) season() string {
 	switch r.Period {
 	case InFall.String():
@@ -165,7 +169,7 @@ func ResolveSemesters(t time.Time, registration []*Registration) *ResolvedSemest
 			Next:    fall,
 		}
 	} else if yearDay >= endSummerReg.dayOfYear() && yearDay < startSpringReg.dayOfYear() {
-		log.Debugln("Fall: EndSummer -- StartSpring ", endSummerReg.dayOfYear(), "--", yearDay < startSpringReg.dayOfYear(), "--", yearDay)
+		log.Debugf("season range: %s (%s[%s] - %s[%s]) today: %s", "Fall", "EndSummer", endSummerReg.time(), "StartSpring", startSpringReg.time(), t)
 		return &ResolvedSemester{
 			Last:    summer,
 			Current: fall,

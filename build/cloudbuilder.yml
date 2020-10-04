@@ -42,7 +42,7 @@ steps:
             'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
             '--trigger-http',
             '--memory',
-            '128',
+            '256',
             '--runtime',
             'go113',
             '--entry-point',

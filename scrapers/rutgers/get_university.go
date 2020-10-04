@@ -238,7 +238,7 @@ func getData(context context.Context, url string, model interface{}) error {
 		fields.WithFields(log.Fields{
 			"content-length":  len(data),
 			"response_status": resp.StatusCode,
-			"response_time":   time.Since(startTime).Seconds()}).Debugln()
+			"response_time":   time.Since(startTime).Seconds()}).Debugln("getData: " + url)
 
 		return false, nil
 	})
