@@ -13,6 +13,7 @@ import (
 	cloudStorage "cloud.google.com/go/storage"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -31,6 +32,7 @@ type ein struct {
 	firebaseApp       *firebase.App
 	storageClient     *storage.Client
 	firestoreClient   *firestore.Client
+	uctFSClient       *uctfirestore.Client
 	newUniversityData []byte
 	logger            *log.Entry
 	ctx               context.Context
@@ -115,15 +117,20 @@ func MainFunc(newUniversityData []byte) {
 		log.WithError(err).Errorln("failed to create firestore client")
 	}
 
+	logger := log.WithFields(log.Fields{})
+
+	uctFSClient := uctfirestore.NewClient(ctx, firestoreClient, logger)
+
 	(&ein{
 		app:               app.Model(),
 		config:            econf,
 		firebaseApp:       firebaseApp,
 		storageClient:     storageClient,
 		firestoreClient:   firestoreClient,
+		uctFSClient:       uctFSClient,
 		newUniversityData: newUniversityData,
-		logger:            log.WithFields(log.Fields{}),
-		ctx:               context.Background(),
+		logger:            logger,
+		ctx:               ctx,
 	}).init()
 }
 
@@ -205,7 +212,7 @@ func (ein *ein) process() error {
 func (ein *ein) insertSections(diff model.University) {
 	defer model.TimeTrack(time.Now(), "insertSections")
 
-	var allSectionMeta []SectionMeta
+	var allSectionMeta []uctfirestore.SectionMeta
 
 	for subjectIndex := range diff.Subjects {
 		subject := diff.Subjects[subjectIndex]
@@ -213,7 +220,12 @@ func (ein *ein) insertSections(diff model.University) {
 			course := subject.Courses[courseIndex]
 			for sectionIndex := range course.Sections {
 				section := course.Sections[sectionIndex]
-				allSectionMeta = append(allSectionMeta, SectionMeta{section, subject, diff})
+				allSectionMeta = append(allSectionMeta, uctfirestore.SectionMeta{
+					Section:    section,
+					Subject:    subject,
+					University: diff,
+					Course:     course,
+				})
 			}
 		}
 	}
@@ -224,10 +236,4 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	ein.updateSerialSection(allSectionMeta)
-}
-
-type SectionMeta struct {
-	section    *model.Section
-	subject    *model.Subject
-	university model.University
 }

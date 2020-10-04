@@ -1,103 +1,82 @@
 package hermes
 
 import (
-	"fmt"
-	"strconv"
-
+	"firebase.google.com/go/messaging"
 	log "github.com/Sirupsen/logrus"
-	"github.com/tevjef/go-fcm"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 )
 
-func (hermes *hermes) sendFcmNotification(pair notificationPair) error {
+func (hermes *hermes) sendNotification(sectionNotification *uctfirestore.SectionNotification) error {
 	var title string
 	var body string
 	var color string
 
-	course := pair.n.University.Subjects[0].Courses[0]
-	section := course.Sections[0]
-
-	if pair.n.Status == "Open" {
+	if sectionNotification.Section.Status == "Open" {
 		title = "A section has opened!"
-		body = "Section " + section.Number + " of " + course.Name + " has opened!"
+		body = "Section " + sectionNotification.Section.Number + " of " + sectionNotification.CourseName + " has opened!"
 		color = "#4CAF50"
 	} else {
 		title = "A section has closed!"
-		body = "Section " + section.Number + " of " + course.Name + " has closed!"
+		body = "Section " + sectionNotification.Section.Number + " of " + sectionNotification.CourseName + " has closed!"
 		color = "#F44336"
 	}
 
-	data := map[string]string{
-		"notificationId":  fmt.Sprintf("%d", pair.n.NotificationId),
-		"status":          pair.n.Status,
-		"topicName":       pair.n.TopicName,
-		"topicId":         section.TopicId,
+	data := map[string]interface{}{
+		"status":          sectionNotification.Section.Status,
+		"topicName":       sectionNotification.Section.TopicName,
+		"topicId":         sectionNotification.Section.TopicId,
 		"title":           title,
 		"body":            body,
 		"color":           color,
-		"registrationUrl": pair.n.University.RegistrationPage,
+		"registrationUrl": sectionNotification.University.RegistrationPage,
 	}
 
-	apnsPayload := &fcm.ApnsPayload{
-		Aps: &fcm.ApsDictionary{
-			Alert: &fcm.ApnsAlert{
-				Title: title,
-				Body:  body,
-			},
-			Badge:            1,
-			Category:         "SECTION_NOTIFICATION_CATEGORY",
-			ContentAvailable: int(fcm.ApnsContentUnavailable),
-		},
-	}
+	badge := 1
 
-	payload, err := apnsPayload.ToMap()
-	if err != nil {
-		return err
-	}
-
-	// Only applications on the in the foreground get this data. Notifications only show in the foreground
-	payload["message"] = data
-
-	sendReq := &fcm.SendRequest{
-		ValidateOnly: hermes.config.dryRun,
-		Message: &fcm.Message{
-			Topic: pair.n.TopicName,
-			Android: &fcm.AndroidConfig{
-				// Won't work on preupdate devices
-				// Data: data,
-				Notification: &fcm.AndroidNotification{
-					Title:       title,
-					Body:        body,
-					Color:       color,
-					ClickAction: "NOTIFICATION_CLICK_ACTION",
+	apnsConfig := &messaging.APNSConfig{
+		Payload: &messaging.APNSPayload{
+			Aps: &messaging.Aps{
+				Alert: &messaging.ApsAlert{
+					Title: title,
+					Body:  body,
 				},
+				Badge:            &badge,
+				Category:         "SECTION_NOTIFICATION_CATEGORY",
+				ContentAvailable: false,
 			},
-			Apns: &fcm.ApnsConfig{
-				Payload: payload,
-			},
+			// Only applications on the in the foreground get this data. Notifications only show in the foreground
+			CustomData: data,
 		},
 	}
 
-	resp, err := hermes.fcmClient.Send(sendReq)
-	if err != nil {
-		if v, ok := err.(fcm.HttpError); ok {
-			log.Error(v.RequestDump)
-			log.Error(v.ResponseDump)
+	androidConfig := &messaging.AndroidConfig{
+		Notification: &messaging.AndroidNotification{
+			Title:       title,
+			Body:        body,
+			Color:       color,
+			ClickAction: "NOTIFICATION_CLICK_ACTION",
+		},
+	}
+
+	message := &messaging.Message{
+		Topic:   sectionNotification.Section.TopicName,
+		APNS:    apnsConfig,
+		Android: androidConfig,
+	}
+
+	if hermes.config.dryRun {
+		result, err := hermes.fcmClient.SendDryRun(hermes.ctx, message)
+		log.WithError(err).Infoln(result)
+		if err != nil {
+			return err
 		}
-
-		return err
+	} else {
+		result, err := hermes.fcmClient.Send(hermes.ctx, message)
+		log.WithError(err).Infoln(result)
+		if err != nil {
+			return err
+		}
 	}
-
-	msgID, err := strconv.ParseInt(resp.MessageID(), 10, 64)
-	if err != nil {
-		return nil
-	}
-
-	log.WithFields(log.Fields{
-		"topic":           pair.n.TopicName,
-		"university_name": pair.n.University.TopicName,
-		"message_id":      msgID}).Infoln("fcm_response")
-
-	hermes.acknowledgeNotification(pair.n.NotificationId, msgID)
 
 	return nil
 }
