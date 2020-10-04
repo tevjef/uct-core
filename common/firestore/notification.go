@@ -38,7 +38,7 @@ func (client Client) InsertNotification(sectionNotification *SectionNotification
 				return err
 			}
 		} else {
-			client.logger.Infoln("firestore: existing notification found!")
+			client.logger.WithFields(field).Debugln("firestore: existing notification found!")
 		}
 
 		if sectionNotification.Section.Status == "Open" {

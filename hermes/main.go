@@ -155,8 +155,13 @@ func (hermes *hermes) init() error {
 		return err
 	}
 
-	if oldSection.Status != newSection.Status {
-		log.WithError(err).WithField("section", newSection.TopicName).Warningln("section status did not updated.")
+	if oldSection.Status == newSection.Status {
+		log.WithError(err).
+			WithField("old_section", oldSection.String()).
+			WithField("new_section", newSection.String()).
+			WithField("section", newSection.TopicName).
+			WithField("event", fmt.Sprintf("%+v", hermes.event)).
+			Warningln("section status did not updated.")
 		return nil
 	} else {
 		log.WithField("old_status", oldSection.Status).
