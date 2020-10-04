@@ -9,6 +9,8 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
+	"go.opencensus.io/exporter/stackdriver/propagation"
+	"go.opencensus.io/plugin/ochttp"
 	"google.golang.org/api/idtoken"
 )
 
@@ -40,10 +42,10 @@ func PublishMessage(token string, projectId string, topicId string, data string)
 }
 
 func PublishToHttp(context context.Context, url string, body io.Reader) error {
-	//http.DefaultTransport = &ochttp.Transport{
-	//	// Use Google Cloud propagation format.
-	//	Propagation: &propagation.HTTPFormat{},
-	//}
+	http.DefaultTransport = &ochttp.Transport{
+		// Use Google Cloud propagation format.
+		Propagation: &propagation.HTTPFormat{},
+	}
 
 	client, err := idtoken.NewClient(context, url)
 	if err != nil {

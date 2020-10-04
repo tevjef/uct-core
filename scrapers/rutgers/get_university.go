@@ -217,7 +217,7 @@ func (sr rutgersRequest) getData(context context.Context, url string, model inte
 	//req.Header.Add("User-Agent", "Go/rutgers-scrape")
 
 	fields := log.WithFields(log.Fields{"url": url, "model_type": fmt.Sprintf("%T", model)})
-	fields.Debugf("%s: getData: ", sr.campus, url)
+	fields.Debugf("%s: getData: %s", sr.campus, url)
 
 	err := try.Do(func(attempt int) (bool, error) {
 		startTime := time.Now()
@@ -236,7 +236,7 @@ func (sr rutgersRequest) getData(context context.Context, url string, model inte
 		fields.WithFields(log.Fields{
 			"content-length":  len(data),
 			"response_status": resp.StatusCode,
-			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %s response_time", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
+			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %d response_time %d", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
 
 		return false, nil
 	})

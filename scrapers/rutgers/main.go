@@ -83,7 +83,7 @@ func (rutgers *rutgers) init() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.WithField("topic_name", uni.TopicName).Infof("%s: scraping complete", rutgers.config.campus)
+			log.WithField("topic_name", uni.TopicName).Infof("%s: sent scraping result to: %s", rutgers.config.campus, rutgers.config.outputHttpUrl)
 		} else {
 			io.Copy(os.Stdout, reader)
 		}

@@ -94,8 +94,8 @@ func (r Registration) dayOfYear() int {
 	return time.Unix(r.PeriodDate, 0).UTC().YearDay()
 }
 
-func (r Registration) time() time.Time {
-	return time.Unix(r.PeriodDate, 0).UTC()
+func (r Registration) time() string {
+	return time.Unix(r.PeriodDate, 0).UTC().Format("2006-01-02")
 }
 
 func (r Registration) season() string {
