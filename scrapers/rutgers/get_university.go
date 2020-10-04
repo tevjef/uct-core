@@ -75,7 +75,7 @@ func (rutgers *rutgers) getCampus(campus string) model.University {
 			semester.Year++
 		}
 
-		subjects := getSubjects(campus, semester)
+		subjects := getSubjects(rutgers.ctx, campus, semester)
 
 		university.Subjects = append(university.Subjects, buildSubjects(subjects)...)
 	}

@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
-	_ "github.com/tevjef/uct-backend/common/metrics"
+	_ "github.com/tevjef/uct-backend/common/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"gopkg.in/alecthomas/kingpin.v2"

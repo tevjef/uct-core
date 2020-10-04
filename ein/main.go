@@ -21,8 +21,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
-	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/model"
+	_ "github.com/tevjef/uct-backend/common/trace"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
