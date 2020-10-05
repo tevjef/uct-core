@@ -1,55 +1,98 @@
 package model
 
 import (
+	"fmt"
+	"strconv"
+
 	log "github.com/sirupsen/logrus"
 )
 
+func MakeSemesterKey(semester *Semester) string {
+	return semester.Season + fmt.Sprint(semester.Year)
+}
+
+func MakeSemester(season, year string) *Semester {
+	yearInt, _ := strconv.Atoi(year)
+
+	semester := &Semester{
+		Year:   int32(yearInt),
+		Season: season,
+	}
+	return semester
+}
+
+func GroupSubjectsForSemester(subjects []*Subject) map[string][]*Subject {
+	m := map[string][]*Subject{}
+	for subjectIndex := range subjects {
+		subject := subjects[subjectIndex]
+		key := MakeSemesterKey(MakeSemester(subject.Season, subject.Year))
+		m[key] = append(m[key], subject)
+	}
+
+	return m
+}
+
 func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
-	filteredUniversity = newUni
-	oldSubjects := oldUni.Subjects
-	newSubjects := newUni.Subjects
+	oldSeasonedSubjects := GroupSubjectsForSemester(oldUni.Subjects)
+	newSeasonedSubjects := GroupSubjectsForSemester(newUni.Subjects)
 
 	var filteredSubjects []*Subject
-	// For each newer subject
-	for s := range newSubjects {
-		// If current index is out of range of the old subjects[] break and add every subject
-		if s >= len(oldSubjects) {
-			filteredSubjects = newSubjects
-			break
+
+	for seasonKey, newSubjects := range newSeasonedSubjects {
+		oldSubjects, ok := oldSeasonedSubjects[seasonKey]
+		// A new semester is found
+
+		logKey := oldUni.TopicName + "." + seasonKey
+
+		if !ok {
+			log.Debugf("diff: %v: new semester found %v", oldUni.TopicName, seasonKey)
+			filteredSubjects = append(filteredSubjects, newSubjects...)
+			continue
 		}
 
-		if !newSubjects[s].Equal(oldSubjects[s]) {
-			newSubjects[s].Courses = diffAndFilterCourses(oldSubjects[s].Courses, newSubjects[s].Courses)
-			filteredSubjects = append(filteredSubjects, newSubjects[s])
+		if len(newSubjects) != len(oldSubjects) {
+			log.Debugf("diff: %v: newSubjects: %v != oldSubjects: %v", logKey, len(newSubjects), len(oldSubjects))
+			filteredSubjects = append(filteredSubjects, newSubjects...)
+			continue
+		}
+
+		for s := range newSubjects {
+			if !newSubjects[s].Equal(oldSubjects[s]) {
+				log.Debugf("diff: %v: change detected in subject: %v", logKey, newSubjects[s].TopicName)
+				newSubjects[s].Courses = diffAndFilterCourses(logKey, oldSubjects[s].Courses, newSubjects[s].Courses)
+				filteredSubjects = append(filteredSubjects, newSubjects[s])
+			}
 		}
 	}
 
+	filteredUniversity = newUni
 	filteredUniversity.Subjects = filteredSubjects
 	return
 }
 
-func diffAndFilterCourses(oldCourses, newCourses []*Course) []*Course {
+func diffAndFilterCourses(logKey string, oldCourses, newCourses []*Course) []*Course {
 	var filteredCourses []*Course
-	for c := range newCourses {
-		if c >= len(oldCourses) {
-			filteredCourses = newCourses
-			break
-		}
+	if len(newCourses) != len(oldCourses) {
+		log.Debugf("diff: %v: newCourses: %v != oldCourses: %v", logKey, len(newCourses), len(oldCourses))
+		return newCourses
+	}
 
+	for c := range newCourses {
 		if !newCourses[c].Equal(oldCourses[c]) {
-			newCourses[c].Sections = diffAndFilterSections(oldCourses[c].Sections, newCourses[c].Sections)
+			log.Debugf("diff: %v: change detected in course: %v", logKey, newCourses[c].TopicName)
+			newCourses[c].Sections = diffAndFilterSections(logKey, oldCourses[c].Sections, newCourses[c].Sections)
 			filteredCourses = append(filteredCourses, newCourses[c])
 		}
 	}
 	return filteredCourses
 }
 
-func diffAndFilterSections(oldSections, newSections []*Section) []*Section {
+func diffAndFilterSections(logKey string, oldSections, newSections []*Section) []*Section {
 	oldSectionFields := logSection(oldSections, "old")
 	newSectionFields := logSection(newSections, "new")
 	var filteredSections []*Section
 	for e := range newSections {
-		if e >= len(oldSections) {
+		if len(newSections) != len(oldSections) {
 			filteredSections = newSections
 			break
 		}
@@ -63,7 +106,7 @@ func diffAndFilterSections(oldSections, newSections []*Section) []*Section {
 				log.Fields{
 					"old_section": oldSections[e].TopicName,
 					"new_section": newSections[e].TopicName,
-				}).Debugln("diff")
+				}).Debugf("diff: %v: change detected in section: %v", logKey, newSections[e].TopicName)
 			filteredSections = append(filteredSections, newSections[e])
 		}
 	}

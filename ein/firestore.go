@@ -1,12 +1,14 @@
 package ein
 
 import (
+	"fmt"
+
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/model"
 )
 
 func (ein *ein) insertUniversity(newUniversity model.University, university model.University) {
-	_ = ein.uctFSClient.InsertUniversity(newUniversity)
+	_ = ein.uctFSClient.InsertUniversity(ein.ctx, newUniversity)
 
 	ein.insertSubjects(&newUniversity)
 
@@ -29,17 +31,34 @@ func (ein *ein) insertSemester(university *model.University) {
 }
 
 func (ein *ein) insertSubjects(university *model.University) {
-	_ = ein.uctFSClient.InsertSubjectsBySemester(*university, university.ResolvedSemesters.Current)
-	_ = ein.uctFSClient.InsertSubjectsBySemester(*university, university.ResolvedSemesters.Next)
-	_ = ein.uctFSClient.InsertSubjectsBySemester(*university, university.ResolvedSemesters.Last)
+	_ = ein.uctFSClient.InsertSubjectsBySemester(ein.ctx, *university, university.ResolvedSemesters.Current)
+	_ = ein.uctFSClient.InsertSubjectsBySemester(ein.ctx, *university, university.ResolvedSemesters.Next)
+	_ = ein.uctFSClient.InsertSubjectsBySemester(ein.ctx, *university, university.ResolvedSemesters.Last)
 
-	_ = ein.uctFSClient.InsertSubjects(university.Subjects)
+	_ = ein.uctFSClient.InsertSubjects(ein.ctx, university.Subjects)
 }
 
 func (ein *ein) updateSerialSection(sectionMeta []uctfirestore.SectionMeta) {
-	_ = ein.uctFSClient.InsertSection(sectionMeta)
+	_ = ein.uctFSClient.InsertSections(ein.ctx, sectionMeta)
+
+	field := map[string]interface{}{}
+	logSectionMetadata(sectionMeta, field)
+	ein.logger.WithFields(field).Infoln("firestore: %d sections updated", len(sectionMeta))
+}
+
+func logSectionMetadata(sectionMeta []uctfirestore.SectionMeta, field map[string]interface{}) {
+	if len(sectionMeta) <= 50 {
+		var sectionStatus []string
+		for i := range sectionMeta {
+			sm := sectionMeta[i]
+			sectionStatus = append(sectionStatus, fmt.Sprintf("status: %s topicName: %s", sm.Section.Status, sm.Section.TopicName))
+		}
+		field["sections"] = sectionStatus
+	}
 }
 
 func (ein *ein) updateSerialCourse(courses []*model.Course) {
-	_ = ein.uctFSClient.InsertCourses(courses)
+	_ = ein.uctFSClient.InsertCourses(ein.ctx, courses)
+
+	ein.logger.Infoln("firestore: %d courses updated", len(courses))
 }

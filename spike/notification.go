@@ -51,7 +51,7 @@ func notificationHandler() gin.HandlerFunc {
 
 		firestore := uctfirestore.FromContext(c)
 
-		if err := firestore.InsertDeviceNotification(&uctfirestore.DeviceNotification{
+		if err := firestore.InsertDeviceNotification(c, &uctfirestore.DeviceNotification{
 			SectionTopicName: topicName,
 			FcmToken:         fcmToken,
 			ReceivedAt:       receiveAt,

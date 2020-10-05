@@ -18,7 +18,7 @@ func subjectHandler(expire time.Duration) gin.HandlerFunc {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
 		firestore := uctfirestore.FromContext(c)
 
-		if sub, err := firestore.GetSubject(subjectTopicName); err != nil {
+		if sub, err := firestore.GetSubject(c, subjectTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
@@ -47,7 +47,7 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 			Year:   int32(year),
 			Season: season,
 		}
-		if subjects, err := firestore.GetSubjectsBySemester(uniTopicName, semester); err != nil {
+		if subjects, err := firestore.GetSubjectsBySemester(c, uniTopicName, semester); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {

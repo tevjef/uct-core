@@ -1,6 +1,7 @@
 package uctfirestore
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,8 +19,12 @@ type FireStoreSubscriptionView struct {
 	IsHot       bool   `firestore:"is_hot"`
 }
 
-func (client Client) GetCourses(topicName string) ([]*model.Course, error) {
-	subject, err := client.GetSubject(topicName)
+func (client Client) GetCourses(ctx context.Context, topicName string) ([]*model.Course, error) {
+	field := log.Fields{"topicName": topicName}
+	ctx, span := makeFirestoreTrace(ctx, "GetCourses", field, client.logger.Data)
+	defer span.End()
+
+	subject, err := client.GetSubject(ctx, topicName)
 	if err != nil {
 		return nil, err
 	}
@@ -27,8 +32,10 @@ func (client Client) GetCourses(topicName string) ([]*model.Course, error) {
 	return subject.Courses, nil
 }
 
-func (client Client) InsertCourses(courses []*model.Course) error {
-	field := log.Fields{"collection": CollectionCourseTopicName}
+func (client Client) InsertCourses(ctx context.Context, courses []*model.Course) error {
+	field := log.Fields{"collection": CollectionCourseTopicName, "courses": len(courses)}
+	ctx, span := makeFirestoreTrace(ctx, "InsertCourses", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionCourseTopicName)
 
@@ -48,7 +55,7 @@ func (client Client) InsertCourses(courses []*model.Course) error {
 			})
 		}
 
-		results, err := batch.Commit(client.context)
+		results, err := batch.Commit(ctx)
 		if err != nil {
 			client.logger.Fatalln(err)
 		}
@@ -58,12 +65,14 @@ func (client Client) InsertCourses(courses []*model.Course) error {
 	return nil
 }
 
-func (client Client) GetCourse(topicName string) (*model.Course, error) {
+func (client Client) GetCourse(ctx context.Context, topicName string) (*model.Course, error) {
 	field := log.Fields{"collection": CollectionCourseTopicName}
+	ctx, span := makeFirestoreTrace(ctx, "GetCourse", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionCourseTopicName)
 	docRef := collection.Doc(topicName)
-	docSnap, err := docRef.Get(client.context)
+	docSnap, err := docRef.Get(ctx)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get docRef")
 	}
@@ -102,13 +111,15 @@ func BatchCourses(count int, items []*model.Course, callback func([]*model.Cours
 	callback(items[len(items)-len(items)%count:])
 }
 
-func (client Client) SetCourseHotness(courseTopicName string, courseHotness *CourseHotness) error {
+func (client Client) SetCourseHotness(ctx context.Context, courseTopicName string, courseHotness *CourseHotness) error {
 	field := log.Fields{"collection": CollectionCourseHotness}
+	ctx, span := makeFirestoreTrace(ctx, "SetCourseHotness", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionCourseHotness)
 
 	docRef := collection.Doc(courseTopicName)
-	result, err := docRef.Set(client.context, courseHotness)
+	result, err := docRef.Set(ctx, courseHotness)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).WithField("result", result).Errorln("firestore: failed to set CourseHotness")
 		return errors.Wrap(err, "firestore: failed to set CourseHotness")
@@ -117,13 +128,15 @@ func (client Client) SetCourseHotness(courseTopicName string, courseHotness *Cou
 	return nil
 }
 
-func (client Client) GetCourseHotness(courseTopicName string) (*CourseHotness, *time.Time, error) {
+func (client Client) GetCourseHotness(ctx context.Context, courseTopicName string) (*CourseHotness, *time.Time, error) {
 	field := log.Fields{"collection": CollectionCourseHotness}
+	ctx, span := makeFirestoreTrace(ctx, "GetCourseHotness", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionCourseHotness)
 
 	docRef := collection.Doc(courseTopicName)
-	docSnap, err := docRef.Get(client.context)
+	docSnap, err := docRef.Get(ctx)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Errorln("firestore: failed to get docRef")
 		return nil, nil, errors.Wrap(err, "firestore: failed to get docRef")

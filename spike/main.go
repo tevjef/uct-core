@@ -17,6 +17,7 @@ import (
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
+	"github.com/tevjef/uct-backend/common/middleware/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -112,6 +113,7 @@ func initGin() {
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.Ginrus())
 	engine.Use(uctfirestore.Firestore(appInstance.uctFSClient))
+	engine.Use(trace.TraceMiddleware)
 	engine.Use(cache.Cache(cache.NewInMemoryStore(10 * time.Second)))
 	// does not cache and defaults to json
 	v1 := engine.Group("/v1")

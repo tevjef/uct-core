@@ -18,12 +18,14 @@ type FirestoreNotificationSent struct {
 	LastStatusUpdatedAt time.Time `firestore:"lastStatusUpdatedAt"`
 }
 
-func (client Client) InsertSectionNotification(sectionNotification *SectionNotification) error {
+func (client Client) InsertSectionNotification(ctx context.Context, sectionNotification *SectionNotification) error {
 	field := log.Fields{"collection": CollectionNotificationSent, "sectionNotification": sectionNotification}
+	ctx, span := makeFirestoreTrace(ctx, "InsertSectionNotification", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionNotificationSent)
 	docRef := collection.Doc(sectionNotification.Section.TopicName)
-	return client.fsClient.RunTransaction(client.context, func(context context.Context, tx *firestore.Transaction) error {
+	return client.fsClient.RunTransaction(ctx, func(context context.Context, tx *firestore.Transaction) error {
 		docSnap, err := tx.Get(docRef)
 		docNotFound := status.Code(err) == codes.NotFound
 		if err != nil && status.Code(err) != codes.NotFound {
@@ -74,11 +76,13 @@ type DeviceNotification struct {
 	AppVersion       string    `firestore:"appVersion"`
 }
 
-func (client Client) InsertDeviceNotification(deviceNotification *DeviceNotification) error {
+func (client Client) InsertDeviceNotification(ctx context.Context, deviceNotification *DeviceNotification) error {
 	field := log.Fields{"collection": CollectionNotificationReceived, "deviceNotification": deviceNotification}
+	ctx, span := makeFirestoreTrace(ctx, "InsertSectionNotification", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionNotificationReceived)
-	_, result, err := collection.Add(client.context, deviceNotification)
+	_, result, err := collection.Add(ctx, deviceNotification)
 	if err != nil {
 		client.logger.WithError(err).
 			WithField("result", result).

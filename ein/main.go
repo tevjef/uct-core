@@ -247,7 +247,7 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	if len(allSectionMeta) == 0 {
-		ein.logger.Infoln("%v: no new sections", diff.TopicName)
+		ein.logger.Infoln("%s: no new sections", diff.TopicName)
 		return
 	}
 

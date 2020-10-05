@@ -137,7 +137,7 @@ func ValidateAllSubjects(university *University) error {
 	makeUniqueSubjects(university.Subjects)
 
 	if len(university.Subjects) == 0 {
-		log.Warningln("no subjects in university: %v", university.TopicName)
+		log.Warningln("validate: no subjects in university: %v", university.TopicName)
 	} else {
 		sort.Sort(subjectSorter{university.Subjects})
 	}
@@ -330,7 +330,7 @@ func (sub *Subject) Validate(uni *University) error {
 	sub.TopicId = ToTopicId(sub.TopicName)
 
 	if len(sub.Courses) == 0 {
-		log.Warningf("no course in subject: %v", sub.TopicName)
+		log.Warningf("validate: no course in subject: %v", sub.TopicName)
 	} else {
 		sort.Sort(courseSorter{sub.Courses})
 	}
@@ -364,7 +364,7 @@ func (course *Course) Validate(subject *Subject) error {
 	course.TopicName = ToTopicName(course.TopicName)
 	course.TopicId = ToTopicId(course.TopicName)
 	if len(course.Sections) == 0 {
-		log.Errorln("no section in course: %v", course.TopicName)
+		log.Errorln("validate: no section in course: %v", course.TopicName)
 	} else {
 		sort.Stable(sectionSorter{course.Sections})
 	}
@@ -499,30 +499,34 @@ func (metaData *Metadata) Validate() error {
 
 func makeUniqueSubjects(subjects []*Subject) {
 	m := make(map[string]int)
+	var duplicates []string
 	for subjectIndex := range subjects {
 		subject := subjects[subjectIndex]
 		key := strings.Join([]string{subject.Season, subject.Year, subject.Name, subject.Number}, "")
 		m[key]++
 		if m[key] > 1 {
-			log.WithFields(log.Fields{"key": key, "count": m[key]}).Debugf("duplicate subject: %v", key)
 			subject.Name = subject.Name + "_" + strconv.Itoa(m[key])
+			duplicates = append(duplicates, fmt.Sprintf("count: %v | %v ", m[key], key))
 		}
+	}
+	if len(duplicates) > 0 {
+		log.WithFields(log.Fields{"subjects": duplicates}).Debugf("validate: duplicate subjects found: %v", len(duplicates))
 	}
 }
 
 func makeUniqueCourses(subject *Subject, courses []*Course) {
 	m := map[string]int{}
+	var duplicates []string
 	for courseIndex := range courses {
 		course := courses[courseIndex]
 		key := strings.Join([]string{course.Name, course.Number}, "")
 		m[key]++
 		if m[key] > 1 {
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
-			log.WithFields(log.Fields{"subject": subject.Name,
-				"season": subject.Season,
-				"year":   subject.Year,
-				"key":    key,
-				"count":  m[key]}).Debugf("duplicate course: %v", key)
+			duplicates = append(duplicates, fmt.Sprintf("season:%v year:%v count: %v | %v ", subject.Season, subject.Year, m[key], key))
 		}
+	}
+	if len(duplicates) > 0 {
+		log.WithFields(log.Fields{"courses": duplicates}).Debugf("validate: duplicate courses found: %v", len(duplicates))
 	}
 }

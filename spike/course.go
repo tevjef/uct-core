@@ -18,7 +18,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 		courseTopicName := strings.ToLower(c.Param("topic"))
 		firestore := uctfirestore.FromContext(c)
 
-		if course, err := firestore.GetCourse(courseTopicName); err != nil {
+		if course, err := firestore.GetCourse(c, courseTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
@@ -26,7 +26,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 
 			//Check if exists
 			var shouldUpdate bool
-			ch, lastUpdate, err := firestore.GetCourseHotness(course.TopicName)
+			ch, lastUpdate, err := firestore.GetCourseHotness(c, course.TopicName)
 			if err != nil || lastUpdate == nil {
 				shouldUpdate = true
 			} else {
@@ -46,7 +46,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 
 			if shouldUpdate {
 				for i := range course.Sections {
-					count, _ := firestore.GetSubscriptionCount(course.Sections[i].TopicName)
+					count, _ := firestore.GetSubscriptionCount(c, course.Sections[i].TopicName)
 
 					view := &model.SubscriptionView{
 						TopicName:   course.Sections[i].TopicName,
@@ -93,7 +93,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 					View: fireStoreSubs,
 				}
 
-				if err := firestore.SetCourseHotness(courseTopicName, &m); err != nil {
+				if err := firestore.SetCourseHotness(c, courseTopicName, &m); err != nil {
 					httperror.ServerError(c, err)
 					return
 				}
@@ -114,7 +114,7 @@ func coursesHandler(expire time.Duration) gin.HandlerFunc {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
 		firestore := uctfirestore.FromContext(c)
 
-		if courses, err := firestore.GetCourses(subjectTopicName); err != nil {
+		if courses, err := firestore.GetCourses(c, subjectTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {

@@ -3,14 +3,17 @@ package uctfirestore
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 )
 
-func (client Client) InsertSubjects(subjects []*model.Subject) error {
-	field := log.Fields{"collection": CollectionSubjectTopicName}
+func (client Client) InsertSubjects(ctx context.Context, subjects []*model.Subject) error {
+	field := log.Fields{"collection": CollectionSubjectTopicName, "subjects": len(subjects)}
+	ctx, span := makeFirestoreTrace(ctx, "InsertSubjects", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionSubjectTopicName)
 	batch := client.fsClient.Batch()
@@ -23,25 +26,27 @@ func (client Client) InsertSubjects(subjects []*model.Subject) error {
 		batch.Set(docRef, firestoreData)
 	}
 
-	results, err := batch.Commit(client.context)
+	results, err := batch.Commit(ctx)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to commit subject transaction")
 	}
 
 	client.logger.WithField("results", len(results)).
 		WithFields(field).
-		Debugln("firestore: batch set complete")
+		Debugln("firestore: subjects batch set complete")
 
 	return nil
 }
 
-func (client Client) GetSubject(topicName string) (*model.Subject, error) {
+func (client Client) GetSubject(ctx context.Context, topicName string) (*model.Subject, error) {
 	field := log.Fields{"topicName": topicName, "collection": CollectionSubjectTopicName}
+	ctx, span := makeFirestoreTrace(ctx, "GetSubject", field, client.logger.Data)
+	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionSubjectTopicName)
 	docRef := collection.Doc(topicName)
 
-	docSnap, err := docRef.Get(client.context)
+	docSnap, err := docRef.Get(ctx)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalf("firestore: failed to get docRef")
 		return nil, err
@@ -65,8 +70,11 @@ func (client Client) GetSubject(topicName string) (*model.Subject, error) {
 	return subject, nil
 }
 
-func (client Client) InsertSubjectsBySemester(university model.University, semester *model.Semester) error {
-	field := log.Fields{"semester": MakeSemesterKey(semester)}
+func (client Client) InsertSubjectsBySemester(ctx context.Context, university model.University, semester *model.Semester) error {
+	field := log.Fields{"semester": MakeSemesterKey(semester), "subjects": len(university.Subjects)}
+	ctx, span := makeFirestoreTrace(ctx, "InsertSubjectsBySemester", field, client.logger.Data)
+	defer span.End()
+
 	filteredSubjects := getSubjectsForSemester(university.Subjects, semester)
 
 	data, err := (&model.Data{Subjects: filteredSubjects}).Marshal()
@@ -91,7 +99,7 @@ func (client Client) InsertSubjectsBySemester(university model.University, semes
 	firestoreData := FirestoreData{Data: buf.Bytes()}
 	collections := client.fsClient.Collection(CollectionUniversitySubjects)
 	docRef := collections.Doc(university.TopicName + "." + MakeSemesterKey(semester))
-	_, err = docRef.Set(client.context, firestoreData)
+	_, err = docRef.Set(ctx, firestoreData)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).Fatalf("firestore: failed to set %s", CollectionUniversitySubjects)
 	}
@@ -101,12 +109,14 @@ func (client Client) InsertSubjectsBySemester(university model.University, semes
 	return nil
 }
 
-func (client Client) GetSubjectsBySemester(universityTopicName string, semester *model.Semester) ([]*model.Subject, error) {
+func (client Client) GetSubjectsBySemester(ctx context.Context, universityTopicName string, semester *model.Semester) ([]*model.Subject, error) {
 	field := log.Fields{"semester": MakeSemesterKey(semester), "collection": CollectionUniversitySubjects}
+	ctx, span := makeFirestoreTrace(ctx, "GetSubjectsBySemester", field, client.logger.Data)
+	defer span.End()
 
 	collections := client.fsClient.Collection(CollectionUniversitySubjects)
 	docRef := collections.Doc(universityTopicName + "." + MakeSemesterKey(semester))
-	docSnap, err := docRef.Get(client.context)
+	docSnap, err := docRef.Get(ctx)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get docRef")
 	}

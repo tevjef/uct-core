@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
+	"go.opencensus.io/trace"
 )
 
 const key = "uctfirestoreclient"
@@ -21,7 +22,9 @@ type Setter interface {
 }
 
 func FromContext(ctx context.Context) *Client {
-	return ctx.Value(key).(*Client)
+	client := ctx.Value(key).(*Client)
+	client.context = ctx
+	return client
 }
 
 func ToContext(s Setter, client *Client) {
@@ -106,6 +109,16 @@ type SectionFirestoreValue struct {
 	Season              Value `json:"season"`
 }
 
+func makeFirestoreTrace(ctx context.Context, name string, attributes ...map[string]interface{}) (context.Context, *trace.Span) {
+	ctx, span := trace.StartSpan(ctx, "firestore."+name)
+	for i := range attributes {
+		for k, v := range attributes[i] {
+			span.AddAttributes(trace.StringAttribute(k, fmt.Sprintf("%v", v)))
+		}
+	}
+	return ctx, span
+}
+
 func FromFirestoreValue(value FirestoreValue) (*SectionFirestoreData, error) {
 	data := SectionFirestoreValue{}
 	b, err := json.Marshal(value.Fields)
@@ -147,8 +160,8 @@ type Client struct {
 
 func NewClient(context context.Context, fsClient *firestore.Client, logger *log.Entry) *Client {
 	return &Client{
-		fsClient,
-		logger,
-		context,
+		fsClient: fsClient,
+		logger:   logger,
+		context:  context,
 	}
 }

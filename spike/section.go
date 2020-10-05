@@ -17,7 +17,7 @@ func sectionHandler(expire time.Duration) gin.HandlerFunc {
 		sectionTopicName := strings.ToLower(c.Param("topic"))
 		firestore := uctfirestore.FromContext(c)
 
-		if s, err := firestore.GetSection(sectionTopicName); err != nil {
+		if s, err := firestore.GetSection(c, sectionTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {

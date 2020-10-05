@@ -34,7 +34,7 @@ func subscriptionHandler() gin.HandlerFunc {
 
 		firestore := uctfirestore.FromContext(c)
 
-		if err := firestore.InsertSubscriptionAndUpdateCount(&uctfirestore.Subscription{
+		if err := firestore.InsertSubscriptionAndUpdateCount(c, &uctfirestore.Subscription{
 			SectionTopicName: topicName,
 			FcmToken:         fcmToken,
 			IsSubscribed:     subscribed,
