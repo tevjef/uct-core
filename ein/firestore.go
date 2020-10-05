@@ -39,3 +39,7 @@ func (ein *ein) insertSubjects(university *model.University) {
 func (ein *ein) updateSerialSection(sectionMeta []uctfirestore.SectionMeta) {
 	_ = ein.uctFSClient.InsertSection(sectionMeta)
 }
+
+func (ein *ein) updateSerialCourse(courses []*model.Course) {
+	_ = ein.uctFSClient.InsertCourses(courses)
+}

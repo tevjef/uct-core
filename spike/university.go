@@ -1,37 +1,28 @@
-package main
+package spike
 
 import (
-	"context"
-	"database/sql"
-	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pquerna/ffjson/ffjson"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func universityHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		topicName := strings.ToLower(c.Param("topic"))
+		firestore := uctfirestore.FromContext(c)
 
-		if u, err := SelectUniversity(c, topicName); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+		if u, err := firestore.GetUniversity(topicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
 			response := model.Response{
-				Data: &model.Data{University: &u},
+				Data: &model.Data{University: u},
 			}
 			c.Set(middleware.ResponseKey, response)
 		}
@@ -40,11 +31,9 @@ func universityHandler(expire time.Duration) gin.HandlerFunc {
 
 func universitiesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		if universities, err := SelectUniversities(c); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+		firestore := uctfirestore.FromContext(c)
+
+		if universities, err := firestore.GetUniversities(); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
@@ -54,65 +43,4 @@ func universitiesHandler(expire time.Duration) gin.HandlerFunc {
 			c.Set(middleware.ResponseKey, response)
 		}
 	}, expire)
-}
-
-func SelectUniversity(ctx context.Context, topicName string) (university model.University, err error) {
-	defer model.TimeTrack(time.Now(), "SelectUniversity")
-	span := mtrace.NewSpan(ctx, "database.SelectUniversity")
-	span.SetLabel("topicName", topicName)
-	defer span.Finish()
-
-	m := map[string]interface{}{"topic_name": topicName}
-	d := store.Data{}
-	if err = middleware.Get(ctx, store.SelectUniversityCTE, &d, m); err != nil {
-		return
-	}
-
-	if err = ffjson.Unmarshal([]byte(d.Data), &university); err != nil {
-		return
-	}
-	return
-}
-
-func SelectUniversities(ctx context.Context) (universities []*model.University, err error) {
-	span := mtrace.NewSpan(ctx, "database.SelectUniversities")
-	defer span.Finish()
-
-	var topics []string
-	m := map[string]interface{}{}
-	if err = middleware.Select(ctx, store.ListUniversitiesQuery, &topics, m); err != nil {
-		return
-	}
-
-	if err == nil && len(topics) == 0 {
-		err = sql.ErrNoRows
-	}
-
-	uniChan := make(chan model.University)
-	go func() {
-		var wg sync.WaitGroup
-		for i := range topics {
-			wg.Add(1)
-			u := topics[i]
-			go func() {
-				defer wg.Done()
-				var uni model.University
-				uni, err = SelectUniversity(ctx, u)
-				if err != nil {
-					return
-				}
-				uniChan <- uni
-			}()
-		}
-		wg.Wait()
-		close(uniChan)
-	}()
-
-	for uni := range uniChan {
-		u := uni
-		universities = append(universities, &u)
-	}
-
-	sort.Sort(model.UniversityByName(universities))
-	return
 }

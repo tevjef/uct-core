@@ -11,7 +11,6 @@ require (
 	firebase.google.com/go v3.9.0+incompatible
 	github.com/BurntSushi/toml v0.3.1
 	github.com/PuerkitoBio/goquery v1.2.0
-	github.com/sirupsen/logrus v1.6.0
 	github.com/andybalholm/cascadia v0.0.0-20161224141413-349dd0209470 // indirect
 	github.com/aws/aws-sdk-go v1.34.32 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
@@ -39,6 +38,7 @@ require (
 	github.com/prometheus/common v0.2.0 // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.4.0
 	github.com/tevjef/go-fcm v0.0.0-20180107005934-84e4deb7d3da
 	github.com/tevjef/go-runtime-metrics v0.0.0-20170326170900-527a54029307
@@ -48,6 +48,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20200926100807-9d91bd62050c
 	google.golang.org/api v0.32.0
+	google.golang.org/grpc v1.32.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect

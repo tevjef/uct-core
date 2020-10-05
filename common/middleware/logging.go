@@ -1,32 +1,12 @@
 package middleware
 
 import (
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
-
-var (
-	httpResponsesLatency = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "spike_http_response_latency",
-		Help: "Measure http response latencies",
-	}, []string{"status", "method", "handler"})
-
-	httpRequestTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "spike_http_request_total_count",
-		Help: "Counts request total",
-	}, []string{"status", "method", "handler"})
-)
-
-func init() {
-	prometheus.MustRegister(httpResponsesLatency)
-	prometheus.MustRegister(httpRequestTotal)
-}
 
 func Ginrus() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -53,15 +33,6 @@ func Ginrus() gin.HandlerFunc {
 
 		latency := time.Since(start)
 
-		labels := prometheus.Labels{
-			"status":  strconv.Itoa(c.Writer.Status()),
-			"method":  c.Request.Method,
-			"handler": handler,
-		}
-
-		httpResponsesLatency.With(labels).Observe(latency.Seconds())
-		httpRequestTotal.With(labels).Inc()
-
 		entry := log.WithFields(log.Fields{
 			"status":     c.Writer.Status(),
 			"method":     c.Request.Method,
@@ -76,7 +47,7 @@ func Ginrus() gin.HandlerFunc {
 			// Append error field if this is an erroneous request.
 			entry.Error(c.Errors.String())
 		} else {
-			entry.Info()
+			entry.Infof("%s %s", c.Request.Method, path)
 		}
 	}
 }

@@ -14,7 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
 	"github.com/tevjef/uct-backend/common/database"
-	firestore2 "github.com/tevjef/uct-backend/common/firestore"
 	_ "github.com/tevjef/uct-backend/common/metrics"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/model"
@@ -139,7 +138,6 @@ func (edward *edward) init() {
 	r.Use(gin.Recovery())
 	r.Use(middleware.Ginrus())
 	r.Use(middleware.Database(edward.postgres))
-	r.Use(firestore2.Firestore(edward.firestore))
 
 	if edward.config.gcpProject != "" {
 		//traceClient, err := trace.NewClient(edward.ctx, edward.config.gcpProject)

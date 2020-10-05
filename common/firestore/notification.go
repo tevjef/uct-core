@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,8 +18,8 @@ type FirestoreNotificationSent struct {
 	LastStatusUpdatedAt time.Time `firestore:"lastStatusUpdatedAt"`
 }
 
-func (client Client) InsertNotification(sectionNotification *SectionNotification) error {
-	field := log.Fields{"collection": CollectionNotificationSent}
+func (client Client) InsertSectionNotification(sectionNotification *SectionNotification) error {
+	field := log.Fields{"collection": CollectionNotificationSent, "sectionNotification": sectionNotification}
 
 	collection := client.fsClient.Collection(CollectionNotificationSent)
 	docRef := collection.Doc(sectionNotification.Section.TopicName)
@@ -60,4 +61,30 @@ func (client Client) InsertNotification(sectionNotification *SectionNotification
 
 		return nil
 	})
+}
+
+type DeviceNotification struct {
+	NotificationId   string    `firebase:"notificationId"`
+	SectionTopicName string    `firestore:"topicName"`
+	ReceivedAt       time.Time `firestore:"receivedAt"`
+	FcmToken         string    `firestore:"fcmToken"`
+	IsSubscribed     bool      `firestore:"isSubscribed"`
+	Os               string    `firestore:"os"`
+	OsVersion        string    `firestore:"osVersion"`
+	AppVersion       string    `firestore:"appVersion"`
+}
+
+func (client Client) InsertDeviceNotification(deviceNotification *DeviceNotification) error {
+	field := log.Fields{"collection": CollectionNotificationReceived, "deviceNotification": deviceNotification}
+
+	collection := client.fsClient.Collection(CollectionNotificationReceived)
+	_, result, err := collection.Add(client.context, deviceNotification)
+	if err != nil {
+		client.logger.WithError(err).
+			WithField("result", result).
+			WithFields(field).Errorln("firestore: failed to add DeviceNotification")
+		return errors.Wrap(err, "firestore: failed to add DeviceNotification")
+	}
+
+	return nil
 }

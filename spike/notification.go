@@ -1,18 +1,15 @@
-package main
+package spike
 
 import (
-	"context"
-	"database/sql"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func notificationHandler() gin.HandlerFunc {
@@ -51,11 +48,17 @@ func notificationHandler() gin.HandlerFunc {
 		}
 
 		os, osVersion, appVersion := deviceInfo(c.Request.Header)
-		if err := InsertNotification(c, topicName, fcmToken, receiveAt, notificationId, os, osVersion, appVersion); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+
+		firestore := uctfirestore.FromContext(c)
+
+		if err := firestore.InsertDeviceNotification(&uctfirestore.DeviceNotification{
+			SectionTopicName: topicName,
+			FcmToken:         fcmToken,
+			ReceivedAt:       receiveAt,
+			NotificationId:   notificationId,
+			Os:               os,
+			OsVersion:        osVersion,
+			AppVersion:       appVersion}); err != nil {
 			httperror.ServerError(c, err)
 		} else {
 			response := model.Response{
@@ -64,36 +67,4 @@ func notificationHandler() gin.HandlerFunc {
 			c.Set(middleware.ResponseKey, response)
 		}
 	}
-}
-
-func InsertNotification(
-	ctx context.Context,
-	topicName,
-	fcmToken string,
-	receiveAt time.Time,
-	notificationId string,
-	os string,
-	osVersion string,
-	appVersion string) (err error) {
-
-	defer model.TimeTrack(time.Now(), "SelectSection")
-	span := mtrace.NewSpan(ctx, "database.InsertNotification")
-	span.SetLabel("topicName", topicName)
-	defer span.Finish()
-
-	m := map[string]interface{}{
-		"topic_name":      topicName,
-		"receive_at":      receiveAt,
-		"fcm_token":       fcmToken,
-		"notification_id": notificationId,
-		"os":              os,
-		"os_version":      osVersion,
-		"app_version":     appVersion,
-	}
-
-	if err = middleware.Insert(ctx, store.InsertNotificationQuery, m); err != nil {
-		return
-	}
-
-	return
 }

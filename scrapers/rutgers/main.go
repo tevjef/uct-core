@@ -6,9 +6,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"reflect"
-	"strings"
-	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
@@ -27,39 +24,7 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func printContextInternals(ctx interface{}, inner bool) {
-	contextValues := reflect.ValueOf(ctx).Elem()
-	contextKeys := reflect.TypeOf(ctx).Elem()
-
-	if !inner {
-		log.Printf("\nFields for %s.%s\n", contextKeys.PkgPath(), contextKeys.Name())
-	}
-
-	if contextKeys.Kind() == reflect.Struct {
-		for i := 0; i < contextValues.NumField(); i++ {
-			reflectValue := contextValues.Field(i)
-			reflectValue = reflect.NewAt(reflectValue.Type(), unsafe.Pointer(reflectValue.UnsafeAddr())).Elem()
-
-			reflectField := contextKeys.Field(i)
-
-			if reflectField.Name == "Context" {
-				printContextInternals(reflectValue.Interface(), true)
-			} else {
-				log.Printf("field name: %+v\n", reflectField.Name)
-				log.Printf("value: %+v\n", reflectValue.Interface())
-			}
-		}
-	} else {
-		log.Printf("context is empty (int)\n")
-	}
-}
-
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		log.Println(pair[0])
-	}
-	printContextInternals(r.Context(), true)
 	MainFunc(r.Context())
 
 	w.WriteHeader(http.StatusOK)

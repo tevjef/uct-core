@@ -1,35 +1,29 @@
-package main
+package spike
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func subjectHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
+		firestore := uctfirestore.FromContext(c)
 
-		if sub, _, err := SelectSubject(c, subjectTopicName); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+		if sub, err := firestore.GetSubject(subjectTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
 			response := model.Response{
-				Data: &model.Data{Subject: &sub},
+				Data: &model.Data{Subject: sub},
 			}
 			c.Set(middleware.ResponseKey, response)
 		}
@@ -39,14 +33,21 @@ func subjectHandler(expire time.Duration) gin.HandlerFunc {
 func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		season := strings.ToLower(c.Param("season"))
-		year := c.Param("year")
+		year, err := strconv.Atoi(c.Param("year"))
+		if err != nil {
+			httperror.BadRequest(c, err)
+			return
+		}
+
 		uniTopicName := strings.ToLower(c.Param("topic"))
 
-		if subjects, err := SelectSubjects(c, uniTopicName, season, year); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+		firestore := uctfirestore.FromContext(c)
+
+		semester := &model.Semester{
+			Year:   int32(year),
+			Season: season,
+		}
+		if subjects, err := firestore.GetSubjectsBySemester(uniTopicName, semester); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
@@ -56,36 +57,4 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 			c.Set(middleware.ResponseKey, response)
 		}
 	}, expire)
-}
-
-func SelectSubject(ctx context.Context, subjectTopicName string) (subject model.Subject, b []byte, err error) {
-	defer model.TimeTrack(time.Now(), "SelectProtoSubject")
-	span := mtrace.NewSpan(ctx, "database.SelectSubject")
-	span.SetLabel("topicName", subjectTopicName)
-	defer span.Finish()
-
-	m := map[string]interface{}{"topic_name": subjectTopicName}
-	d := store.Data{}
-	if err = middleware.Get(ctx, store.SelectProtoSubjectQuery, &d, m); err != nil {
-		return
-	}
-	b = d.Data
-	err = subject.Unmarshal(d.Data)
-	return
-}
-
-func SelectSubjects(ctx context.Context, uniTopicName, season, year string) (subjects []*model.Subject, err error) {
-	defer model.TimeTrack(time.Now(), "SelectSubjects")
-	span := mtrace.NewSpan(ctx, "database.SelectSubjects")
-	span.SetLabel("topicName", uniTopicName)
-	span.SetLabel("year", year)
-	span.SetLabel("season", season)
-	defer span.Finish()
-
-	m := map[string]interface{}{"topic_name": uniTopicName, "subject_season": season, "subject_year": year}
-	err = middleware.Select(ctx, store.ListSubjectQuery, &subjects, m)
-	if err == nil && len(subjects) == 0 {
-		err = httperror.NoDataFound(fmt.Sprintf("No data subjects found for university=%s, season=%s, year=%s", uniTopicName, season, year))
-	}
-	return
 }

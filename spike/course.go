@@ -1,74 +1,120 @@
-package main
+package spike
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gonum/stat"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/edward/client"
-	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		courseTopicName := strings.ToLower(c.Param("topic"))
+		firestore := uctfirestore.FromContext(c)
 
-		url, _ := url.Parse("http://edward-http:2058")
-
-		client := client.Client{
-			BaseURL:    url,
-			UserAgent:  "",
-			HttpClient: http.DefaultClient,
-		}
-
-		if response, err := client.ListSubscriptionView(courseTopicName); err != nil {
+		if course, err := firestore.GetCourse(courseTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
-			c.Set(middleware.ResponseKey, *response)
-		}
-	}, expire)
-}
+			var subs []*model.SubscriptionView
 
-func courseHandler(expire time.Duration) gin.HandlerFunc {
-	return cache.CachePage(func(c *gin.Context) {
-		courseTopicName := strings.ToLower(c.Param("topic"))
+			//Check if exists
+			var shouldUpdate bool
+			ch, lastUpdate, err := firestore.GetCourseHotness(course.TopicName)
+			if err != nil || lastUpdate == nil {
+				shouldUpdate = true
+			} else {
+				shouldUpdate = lastUpdate.Add(time.Hour * 6).Before(time.Now())
 
-		if course, _, err := SelectCourse(c, courseTopicName); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
+				if !shouldUpdate {
+					for i := range ch.View {
+						sv := ch.View[i]
+						subs = append(subs, &model.SubscriptionView{
+							IsHot:       sv.IsHot,
+							TopicName:   sv.TopicName,
+							Subscribers: sv.Subscribers,
+						})
+					}
+				}
 			}
-			httperror.ServerError(c, err)
-			return
-		} else {
+
+			if shouldUpdate {
+				for i := range course.Sections {
+					count, _ := firestore.GetSubscriptionCount(course.Sections[i].TopicName)
+
+					view := &model.SubscriptionView{
+						TopicName:   course.Sections[i].TopicName,
+						Subscribers: int64(count),
+					}
+
+					subs = append(subs, view)
+				}
+
+				var x []float64
+				var weights []float64
+				for key := range subs {
+					value := subs[key]
+					x = append(x, float64(value.Subscribers))
+					weights = append(weights, 1)
+				}
+
+				mean, std := stat.MeanStdDev(x, weights)
+
+				for key := range subs {
+					value := subs[key]
+					deviation := (float64(value.Subscribers) - mean) / std
+					value.IsHot = deviation > float64(1) && value.Subscribers > 10
+
+					x = append(x, float64(value.Subscribers))
+					weights = append(weights, 1)
+				}
+
+				var fireStoreSubs []*uctfirestore.FireStoreSubscriptionView
+
+				for key := range subs {
+					value := subs[key]
+
+					view := &uctfirestore.FireStoreSubscriptionView{
+						TopicName:   value.TopicName,
+						Subscribers: value.Subscribers,
+						IsHot:       value.IsHot,
+					}
+
+					fireStoreSubs = append(fireStoreSubs, view)
+				}
+
+				m := uctfirestore.CourseHotness{
+					View: fireStoreSubs,
+				}
+
+				if err := firestore.SetCourseHotness(courseTopicName, &m); err != nil {
+					httperror.ServerError(c, err)
+					return
+				}
+			}
+
 			response := model.Response{
-				Data: &model.Data{Course: &course},
+				Data: &model.Data{SubscriptionView: subs},
 			}
+
 			c.Set(middleware.ResponseKey, response)
 		}
+
 	}, expire)
 }
 
 func coursesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
+		firestore := uctfirestore.FromContext(c)
 
-		if courses, err := SelectCourses(c, subjectTopicName); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+		if courses, err := firestore.GetCourses(subjectTopicName); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {
@@ -78,45 +124,4 @@ func coursesHandler(expire time.Duration) gin.HandlerFunc {
 			c.Set(middleware.ResponseKey, response)
 		}
 	}, expire)
-}
-
-func SelectCourse(ctx context.Context, courseTopicName string) (course model.Course, b []byte, err error) {
-	defer model.TimeTrack(time.Now(), "SelectCourse")
-	span := mtrace.NewSpan(ctx, "database.SelectCourse")
-	span.SetLabel("topicName", courseTopicName)
-	defer span.Finish()
-
-	d := store.Data{}
-	m := map[string]interface{}{"topic_name": courseTopicName}
-	if err = middleware.Get(ctx, store.SelectCourseQuery, &d, m); err != nil {
-		return
-	}
-	b = d.Data
-	err = course.Unmarshal(b)
-	return
-}
-
-func SelectCourses(ctx context.Context, subjectTopicName string) (courses []*model.Course, err error) {
-	defer model.TimeTrack(time.Now(), "SelectCourses")
-	span := mtrace.NewSpan(ctx, "database.SelectCourses")
-	span.SetLabel("topicName", subjectTopicName)
-	defer span.Finish()
-
-	var d []store.Data
-	m := map[string]interface{}{"topic_name": subjectTopicName}
-	if err = middleware.Select(ctx, store.ListCoursesQuery, &d, m); err != nil {
-		return
-	}
-	if err == nil && len(courses) == 0 {
-		err = httperror.NoDataFound(fmt.Sprintf("No courses found for %s", subjectTopicName))
-	}
-	for i := range d {
-		c := model.Course{}
-		if err = c.Unmarshal(d[i].Data); err != nil {
-			return
-		}
-		courses = append(courses, &c)
-	}
-
-	return
 }

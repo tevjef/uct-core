@@ -13,22 +13,22 @@ import (
 	"github.com/tevjef/uct-backend/common/model"
 )
 
-const key = "firestoreclient"
+const key = "uctfirestoreclient"
 
 // Setter defines a context that enables setting values.
 type Setter interface {
 	Set(string, interface{})
 }
 
-func FromContext(ctx context.Context) *firestore.Client {
-	return ctx.Value(key).(*firestore.Client)
+func FromContext(ctx context.Context) *Client {
+	return ctx.Value(key).(*Client)
 }
 
-func ToContext(s Setter, client *firestore.Client) {
+func ToContext(s Setter, client *Client) {
 	s.Set(key, client)
 }
 
-func Firestore(client *firestore.Client) gin.HandlerFunc {
+func Firestore(client *Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ToContext(c, client)
 		c.Next()
@@ -40,7 +40,12 @@ const CollectionUniversitySemesters = "university.semesters"
 const CollectionUniversitySubjects = "university.subjects"
 const CollectionSubjectTopicName = "subject.topicName"
 const CollectionSectionTopicName = "section.topicName"
+const CollectionCourseTopicName = "course.topicName"
 const CollectionNotificationSent = "notification.sent"
+const CollectionNotificationReceived = "notification.received"
+const CollectionSubscriptions = "subscriptions.user"
+const CollectionSubscriptionsCount = "subscriptions.count"
+const CollectionCourseHotness = "course.hotness"
 
 type FirestoreSemesters struct {
 	CurrentSeason string `firestore:"currentSeason"`

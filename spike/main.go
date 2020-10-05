@@ -1,113 +1,120 @@
-package main
+package spike
 
 import (
 	"context"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"strconv"
+	"sync"
 	"time"
 
+	"cloud.google.com/go/firestore"
+	firebase "firebase.google.com/go"
+	"firebase.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
-	"github.com/tevjef/uct-backend/common/conf"
-	"github.com/tevjef/uct-backend/common/database"
-	_ "github.com/tevjef/uct-backend/common/metrics"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/cache"
-	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/common/redis"
-	"github.com/tevjef/uct-backend/spike/store"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
+
+	_ "github.com/tevjef/uct-backend/common/metrics"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type spike struct {
-	app      *kingpin.ApplicationModel
-	config   *spikeConfig
-	postgres database.Handler
-	redis    *redis.Helper
-	ctx      context.Context
+	app             *kingpin.ApplicationModel
+	firebaseApp     *firebase.App
+	storageClient   *storage.Client
+	firestoreClient *firestore.Client
+	uctFSClient     *uctfirestore.Client
+	logger          *log.Entry
+
+	ctx context.Context
 }
 
-type spikeConfig struct {
-	service    conf.Config
-	gcpProject string
-	port       uint16
-}
+var engine *gin.Engine
+var initOnce sync.Once
+var appInstance *spike
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
+	log.SetFormatter(&log.JSONFormatter{
+		FieldMap: log.FieldMap{
+			log.FieldKeyLevel: "severity",
+			log.FieldKeyMsg:   "message",
+		},
+	})
+	log.SetLevel(log.DebugLevel)
+
 }
 
-func main() {
-	sconf := &spikeConfig{}
-
-	app := kingpin.New("spike", "A command-line application to serve university course information")
-
-	app.Flag("listen", "port to start server on").
-		Short('l').
-		Default("9876").
-		Envar("SPIKE_LISTEN").
-		Uint16Var(&sconf.port)
-
-	app.Flag("project", "Google Cloud Platform project for tracing").
-		Short('p').
-		Envar("SPIKE_GCP_PROJECT").
-		StringVar(&sconf.gcpProject)
-
-	configFile := app.Flag("config", "configuration file for the application").
-		Short('c').
-		Envar("SPIKE_CONFIG").
-		File()
-
-	kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	sconf.service = conf.OpenConfigWithName(*configFile, app.Name)
-
-	// Start profiling
-	go model.StartPprof(sconf.service.DebugSever(app.Name))
-
-	// Open database connection
-	pgdb, err := model.OpenPostgres(sconf.service.DatabaseConfig(app.Name))
-	if err != nil {
-		log.WithError(err).Fatalln("failed to open connection to database")
-	}
-	pgdb.SetMaxOpenConns(sconf.service.Postgres.ConnMax)
-	pgdb.SetMaxIdleConns(sconf.service.Postgres.ConnMax)
-
-	(&spike{
-		app:      app.Model(),
-		config:   sconf,
-		redis:    redis.NewHelper(sconf.service, app.Name),
-		postgres: database.NewHandler(app.Name, pgdb, store.Queries),
-		ctx:      context.Background(),
-	}).init()
+func Spike(w http.ResponseWriter, r *http.Request) {
+	MainFunc(w, r)
 }
 
-func (spike *spike) init() {
-	// recovery and logging
-	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(middleware.Ginrus())
-	r.Use(middleware.Database(spike.postgres))
-	r.Use(cache.Cache(cache.NewRedisCache(
-		spike.config.service.RedisAddr(),
-		spike.config.service.Redis.Password,
-		spike.config.service.Spike.RedisDb,
-		10*time.Second)))
+func MainFunc(w http.ResponseWriter, r *http.Request) {
+	initOnce.Do(func() {
+		ctx := context.Background()
+		app := kingpin.New("spike", "A command-line application to serve university course information")
 
-	if spike.config.gcpProject != "" {
-		//traceClient, err := trace.NewClient(spike.ctx, spike.config.gcpProject)
-		//if err != nil {
-		//	log.Fatalf("failed to create client: %v", err)
-		//}
-		//r.Use(mtrace.Trace(traceClient))
-	}
+		logger := log.WithFields(log.Fields{})
 
+		firebaseConf := &firebase.Config{
+			StorageBucket: "universitycoursetracker.appspot.com",
+		}
+
+		var cred option.ClientOption
+		if os.Getenv("USER") == "tevjef" {
+			cred = option.WithCredentialsFile(os.Getenv("GOOGLE_CREDENTIALS"))
+		} else {
+			credentials, _ := google.FindDefaultCredentials(ctx)
+			cred = option.WithCredentials(credentials)
+		}
+
+		firebaseApp, err := firebase.NewApp(ctx, firebaseConf, cred)
+		if err != nil {
+			log.WithError(err).Errorln("failed to crate firebase app")
+		}
+
+		storageClient, err := firebaseApp.Storage(ctx)
+		if err != nil {
+			log.WithError(err).Errorln("failed to crate firebase storage client")
+		}
+
+		firestoreClient, err := firebaseApp.Firestore(ctx)
+		if err != nil {
+			log.WithError(err).Errorln("failed to create firestore client")
+		}
+
+		uctFSClient := uctfirestore.NewClient(ctx, firestoreClient, logger)
+
+		appInstance = &spike{
+			app:             app.Model(),
+			firebaseApp:     firebaseApp,
+			storageClient:   storageClient,
+			firestoreClient: firestoreClient,
+			uctFSClient:     uctFSClient,
+			logger:          logger,
+			ctx:             ctx,
+		}
+
+		initGin()
+	})
+
+	appInstance.init(w, r)
+}
+
+func initGin() {
+	engine = gin.New()
+	engine.Use(gin.Recovery())
+	engine.Use(middleware.Ginrus())
+	engine.Use(uctfirestore.Firestore(appInstance.uctFSClient))
+	engine.Use(cache.Cache(cache.NewInMemoryStore(10 * time.Second)))
 	// does not cache and defaults to json
-	v1 := r.Group("/v1")
+	v1 := engine.Group("/v1")
 	{
 		v1.Use(middleware.ContentNegotiation(middleware.JsonContentType))
 		v1.Use(middleware.Decorator)
@@ -117,14 +124,14 @@ func (spike *spike) init() {
 		v1.GET("/subjects/:topic/:season/:year", subjectsHandler(0))
 		v1.GET("/subject/:topic", subjectHandler(0))
 		v1.GET("/courses/:topic", coursesHandler(0))
-		v1.GET("/course/:topic", courseHandler(0))
+		//v1.GET("/course/:topic", courseHandler(0))
 		v1.GET("/section/:topic", sectionHandler(0))
-		v1.GET("/subscription", subscriptionHandler())
-		v1.GET("/notification", notificationHandler())
+		v1.POST("/subscription", subscriptionHandler())
+		v1.POST("/notification", notificationHandler())
 	}
 
 	// v2 caches responses and defaults to protobuf
-	v2 := r.Group("/v2")
+	v2 := engine.Group("/v2")
 	{
 		v2.Use(middleware.ContentNegotiation(middleware.ProtobufContentType))
 		v2.Use(middleware.Decorator)
@@ -134,15 +141,17 @@ func (spike *spike) init() {
 		v2.GET("/subjects/:topic/:season/:year", subjectsHandler(time.Minute))
 		v2.GET("/subject/:topic", subjectHandler(10*time.Second))
 		v2.GET("/courses/:topic", coursesHandler(10*time.Second))
-		v2.GET("/course/:topic", courseHandler(10*time.Second))
+		//v2.GET("/course/:topic", courseHandler(10*time.Second))
 		v2.GET("/course/:topic/hotness/view", hotnessHandler(10*time.Second))
 		v2.GET("/section/:topic", sectionHandler(10*time.Second))
 		v2.POST("/subscription", subscriptionHandler())
 		v2.POST("/notification", notificationHandler())
 	}
 
-	static := r.Group("/static")
+	static := engine.Group("/static")
 	static.GET("/:file", serveStaticFromGithub)
+}
 
-	r.Run(":" + strconv.Itoa(int(spike.config.port)))
+func (spike *spike) init(wr http.ResponseWriter, req *http.Request) {
+	engine.ServeHTTP(wr, req)
 }

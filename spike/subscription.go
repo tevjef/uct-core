@@ -1,18 +1,14 @@
-package main
+package spike
 
 import (
-	"context"
-	"database/sql"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/middleware/httperror"
-	mtrace "github.com/tevjef/uct-backend/common/middleware/trace"
 	"github.com/tevjef/uct-backend/common/model"
-	"github.com/tevjef/uct-backend/spike/store"
 )
 
 func subscriptionHandler() gin.HandlerFunc {
@@ -34,13 +30,17 @@ func subscriptionHandler() gin.HandlerFunc {
 			httperror.BadRequest(c, errors.New("empty topicName"))
 			return
 		}
-
 		os, osVersion, appVersion := deviceInfo(c.Request.Header)
-		if err := InsertSubscription(c, topicName, fcmToken, subscribed, os, osVersion, appVersion); err != nil {
-			if err == sql.ErrNoRows {
-				httperror.NotFound(c, err)
-				return
-			}
+
+		firestore := uctfirestore.FromContext(c)
+
+		if err := firestore.InsertSubscriptionAndUpdateCount(&uctfirestore.Subscription{
+			SectionTopicName: topicName,
+			FcmToken:         fcmToken,
+			IsSubscribed:     subscribed,
+			Os:               os,
+			OsVersion:        osVersion,
+			AppVersion:       appVersion}); err != nil {
 			httperror.ServerError(c, err)
 		} else {
 			response := model.Response{
@@ -49,33 +49,4 @@ func subscriptionHandler() gin.HandlerFunc {
 			c.Set(middleware.ResponseKey, response)
 		}
 	}
-}
-
-func InsertSubscription(
-	ctx context.Context,
-	topicName,
-	fcmToken string,
-	subscribed bool,
-	os string,
-	osVersion string,
-	appVersion string) (err error) {
-
-	defer model.TimeTrack(time.Now(), "SelectSection")
-	span := mtrace.NewSpan(ctx, "database.InsertSubscription")
-	span.SetLabel("topicName", topicName)
-	defer span.Finish()
-
-	m := map[string]interface{}{
-		"topic_name":    topicName,
-		"fcm_token":     fcmToken,
-		"is_subscribed": subscribed,
-		"os":            os,
-		"os_version":    osVersion,
-		"app_version":   appVersion,
-	}
-
-	if err = middleware.Insert(ctx, store.InsertSubscriptionQuery, m); err != nil {
-		return
-	}
-	return
 }

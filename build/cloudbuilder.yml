@@ -5,6 +5,21 @@ steps:
             'hermes',
             '--source',
             'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
+            '--trigger-http',
+            '--allow-unauthenticated',
+            '--memory',
+            '128',
+            '--runtime',
+            'go113',
+            '--entry-point',
+            'Spike'
+    ]
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [ 'functions',
+            'deploy',
+            'spike',
+            '--source',
+            'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
             '--trigger-event',
             'providers/cloud.firestore/eventTypes/document.update',
             '--trigger-resource',

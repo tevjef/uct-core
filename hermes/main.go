@@ -71,11 +71,6 @@ func MainFunc(firebaseEvent uctfirestore.FirestoreEvent) error {
 		Envar("HERMES_DRY_RUN").
 		BoolVar(&hconf.dryRun)
 
-	app.Flag("firebase-project-id", "Firebase project Id").
-		Default("universitycoursetracker").
-		Envar("FIREBASE_PROJECT_ID").
-		StringVar(&hconf.firebaseProjectID)
-
 	kingpin.MustParse(app.Parse([]string{}))
 
 	ctx := context.Background()
@@ -89,7 +84,6 @@ func MainFunc(firebaseEvent uctfirestore.FirestoreEvent) error {
 	logger := log.WithFields(log.Fields{})
 
 	firebaseConf := &firebase.Config{
-		ProjectID:     hconf.firebaseProjectID,
 		StorageBucket: "universitycoursetracker.appspot.com",
 	}
 
@@ -182,7 +176,7 @@ func (hermes *hermes) init() error {
 		return err
 	}
 
-	err = hermes.uctFSClient.InsertNotification(sectionNotification)
+	err = hermes.uctFSClient.InsertSectionNotification(sectionNotification)
 	if err != nil {
 		hermes.logger.WithError(err).Fatalf("failed to insert notification")
 		return err

@@ -10,7 +10,7 @@ func (client Client) InsertSection(sectionMetas []SectionMeta) error {
 
 	collection := client.fsClient.Collection(CollectionSectionTopicName)
 
-	Batch(500, sectionMetas, func(s []SectionMeta) {
+	BatchSections(500, sectionMetas, func(s []SectionMeta) {
 
 		batch := client.fsClient.Batch()
 
@@ -34,14 +34,14 @@ func (client Client) InsertSection(sectionMetas []SectionMeta) error {
 		if err != nil {
 			client.logger.Fatalln(err)
 		}
-		client.logger.WithField("results", len(results)).WithFields(field).Debugln("firestore: batch set complete")
+		client.logger.WithField("results", len(results)).WithFields(field).Debugln("firestore: section batch set complete")
 	})
 
 	return nil
 }
 
 func (client Client) GetSection(topicName string) (*model.Section, error) {
-	field := log.Fields{"collection": CollectionSectionTopicName}
+	field := log.Fields{"collection": CollectionSectionTopicName, "topicName": topicName}
 
 	collection := client.fsClient.Collection(CollectionSectionTopicName)
 	docRef := collection.Doc(topicName)
@@ -68,7 +68,7 @@ func (client Client) GetSection(topicName string) (*model.Section, error) {
 }
 
 func (client Client) GetSectionNotification(topicName string) (*SectionNotification, error) {
-	field := log.Fields{"collection": CollectionSectionTopicName}
+	field := log.Fields{"collection": CollectionSectionTopicName, "topicName": topicName}
 
 	collection := client.fsClient.Collection(CollectionSectionTopicName)
 	docRef := collection.Doc(topicName)
@@ -111,7 +111,7 @@ func SectionFromBytes(bytes []byte) (*model.Section, error) {
 	return section, err
 }
 
-func Batch(count int, items []SectionMeta, callback func([]SectionMeta)) {
+func BatchSections(count int, items []SectionMeta, callback func([]SectionMeta)) {
 	var result []SectionMeta
 
 	for i := 0; i < len(items); i++ {

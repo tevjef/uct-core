@@ -212,12 +212,19 @@ func (ein *ein) process() error {
 	}
 
 	ein.insertUniversity(newUniversity, university)
+	ein.insertCourses(newUniversity, university)
 	ein.insertSections(university)
 
 	return nil
 }
 
 // uses raw because the previously validated university was mutated some where and I couldn't find where
+func (ein *ein) insertCourses(full model.University, diff model.University) {
+	courses := diffAndMergeCourses(&full, &diff)
+
+	ein.updateSerialCourse(courses)
+}
+
 func (ein *ein) insertSections(diff model.University) {
 	defer model.TimeTrack(time.Now(), "insertSections")
 
@@ -245,4 +252,30 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	ein.updateSerialSection(allSectionMeta)
+}
+
+// For ever course that's in the diff return the course that has full data.
+func diffAndMergeCourses(full, diff *model.University) (coursesToUpdate []*model.Course) {
+	var allCourses []*model.Course
+	var diffCourses []*model.Course
+
+	for i := range full.Subjects {
+		allCourses = append(allCourses, full.Subjects[i].Courses...)
+	}
+
+	for i := range diff.Subjects {
+		diffCourses = append(diffCourses, diff.Subjects[i].Courses...)
+	}
+
+	for i := range diffCourses {
+		course := diffCourses[i]
+		for j := range allCourses {
+			fullCourse := allCourses[j]
+			if course.TopicName == fullCourse.TopicName {
+				coursesToUpdate = append(coursesToUpdate, fullCourse)
+			}
+		}
+	}
+
+	return coursesToUpdate
 }
