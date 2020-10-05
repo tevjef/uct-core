@@ -2,7 +2,7 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
-            'hermes',
+            'spike',
             '--source',
             'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
             '--trigger-http',
@@ -17,7 +17,7 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
-            'spike',
+            'hermes',
             '--source',
             'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
             '--trigger-event',
