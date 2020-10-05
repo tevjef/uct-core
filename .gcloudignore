@@ -2,3 +2,9 @@
 .gitignore
 build
 firebase
+kubernetes
+postgresql
+julia
+jet
+faye
+edward

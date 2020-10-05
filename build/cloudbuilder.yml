@@ -1,18 +1,16 @@
 steps:
+  - name: 'gcr.io/universitycoursetracker/firebase'
+    args: ['deploy', '--config=firebase/firebase.json','--project=universitycoursetracker', '--only=hosting']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
             'spike',
-            '--source',
-            'https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
+            '--source=https://source.developers.google.com/projects/universitycoursetracker/repos/github_tevjef_uct-backend/moveable-aliases/develop_firebase',
             '--trigger-http',
             '--allow-unauthenticated',
-            '--memory',
-            '128',
-            '--runtime',
-            'go113',
-            '--entry-point',
-            'Spike'
+            '--memory=128',
+            '--runtime=go113',
+            '--entry-point=Spike'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
@@ -97,3 +95,4 @@ steps:
             '--set-env-vars',
             'RUTGERS_CAMPUS=CM,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
     ]
+timeout: 30m
