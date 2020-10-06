@@ -112,8 +112,8 @@ func initGin() {
 	engine = gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.Ginrus())
-	engine.Use(uctfirestore.Firestore(appInstance.uctFSClient))
 	engine.Use(trace.TraceMiddleware)
+	engine.Use(uctfirestore.Firestore(appInstance.uctFSClient))
 	engine.Use(cache.Cache(cache.NewInMemoryStore(10 * time.Second)))
 	// does not cache and defaults to json
 	v1 := engine.Group("/v1")

@@ -83,7 +83,7 @@ func Middleware(service string) gin.HandlerFunc {
 func TraceMiddleware(c *gin.Context) {
 	h := &handler{
 		propagation:      &propagation.HTTPFormat{},
-		IsPublicEndpoint: true,
+		IsPublicEndpoint: false,
 		StartOptions: trace.StartOptions{
 			SpanKind: trace.SpanKindServer,
 		},
