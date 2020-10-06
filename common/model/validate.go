@@ -142,16 +142,25 @@ func ValidateAllSubjects(university *University) error {
 		sort.Sort(subjectSorter{university.Subjects})
 	}
 
+	var duplicateCourses []string
+
 	for subjectIndex := range university.Subjects {
 		subject := university.Subjects[subjectIndex]
 		if err := subject.Validate(university); err != nil {
 			return err
 		}
 
+		duplicateCourses = append(duplicateCourses, makeUniqueCourses(subject, subject.Courses)...)
+
 		if err := ValidateAllCourses(subject); err != nil {
 			return err
 		}
+	}
 
+	if len(duplicateCourses) > 0 {
+		log.WithFields(log.Fields{
+			"courses": duplicateCourses,
+		}).Debugf("validate: duplicate courses found: %v", len(duplicateCourses))
 	}
 
 	return nil
@@ -159,7 +168,6 @@ func ValidateAllSubjects(university *University) error {
 
 func ValidateAllCourses(subject *Subject) error {
 	courses := subject.Courses
-	makeUniqueCourses(subject, courses)
 	for courseIndex := range courses {
 		course := courses[courseIndex]
 		if err := course.Validate(subject); err != nil {
@@ -514,7 +522,7 @@ func makeUniqueSubjects(subjects []*Subject) {
 	}
 }
 
-func makeUniqueCourses(subject *Subject, courses []*Course) {
+func makeUniqueCourses(subject *Subject, courses []*Course) []string {
 	m := map[string]int{}
 	var duplicates []string
 	for courseIndex := range courses {
@@ -523,10 +531,9 @@ func makeUniqueCourses(subject *Subject, courses []*Course) {
 		m[key]++
 		if m[key] > 1 {
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
-			duplicates = append(duplicates, fmt.Sprintf("season:%v year:%v count: %v | %v ", subject.Season, subject.Year, m[key], key))
+			duplicates = append(duplicates, fmt.Sprintf("subject: %v sectionCount:%v | %v %v", subject.TopicName, len(course.Sections), key, course))
 		}
 	}
-	if len(duplicates) > 0 {
-		log.WithFields(log.Fields{"courses": duplicates}).Debugf("validate: duplicate courses found: %v", len(duplicates))
-	}
+
+	return duplicates
 }

@@ -43,7 +43,7 @@ func (ein *ein) updateSerialSection(sectionMeta []uctfirestore.SectionMeta) {
 
 	field := map[string]interface{}{}
 	logSectionMetadata(sectionMeta, field)
-	ein.logger.WithFields(field).Infoln("firestore: %d sections updated", len(sectionMeta))
+	ein.logger.WithFields(field).Info("firestore: %d sections updated", len(sectionMeta))
 }
 
 func logSectionMetadata(sectionMeta []uctfirestore.SectionMeta, field map[string]interface{}) {
@@ -60,5 +60,5 @@ func logSectionMetadata(sectionMeta []uctfirestore.SectionMeta, field map[string
 func (ein *ein) updateSerialCourse(courses []*model.Course) {
 	_ = ein.uctFSClient.InsertCourses(ein.ctx, courses)
 
-	ein.logger.Infoln("firestore: %d courses updated", len(courses))
+	ein.logger.Infof("firestore: %d courses updated", len(courses))
 }

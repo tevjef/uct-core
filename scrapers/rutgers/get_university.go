@@ -11,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/conf"
+	"github.com/tevjef/uct-backend/common/middleware"
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/try"
 	"go.opencensus.io/exporter/stackdriver/propagation"
@@ -233,10 +234,18 @@ func (sr rutgersRequest) getData(context context.Context, url string, model inte
 			return true, err
 		}
 
-		fields.WithFields(log.Fields{
-			"content-length":  len(data),
-			"response_status": resp.StatusCode,
-			"response_time":   time.Since(startTime).Seconds()}).Debugf("%s: url: %s status: %s content-length: %v response_time %v", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
+		log.WithFields(log.Fields{
+			"httpRequest": log.Fields{
+				"requestMethod": resp.Request.Method,
+				"requestUrl":    resp.Request.URL.String(),
+				"requestSize":   resp.Request.ContentLength,
+				"responseSize":  resp.ContentLength,
+				"status":        resp.Status,
+				"userAgent":     resp.Request.UserAgent(),
+				"serverIp":      middleware.GetOutboundIP().String(),
+				"latency":       time.Since(startTime),
+			},
+		}).Debugf("%s: url: %s status: %s content-length: %v response_time %v", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
 
 		return false, nil
 	})

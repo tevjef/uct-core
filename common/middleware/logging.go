@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net"
 	"strings"
 	"time"
 
@@ -34,13 +35,17 @@ func Ginrus() gin.HandlerFunc {
 		latency := time.Since(start)
 
 		entry := log.WithFields(log.Fields{
-			"status":     c.Writer.Status(),
-			"method":     c.Request.Method,
-			"path":       path,
-			"ip":         c.ClientIP(),
-			"latency":    latency,
-			"handler":    handler,
-			"user-agent": c.Request.UserAgent(),
+			"httpRequest": log.Fields{
+				"requestMethod": c.Request.Method,
+				"requestUrl":    c.Request.URL.String(),
+				"requestSize":   c.Request.ContentLength,
+				"responseSize":  c.Writer.Size(),
+				"status":        c.Writer.Status(),
+				"userAgent":     c.Request.UserAgent(),
+				"remoteIp":      c.ClientIP(),
+				"serverIp":      GetOutboundIP().String(),
+				"latency":       latency.String(),
+			},
 		})
 
 		if len(c.Errors) > 0 {
@@ -50,4 +55,17 @@ func Ginrus() gin.HandlerFunc {
 			entry.Infof("%s %s", c.Request.Method, path)
 		}
 	}
+}
+
+// Get preferred outbound ip of this machine
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
 }

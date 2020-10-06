@@ -6,9 +6,11 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
+	"github.com/tevjef/uct-backend/common/middleware"
 	"google.golang.org/api/idtoken"
 )
 
@@ -40,6 +42,7 @@ func PublishMessage(token string, projectId string, topicId string, data string)
 }
 
 func PublishToHttp(context context.Context, url string, body io.Reader) error {
+	startTime := time.Now()
 	client, err := idtoken.NewClient(context, url)
 	if err != nil {
 		return fmt.Errorf("idtoken.NewClient: %v", err)
@@ -51,17 +54,29 @@ func PublishToHttp(context context.Context, url string, body io.Reader) error {
 		return err
 	}
 
+	entry := log.WithFields(log.Fields{
+		"httpRequest": log.Fields{
+			"requestMethod": resp.Request.Method,
+			"requestUrl":    resp.Request.URL.String(),
+			"requestSize":   resp.Request.ContentLength,
+			"responseSize":  resp.ContentLength,
+			"status":        resp.Status,
+			"userAgent":     resp.Request.UserAgent(),
+			"serverIp":      middleware.GetOutboundIP().String(),
+			"latency":       time.Since(startTime),
+		}})
+
 	if resp.StatusCode > 300 {
-		log.WithError(err).WithField("status", resp.Status).Debugln("api call failed")
+		entry.WithError(err).WithField("status", resp.Status).Debugln("api call failed")
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.WithError(err).Fatal("failed to read response")
+		entry.WithError(err).Fatal("failed to read response")
 		return err
 	}
 
-	log.Debugln(string(b))
+	entry.Debugln(string(b))
 
 	return nil
 }
