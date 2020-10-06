@@ -12,7 +12,7 @@ import (
 
 func (client Client) InsertSubjects(ctx context.Context, subjects []*model.Subject) error {
 	field := log.Fields{"collection": CollectionSubjectTopicName, "subjects": len(subjects)}
-	ctx, span := makeFirestoreTrace(ctx, "InsertSubjects", field, client.logger.Data)
+	spannedContext, span := makeFirestoreTrace(ctx, "InsertSubjects", field, client.logger.Data)
 	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionSubjectTopicName)
@@ -26,7 +26,7 @@ func (client Client) InsertSubjects(ctx context.Context, subjects []*model.Subje
 		batch.Set(docRef, firestoreData)
 	}
 
-	results, err := batch.Commit(ctx)
+	results, err := batch.Commit(spannedContext)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to commit subject transaction")
 	}
@@ -72,7 +72,7 @@ func (client Client) GetSubject(ctx context.Context, topicName string) (*model.S
 
 func (client Client) InsertSubjectsBySemester(ctx context.Context, university model.University, semester *model.Semester) error {
 	field := log.Fields{"semester": MakeSemesterKey(semester), "subjects": len(university.Subjects)}
-	ctx, span := makeFirestoreTrace(ctx, "InsertSubjectsBySemester", field, client.logger.Data)
+	spannedContext, span := makeFirestoreTrace(ctx, "InsertSubjectsBySemester", field, client.logger.Data)
 	defer span.End()
 
 	filteredSubjects := getSubjectsForSemester(university.Subjects, semester)
@@ -99,7 +99,7 @@ func (client Client) InsertSubjectsBySemester(ctx context.Context, university mo
 	firestoreData := FirestoreData{Data: buf.Bytes()}
 	collections := client.fsClient.Collection(CollectionUniversitySubjects)
 	docRef := collections.Doc(university.TopicName + "." + MakeSemesterKey(semester))
-	_, err = docRef.Set(ctx, firestoreData)
+	_, err = docRef.Set(spannedContext, firestoreData)
 	if err != nil {
 		client.logger.WithError(err).WithFields(field).Fatalf("firestore: failed to set %s", CollectionUniversitySubjects)
 	}

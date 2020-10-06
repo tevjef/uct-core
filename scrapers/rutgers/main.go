@@ -26,15 +26,6 @@ func init() {
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	log.WithFields(log.Fields{
-		"httpRequest": log.Fields{
-			"requestHeaders": r.Header,
-			"requestMethod":  r.Method,
-			"requestUrl":     r.URL.String(),
-			"requestSize":    r.ContentLength,
-			"userAgent":      r.UserAgent(),
-		}}).Debugln("ein: function started")
-
 	MainFunc(r)
 
 	w.WriteHeader(http.StatusOK)
