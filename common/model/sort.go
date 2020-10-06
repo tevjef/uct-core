@@ -202,7 +202,7 @@ func (a subjectSorter) Swap(i, j int) {
 func (a subjectSorter) Less(i, j int) bool {
 	is := a.subjects[i]
 	js := a.subjects[j]
-	return is.Number+is.Name+is.Season < js.Number+js.Name+js.Season
+	return is.Name+is.Number+is.Season < js.Name+js.Number+js.Season
 }
 
 func (meeting Meeting) dayRank() int {

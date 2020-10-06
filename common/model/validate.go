@@ -531,7 +531,7 @@ func makeUniqueCourses(subject *Subject, courses []*Course) []string {
 		m[key]++
 		if m[key] > 1 {
 			course.Name = course.Name + "_" + strconv.Itoa(m[key])
-			duplicates = append(duplicates, fmt.Sprintf("subject: %v sectionCount:%v | %v %v", subject.TopicName, len(course.Sections), key, course))
+			duplicates = append(duplicates, fmt.Sprintf("subject: %v sectionCount:%v | %v", subject.TopicName, len(course.Sections), key))
 		}
 	}
 
