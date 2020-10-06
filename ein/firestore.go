@@ -43,7 +43,7 @@ func (ein *ein) updateSerialSection(sectionMeta []uctfirestore.SectionMeta) {
 
 	field := map[string]interface{}{}
 	logSectionMetadata(sectionMeta, field)
-	ein.logger.WithFields(field).Info("firestore: %d sections updated", len(sectionMeta))
+	ein.logger.WithFields(field).Infof("firestore: %d sections updated", len(sectionMeta))
 }
 
 func logSectionMetadata(sectionMeta []uctfirestore.SectionMeta, field map[string]interface{}) {

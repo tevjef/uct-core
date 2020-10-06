@@ -16,6 +16,7 @@ import (
 	"github.com/tevjef/uct-backend/common/conf"
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
 	_ "github.com/tevjef/uct-backend/common/trace"
+	"go.opencensus.io/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -52,15 +53,18 @@ func init() {
 }
 
 func Hermes(context context.Context, event uctfirestore.FirestoreEvent) error {
-	meta, err := metadata.FromContext(context)
+	ctx, span := trace.StartSpan(context, "/func.Hermes", trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("metadata.FromContext: %v", err)
 	}
 	log.Debugf("function triggered by change to: %v on event %v", meta, event)
-	return MainFunc(event)
+	return MainFunc(ctx, event)
 }
 
-func MainFunc(firebaseEvent uctfirestore.FirestoreEvent) error {
+func MainFunc(ctx context.Context, firebaseEvent uctfirestore.FirestoreEvent) error {
 	hconf := &hermesConfig{}
 
 	app := kingpin.New("hermes", "A server that listens to a database for events and publishes notifications to Firebase Cloud Messaging")
@@ -72,14 +76,6 @@ func MainFunc(firebaseEvent uctfirestore.FirestoreEvent) error {
 		BoolVar(&hconf.dryRun)
 
 	kingpin.MustParse(app.Parse([]string{}))
-
-	ctx := context.Background()
-
-	if hconf.dryRun {
-		log.Infoln("enabling hermes in dry run mode")
-	} else {
-		log.Infoln("enabling hermes in production mode")
-	}
 
 	logger := log.WithFields(log.Fields{})
 
@@ -155,7 +151,7 @@ func (hermes *hermes) init() error {
 			WithField("new_section", newSection.String()).
 			WithField("section", newSection.TopicName).
 			WithField("event", fmt.Sprintf("%+v", hermes.event)).
-			Warningln("section status did not update")
+			Debugf("section status did not update")
 		return nil
 	} else {
 		log.WithField("old_status", oldSection.Status).

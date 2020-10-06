@@ -26,7 +26,11 @@ func init() {
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	MainFunc(r)
+	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
+	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.RutgersScraper", sc, trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	MainFunc(r.Clone(ctx))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -64,15 +68,10 @@ func MainFunc(r *http.Request) {
 	kingpin.MustParse(app.Parse([]string{}))
 	app.Name = app.Name + "-" + rconf.campus
 
-	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
-	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.RutgersScraper", sc, trace.WithSpanKind(trace.SpanKindServer))
-	span.AddAttributes(trace.StringAttribute("campus", rconf.campus))
-	defer span.End()
-
 	(&rutgers{
 		app:    app.Model(),
 		config: rconf,
-		ctx:    ctx,
+		ctx:    r.Context(),
 	}).init()
 }
 

@@ -30,7 +30,7 @@ func (client Client) InsertUniversity(ctx context.Context, university model.Univ
 		return err
 	}
 
-	client.logger.WithFields(field).Debugf("%firestore: set %v")
+	client.logger.WithFields(field).Debugf("firestore: set %v", CollectionUniversityTopicName)
 
 	return nil
 }

@@ -48,7 +48,11 @@ type einConfig struct {
 }
 
 func Ein(w http.ResponseWriter, r *http.Request) {
-	MainFunc(r)
+	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
+	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.Ein", sc, trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	MainFunc(r.Clone(ctx))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -95,14 +99,12 @@ func MainFunc(r *http.Request) {
 
 	kingpin.MustParse(app.Parse([]string{}))
 
-	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
-	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.Ein", sc, trace.WithSpanKind(trace.SpanKindServer))
-	defer span.End()
-
 	firebaseConf := &firebase.Config{
 		ProjectID:     econf.firebaseProjectID,
 		StorageBucket: "universitycoursetracker.appspot.com",
 	}
+
+	ctx := r.Context()
 
 	credentials, err := google.FindDefaultCredentials(ctx)
 	firebaseApp, err := firebase.NewApp(ctx, firebaseConf, option.WithCredentials(credentials))
