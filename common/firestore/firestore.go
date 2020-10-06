@@ -110,13 +110,13 @@ type SectionFirestoreValue struct {
 }
 
 func makeFirestoreTrace(ctx context.Context, name string, attributes ...map[string]interface{}) (context.Context, *trace.Span) {
-	ctx, span := trace.StartSpan(ctx, "firestore."+name)
+	newContext, span := trace.StartSpan(ctx, "firestore."+name)
 	for i := range attributes {
 		for k, v := range attributes[i] {
 			span.AddAttributes(trace.StringAttribute(k, fmt.Sprintf("%v", v)))
 		}
 	}
-	return ctx, span
+	return newContext, span
 }
 
 func FromFirestoreValue(value FirestoreValue) (*SectionFirestoreData, error) {

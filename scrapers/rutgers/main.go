@@ -1,7 +1,6 @@
 package rutgers
 
 import (
-	"context"
 	"io"
 	"net/http"
 	_ "net/http/pprof"
@@ -11,6 +10,8 @@ import (
 	"github.com/tevjef/uct-backend/common/model"
 	"github.com/tevjef/uct-backend/common/publishing"
 	_ "github.com/tevjef/uct-backend/common/trace"
+	"go.opencensus.io/exporter/stackdriver/propagation"
+	"go.opencensus.io/trace"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -25,12 +26,12 @@ func init() {
 }
 
 func RutgersScraper(w http.ResponseWriter, r *http.Request) {
-	MainFunc(r.Context())
+	MainFunc(r)
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func MainFunc(context context.Context) {
+func MainFunc(r *http.Request) {
 	rconf := &rutgersConfig{}
 
 	app := kingpin.New("rutgers", "A web scraper that retrives course information for Rutgers University's servers.")
@@ -63,10 +64,15 @@ func MainFunc(context context.Context) {
 	kingpin.MustParse(app.Parse([]string{}))
 	app.Name = app.Name + "-" + rconf.campus
 
+	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
+	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.RutgersScraper", sc, trace.WithSpanKind(trace.SpanKindServer))
+	span.AddAttributes(trace.StringAttribute("campus", rconf.campus))
+	defer span.End()
+
 	(&rutgers{
 		app:    app.Model(),
 		config: rconf,
-		ctx:    context,
+		ctx:    ctx,
 	}).init()
 }
 

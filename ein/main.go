@@ -13,6 +13,8 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
 	uctfirestore "github.com/tevjef/uct-backend/common/firestore"
+	"go.opencensus.io/exporter/stackdriver/propagation"
+	"go.opencensus.io/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -46,12 +48,7 @@ type einConfig struct {
 }
 
 func Ein(w http.ResponseWriter, r *http.Request) {
-	newUniversityData, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.WithError(err).Errorln("failed to read request body")
-	}
-
-	MainFunc(newUniversityData)
+	MainFunc(r)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -67,7 +64,7 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func MainFunc(newUniversityData []byte) {
+func MainFunc(r *http.Request) {
 	econf := &einConfig{}
 
 	app := kingpin.New("ein", "A command-line application for inserting and updated university information")
@@ -98,7 +95,9 @@ func MainFunc(newUniversityData []byte) {
 
 	kingpin.MustParse(app.Parse([]string{}))
 
-	ctx := context.Background()
+	sc, _ := (&propagation.HTTPFormat{}).SpanContextFromRequest(r)
+	ctx, span := trace.StartSpanWithRemoteParent(r.Context(), "/func.Ein", sc, trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
 
 	firebaseConf := &firebase.Config{
 		ProjectID:     econf.firebaseProjectID,
@@ -124,6 +123,11 @@ func MainFunc(newUniversityData []byte) {
 	logger := log.WithFields(log.Fields{})
 
 	uctFSClient := uctfirestore.NewClient(ctx, firestoreClient, logger)
+
+	newUniversityData, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.WithError(err).Errorln("failed to read request body")
+	}
 
 	(&ein{
 		app:               app.Model(),
