@@ -20,7 +20,7 @@ type Subscription struct {
 }
 
 type SubscriptionCount struct {
-	subscriberCount int `firestore:"subscriberCount"`
+	SubscriberCount int `firestore:"subscriberCount"`
 }
 
 func (client Client) InsertSubscriptionAndUpdateCount(ctx context.Context, subscription *Subscription) error {
@@ -65,9 +65,9 @@ func (client Client) UpdateSubscription(ctx context.Context, subscription *Subsc
 		}
 
 		if subscription.IsSubscribed {
-			sc.subscriberCount = sc.subscriberCount + 1
-		} else if sc.subscriberCount > 0 {
-			sc.subscriberCount = sc.subscriberCount + -1
+			sc.SubscriberCount = sc.SubscriberCount + 1
+		} else if sc.SubscriberCount > 0 {
+			sc.SubscriberCount = sc.SubscriberCount + -1
 		}
 
 		err = tx.Set(docRef, &sc)
@@ -110,5 +110,5 @@ func (client Client) GetSubscriptionCount(ctx context.Context, topicName string)
 		return 0, err
 	}
 
-	return sc.subscriberCount, nil
+	return sc.SubscriberCount, nil
 }

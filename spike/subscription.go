@@ -15,7 +15,7 @@ func subscriptionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		subscribed, err := strconv.ParseBool(c.PostForm("isSubscribed"))
 		if err != nil {
-			httperror.BadRequest(c, errors.New("invalid isSubscribed"+err.Error()))
+			httperror.BadRequest(c, errors.Wrap(err, "invalid isSubscribed"))
 			return
 		}
 
