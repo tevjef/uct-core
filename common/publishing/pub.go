@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -41,17 +41,17 @@ func PublishMessage(token string, projectId string, topicId string, data string)
 	log.Debugln("Published message %d; msg ID: %v\n", id)
 }
 
-func PublishToHttp(context context.Context, url string, body io.Reader) error {
+func PublishToHttp(context context.Context, url string, body io.Reader) (*log.Entry, error) {
 	startTime := time.Now()
 	client, err := idtoken.NewClient(context, url)
 	if err != nil {
-		return fmt.Errorf("idtoken.NewClient: %v", err)
+		return nil, fmt.Errorf("idtoken.NewClient: %v", err)
 	}
 
 	req, err := http.NewRequestWithContext(context, http.MethodPost, url, body)
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	entry := log.WithFields(log.Fields{
@@ -69,16 +69,11 @@ func PublishToHttp(context context.Context, url string, body io.Reader) error {
 		}})
 
 	if resp.StatusCode > 300 {
-		entry.WithError(err).WithField("status", resp.Status).Debugln("api call failed")
+		dump, _ := httputil.DumpResponse(resp, false)
+		entry.WithError(err).
+			WithField("httpDump", string(dump)).
+			WithField("status", resp.Status).Debugln("api call failed")
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		entry.WithError(err).Fatal("failed to read response")
-		return err
-	}
-
-	entry.Debugln(string(b))
-
-	return nil
+	return entry, nil
 }

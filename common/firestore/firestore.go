@@ -46,8 +46,8 @@ const CollectionSectionTopicName = "section.topicName"
 const CollectionCourseTopicName = "course.topicName"
 const CollectionNotificationSent = "notification.sent"
 const CollectionNotificationReceived = "notification.received"
-const CollectionSubscriptions = "subscriptions.user"
-const CollectionSubscriptionsCount = "subscriptions.count"
+const CollectionSubscriptionUser = "subscription.user"
+const CollectionSubscriptionCount = "subscription.count"
 const CollectionCourseHotness = "course.hotness"
 
 type FirestoreSemesters struct {

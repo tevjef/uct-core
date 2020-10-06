@@ -104,7 +104,7 @@ func (client Client) InsertSubjectsBySemester(ctx context.Context, university mo
 		client.logger.WithError(err).WithFields(field).Fatalf("firestore: failed to set %s", CollectionUniversitySubjects)
 	}
 
-	client.logger.WithFields(field).Debugln("firestore: set %s", CollectionUniversitySubjects)
+	client.logger.WithFields(field).Debugf("firestore: set %s", CollectionUniversitySubjects)
 
 	return nil
 }

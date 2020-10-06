@@ -36,24 +36,50 @@ func rankSeason(seasonStr string) int {
 	return 0
 }
 
-type courseSorter struct {
+type CourseSorter struct {
 	courses []*Course
 }
 
-func (a courseSorter) Len() int {
+func (a CourseSorter) Len() int {
 	return len(a.courses)
 }
 
-func (a courseSorter) Swap(i, j int) {
+func (a CourseSorter) Swap(i, j int) {
 	a.courses[i], a.courses[j] = a.courses[j], a.courses[i]
 }
 
-func (a courseSorter) Less(i, j int) bool {
+func (a CourseSorter) Less(i, j int) bool {
 	c1 := a.courses[i]
 	c2 := a.courses[j]
 
 	left := c1.Name + c1.Number
 	right := c2.Name + c2.Number
+
+	if left == right {
+		return len(c1.Sections) < len(c2.Sections)
+	}
+
+	return left < right
+}
+
+type CourseByNumber struct {
+	Courses []*Course
+}
+
+func (a CourseByNumber) Len() int {
+	return len(a.Courses)
+}
+
+func (a CourseByNumber) Swap(i, j int) {
+	a.Courses[i], a.Courses[j] = a.Courses[j], a.Courses[i]
+}
+
+func (a CourseByNumber) Less(i, j int) bool {
+	c1 := a.Courses[i]
+	c2 := a.Courses[j]
+
+	left := c1.Number + c1.Name
+	right := c2.Number + c2.Name
 
 	if left == right {
 		return len(c1.Sections) < len(c2.Sections)

@@ -340,7 +340,7 @@ func (sub *Subject) Validate(uni *University) error {
 	if len(sub.Courses) == 0 {
 		log.Warningf("validate: no course in subject: %v", sub.TopicName)
 	} else {
-		sort.Sort(courseSorter{sub.Courses})
+		sort.Sort(CourseSorter{sub.Courses})
 	}
 
 	return nil

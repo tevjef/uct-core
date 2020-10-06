@@ -38,7 +38,8 @@ func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
 
 	var filteredSubjects []*Subject
 
-	for seasonKey, newSubjects := range newSeasonedSubjects {
+	for seasonKey := range newSeasonedSubjects {
+		newSubjects := newSeasonedSubjects[seasonKey]
 		oldSubjects, ok := oldSeasonedSubjects[seasonKey]
 		// A new semester is found
 
@@ -59,8 +60,9 @@ func DiffAndFilter(oldUni, newUni University) (filteredUniversity University) {
 		for s := range newSubjects {
 			if !newSubjects[s].Equal(oldSubjects[s]) {
 				log.Debugf("diff: %v: change detected in subject: %v", logKey, newSubjects[s].TopicName)
-				newSubjects[s].Courses = diffAndFilterCourses(logKey, oldSubjects[s].Courses, newSubjects[s].Courses)
-				filteredSubjects = append(filteredSubjects, newSubjects[s])
+				filteredSubject := *newSubjects[s]
+				filteredSubject.Courses = diffAndFilterCourses(logKey, oldSubjects[s].Courses, newSubjects[s].Courses)
+				filteredSubjects = append(filteredSubjects, &filteredSubject)
 			}
 		}
 	}
@@ -80,8 +82,9 @@ func diffAndFilterCourses(logKey string, oldCourses, newCourses []*Course) []*Co
 	for c := range newCourses {
 		if !newCourses[c].Equal(oldCourses[c]) {
 			log.Debugf("diff: %v: change detected in course: %v", logKey, newCourses[c].TopicName)
-			newCourses[c].Sections = diffAndFilterSections(logKey, oldCourses[c].Sections, newCourses[c].Sections)
-			filteredCourses = append(filteredCourses, newCourses[c])
+			filteredCourse := *newCourses[c]
+			filteredCourse.Sections = diffAndFilterSections(logKey, oldCourses[c].Sections, newCourses[c].Sections)
+			filteredCourses = append(filteredCourses, &filteredCourse)
 		}
 	}
 	return filteredCourses

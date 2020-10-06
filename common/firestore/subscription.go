@@ -24,11 +24,11 @@ type SubscriptionCount struct {
 }
 
 func (client Client) InsertSubscriptionAndUpdateCount(ctx context.Context, subscription *Subscription) error {
-	field := log.Fields{"collection": CollectionSubscriptions, "subscription": subscription}
+	field := log.Fields{"collection": CollectionSubscriptionUser, "subscription": subscription}
 	ctx, span := makeFirestoreTrace(ctx, "InsertSubscriptionAndUpdateCount", field, client.logger.Data)
 	defer span.End()
 
-	collection := client.fsClient.Collection(CollectionSubscriptions)
+	collection := client.fsClient.Collection(CollectionSubscriptionUser)
 
 	_, result, err := collection.Add(ctx, subscription)
 	if err != nil {
@@ -40,11 +40,11 @@ func (client Client) InsertSubscriptionAndUpdateCount(ctx context.Context, subsc
 }
 
 func (client Client) UpdateSubscription(ctx context.Context, subscription *Subscription) error {
-	field := log.Fields{"collection": CollectionSubscriptionsCount, "subscription": subscription}
+	field := log.Fields{"collection": CollectionSubscriptionCount, "subscription": subscription}
 	ctx, span := makeFirestoreTrace(ctx, "UpdateSubscription", field, client.logger.Data)
 	defer span.End()
 
-	collection := client.fsClient.Collection(CollectionSubscriptionsCount)
+	collection := client.fsClient.Collection(CollectionSubscriptionCount)
 
 	docRef := collection.Doc(subscription.SectionTopicName)
 	err := client.fsClient.RunTransaction(ctx, func(context context.Context, tx *firestore.Transaction) error {
@@ -70,7 +70,7 @@ func (client Client) UpdateSubscription(ctx context.Context, subscription *Subsc
 			sc.subscriberCount = sc.subscriberCount + -1
 		}
 
-		err = tx.Set(docRef, sc)
+		err = tx.Set(docRef, &sc)
 		if err != nil {
 			return errors.Wrap(err, "firestore: failed to update subscription count")
 		}
@@ -87,11 +87,11 @@ func (client Client) UpdateSubscription(ctx context.Context, subscription *Subsc
 }
 
 func (client Client) GetSubscriptionCount(ctx context.Context, topicName string) (int, error) {
-	field := log.Fields{"collection": CollectionSubscriptionsCount, "topicName": topicName}
+	field := log.Fields{"collection": CollectionSubscriptionCount, "topicName": topicName}
 	ctx, span := makeFirestoreTrace(ctx, "GetSubscriptionCount", field, client.logger.Data)
 	defer span.End()
 
-	collection := client.fsClient.Collection(CollectionSubscriptionsCount)
+	collection := client.fsClient.Collection(CollectionSubscriptionCount)
 	docRef := collection.Doc(topicName)
 	docSnap, err := docRef.Get(ctx)
 	if err != nil && status.Code(err) == codes.NotFound {

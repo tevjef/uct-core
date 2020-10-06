@@ -84,11 +84,11 @@ func (rutgers *rutgers) init() {
 		log.WithError(err).Warningf("%s: incomplete university, exiting...", rutgers.config.campus)
 	} else {
 		if rutgers.config.outputHttpUrl != "" {
-			err := publishing.PublishToHttp(rutgers.ctx, rutgers.config.outputHttpUrl, reader)
+			entry, err := publishing.PublishToHttp(rutgers.ctx, rutgers.config.outputHttpUrl, reader)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.WithField("topic_name", uni.TopicName).Infof("%s: sent scraping result to: %s", rutgers.config.campus, rutgers.config.outputHttpUrl)
+			entry.WithField("topic_name", uni.TopicName).Infof("%s: sent scraping result to: %s", rutgers.config.campus, rutgers.config.outputHttpUrl)
 		} else {
 			io.Copy(os.Stdout, reader)
 		}

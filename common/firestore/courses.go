@@ -2,6 +2,7 @@ package uctfirestore
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,6 +29,8 @@ func (client Client) GetCourses(ctx context.Context, topicName string) ([]*model
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Sort(model.CourseByNumber{Courses: subject.Courses})
 
 	return subject.Courses, nil
 }
