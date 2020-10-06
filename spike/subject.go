@@ -16,7 +16,7 @@ import (
 func subjectHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if sub, err := firestore.GetSubject(c, subjectTopicName); err != nil {
 			httperror.ServerError(c, err)
@@ -41,7 +41,7 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 
 		uniTopicName := strings.ToLower(c.Param("topic"))
 
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		semester := &model.Semester{
 			Year:   int32(year),

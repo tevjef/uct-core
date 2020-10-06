@@ -15,7 +15,7 @@ import (
 func universityHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		topicName := strings.ToLower(c.Param("topic"))
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if u, err := firestore.GetUniversity(c, topicName); err != nil {
 			httperror.ServerError(c, err)
@@ -31,9 +31,9 @@ func universityHandler(expire time.Duration) gin.HandlerFunc {
 
 func universitiesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
-		if universities, err := firestore.GetUniversities(c); err != nil {
+		if universities, err := firestore.GetUniversities(c.Request.Context()); err != nil {
 			httperror.ServerError(c, err)
 			return
 		} else {

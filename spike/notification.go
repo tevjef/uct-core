@@ -49,7 +49,7 @@ func notificationHandler() gin.HandlerFunc {
 
 		os, osVersion, appVersion := deviceInfo(c.Request.Header)
 
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if err := firestore.InsertDeviceNotification(c, &uctfirestore.DeviceNotification{
 			SectionTopicName: topicName,

@@ -33,7 +33,7 @@ func ToContext(s Setter, client *Client) {
 
 func Firestore(client *Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ToContext(c, client)
+		c.Request = c.Request.Clone(context.WithValue(c.Request.Context(), key, client))
 		c.Next()
 	}
 }

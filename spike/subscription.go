@@ -32,7 +32,7 @@ func subscriptionHandler() gin.HandlerFunc {
 		}
 		os, osVersion, appVersion := deviceInfo(c.Request.Header)
 
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if err := firestore.InsertSubscriptionAndUpdateCount(c, &uctfirestore.Subscription{
 			SectionTopicName: topicName,

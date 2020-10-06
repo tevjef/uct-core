@@ -16,7 +16,7 @@ import (
 func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		courseTopicName := strings.ToLower(c.Param("topic"))
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if course, err := firestore.GetCourse(c, courseTopicName); err != nil {
 			httperror.ServerError(c, err)
@@ -112,7 +112,7 @@ func hotnessHandler(expire time.Duration) gin.HandlerFunc {
 func coursesHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		subjectTopicName := strings.ToLower(c.Param("topic"))
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if courses, err := firestore.GetCourses(c, subjectTopicName); err != nil {
 			httperror.ServerError(c, err)

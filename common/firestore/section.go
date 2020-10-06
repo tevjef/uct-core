@@ -52,20 +52,21 @@ func (client Client) GetSection(ctx context.Context, topicName string) (*model.S
 	docRef := collection.Doc(topicName)
 	docSnap, err := docRef.Get(ctx)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalln("firestore: failed to get docRef")
+		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Errorln("firestore: failed to get docRef")
+		return nil, err
 	}
 
 	sectionFirebaseData := SectionFirestoreData{}
 
 	err = docSnap.DataTo(&sectionFirebaseData)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalf("firestore: failed to map SectionFirestoreData")
+		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Errorln("firestore: failed to map SectionFirestoreData")
 		return nil, err
 	}
 
 	section, err := SectionFromBytes(sectionFirebaseData.Data)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Fatalf("firestore: failed to unmarshal model.Section")
+		client.logger.WithError(err).WithFields(field).WithField("path", docSnap.Ref.Path).Errorln("firestore: failed to unmarshal model.Section")
 		return nil, err
 	}
 
@@ -81,7 +82,8 @@ func (client Client) GetSectionNotification(ctx context.Context, topicName strin
 	docRef := collection.Doc(topicName)
 	docSnap, err := docRef.Get(ctx)
 	if err != nil {
-		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to get docRef")
+		client.logger.WithError(err).WithFields(field).Errorln("firestore: failed to get docRef")
+		return nil, err
 	}
 
 	sectionFirebaseData := SectionFirestoreData{}

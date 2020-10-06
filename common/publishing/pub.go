@@ -56,14 +56,16 @@ func PublishToHttp(context context.Context, url string, body io.Reader) error {
 
 	entry := log.WithFields(log.Fields{
 		"httpRequest": log.Fields{
-			"requestMethod": resp.Request.Method,
-			"requestUrl":    resp.Request.URL.String(),
-			"requestSize":   resp.Request.ContentLength,
-			"responseSize":  resp.ContentLength,
-			"status":        resp.Status,
-			"userAgent":     resp.Request.UserAgent(),
-			"serverIp":      middleware.GetOutboundIP().String(),
-			"latency":       time.Since(startTime),
+			"requestHeaders":  req.Header,
+			"responseHeaders": resp.Header,
+			"requestMethod":   resp.Request.Method,
+			"requestUrl":      resp.Request.URL.String(),
+			"requestSize":     resp.Request.ContentLength,
+			"responseSize":    resp.ContentLength,
+			"status":          resp.Status,
+			"userAgent":       resp.Request.UserAgent(),
+			"serverIp":        middleware.GetOutboundIP().String(),
+			"latency":         time.Since(startTime),
 		}})
 
 	if resp.StatusCode > 300 {

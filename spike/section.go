@@ -15,7 +15,7 @@ import (
 func sectionHandler(expire time.Duration) gin.HandlerFunc {
 	return cache.CachePage(func(c *gin.Context) {
 		sectionTopicName := strings.ToLower(c.Param("topic"))
-		firestore := uctfirestore.FromContext(c)
+		firestore := uctfirestore.FromContext(c.Request.Context())
 
 		if s, err := firestore.GetSection(c, sectionTopicName); err != nil {
 			httperror.ServerError(c, err)

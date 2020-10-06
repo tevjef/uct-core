@@ -236,14 +236,16 @@ func (sr rutgersRequest) getData(context context.Context, url string, model inte
 
 		log.WithFields(log.Fields{
 			"httpRequest": log.Fields{
-				"requestMethod": resp.Request.Method,
-				"requestUrl":    resp.Request.URL.String(),
-				"requestSize":   resp.Request.ContentLength,
-				"responseSize":  resp.ContentLength,
-				"status":        resp.Status,
-				"userAgent":     resp.Request.UserAgent(),
-				"serverIp":      middleware.GetOutboundIP().String(),
-				"latency":       time.Since(startTime),
+				"requestHeaders":  req.Header,
+				"responseHeaders": resp.Header,
+				"requestMethod":   resp.Request.Method,
+				"requestUrl":      resp.Request.URL.String(),
+				"requestSize":     resp.Request.ContentLength,
+				"responseSize":    resp.ContentLength,
+				"status":          resp.Status,
+				"userAgent":       resp.Request.UserAgent(),
+				"serverIp":        middleware.GetOutboundIP().String(),
+				"latency":         time.Since(startTime),
 			},
 		}).Debugf("%s: url: %s status: %s content-length: %v response_time %v", sr.campus, url, resp.Status, len(data), time.Since(startTime).Seconds())
 

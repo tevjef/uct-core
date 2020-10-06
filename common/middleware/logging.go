@@ -36,15 +36,17 @@ func Ginrus() gin.HandlerFunc {
 
 		entry := log.WithFields(log.Fields{
 			"httpRequest": log.Fields{
-				"requestMethod": c.Request.Method,
-				"requestUrl":    c.Request.URL.String(),
-				"requestSize":   c.Request.ContentLength,
-				"responseSize":  c.Writer.Size(),
-				"status":        c.Writer.Status(),
-				"userAgent":     c.Request.UserAgent(),
-				"remoteIp":      c.ClientIP(),
-				"serverIp":      GetOutboundIP().String(),
-				"latency":       latency.String(),
+				"requestHeaders":  c.Request.Header,
+				"responseHeaders": c.Writer.Header(),
+				"requestMethod":   c.Request.Method,
+				"requestUrl":      c.Request.URL.String(),
+				"requestSize":     c.Request.ContentLength,
+				"responseSize":    c.Writer.Size(),
+				"status":          c.Writer.Status(),
+				"userAgent":       c.Request.UserAgent(),
+				"remoteIp":        c.ClientIP(),
+				"serverIp":        GetOutboundIP().String(),
+				"latency":         latency.String(),
 			},
 		})
 
