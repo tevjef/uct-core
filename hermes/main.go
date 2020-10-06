@@ -164,7 +164,7 @@ func (hermes *hermes) init() error {
 			Debugf("firestore: document updated: %v", hermes.event.UpdateMask.FieldPaths)
 	}
 
-	sectionNotification, err := hermes.uctFSClient.GetSectionNotification(newSection.TopicName)
+	sectionNotification, err := hermes.uctFSClient.GetSectionNotification(hermes.ctx, newSection.TopicName)
 	if err != nil {
 		hermes.logger.WithError(err).Fatalf("failed to get additional section data")
 		return err
@@ -176,7 +176,7 @@ func (hermes *hermes) init() error {
 		return err
 	}
 
-	err = hermes.uctFSClient.InsertSectionNotification(sectionNotification)
+	err = hermes.uctFSClient.InsertSectionNotification(hermes.ctx, sectionNotification)
 	if err != nil {
 		hermes.logger.WithError(err).Fatalf("failed to insert notification")
 		return err
