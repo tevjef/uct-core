@@ -3,9 +3,11 @@ package ein
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -35,6 +37,7 @@ type ein struct {
 	firestoreClient   *firestore.Client
 	uctFSClient       *uctfirestore.Client
 	newUniversityData []byte
+	isBackfill        bool
 	logger            *log.Entry
 	ctx               context.Context
 }
@@ -131,6 +134,16 @@ func MainFunc(r *http.Request) {
 		log.WithError(err).Errorln("failed to read request body")
 	}
 
+	isBackfill := false
+	backfillQuery := r.URL.Query().Get("backfill")
+	if backfillQuery != "" {
+		b, err := strconv.ParseBool(backfillQuery)
+		if err == nil {
+			isBackfill = b
+			log.Debugln("starting with backfill")
+		}
+	}
+
 	(&ein{
 		app:               app.Model(),
 		config:            econf,
@@ -139,6 +152,7 @@ func MainFunc(r *http.Request) {
 		firestoreClient:   firestoreClient,
 		uctFSClient:       uctFSClient,
 		newUniversityData: newUniversityData,
+		isBackfill:        isBackfill,
 		logger:            logger,
 		ctx:               ctx,
 	}).init()
@@ -152,7 +166,6 @@ func (ein *ein) init() {
 }
 
 func (ein *ein) process() error {
-
 	// Decode new data
 	var newUniversity model.University
 	if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(ein.newUniversityData), &newUniversity); err != nil {
@@ -169,7 +182,7 @@ func (ein *ein) process() error {
 
 	var oldRaw []byte
 
-	objName := "scraper-cache/" + newUniversity.TopicName
+	objName := "scraper-cache/" + ein.cacheKey(newUniversity)
 	bucket, err := ein.storageClient.DefaultBucket()
 	if err != nil {
 		ein.logger.WithError(err).Errorln("failed to get default bucket")
@@ -189,7 +202,7 @@ func (ein *ein) process() error {
 	// Decode old data if have some
 	var oldUniversity model.University
 
-	if len(oldRaw) != 0 && !ein.config.noDiff {
+	if len(oldRaw) != 0 && !ein.config.noDiff && !ein.isBackfill {
 		if err := model.UnmarshalMessage(ein.config.inputFormat, bytes.NewReader(oldRaw), &oldUniversity); err != nil {
 			return errors.Wrap(err, "error while unmarshalling old data")
 		}
@@ -258,6 +271,14 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	ein.updateSerialSection(allSectionMeta)
+}
+
+func (ein *ein) cacheKey(university model.University) string {
+	if ein.isBackfill {
+		return university.TopicName + ".backfill." + fmt.Sprint(time.Now().Unix())
+	}
+
+	return university.TopicName
 }
 
 // For ever course that's in the diff return the course that has full data.
