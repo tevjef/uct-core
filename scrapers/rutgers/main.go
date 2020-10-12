@@ -5,6 +5,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
@@ -65,13 +66,29 @@ func MainFunc(r *http.Request) {
 		Envar("RUTGERS_LATEST").
 		BoolVar(&rconf.latest)
 
+	timeOverrideStr := ""
+	app.Flag("time-override", "Set time for scraper").
+		Envar("RUTGERS_TIME_OVERRIDE").
+		StringVar(&timeOverrideStr)
+
 	kingpin.MustParse(app.Parse([]string{}))
 	app.Name = app.Name + "-" + rconf.campus
 
+	var timeOverride *time.Time
+	if timeOverrideStr != "" {
+		t, err := time.Parse("2006-01-02", timeOverrideStr)
+		if err != nil {
+			log.WithError(err).Fatalf("failed to  parse time override")
+		}
+		timeOverride = &t
+	} else {
+		timeOverride = nil
+	}
 	(&rutgers{
-		app:    app.Model(),
-		config: rconf,
-		ctx:    r.Context(),
+		app:          app.Model(),
+		config:       rconf,
+		timeOverride: timeOverride,
+		ctx:          r.Context(),
 	}).init()
 }
 
@@ -91,5 +108,13 @@ func (rutgers *rutgers) init() {
 		} else {
 			io.Copy(os.Stdout, reader)
 		}
+	}
+}
+
+func (rutgers *rutgers) GetTime() time.Time {
+	if rutgers.timeOverride != nil {
+		return *rutgers.timeOverride
+	} else {
+		return time.Now()
 	}
 }

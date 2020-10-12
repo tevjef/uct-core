@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/gogo/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"github.com/tevjef/uct-backend/common/model"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -14,8 +13,11 @@ import (
 var (
 	app    = kingpin.New("print", "An application to print and translate json and protobuf")
 	format = app.Flag("format", "choose file input format").Short('f').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").Required().String()
-	out    = app.Flag("output", "output format").Short('o').HintOptions(model.Protobuf, model.Json).PlaceHolder("[protobuf, json]").String()
-	file   = app.Arg("input", "file to print").File()
+	out    = app.Flag("output", "output format").Short('o').
+		HintOptions(model.Protobuf, model.Json).
+		Default("json").
+		PlaceHolder("[protobuf, json]").String()
+	file = app.Arg("input", "file to print").File()
 )
 
 func main() {
@@ -38,24 +40,8 @@ func main() {
 		log.WithError(err).Fatalf("Failed to unmarshall message")
 	}
 
-	if *format == model.Json {
-		if *out != "" {
-			io.Copy(os.Stdout, input)
-		}
-	} else if *format == model.Protobuf {
-		if *out != "" {
-			log.Println(proto.MarshalTextString(&university))
-		}
-	}
-
 	if *out != "" {
 		if output, err := model.MarshalMessage(*out, university); err != nil {
-			log.WithError(err).Fatal()
-		} else {
-			io.Copy(os.Stdout, output)
-		}
-	} else {
-		if output, err := model.MarshalMessage(*format, university); err != nil {
 			log.WithError(err).Fatal()
 		} else {
 			io.Copy(os.Stdout, output)

@@ -36,9 +36,10 @@ type rutgersRequest struct {
 }
 
 type rutgers struct {
-	app    *kingpin.ApplicationModel
-	config *rutgersConfig
-	ctx    context.Context
+	app          *kingpin.ApplicationModel
+	config       *rutgersConfig
+	timeOverride *time.Time
+	ctx          context.Context
 }
 
 type rutgersConfig struct {
@@ -56,11 +57,11 @@ func (rutgers *rutgers) getCampus(campus string) model.University {
 
 	// Rutgers servers go down for maintenance between 2 and 5 AM UTC every day.
 	// Data scraped from this time would be inaccurate and may lead to unforeseen errors
-	if currentHour := time.Now().In(time.FixedZone("EST", -18000)).Hour(); currentHour >= 2 && currentHour < 5 {
+	if currentHour := rutgers.GetTime().In(time.FixedZone("EST", -18000)).Hour(); currentHour >= 2 && currentHour < 5 {
 		return university
 	}
 
-	university.ResolvedSemesters = model.ResolveSemesters(time.Now(), university.Registrations)
+	university.ResolvedSemesters = model.ResolveSemesters(rutgers.GetTime(), university.Registrations)
 
 	semesters := []*model.Semester{
 		university.ResolvedSemesters.Last,

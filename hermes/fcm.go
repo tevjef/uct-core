@@ -71,13 +71,13 @@ func (hermes *hermes) sendNotification(sectionNotification *uctfirestore.Section
 
 	if hermes.config.dryRun {
 		result, err := hermes.fcmClient.SendDryRun(hermes.ctx, message)
-		log.WithError(err).WithFields(field).Infoln("dry run notification sent: " + result)
+		log.WithError(err).WithFields(field).Infof("dry run notification sent: %v %v", sectionNotification.Section.TopicName, result)
 		if err != nil {
 			return err
 		}
 	} else {
 		result, err := hermes.fcmClient.Send(hermes.ctx, message)
-		log.WithError(err).WithFields(field).Infoln("prod notification sent: " + result)
+		log.WithError(err).WithFields(field).Infof("prod notification sent: %v %v", sectionNotification.Section.TopicName, result)
 		if err != nil {
 			return err
 		}

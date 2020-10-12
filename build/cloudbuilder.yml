@@ -10,7 +10,9 @@ steps:
             '--allow-unauthenticated',
             '--memory=128',
             '--runtime=go113',
-            '--entry-point=Spike'
+            '--entry-point=Spike',
+            '--set-env-vars',
+            'GIN_MODE=release'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
@@ -27,7 +29,9 @@ steps:
             '--runtime',
             'go113',
             '--entry-point',
-            'Hermes'
+            'Hermes',
+            '--set-env-vars',
+            'HERMES_DRY_RUN=false'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',

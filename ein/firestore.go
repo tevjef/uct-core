@@ -8,7 +8,9 @@ import (
 )
 
 func (ein *ein) insertUniversity(newUniversity model.University, university model.University) {
-	_ = ein.uctFSClient.InsertUniversity(ein.ctx, newUniversity)
+	if !ein.isBackfill {
+		_ = ein.uctFSClient.InsertUniversity(ein.ctx, newUniversity)
+	}
 
 	ein.insertSubjects(&newUniversity)
 
