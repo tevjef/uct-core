@@ -62,6 +62,13 @@ func PublishToHttp(context context.Context, url string, body io.Reader) (*log.En
 	}
 
 	req, err := http.NewRequestWithContext(context, http.MethodPost, url, bytes.NewReader(b.Bytes()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("Content-Encoding", "gzip")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

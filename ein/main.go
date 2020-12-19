@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -130,9 +131,15 @@ func MainFunc(r *http.Request) {
 
 	uctFSClient := uctfirestore.NewClient(ctx, firestoreClient, logger)
 
-	reader, err := gzip.NewReader(r.Body)
-	if err != nil {
-		log.WithError(err).Errorln("failed to create gzip reader")
+	var reader io.Reader
+
+	if r.Header.Get("Content-Encoding") == "gzip" {
+		reader, err = gzip.NewReader(r.Body)
+		if err != nil {
+			log.WithError(err).Errorln("failed to create gzip reader")
+		}
+	} else {
+		reader = r.Body
 	}
 
 	newUniversityData, err := ioutil.ReadAll(reader)
@@ -272,7 +279,7 @@ func (ein *ein) insertSections(diff model.University) {
 	}
 
 	if len(allSectionMeta) == 0 {
-		ein.logger.Infoln("%s: no new sections", diff.TopicName)
+		ein.logger.Infof("%s: no new sections", diff.TopicName)
 		return
 	}
 
