@@ -1,6 +1,7 @@
 steps:
   - name: 'gcr.io/universitycoursetracker/firebase'
     args: ['deploy', '--config=firebase/firebase.json','--project=universitycoursetracker', '--only=hosting']
+    waitFor: ['-']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
@@ -14,7 +15,9 @@ steps:
             '--set-env-vars',
             'GIN_MODE=release'
     ]
+    waitFor: ['-']
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: hermes
     args: [ 'functions',
             'deploy',
             'hermes',
@@ -33,7 +36,9 @@ steps:
             '--set-env-vars',
             'HERMES_DRY_RUN=false'
     ]
+    waitFor: ['-']
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: ein
     args: [ 'functions',
             'deploy',
             'ein',
@@ -51,6 +56,7 @@ steps:
             '--set-env-vars',
             'EIN_INPUT_FORMAT=protobuf'
     ]
+    waitFor: ['hermes']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
@@ -67,6 +73,7 @@ steps:
             '--set-env-vars',
             'RUTGERS_CAMPUS=NB,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
     ]
+    waitFor: ['ein']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
@@ -83,6 +90,7 @@ steps:
             '--set-env-vars',
             'RUTGERS_CAMPUS=NK,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
     ]
+    waitFor: ['ein']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'functions',
             'deploy',
@@ -99,4 +107,5 @@ steps:
             '--set-env-vars',
             'RUTGERS_CAMPUS=CM,OUTPUT_HTTP_URL=https://us-central1-universitycoursetracker.cloudfunctions.net/ein'
     ]
+    waitFor: ['ein']
 timeout: 30m

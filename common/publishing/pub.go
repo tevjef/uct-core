@@ -1,6 +1,8 @@
 package publishing
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -48,7 +50,18 @@ func PublishToHttp(context context.Context, url string, body io.Reader) (*log.En
 		return nil, fmt.Errorf("idtoken.NewClient: %v", err)
 	}
 
-	req, err := http.NewRequestWithContext(context, http.MethodPost, url, body)
+	var b bytes.Buffer
+	w := gzip.NewWriter(&b)
+	_, err = io.Copy(w, body)
+	if err != nil {
+		return nil, fmt.Errorf("idtoken.NewClient: %v", err)
+	}
+	err = w.Close()
+	if err != nil {
+		return nil, fmt.Errorf("idtoken.NewClient: %v", err)
+	}
+
+	req, err := http.NewRequestWithContext(context, http.MethodPost, url, bytes.NewReader(b.Bytes()))
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

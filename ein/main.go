@@ -2,6 +2,7 @@ package ein
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -129,7 +130,12 @@ func MainFunc(r *http.Request) {
 
 	uctFSClient := uctfirestore.NewClient(ctx, firestoreClient, logger)
 
-	newUniversityData, err := ioutil.ReadAll(r.Body)
+	reader, err := gzip.NewReader(r.Body)
+	if err != nil {
+		log.WithError(err).Errorln("failed to create gzip reader")
+	}
+
+	newUniversityData, err := ioutil.ReadAll(reader)
 	if err != nil {
 		log.WithError(err).Errorln("failed to read request body")
 	}
