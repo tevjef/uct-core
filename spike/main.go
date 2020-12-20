@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-contrib/gzip"
-
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/storage"
@@ -139,7 +137,6 @@ func initGin() {
 	{
 		v2.Use(middleware.ContentNegotiation(middleware.ProtobufContentType))
 		v2.Use(middleware.Decorator)
-		v2.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedExtensions([]string{"/static"})))
 
 		v2.GET("/universities", universitiesHandler(time.Minute))
 		v2.GET("/university/:topic", universityHandler(time.Minute))
