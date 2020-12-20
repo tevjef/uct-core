@@ -51,6 +51,11 @@ func subjectsHandler(expire time.Duration) gin.HandlerFunc {
 			httperror.ServerError(c, err)
 			return
 		} else {
+			for s := range subjects {
+				subject := subjects[s]
+				subject.Courses = nil
+			}
+
 			response := model.Response{
 				Data: &model.Data{Subjects: subjects},
 			}
