@@ -16,24 +16,26 @@ func (client Client) InsertSubjects(ctx context.Context, subjects []*model.Subje
 	defer span.End()
 
 	collection := client.fsClient.Collection(CollectionSubjectTopicName)
-	batch := client.fsClient.Batch()
-	for subjectIndex := range subjects {
-		subject := subjects[subjectIndex]
-		docRef := collection.Doc(subject.TopicName)
+	BatchSubjects(50, subjects, func(s []*model.Subject) {
+		batch := client.fsClient.Batch()
+		for subjectIndex := range s {
+			subject := s[subjectIndex]
+			docRef := collection.Doc(subject.TopicName)
 
-		data, _ := subject.Marshal()
-		firestoreData := FirestoreData{Data: data}
-		batch.Set(docRef, firestoreData)
-	}
+			data, _ := subject.Marshal()
+			firestoreData := FirestoreData{Data: data}
+			batch.Set(docRef, firestoreData)
+		}
 
-	results, err := batch.Commit(spannedContext)
-	if err != nil {
-		client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to commit subject transaction")
-	}
+		results, err := batch.Commit(spannedContext)
+		if err != nil {
+			client.logger.WithError(err).WithFields(field).Fatalln("firestore: failed to commit subject transaction")
+		}
+		client.logger.WithField("results", len(results)).
+			WithFields(field).
+			Debugln("firestore: subjects batch set complete")
 
-	client.logger.WithField("results", len(results)).
-		WithFields(field).
-		Debugln("firestore: subjects batch set complete")
+	})
 
 	return nil
 }
@@ -154,4 +156,19 @@ func (client Client) GetSubjectsBySemester(ctx context.Context, universityTopicN
 	}
 
 	return uctData.Subjects, nil
+}
+
+func BatchSubjects(count int, items []*model.Subject, callback func([]*model.Subject)) {
+	var result []*model.Subject
+
+	for i := 0; i < len(items); i++ {
+		if len(result) == count {
+			callback(result)
+			result = []*model.Subject{}
+		}
+
+		result = append(result, items[i])
+	}
+
+	callback(items[len(items)-len(items)%count:])
 }
